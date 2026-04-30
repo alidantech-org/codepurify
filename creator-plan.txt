@@ -1,0 +1,64 @@
+1. have a config json file (convection:lock)
+      with:
+        - a base type defination, key and variable naming convection defined statically
+        - import patterns file patterns, types, enums, folders and typing
+        - defines a base which all entities or types can depend on eg can be defined like which path they are in and their names 
+          for use in code construction
+
+2. create a generator for a sample type which create a ts file in the designated folder
+      with:
+        - code patterns matching convection from the config file
+        - each type that can be there defined but with empty configs
+
+3. have utils for detecting what is defined inside a type file
+      like:
+        - type class (number, boolean, string)
+        - relations (other types used inside the main type)
+        - nested types - ( can be skipped for now !!!)
+        - configs anyything in SHOUTING_CASE
+        - Key Defination - for typing, matched with the array config too for use in loops eg for dtos
+        - error detection and warning logging eg for empty definations etc
+
+4. create a python class for building context (merge: json_config & utils)
+      does:
+        - understands the config first from config class and has variables
+        - read a ts file from designated entities path and validates convetions with warnings or error throwing
+        - validates the ts file that it follows naming convection, throws error for orphaned files and misconvections
+        - using utils parse each of everything in the ts files and constructs and entity context schema with whatever 
+          variables need, entity name in all cases (kebab, plural, singular, snake, dash, shouiting, camel, pascal etc)
+        - builds config arrays still using utils eg string fields, relations, boolean, enums, foreign keys etc
+        - ensures all variables for an entity is defined and ready to be used
+
+5. decide on pattern for what should be mutable and what is imutable, repositories and entities and dtos should atleast be imutable, can
+   auto geneate  mutable controller and service, or have service imutable or mutable, but have generator validate convection and throws error 
+   if sth is out of place, validates that no funny files not registered in its context, config, plan on how decorators can be handled,
+   eg have decorators registered in the config, but generator can validate file and some code with porper export exists and can create file if 
+   missing, can add logic for permissions geneate using defined decorators
+
+6. design templates that the generator will use, have a defined static variable defination in a registry for all posible variables that can 
+   be used in the templates to avoid missing variables and make template edidatable
+      define:
+        - entity file (typeorm) (parmanently immutable)
+        - repository file (extends base repositories which is user defined) (parmanently immutable - exposes query builder and many methods
+          from base for customisation options, in mutable use cases files)
+        - dtos ( four files and barel export ) entiy-(params, query).dto.ts and (create, update, {mutable-additionals})-.dto.ts all immutable
+                  except for additionals
+        - service file - imutable, can use, use cases which are muatble for custom logic, all service methods predefined in a config and extends
+          a base service, which exposes common methods, like findby id for use in dependent code from other services
+        - service file interface - imutable, created from service defination and defines context for use in creating service and for being
+        - controller file, have default endpoints created from config, file convection designed and decorators added and also guards and roles
+          passed for guards, by default injects the service file interface and uses its methods to create endpoints
+
+7. plan on how to make code generator headless and have template know the syntax of the code being generated and the logic to generate it only
+   generator can pass varibles so template creator can depend on variables to get their work done
+
+8. plan on how to add support for teminal commands like pretier, and genrating a pretier file too and running it after generation and also running
+   other npm commands like eslint, tsc, etc and also checking compilation errors and throwing errors
+
+9. plan on how to support backup what is there in hidden file to support rollback and also support rollback, also use git to track changes, and to
+   compare changes with git and add enforcemnt for user to be not in any other branch apart from 'genarated' maybe add logic for auto checkout to 
+   'genarated' branch if user is not in it and ask user to confirm the action canoot auto checkout if user has active changes in that current
+   branch
+
+10. support running the code and testing it and providing url for the user
+
