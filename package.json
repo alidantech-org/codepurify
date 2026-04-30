@@ -1,0 +1,55 @@
+{
+  "name": "tempura",
+  "version": "0.1.0",
+  "description": "Convention-locked NestJS backend generator.",
+  "type": "module",
+  "bin": {
+    "tempura": "./dist/cli/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build && npm run typecheck"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "consola": "^3.2.3",
+    "eta": "^3.5.0",
+    "execa": "^9.3.0",
+    "fast-glob": "^3.3.2",
+    "fs-extra": "^11.2.0",
+    "picocolors": "^1.0.1",
+    "ts-morph": "^23.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.14.10",
+    "eslint": "^9.6.0",
+    "prettier": "^3.3.2",
+    "tsup": "^8.1.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "nestjs",
+    "generator",
+    "codegen",
+    "typescript",
+    "cli"
+  ],
+  "license": "MIT"
+}
