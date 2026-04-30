@@ -12,9 +12,9 @@ import * as __entity.types_alias__ from '__entity.types_import_path__';
 /* @if({ entity.has_enum_import }) */
 import * as __entity.enum_alias__ from '__entity.enum_import_path__';
 /* @endif */
-import { IFindAllResponse } from '@/types/shared/response';
-import { InternalFindOptions } from '@/types/shared/query';
-import { IBaseItemQuery, IBaseListQuery } from '@/types/shared/query';
+import { IFindAllResponse } from '../shared/response';
+import { InternalFindOptions } from '../shared/query';
+import { IBaseItemQuery, IBaseListQuery } from '../shared/query';
 /* @endskipempty */
 
 /**

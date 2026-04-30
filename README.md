@@ -10,12 +10,12 @@ Tempura generates predictable, production-grade NestJS backend code from strict 
 
 It is built to eliminate:
 
-* repeated file copying
-* inconsistent architecture
-* AI-generated drift
-* surprise files
-* broken patterns
-* manual boilerplate work
+- repeated file copying
+- inconsistent architecture
+- AI-generated drift
+- surprise files
+- broken patterns
+- manual boilerplate work
 
 ---
 
@@ -39,11 +39,11 @@ generated NestJS code
 
 Generated code should be:
 
-* readable
-* predictable
-* traceable
-* regeneratable
-* convention-safe
+- readable
+- predictable
+- traceable
+- regeneratable
+- convention-safe
 
 Generated code is **visible source code**, not hidden runtime magic.
 
@@ -55,23 +55,23 @@ Generated code is **visible source code**, not hidden runtime magic.
 
 These files are fully generated and should not be edited manually:
 
-* entities
-* repositories
-* generated DTOs
-* generated services
-* generated controllers
-* generated modules
+- entities
+- repositories
+- generated DTOs
+- generated services
+- generated controllers
+- generated modules
 
 ### Mutable (Developer Owned)
 
 These files are safe extension points:
 
-* use-cases
-* custom business logic
-* additional DTOs
-* permission hooks
-* decorators
-* custom validators
+- use-cases
+- custom business logic
+- additional DTOs
+- permission hooks
+- decorators
+- custom validators
 
 ---
 
@@ -81,12 +81,12 @@ These files are safe extension points:
 
 Enforces:
 
-* naming conventions
-* folder structure
-* imports
-* decorators
-* file placement
-* generated architecture
+- naming conventions
+- folder structure
+- imports
+- decorators
+- file placement
+- generated architecture
 
 ---
 
@@ -94,13 +94,13 @@ Enforces:
 
 Detects:
 
-* primitive field types
-* relations
-* enums
-* foreign keys
-* config constants
-* exports/imports
-* invalid definitions
+- primitive field types
+- relations
+- enums
+- foreign keys
+- config constants
+- exports/imports
+- invalid definitions
 
 ---
 
@@ -135,15 +135,15 @@ foreign keys
 
 Generates:
 
-* entities
-* repositories
-* DTOs
-* services
-* controllers
-* modules
-* use-cases
-* guards
-* decorators
+- entities
+- repositories
+- DTOs
+- services
+- controllers
+- modules
+- use-cases
+- guards
+- decorators
 
 ---
 
@@ -151,12 +151,12 @@ Generates:
 
 Supports:
 
-* immutable validation
-* backup before overwrite
-* rollback
-* manifest tracking
-* generation history
-* git integration
+- immutable validation
+- backup before overwrite
+- rollback
+- manifest tracking
+- generation history
+- git integration
 
 ---
 
@@ -185,29 +185,29 @@ npx tempura clean
 ```js id="1h98ti"
 // tempura.config.js
 
-const { defineTempuraConfig } = require("tempura");
+const { defineTempuraConfig } = require('tempura');
 
 module.exports = defineTempuraConfig({
   project: {
-    name: "my-nest-app",
-    rootDir: ".",
-    sourceDir: "src",
+    name: 'my-nest-app',
+    rootDir: '.',
+    sourceDir: 'src',
   },
 
   nest: {
-    modulesDir: "src/modules",
-    entityPattern: "**/*.entity.ts",
-    generatedDirName: "__generated__",
-    customDirName: "custom",
+    modulesDir: 'src/modules',
+    entityPattern: '**/*.entity.ts',
+    generatedDirName: '__generated__',
+    customDirName: 'custom',
   },
 
   immutable: {
     enabled: true,
-    include: ["__generated__/**/*.ts"],
+    include: ['__generated__/**/*.ts'],
   },
 
   mutable: {
-    include: ["custom/**/*.ts"],
+    include: ['custom/**/*.ts'],
   },
 
   formatting: {
@@ -218,7 +218,7 @@ module.exports = defineTempuraConfig({
 
   git: {
     enabled: true,
-    requiredBranch: "generated",
+    requiredBranch: 'generated',
     preventDirtyCheckout: true,
   },
 });
@@ -261,11 +261,11 @@ generator: tempura@0.1.0
 
 This enables:
 
-* regeneration
-* drift detection
-* rollback
-* debugging
-* traceability
+- regeneration
+- drift detection
+- rollback
+- debugging
+- traceability
 
 ---
 

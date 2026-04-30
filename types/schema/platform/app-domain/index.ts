@@ -1,0 +1,33 @@
+// app-domain/index.ts
+export type { IAppDomain, AppDomainKey } from './app-domain.types';
+export { APP_DOMAIN_FIELDS, APP_DOMAIN_META, APP_DOMAIN_DB } from './app-domain.config';
+export type {
+  AppDomainRelationKey,
+  IAppDomainContextualFields,
+  IAppDomainTransitionFields,
+  IAppDomainToggleFields,
+  AppDomainSearchableField,
+  AppDomainFilterableField,
+  AppDomainDefaultSelectField,
+  AppDomainSelectableField,
+  AppDomainSortableField,
+  AppDomainDateRangeField,
+  AppDomainCreatableField,
+  AppDomainSystemCreatableField,
+  AppDomainUpdatableField,
+  AppDomainEditableField,
+  IAppDomainReadonlyFields,
+  IAppDomainImmutableFields,
+  AppDomainSensitiveField,
+  AppDomainSystemField,
+  AppDomainComputedField,
+  IAppDomainRelationMap,
+  IAppDomainAsOneRelationConfig,
+  IAppDomainAsManyRelationConfig,
+  IAppDomainFilter,
+  IAppDomainItemQuery,
+  IAppDomainListQuery,
+  IAppDomainRelationQueries,
+  IAppDomainAsOneRelationQuery,
+  IAppDomainAsManyRelationQuery,
+} from './app-domain.types.tg';
