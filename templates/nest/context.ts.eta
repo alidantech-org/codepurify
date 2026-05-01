@@ -1,0 +1,377 @@
+/**
+ * <%= entity.names.pascal %> Context
+ * 
+ * Auto-generated context file for <%= entity.names.pascal %> entity.
+ * Contains field definitions, relations, and query types.
+ */
+
+import type { <%= entity.exports.interfaceName %> } from './<%= basename(entity.files.typesFile) %>';
+
+/**
+ * <%= entity.names.pascal %> field keys
+ */
+export type <%= entity.generated.relationKeyType %> = 
+<% fields.groups.all.forEach(field => { %>
+  | '<%= field.name %>'
+<% }) %>;
+
+/**
+ * <%= entity.names.pascal %> selectable fields
+ */
+export type <%= entity.generated.selectableFieldType %> = 
+<% fields.selection.defaultSelect.forEach(field => { %>
+  | '<%= field.name %>'
+<% }) %>;
+
+/**
+ * <%= entity.names.pascal %> sortable fields
+ */
+export type <%= entity.generated.sortableFieldType %> = 
+<% fields.selection.sortable.forEach(field => { %>
+  | '<%= field.name %>'
+<% }) %>;
+
+/**
+ * <%= entity.names.pascal %> filterable fields
+ */
+export type <%= entity.generated.filterableFieldType %> = 
+<% fields.selection.filterable.forEach(field => { %>
+  | '<%= field.name %>'
+<% }) %>;
+
+/**
+ * <%= entity.names.pascal %> creatable fields
+ */
+export type <%= entity.generated.creatableFieldType %> = 
+<% fields.mutation.creatable.forEach(field => { %>
+  | '<%= field.name %>'
+<% }) %>;
+
+/**
+ * <%= entity.names.pascal %> updatable fields
+ */
+export type <%= entity.generated.updatableFieldType %> = 
+<% fields.mutation.updatable.forEach(field => { %>
+  | '<%= field.name %>'
+<% }) %>;
+
+/**
+ * <%= entity.names.pascal %> list query parameters
+ */
+export interface <%= entity.generated.listQueryType %> {
+  /** Pagination */
+  page?: number;
+  limit?: number;
+  /** Sorting */
+  sortBy?: <%= entity.generated.sortableFieldType %>;
+  sortOrder?: 'ASC' | 'DESC';
+  /** Filtering */
+<% fields.selection.filterable.forEach(field => { %>
+  <%= field.name %>?: <%= field.type %>;
+<% }) %>
+  /** Search */
+  search?: string;
+<% if (fields.selection.dateRange.length > 0) { %>
+  /** Date range filtering */
+<% fields.selection.dateRange.forEach(field => { %>
+  <%= field.name %>From?: string;
+  <%= field.name %>To?: string;
+<% }) %>
+<% } %>
+}
+
+/**
+ * <%= entity.names.pascal %> item query parameters
+ */
+export interface <%= entity.generated.itemQueryType %> {
+  /** Select specific fields */
+  select?: <%= entity.generated.selectableFieldType %>[];
+  /** Include relations */
+  include?: <%= entity.generated.relationKeyType %>[];
+}
+
+/**
+ * <%= entity.names.pascal %> create input
+ */
+export interface <%= entity.generated.createInputType %> {
+<% fields.mutation.creatable.forEach(field => { %>
+  <%= field.name %><%= field.optional ? '?' : '' %>: <%= field.type %><%= field.nullable ? ' | null' : '' %>;
+<% }) %>
+}
+
+/**
+ * <%= entity.names.pascal %> update input
+ */
+export interface <%= entity.generated.updateInputType %> {
+<% fields.mutation.updatable.forEach(field => { %>
+  <%= field.name %>?: <%= field.type %><%= field.nullable ? ' | null' : '' %>;
+<% }) %>
+}
+
+<% if (relations.groups.oneToOne.length > 0 || relations.groups.manyToOne.length > 0) { %>
+/**
+ * <%= entity.names.pascal %> "as one" relation queries
+ */
+<% relations.queries.asOneQueries.forEach(query => { %>
+export interface <%= query.typeName %> {
+  select?: string[];
+  include?: string[];
+}
+<% }) %>
+<% } %>
+
+<% if (relations.groups.oneToMany.length > 0 || relations.groups.manyToMany.length > 0) { %>
+/**
+ * <%= entity.names.pascal %> "as many" relation queries
+ */
+<% relations.queries.asManyQueries.forEach(query => { %>
+export interface <%= query.typeName %> {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filter?: Record<string, any>;
+}
+<% }) %>
+<% } %>
+
+/**
+ * <%= entity.names.pascal %> relations map
+ */
+export const <%= entity.relationMaps.entityRelationsMap %> = {
+<% relations.groups.all.forEach(relation => { %>
+  '<%= relation.name %>': {
+    targetType: '<%= relation.targetType %>',
+    relationType: '<%= relation.relationType %>',
+    isArray: <%= relation.isArray ? 'true' : 'false' %>,
+    isNullable: <%= relation.isNullable ? 'true' : 'false' %>,
+    joinColumn: <%= relation.joinColumn ? `'${relation.joinColumn}'` : 'undefined' %>,
+    joinTable: <%= relation.joinTable ? `'${relation.joinTable}'` : 'undefined' %>,
+  },
+<% }) %>
+} as const;
+
+/**
+ * <%= entity.names.pascal %> relation targets map
+ */
+export const <%= entity.relationMaps.relationTargetsMap %> = {
+<% relations.maps.relationTargets && Object.entries(relations.maps.relationTargets).forEach(([key, value]) => { %>
+  '<%= key %>': '<%= value %>',
+<% }) %>
+} as const;
+
+/**
+ * <%= entity.names.pascal %> relation fields map
+ */
+export const <%= entity.relationMaps.relationFieldsMap %> = {
+<% relations.maps.relationFields && Object.entries(relations.maps.relationFields).forEach(([key, value]) => { %>
+  '<%= key %>': '<%= value %>',
+<% }) %>
+} as const;
+
+/**
+ * <%= entity.names.pascal %> field definitions
+ */
+export const <%= entity.names.camel %>Fields = {
+<% fields.groups.all.forEach(field => { %>
+  '<%= field.name %>': {
+    type: '<%= field.type %>',
+    optional: <%= field.optional ? 'true' : 'false' %>,
+    nullable: <%= field.nullable ? 'true' : 'false' %>,
+    array: <%= field.array ? 'true' : 'false' %>,
+    readonly: <%= field.readonly ? 'true' : 'false' %>,
+    category: '<%= field.category %>',
+    isPrimaryKey: <%= field.isPrimaryKey ? 'true' : 'false' %>,
+    isForeignKey: <%= field.isForeignKey ? 'true' : 'false' %>,
+    searchable: <%= field.searchable ? 'true' : 'false' %>,
+    sortable: <%= field.sortable ? 'true' : 'false' %>,
+    filterable: <%= field.filterable ? 'true' : 'false' %>,
+    columnName: '<%= field.columnName %>',
+    dbType: '<%= field.dbType %>',
+  },
+<% }) %>
+} as const;
+
+/**
+ * <%= entity.names.pascal %> field groups
+ */
+export const <%= entity.names.camel %>FieldGroups = {
+  primaryKeys: [<% fields.groups.primaryKeys.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  foreignKeys: [<% fields.groups.foreignKeys.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  auditFields: [<% fields.groups.auditFields.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  relationFields: [<% fields.groups.relationFields.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  primitiveFields: [<% fields.groups.primitiveFields.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  enumFields: [<% fields.groups.enumFields.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  customFields: [<% fields.groups.customFields.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  all: [<% fields.groups.all.forEach(field => { %>'<%= field.name %>',<% }) %>],
+} as const;
+
+/**
+ * <%= entity.names.pascal %> field selection
+ */
+export const <%= entity.names.camel %>FieldSelection = {
+  defaultSelect: [<% fields.selection.defaultSelect.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  selectable: [<% fields.selection.selectable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  sortable: [<% fields.selection.sortable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  filterable: [<% fields.selection.filterable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  searchable: [<% fields.selection.searchable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  dateRange: [<% fields.selection.dateRange.forEach(field => { %>'<%= field.name %>',<% }) %>],
+} as const;
+
+/**
+ * <%= entity.names.pascal %> field mutation
+ */
+export const <%= entity.names.camel %>FieldMutation = {
+  creatable: [<% fields.mutation.creatable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  systemCreatable: [<% fields.mutation.systemCreatable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  updatable: [<% fields.mutation.updatable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  editable: [<% fields.mutation.editable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  readonly: [<% fields.mutation.readonly.forEach(field => { %>'<%= field.name %>',<% }) %>],
+  immutable: [<% fields.mutation.immutable.forEach(field => { %>'<%= field.name %>',<% }) %>],
+} as const;
+
+/**
+ * Type guards for <%= entity.names.pascal %>
+ */
+
+/**
+ * Check if a field is a primary key
+ */
+export function is<%= entity.names.pascal %>PrimaryKey(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.groups.primaryKeys.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Check if a field is a foreign key
+ */
+export function is<%= entity.names.pascal %>ForeignKey(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.groups.foreignKeys.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Check if a field is searchable
+ */
+export function is<%= entity.names.pascal %>SearchableField(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.selection.searchable.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Check if a field is sortable
+ */
+export function is<%= entity.names.pascal %>SortableField(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.selection.sortable.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Check if a field is filterable
+ */
+export function is<%= entity.names.pascal %>FilterableField(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.selection.filterable.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Check if a field is creatable
+ */
+export function is<%= entity.names.pascal %>CreatableField(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.mutation.creatable.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Check if a field is updatable
+ */
+export function is<%= entity.names.pascal %>UpdatableField(field: string): field is keyof <%= entity.exports.interfaceName %> {
+  return [<% fields.mutation.updatable.forEach(field => { %>'<%= field.name %>',<% }) %>].includes(field);
+}
+
+/**
+ * Utility functions for <%= entity.names.pascal %>
+ */
+
+/**
+ * Get all <%= entity.names.camel.toLowerCase() %> field names
+ */
+export function get<%= entity.names.pascal %>FieldNames(): (keyof <%= entity.exports.interfaceName %>)[] {
+  return [<% fields.groups.all.forEach(field => { %>'<%= field.name %>',<% }) %>];
+}
+
+/**
+ * Get <%= entity.names.camel.toLowerCase() %> primary key fields
+ */
+export function get<%= entity.names.pascal %>PrimaryKeys(): (keyof <%= entity.exports.interfaceName %>)[] {
+  return [<% fields.groups.primaryKeys.forEach(field => { %>'<%= field.name %>',<% }) %>];
+}
+
+/**
+ * Get <%= entity.names.camel.toLowerCase() %> relation fields
+ */
+export function get<%= entity.names.pascal %>RelationFields(): (keyof <%= entity.exports.interfaceName %>)[] {
+  return [<% fields.groups.relationFields.forEach(field => { %>'<%= field.name %>',<% }) %>];
+}
+
+/**
+ * Get <%= entity.names.camel.toLowerCase() %> creatable fields
+ */
+export function get<%= entity.names.pascal %>CreatableFields(): (keyof <%= entity.exports.interfaceName %>)[] {
+  return [<% fields.mutation.creatable.forEach(field => { %>'<%= field.name %>',<% }) %>];
+}
+
+/**
+ * Get <%= entity.names.camel.toLowerCase() %> updatable fields
+ */
+export function get<%= entity.names.pascal %>UpdatableFields(): (keyof <%= entity.exports.interfaceName %>)[] {
+  return [<% fields.mutation.updatable.forEach(field => { %>'<%= field.name %>',<% }) %>];
+}
+
+/**
+ * Create empty <%= entity.names.camel.toLowerCase() %> entity
+ */
+export function createEmpty<%= entity.names.pascal %>(): Partial<<%= entity.exports.interfaceName %>> {
+  return {
+<% fields.groups.all.forEach(field => { %>
+    <%= field.name %>: undefined,
+<% }) %>
+  };
+}
+
+/**
+ * Create <%= entity.names.camel.toLowerCase() %> entity with default values
+ */
+export function createDefault<%= entity.names.pascal %>(): Partial<<%= entity.exports.interfaceName %>> {
+  return {
+<% fields.groups.all.forEach(field => { %>
+    <%= field.name %>: <%= field.nullable ? 'null' : (field.type === 'string' ? "''" : (field.type === 'number' ? '0' : (field.type === 'boolean' ? 'false' : 'undefined'))) %>,
+<% }) %>
+  };
+}
+
+/**
+ * Export all context types and utilities
+ */
+export type {
+  <%= entity.generated.relationKeyType %>,
+  <%= entity.generated.selectableFieldType %>,
+  <%= entity.generated.sortableFieldType %>,
+  <%= entity.generated.filterableFieldType %>,
+  <%= entity.generated.creatableFieldType %>,
+  <%= entity.generated.updatableFieldType %>,
+  <%= entity.generated.listQueryType %>,
+  <%= entity.generated.itemQueryType %>,
+  <%= entity.generated.createInputType %>,
+  <%= entity.generated.updateInputType %>,
+<% relations.queries.asOneQueries.forEach(query => { %>
+  <%= query.typeName %>,
+<% }) %>
+<% relations.queries.asManyQueries.forEach(query => { %>
+  <%= query.typeName %>,
+<% }) %>
+};
+
+export {
+  <%= entity.relationMaps.entityRelationsMap %>,
+  <%= entity.relationMaps.relationTargetsMap %>,
+  <%= entity.relationMaps.relationFieldsMap %>,
+  <%= entity.names.camel %>Fields,
+  <%= entity.names.camel %>FieldGroups,
+  <%= entity.names.camel %>FieldSelection,
+  <%= entity.names.camel %>FieldMutation,
+};

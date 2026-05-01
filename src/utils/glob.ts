@@ -5,7 +5,7 @@
  * Includes directory operations and file existence checks.
  */
 
-import { fastGlob } from 'fast-glob';
+import fastGlob from 'fast-glob';
 import { access, stat, mkdir, rm } from 'node:fs/promises';
 import { constants } from 'node:fs';
 

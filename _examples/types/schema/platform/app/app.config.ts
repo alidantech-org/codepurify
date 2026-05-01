@@ -2,7 +2,7 @@ import * as T from './app.types';
 import * as B from '../../../shared/base';
 
 // tempura items
-import { DefineKeysArray } from '../../../tempura/fields.defination';
+import { DefineKeysArray } from '../../../tempura/fields.definition';
 import { EntityDBDefinition, EntityMeta } from '../../../tempura/database.defination';
 import { EAppStatus, EAppType } from '../../../enums/platform';
 import { APP_API_KEY_META } from '../app-api-key';

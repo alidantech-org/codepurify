@@ -1,4 +1,4 @@
-export type EntityKey<TEntity> = Extract<keyof TEntity, string>;
+import type { EntityKey } from './database.definition';
 
 /**
  * Defines a comprehensive field array configuration for an entity type.
