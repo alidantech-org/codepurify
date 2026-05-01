@@ -1,10 +1,10 @@
 {
-  "name": "tempura",
+  "name": "tempurify",
   "version": "0.1.0",
   "description": "Convention-locked NestJS backend generator.",
   "type": "module",
   "bin": {
-    "tempura": "./dist/cli/index.js"
+    "tempurify": "./dist/cli/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,6 +30,7 @@
     "execa": "^9.3.0",
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
+    "jiti": "^2.6.1",
     "ora": "^9.4.0",
     "picocolors": "^1.1.1",
     "ts-morph": "^23.0.0",

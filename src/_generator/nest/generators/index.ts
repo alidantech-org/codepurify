@@ -1,6 +1,6 @@
 /**
- * Tempura Nest Generators Module
- * 
+ * Tempurify Nest Generators Module
+ *
  * Barrel export for all generator modules.
  * Provides file generation from entity context to generated file plans.
  */

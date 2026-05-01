@@ -1,6 +1,6 @@
 /**
- * Tempura Nest Template Renderer Module
- * 
+ * Tempurify Nest Template Renderer Module
+ *
  * Barrel export for all template renderer modules.
  * Provides template loading, rendering, and validation functionality.
  */

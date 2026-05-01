@@ -1,17 +1,26 @@
 /**
- * Tempura Configuration Validation Schemas
+ * Tempurify Configuration Validation Schemas
  *
- * Provides Zod schemas for runtime validation of Tempura configuration.
+ * Provides Zod schemas for runtime validation of Tempurify configuration.
  * Ensures user configuration matches expected structure and types.
  */
 
 import { z } from 'zod';
-import type { TempuraConfig, ResolvedTempuraConfig } from './config.types';
+import type { TempurifyConfig, ResolvedTempurifyConfig } from './config.types';
 
 /**
- * Schema for project configuration
+ * Schema for project configuration (user-facing, all optional)
  */
 const projectConfigSchema = z.object({
+  name: z.string().optional(),
+  rootDir: z.string().optional(),
+  sourceDir: z.string().optional(),
+});
+
+/**
+ * Schema for resolved project configuration (all required)
+ */
+const resolvedProjectConfigSchema = z.object({
   name: z.string().optional(),
   rootDir: z.string(),
   sourceDir: z.string(),
@@ -33,7 +42,7 @@ const nestConfigSchema = z.object({
  * Schema for paths configuration
  */
 const pathsConfigSchema = z.object({
-  tempuraDir: z.string(),
+  tempurifyDir: z.string(),
   manifestFile: z.string(),
   cacheDir: z.string(),
   backupsDir: z.string(),
@@ -82,9 +91,9 @@ const gitConfigSchema = z.object({
 });
 
 /**
- * Main Tempura configuration schema
+ * Main Tempurify configuration schema
  */
-export const tempuraConfigSchema = z.object({
+export const tempurifyConfigSchema = z.object({
   project: projectConfigSchema.partial(),
   nest: nestConfigSchema.partial(),
   paths: pathsConfigSchema.optional(),
@@ -93,13 +102,13 @@ export const tempuraConfigSchema = z.object({
   mutable: mutableConfigSchema.optional(),
   formatting: formattingConfigSchema.optional(),
   git: gitConfigSchema.optional(),
-}) satisfies z.ZodType<TempuraConfig>;
+}) satisfies z.ZodType<TempurifyConfig>;
 
 /**
- * Resolved Tempura configuration schema (all properties required)
+ * Resolved Tempurify configuration schema (all properties required)
  */
-export const resolvedTempuraConfigSchema = z.object({
-  project: projectConfigSchema,
+export const resolvedTempurifyConfigSchema = z.object({
+  project: resolvedProjectConfigSchema,
   nest: nestConfigSchema,
   paths: pathsConfigSchema,
   templates: templateConfigSchema,
@@ -107,26 +116,26 @@ export const resolvedTempuraConfigSchema = z.object({
   mutable: mutableConfigSchema,
   formatting: formattingConfigSchema,
   git: gitConfigSchema,
-}) satisfies z.ZodType<ResolvedTempuraConfig>;
+}) satisfies z.ZodType<ResolvedTempurifyConfig>;
 
 /**
- * Validates a Tempura configuration object
+ * Validates a Tempurify configuration object
  *
  * @param config - Configuration to validate
  * @returns Validated configuration
  * @throws ZodError if validation fails
  */
-export function validateTempuraConfig(config: unknown): TempuraConfig {
-  return tempuraConfigSchema.parse(config);
+export function validateTempurifyConfig(config: unknown): TempurifyConfig {
+  return tempurifyConfigSchema.parse(config);
 }
 
 /**
- * Validates a resolved Tempura configuration object
+ * Validates a resolved Tempurify configuration object
  *
  * @param config - Resolved configuration to validate
  * @returns Validated resolved configuration
  * @throws ZodError if validation fails
  */
-export function validateResolvedTempuraConfig(config: unknown): ResolvedTempuraConfig {
-  return resolvedTempuraConfigSchema.parse(config);
+export function validateResolvedTempurifyConfig(config: unknown): ResolvedTempurifyConfig {
+  return resolvedTempurifyConfigSchema.parse(config);
 }

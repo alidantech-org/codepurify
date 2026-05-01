@@ -1,5 +1,5 @@
 /**
- * Tempura Generator Orchestrator
+ * Tempurify Generator Orchestrator
  *
  * Main orchestrator that connects all generation components:
  * - Load config
@@ -14,13 +14,13 @@
 
 import { join, resolve } from 'node:path';
 import { ensureDirectory } from '../utils';
-import { createTempuraError, TempuraErrorCode } from './errors';
+import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';
 import { BackupManager } from './backup-manager';
 import { ManifestManager } from './manifest-manager';
 import { FileWriter } from './file-writer';
 import { RollbackManager } from './rollback-manager';
-import { loadTempuraConfig } from '../config/config-loader';
+import { loadTempurifyConfig } from '../config/config-loader';
 import { discoverEntityFolders } from '../_generator/nest/parser/entity-folder-parser';
 import { parseEntityConfigFile } from '../_generator/nest/parser/config-parser';
 import { parseEntityTypesFile } from '../_generator/nest/parser/entity-parser';
@@ -28,7 +28,7 @@ import { buildNestEntityContext } from '../_generator/nest/context/nest-context-
 import { generateContextFile } from '../_generator/nest/generators/context.generator';
 import { generateIndexFile } from '../_generator/nest/generators/index.generator';
 import type { GeneratedFilePlan } from '../_generator/nest/generators/context.generator';
-import type { TempuraConfig } from '../config/config.types';
+import type { TempurifyConfig } from '../config/config.types';
 
 /**
  * Generator options
@@ -36,7 +36,7 @@ import type { TempuraConfig } from '../config/config.types';
 export interface GeneratorOptions {
   /** Root directory */
   rootDir: string;
-  /** Tempura config file path */
+  /** Tempurify config file path */
   configFile?: string;
   /** Whether to generate only context files (MVP) */
   contextOnly?: boolean;
@@ -65,32 +65,32 @@ export interface GenerationResult {
 /**
  * Main generator orchestrator
  */
-export class TempuraGenerator {
+export class TempurifyGenerator {
   private rootDir: string;
-  private tempuraDir: string;
+  private tempurifyDir: string;
   private backupsDir: string;
   private manifestFile: string;
 
   constructor(private options: GeneratorOptions) {
     this.rootDir = resolve(options.rootDir);
-    this.tempuraDir = join(this.rootDir, '.tempura');
-    this.backupsDir = join(this.tempuraDir, 'backups');
-    this.manifestFile = join(this.tempuraDir, 'manifest.json');
+    this.tempurifyDir = join(this.rootDir, '.tempurify');
+    this.backupsDir = join(this.tempurifyDir, 'backups');
+    this.manifestFile = join(this.tempurifyDir, 'manifest.json');
   }
 
   /**
    * Main generation entry point
    *
    * @returns Generation result
-   * @throws TempuraError if generation fails
+   * @throws TempurifyError if generation fails
    */
   async generate(): Promise<GenerationResult> {
     const startTime = Date.now();
 
     try {
-      logger.info('Starting Tempura generation...');
+      logger.info('Starting Tempurify generation...');
 
-      // 1. Load Tempura config
+      // 1. Load Tempurify config
       const config = await this.loadConfig();
 
       // 2. Discover entity folders
@@ -143,24 +143,24 @@ export class TempuraGenerator {
       };
     } catch (error) {
       logger.error('Generation failed', error);
-      throw createTempuraError(TempuraErrorCode.GENERATION_FAILED, 'Generation failed', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.GENERATION_FAILED, 'Generation failed', { cause: error });
     }
   }
 
   /**
-   * Loads Tempura configuration
+   * Loads Tempurify configuration
    *
-   * @returns Tempura config
-   * @throws TempuraError if config loading fails
+   * @returns Tempurify config
+   * @throws TempurifyError if config loading fails
    */
-  private async loadConfig(): Promise<TempuraConfig> {
+  private async loadConfig(): Promise<TempurifyConfig> {
     try {
-      const configPath = this.options.configFile || join(this.rootDir, 'tempura.config.ts');
-      const config = await loadTempuraConfig(configPath);
-      logger.debug('Loaded Tempura config');
+      const configPath = this.options.configFile || join(this.rootDir, 'tempurify.config.ts');
+      const config = await loadTempurifyConfig(configPath);
+      logger.debug('Loaded Tempurify config');
       return config;
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.CONFIG_NOT_FOUND, 'Failed to load Tempura config', {
+      throw createTempurifyError(TempurifyErrorCode.CONFIG_NOT_FOUND, 'Failed to load Tempurify config', {
         configFile: this.options.configFile,
         cause: error,
       });
@@ -171,7 +171,7 @@ export class TempuraGenerator {
    * Discovers entity folders
    *
    * @returns Array of discovered entity folders
-   * @throws TempuraError if discovery fails
+   * @throws TempurifyError if discovery fails
    */
   private async discoverEntityFolders() {
     try {
@@ -179,7 +179,7 @@ export class TempuraGenerator {
       logger.debug(`Discovered ${entityFolders.length} entity folders`);
       return entityFolders;
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.GENERATION_FAILED, 'Failed to discover entity folders', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.GENERATION_FAILED, 'Failed to discover entity folders', { cause: error });
     }
   }
 
@@ -188,7 +188,7 @@ export class TempuraGenerator {
    *
    * @param entityFolders - Array of entity folders
    * @returns Array of parsed entities
-   * @throws TempuraError if parsing fails
+   * @throws TempurifyError if parsing fails
    */
   private async parseEntities(entityFolders: any[]) {
     const parsedEntities = [];
@@ -222,7 +222,7 @@ export class TempuraGenerator {
    *
    * @param parsedEntities - Array of parsed entities
    * @returns Array of entity contexts
-   * @throws TempuraError if context building fails
+   * @throws TempurifyError if context building fails
    */
   private async buildContexts(parsedEntities: any[]) {
     const entityContexts = [];
@@ -246,7 +246,7 @@ export class TempuraGenerator {
    *
    * @param entityContexts - Array of entity contexts
    * @returns Array of file plans
-   * @throws TempuraError if plan generation fails
+   * @throws TempurifyError if plan generation fails
    */
   private async generateFilePlans(entityContexts: any[]): Promise<GeneratedFilePlan[]> {
     const filePlans: GeneratedFilePlan[] = [];
@@ -285,7 +285,7 @@ export class TempuraGenerator {
    *
    * @param filePlans - Array of file plans
    * @returns Backup session ID
-   * @throws TempuraError if backup fails
+   * @throws TempurifyError if backup fails
    */
   private async createBackupSession(filePlans: GeneratedFilePlan[]): Promise<string> {
     try {
@@ -304,7 +304,7 @@ export class TempuraGenerator {
       logger.info(`Created backup session: ${session.id}`);
       return session.id;
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Failed to create backup session', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Failed to create backup session', { cause: error });
     }
   }
 
@@ -314,12 +314,12 @@ export class TempuraGenerator {
    * @param filePlans - Array of file plans
    * @param backupSessionId - Backup session ID
    * @returns Write results
-   * @throws TempuraError if writing fails
+   * @throws TempurifyError if writing fails
    */
   private async writeFiles(filePlans: GeneratedFilePlan[], backupSessionId?: string) {
     try {
-      // Ensure tempura directory exists
-      await ensureDirectory(this.tempuraDir);
+      // Ensure tempurify directory exists
+      await ensureDirectory(this.tempurifyDir);
 
       const manifestManager = new ManifestManager(this.manifestFile);
       const backupManager = new BackupManager(this.backupsDir);
@@ -352,7 +352,7 @@ export class TempuraGenerator {
         skipped: results.filter((r) => !r.written).length,
       };
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.FILE_WRITE_FAILED, 'Failed to write files', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.FILE_WRITE_FAILED, 'Failed to write files', { cause: error });
     }
   }
 
@@ -360,7 +360,7 @@ export class TempuraGenerator {
    * Updates manifest with generated files
    *
    * @param filePlans - Array of file plans
-   * @throws TempuraError if manifest update fails
+   * @throws TempurifyError if manifest update fails
    */
   private async updateManifest(filePlans: GeneratedFilePlan[]) {
     try {
@@ -386,14 +386,14 @@ export class TempuraGenerator {
 
       logger.debug('Updated manifest');
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.MANIFEST_INVALID, 'Failed to update manifest', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.MANIFEST_INVALID, 'Failed to update manifest', { cause: error });
     }
   }
 
   /**
    * Rolls back the last generation
    *
-   * @throws TempuraError if rollback fails
+   * @throws TempurifyError if rollback fails
    */
   async rollback(): Promise<void> {
     try {
@@ -406,7 +406,7 @@ export class TempuraGenerator {
       await rollbackManager.rollbackLatest();
       logger.success('Rollback completed');
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.ROLLBACK_FAILED, 'Failed to rollback', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'Failed to rollback', { cause: error });
     }
   }
 }
@@ -418,7 +418,7 @@ export class TempuraGenerator {
  * @returns Generation result
  */
 export async function generate(options: GeneratorOptions): Promise<GenerationResult> {
-  const generator = new TempuraGenerator(options);
+  const generator = new TempurifyGenerator(options);
   return generator.generate();
 }
 
@@ -426,9 +426,9 @@ export async function generate(options: GeneratorOptions): Promise<GenerationRes
  * Convenience function to rollback last generation
  *
  * @param rootDir - Root directory
- * @throws TempuraError if rollback fails
+ * @throws TempurifyError if rollback fails
  */
 export async function rollback(rootDir: string): Promise<void> {
-  const generator = new TempuraGenerator({ rootDir });
+  const generator = new TempurifyGenerator({ rootDir });
   return generator.rollback();
 }

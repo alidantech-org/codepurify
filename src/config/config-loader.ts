@@ -1,23 +1,22 @@
 /**
- * Tempura Configuration Loader
+ * Tempurify Configuration Loader
  *
- * Handles loading, validating, and merging Tempura configuration files.
+ * Handles loading, validating, and merging Tempurify configuration files.
  * Supports multiple config file formats and resolves paths to absolute paths.
  */
 
-import { readFile, access, stat } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import { access, stat } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { createJiti } from 'jiti';
 
-import type { TempuraConfig, ResolvedTempuraConfig } from './config.types';
-import { DEFAULT_TEMPURA_CONFIG, createDefaultTempuraConfig } from './config-defaults';
-import { validateTempuraConfig, validateResolvedTempuraConfig } from './config-schema';
+import type { TempurifyConfig, ResolvedTempurifyConfig } from './config.types';
+import { DEFAULT_TEMPURA_CONFIG, createDefaultTempurifyConfig } from './config-defaults';
+import { validateTempurifyConfig, validateResolvedTempurifyConfig } from './config-schema';
 
 /**
  * Supported configuration file names in order of preference
  */
-const CONFIG_FILE_NAMES = ['tempura.config.js', 'tempura.config.mjs', 'tempura.config.cjs', 'tempura.config.ts'] as const;
+const CONFIG_FILE_NAMES = ['tempurify.config.ts', 'tempurify.config.js', 'tempurify.config.mjs', 'tempurify.config.cjs'] as const;
 
 /**
  * Error thrown when configuration is invalid or missing
@@ -33,12 +32,12 @@ export class ConfigError extends Error {
 }
 
 /**
- * Finds a Tempura configuration file in the given directory
+ * Finds a Tempurify configuration file in the given directory
  *
  * @param rootDir - Directory to search in (defaults to process.cwd())
  * @returns Path to config file or null if not found
  */
-export async function findTempuraConfigFile(rootDir: string = process.cwd()): Promise<string | null> {
+export async function findTempurifyConfigFile(rootDir: string = process.cwd()): Promise<string | null> {
   try {
     // Check if directory exists
     await access(rootDir);
@@ -69,33 +68,21 @@ export async function findTempuraConfigFile(rootDir: string = process.cwd()): Pr
 }
 
 /**
- * Loads a configuration file dynamically
+ * Loads a configuration file dynamically using jiti
  *
  * @param configPath - Path to the configuration file
  * @returns Loaded configuration object
  */
-async function loadConfigFile(configPath: string): Promise<TempuraConfig> {
+async function loadConfigFile(configPath: string): Promise<TempurifyConfig> {
   try {
-    // Determine file extension and loading strategy
-    const ext = configPath.split('.').pop();
+    // Create jiti instance for dynamic loading
+    const jiti = createJiti(import.meta.url);
 
-    if (ext === 'ts') {
-      // For TypeScript files, we need to use a different approach
-      // For now, we'll throw an error as TypeScript config loading requires additional setup
-      throw new ConfigError('TypeScript config files are not yet supported. Use .js, .mjs, or .cjs files.');
-    }
-
-    // Create a require function that can handle ES modules
-    const require = createRequire(import.meta.url);
-
-    // Clear require cache to ensure fresh loading
-    delete require.cache[require.resolve(configPath)];
-
-    // Load the config file
-    const configModule = require(configPath);
+    // Load the config file dynamically
+    const imported = await jiti.import(configPath);
 
     // Handle both default export and module.exports
-    const config = configModule.default || configModule;
+    const config = (imported as any)?.default ?? imported;
 
     if (typeof config !== 'object' || config === null) {
       throw new ConfigError('Configuration must export an object');
@@ -117,8 +104,8 @@ async function loadConfigFile(configPath: string): Promise<TempuraConfig> {
  * @param userConfig - User configuration
  * @returns Merged configuration
  */
-function mergeConfig(defaults: TempuraConfig, userConfig: TempuraConfig): TempuraConfig {
-  const merged: TempuraConfig = { ...defaults };
+function mergeConfig(defaults: TempurifyConfig, userConfig: TempurifyConfig): TempurifyConfig {
+  const merged: TempurifyConfig = { ...defaults };
 
   // Helper function to merge objects recursively
   function merge(target: Record<string, any>, source: Record<string, any>): Record<string, any> {
@@ -180,12 +167,12 @@ function mergeConfig(defaults: TempuraConfig, userConfig: TempuraConfig): Tempur
  * @param rootDir - Root directory to resolve paths from
  * @returns Configuration with absolute paths
  */
-function resolvePaths(config: TempuraConfig, rootDir: string): ResolvedTempuraConfig {
+function resolvePaths(config: TempurifyConfig, rootDir: string): ResolvedTempurifyConfig {
   const resolved = config as any;
 
-  // Resolve project paths
+  // Set rootDir from process.cwd() (internal only, never from user config)
   if (resolved.project) {
-    resolved.project.rootDir = resolve(rootDir, resolved.project.rootDir);
+    resolved.project.rootDir = resolve(rootDir);
     if (resolved.project.sourceDir) {
       resolved.project.sourceDir = resolve(rootDir, resolved.project.sourceDir);
     }
@@ -198,10 +185,10 @@ function resolvePaths(config: TempuraConfig, rootDir: string): ResolvedTempuraCo
     }
   }
 
-  // Resolve Tempura paths
+  // Resolve Tempurify paths
   if (resolved.paths) {
-    if (resolved.paths.tempuraDir) {
-      resolved.paths.tempuraDir = resolve(rootDir, resolved.paths.tempuraDir);
+    if (resolved.paths.tempurifyDir) {
+      resolved.paths.tempurifyDir = resolve(rootDir, resolved.paths.tempurifyDir);
     }
     if (resolved.paths.manifestFile) {
       resolved.paths.manifestFile = resolve(rootDir, resolved.paths.manifestFile);
@@ -228,29 +215,29 @@ function resolvePaths(config: TempuraConfig, rootDir: string): ResolvedTempuraCo
 }
 
 /**
- * Loads and validates Tempura configuration
+ * Loads and validates Tempurify configuration
  *
  * @param rootDir - Root directory to search for config (defaults to process.cwd())
  * @returns Resolved and validated configuration
  * @throws ConfigError if configuration is invalid or missing
  */
-export async function loadTempuraConfig(rootDir: string = process.cwd()): Promise<ResolvedTempuraConfig> {
+export async function loadTempurifyConfig(rootDir: string = process.cwd()): Promise<ResolvedTempurifyConfig> {
   try {
     // Find configuration file
-    const configPath = await findTempuraConfigFile(rootDir);
+    const configPath = await findTempurifyConfigFile(rootDir);
 
     if (!configPath) {
-      throw new ConfigError(`No Tempura configuration file found in: ${rootDir}\n` + `Supported files: ${CONFIG_FILE_NAMES.join(', ')}`);
+      throw new ConfigError(`No Tempurify configuration file found in: ${rootDir}\n` + `Supported files: ${CONFIG_FILE_NAMES.join(', ')}`);
     }
 
     // Load user configuration
     const userConfig = await loadConfigFile(configPath);
 
     // Validate user configuration
-    const validatedUserConfig = validateTempuraConfig(userConfig);
+    const validatedUserConfig = validateTempurifyConfig(userConfig);
 
     // Create default configuration
-    const defaultConfig = createDefaultTempuraConfig(rootDir);
+    const defaultConfig = createDefaultTempurifyConfig(rootDir);
 
     // Merge configurations
     const mergedConfig = mergeConfig(defaultConfig, validatedUserConfig);
@@ -259,11 +246,11 @@ export async function loadTempuraConfig(rootDir: string = process.cwd()): Promis
     const resolvedConfig = resolvePaths(mergedConfig, rootDir);
 
     // Validate final resolved configuration
-    return validateResolvedTempuraConfig(resolvedConfig);
+    return validateResolvedTempurifyConfig(resolvedConfig);
   } catch (error) {
     if (error instanceof ConfigError) {
       throw error;
     }
-    throw new ConfigError('Failed to load Tempura configuration', error as Error);
+    throw new ConfigError('Failed to load Tempurify configuration', error as Error);
   }
 }

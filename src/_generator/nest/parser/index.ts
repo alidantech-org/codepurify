@@ -1,6 +1,6 @@
 /**
- * Tempura Nest Entity Parser Module
- * 
+ * Tempurify Nest Entity Parser Module
+ *
  * Barrel export for all parser modules.
  * Provides discovery and parsing of user-owned entity definitions.
  */

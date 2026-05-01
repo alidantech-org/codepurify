@@ -1,6 +1,6 @@
 /**
- * Tempura Relation Definition Types
- * 
+ * Tempurify Relation Definition Types
+ *
  * Defines the structure for entity relations and query types.
  * Provides types for relation configurations and generated query contracts.
  */

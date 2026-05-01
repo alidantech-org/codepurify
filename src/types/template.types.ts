@@ -1,5 +1,5 @@
 /**
- * Tempura Template Types
+ * Tempurify Template Types
  *
  * Types for template registry, rendering, and variable definitions.
  * Provides contracts for the template system.

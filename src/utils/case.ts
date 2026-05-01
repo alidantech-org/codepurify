@@ -1,5 +1,5 @@
 /**
- * Tempura Case Utilities
+ * Tempurify Case Utilities
  *
  * Provides naming case conversion helpers for code generation.
  * Handles various input formats and converts to different case styles.

@@ -1,11 +1,11 @@
 /**
- * Tempura Context Builder
+ * Tempurify Context Builder
  *
  * Orchestrates the generation of entity contexts using the new 3-layer architecture.
  * Manages parsing, generation, and validation of entity contexts.
  */
 
-import { createTempuraError, TempuraErrorCode } from './errors';
+import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';
 import type { ParsedEntityDefinition } from '../types/entity.definition';
 import type { ContextGenerationOptions, ContextGenerationResult } from '../types/context.definition';
@@ -42,7 +42,7 @@ export class ContextBuilder {
    * Builds contexts for all entities in the project
    *
    * @returns Context builder result
-   * @throws TempuraError if building fails
+   * @throws TempurifyError if building fails
    */
   async buildContexts(): Promise<ContextBuilderResult> {
     const startTime = Date.now();
@@ -91,7 +91,7 @@ export class ContextBuilder {
         processingTimeMs: processingTime,
       };
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.GENERATION_FAILED, 'Failed to build contexts', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.GENERATION_FAILED, 'Failed to build contexts', { cause: error });
     }
   }
 
@@ -100,7 +100,7 @@ export class ContextBuilder {
    *
    * @param entityName - Entity name
    * @returns Generation result
-   * @throws TempuraError if building fails
+   * @throws TempurifyError if building fails
    */
   async buildContextForEntity(entityName: string): Promise<ContextGenerationResult> {
     try {
@@ -115,7 +115,7 @@ export class ContextBuilder {
       logger.info(`Context built for entity: ${entityName}`);
       return result;
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.GENERATION_FAILED, `Failed to build context for entity: ${entityName}`, {
+      throw createTempurifyError(TempurifyErrorCode.GENERATION_FAILED, `Failed to build context for entity: ${entityName}`, {
         entityName,
         cause: error,
       });
@@ -126,7 +126,7 @@ export class ContextBuilder {
    * Validates existing contexts for all entities
    *
    * @returns Validation result
-   * @throws TempuraError if validation fails
+   * @throws TempurifyError if validation fails
    */
   async validateContexts(): Promise<{
     valid: number;
@@ -160,7 +160,7 @@ export class ContextBuilder {
 
       return { valid, invalid, errors };
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.VALIDATION_FAILED, 'Failed to validate contexts', { cause: error });
+      throw createTempurifyError(TempurifyErrorCode.VALIDATION_FAILED, 'Failed to validate contexts', { cause: error });
     }
   }
 
@@ -199,7 +199,7 @@ export class ContextBuilder {
     const entity = parseResult.entities.find((e: ParsedEntityDefinition) => e.entityName === entityName);
 
     if (!entity) {
-      throw createTempuraError(TempuraErrorCode.FILE_NOT_FOUND, `Entity folder not found: ${entityName}`);
+      throw createTempurifyError(TempurifyErrorCode.FILE_NOT_FOUND, `Entity folder not found: ${entityName}`);
     }
 
     return entity;

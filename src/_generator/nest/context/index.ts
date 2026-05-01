@@ -1,6 +1,6 @@
 /**
- * Tempura Nest Context Builder Module
- * 
+ * Tempurify Nest Context Builder Module
+ *
  * Barrel export for all context builder modules.
  * Provides conversion from parsed entity data to template-ready context.
  */

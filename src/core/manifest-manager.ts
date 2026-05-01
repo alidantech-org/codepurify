@@ -1,19 +1,19 @@
 /**
- * Tempura Manifest Manager
+ * Tempurify Manifest Manager
  *
- * Manages the .tempura/manifest.json file that tracks all generated files.
+ * Manages the .tempurify/manifest.json file that tracks all generated files.
  * Provides CRUD operations for manifest entries with validation.
  */
 
 import { z } from 'zod';
 import { readJsonFile, writeJsonFile } from '../utils/json';
-import { createTempuraError, TempuraErrorCode } from './errors';
+import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';
 
 /**
  * Individual manifest entry for a generated file
  */
-export interface TempuraManifestEntry {
+export interface TempurifyManifestEntry {
   /** Relative file path (POSIX format) */
   path: string;
   /** Absolute file path */
@@ -33,15 +33,15 @@ export interface TempuraManifestEntry {
 /**
  * Complete manifest structure
  */
-export interface TempuraManifest {
+export interface TempurifyManifest {
   /** Manifest version */
   version: 1;
   /** Generator name */
-  generator: 'tempura';
+  generator: 'tempurify';
   /** When generation occurred */
   generatedAt: string | null;
   /** All manifest entries */
-  entries: TempuraManifestEntry[];
+  entries: TempurifyManifestEntry[];
 }
 
 /**
@@ -62,13 +62,13 @@ const manifestEntrySchema = z.object({
  */
 const manifestSchema = z.object({
   version: z.literal(1),
-  generator: z.literal('tempura'),
+  generator: z.literal('tempurify'),
   generatedAt: z.string().nullable(),
   entries: z.array(manifestEntrySchema),
 });
 
 /**
- * Manages Tempura manifest operations
+ * Manages Tempurify manifest operations
  */
 export class ManifestManager {
   constructor(private manifestFile: string) {}
@@ -77,11 +77,11 @@ export class ManifestManager {
    * Loads the manifest from disk
    *
    * @returns Loaded manifest or empty manifest if file doesn't exist
-   * @throws TempuraError if manifest is invalid
+   * @throws TempurifyError if manifest is invalid
    */
-  async load(): Promise<TempuraManifest> {
+  async load(): Promise<TempurifyManifest> {
     try {
-      const manifest = await readJsonFile<TempuraManifest>(this.manifestFile);
+      const manifest = await readJsonFile<TempurifyManifest>(this.manifestFile);
 
       if (!manifest) {
         logger.debug('Manifest file not found, creating empty manifest');
@@ -94,13 +94,13 @@ export class ManifestManager {
       return validated;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw createTempuraError(TempuraErrorCode.MANIFEST_INVALID, 'Manifest file has invalid structure', {
+        throw createTempurifyError(TempurifyErrorCode.MANIFEST_INVALID, 'Manifest file has invalid structure', {
           errors: error.errors,
           file: this.manifestFile,
         });
       }
 
-      throw createTempuraError(TempuraErrorCode.MANIFEST_INVALID, 'Failed to load manifest file', {
+      throw createTempurifyError(TempurifyErrorCode.MANIFEST_INVALID, 'Failed to load manifest file', {
         file: this.manifestFile,
         cause: error,
       });
@@ -111,9 +111,9 @@ export class ManifestManager {
    * Saves the manifest to disk
    *
    * @param manifest - Manifest to save
-   * @throws TempuraError if save fails
+   * @throws TempurifyError if save fails
    */
-  async save(manifest: TempuraManifest): Promise<void> {
+  async save(manifest: TempurifyManifest): Promise<void> {
     try {
       // Validate before saving
       const validated = manifestSchema.parse(manifest);
@@ -121,12 +121,12 @@ export class ManifestManager {
       logger.debug(`Saved manifest with ${validated.entries.length} entries`);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw createTempuraError(TempuraErrorCode.MANIFEST_INVALID, 'Cannot save manifest with invalid structure', {
+        throw createTempurifyError(TempurifyErrorCode.MANIFEST_INVALID, 'Cannot save manifest with invalid structure', {
           errors: error.errors,
         });
       }
 
-      throw createTempuraError(TempuraErrorCode.MANIFEST_INVALID, 'Failed to save manifest file', {
+      throw createTempurifyError(TempurifyErrorCode.MANIFEST_INVALID, 'Failed to save manifest file', {
         file: this.manifestFile,
         cause: error,
       });
@@ -138,10 +138,10 @@ export class ManifestManager {
    *
    * @returns Empty manifest structure
    */
-  createEmpty(): TempuraManifest {
+  createEmpty(): TempurifyManifest {
     return {
       version: 1,
-      generator: 'tempura',
+      generator: 'tempurify',
       generatedAt: null,
       entries: [],
     };
@@ -153,7 +153,7 @@ export class ManifestManager {
    * @param filePath - File path to look up
    * @returns Manifest entry or null if not found
    */
-  async getEntry(filePath: string): Promise<TempuraManifestEntry | null> {
+  async getEntry(filePath: string): Promise<TempurifyManifestEntry | null> {
     const manifest = await this.load();
     const entry = manifest.entries.find((entry) => entry.path === filePath);
     return entry || null;
@@ -163,9 +163,9 @@ export class ManifestManager {
    * Inserts or updates a manifest entry
    *
    * @param entry - Entry to upsert
-   * @throws TempuraError if operation fails
+   * @throws TempurifyError if operation fails
    */
-  async upsertEntry(entry: TempuraManifestEntry): Promise<void> {
+  async upsertEntry(entry: TempurifyManifestEntry): Promise<void> {
     const manifest = await this.load();
 
     // Remove existing entry if present
@@ -185,7 +185,7 @@ export class ManifestManager {
    * Removes a manifest entry by file path
    *
    * @param filePath - File path to remove
-   * @throws TempuraError if operation fails
+   * @throws TempurifyError if operation fails
    */
   async removeEntry(filePath: string): Promise<void> {
     const manifest = await this.load();
@@ -205,7 +205,7 @@ export class ManifestManager {
    *
    * @returns Array of all manifest entries
    */
-  async listEntries(): Promise<TempuraManifestEntry[]> {
+  async listEntries(): Promise<TempurifyManifestEntry[]> {
     const manifest = await this.load();
     return manifest.entries;
   }

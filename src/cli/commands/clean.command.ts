@@ -1,7 +1,7 @@
 /**
- * Tempura Clean Command
+ * Tempurify Clean Command
  *
- * Clears the .tempura/cache directory.
+ * Clears the .tempurify/cache directory.
  */
 
 import { Command } from 'commander';
@@ -16,14 +16,14 @@ import { fileExists } from '../../utils';
  */
 export function createCleanCommand(): Command {
   const command = new Command('clean')
-    .description('Clear the .tempura/cache directory')
+    .description('Clear the .tempurify/cache directory')
     .option('-f, --force', 'Force clean without confirmation')
     .action(async (options) => {
       try {
-        intro('🧹 Tempura Clean');
+        intro('🧹 Tempurify Clean');
 
         const rootDir = process.cwd();
-        const cacheDir = join(rootDir, '.tempura', 'cache');
+        const cacheDir = join(rootDir, '.tempurify', 'cache');
 
         // Check if cache exists
         if (!(await fileExists(cacheDir))) {

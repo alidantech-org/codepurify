@@ -1,41 +1,41 @@
 /**
- * Tempura Configuration Module
- * 
- * Central exports for all Tempura configuration functionality.
+ * Tempurify Configuration Module
+ *
+ * Central exports for all Tempurify configuration functionality.
  * This module provides types, validation, defaults, and loading utilities.
  */
 
 // Type definitions
 export type {
-  TempuraConfig,
-  ResolvedTempuraConfig,
-  TempuraProjectConfig,
-  TempuraNestConfig,
-  TempuraPathsConfig,
-  TempuraTemplateConfig,
-  TempuraImmutableConfig,
-  TempuraMutableConfig,
-  TempuraFormattingConfig,
-  TempuraGitConfig,
+  TempurifyConfig,
+  ResolvedTempurifyConfig,
+  TempurifyProjectConfig,
+  TempurifyNestConfig,
+  TempurifyPathsConfig,
+  TempurifyTemplateConfig,
+  TempurifyImmutableConfig,
+  TempurifyMutableConfig,
+  TempurifyFormattingConfig,
+  TempurifyGitConfig,
 } from './config.types';
 
 // Configuration helper
-export { defineTempuraConfig } from './define-config';
+export { defineTempurifyConfig } from './define-config';
 
 // Default configuration
-export { DEFAULT_TEMPURA_CONFIG, createDefaultTempuraConfig } from './config-defaults';
+export { DEFAULT_TEMPURA_CONFIG, createDefaultTempurifyConfig } from './config-defaults';
 
 // Validation schemas
 export {
-  tempuraConfigSchema,
-  resolvedTempuraConfigSchema,
-  validateTempuraConfig,
-  validateResolvedTempuraConfig,
+  tempurifyConfigSchema,
+  resolvedTempurifyConfigSchema,
+  validateTempurifyConfig,
+  validateResolvedTempurifyConfig,
 } from './config-schema';
 
 // Configuration loading
-export {
-  findTempuraConfigFile,
-  loadTempuraConfig,
-  ConfigError,
-} from './config-loader';
+export { findTempurifyConfigFile, loadTempurifyConfig, ConfigError } from './config-loader';
+
+// Configuration template generation
+export * from './default-config-template';
+export * from './config-template-generator';

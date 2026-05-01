@@ -1,6 +1,6 @@
 /**
- * Tempura Entity Definition Types
- * 
+ * Tempurify Entity Definition Types
+ *
  * Defines the structure for entity definitions and parsing results.
  * Provides types for parsed entity information used by generators.
  */

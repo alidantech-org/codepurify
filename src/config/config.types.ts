@@ -1,27 +1,27 @@
 /**
- * Tempura Configuration Types
+ * Tempurify Configuration Types
  *
- * Defines the structure for Tempura's configuration system.
+ * Defines the structure for Tempurify's configuration system.
  * Supports project settings, NestJS paths, immutable/mutable rules,
  * formatting commands, git rules, and path management.
  */
 
 /**
- * Project-level configuration
+ * Project-level configuration (user-facing, all optional)
  */
-export interface TempuraProjectConfig {
+export interface TempurifyProjectConfig {
   /** Project name (optional) */
   name?: string;
-  /** Root directory of the project */
-  rootDir: string;
+  /** Root directory of the project (auto-resolved from process.cwd()) */
+  rootDir?: string;
   /** Source directory containing source code */
-  sourceDir: string;
+  sourceDir?: string;
 }
 
 /**
  * NestJS-specific configuration
  */
-export interface TempuraNestConfig {
+export interface TempurifyNestConfig {
   /** Directory containing NestJS modules */
   modulesDir: string;
   /** Pattern to find entity folders */
@@ -37,11 +37,11 @@ export interface TempuraNestConfig {
 }
 
 /**
- * Path configuration for various Tempura resources
+ * Path configuration for various Tempurify resources
  */
-export interface TempuraPathsConfig {
-  /** Tempura working directory */
-  tempuraDir: string;
+export interface TempurifyPathsConfig {
+  /** Tempurify working directory */
+  tempurifyDir: string;
   /** Manifest file path */
   manifestFile: string;
   /** Cache directory path */
@@ -53,7 +53,7 @@ export interface TempuraPathsConfig {
 /**
  * Template configuration
  */
-export interface TempuraTemplateConfig {
+export interface TempurifyTemplateConfig {
   /** Directory containing built-in templates */
   builtinDir: string;
   /** Directory containing user templates */
@@ -65,7 +65,7 @@ export interface TempuraTemplateConfig {
 /**
  * Immutable file configuration
  */
-export interface TempuraImmutableConfig {
+export interface TempurifyImmutableConfig {
   /** Whether immutable validation is enabled */
   enabled: boolean;
   /** Glob patterns for immutable files */
@@ -75,7 +75,7 @@ export interface TempuraImmutableConfig {
 /**
  * Mutable file configuration
  */
-export interface TempuraMutableConfig {
+export interface TempurifyMutableConfig {
   /** Glob patterns for mutable files */
   include: string[];
 }
@@ -83,7 +83,7 @@ export interface TempuraMutableConfig {
 /**
  * Formatting configuration
  */
-export interface TempuraFormattingConfig {
+export interface TempurifyFormattingConfig {
   /** Whether to run prettier */
   prettier: boolean;
   /** Whether to run eslint */
@@ -95,7 +95,7 @@ export interface TempuraFormattingConfig {
 /**
  * Git integration configuration
  */
-export interface TempuraGitConfig {
+export interface TempurifyGitConfig {
   /** Whether git integration is enabled */
   enabled: boolean;
   /** Required branch for generation operations */
@@ -105,45 +105,45 @@ export interface TempuraGitConfig {
 }
 
 /**
- * Main Tempura configuration interface
+ * Main Tempurify configuration interface
  */
-export interface TempuraConfig {
+export interface TempurifyConfig {
   /** Project configuration */
-  project: Partial<TempuraProjectConfig>;
+  project: Partial<TempurifyProjectConfig>;
   /** NestJS configuration */
-  nest: Partial<TempuraNestConfig>;
+  nest: Partial<TempurifyNestConfig>;
   /** Path configuration */
-  paths?: Partial<TempuraPathsConfig>;
+  paths?: Partial<TempurifyPathsConfig>;
   /** Template configuration */
-  templates?: Partial<TempuraTemplateConfig>;
+  templates?: Partial<TempurifyTemplateConfig>;
   /** Immutable configuration */
-  immutable?: Partial<TempuraImmutableConfig>;
+  immutable?: Partial<TempurifyImmutableConfig>;
   /** Mutable configuration */
-  mutable?: Partial<TempuraMutableConfig>;
+  mutable?: Partial<TempurifyMutableConfig>;
   /** Formatting configuration */
-  formatting?: Partial<TempuraFormattingConfig>;
+  formatting?: Partial<TempurifyFormattingConfig>;
   /** Git configuration */
-  git?: Partial<TempuraGitConfig>;
+  git?: Partial<TempurifyGitConfig>;
 }
 
 /**
- * Resolved Tempura configuration with all paths absolute
+ * Resolved Tempurify configuration with all paths absolute
  */
-export interface ResolvedTempuraConfig {
+export interface ResolvedTempurifyConfig {
   /** Project configuration */
-  project: TempuraProjectConfig;
+  project: TempurifyProjectConfig;
   /** NestJS configuration */
-  nest: TempuraNestConfig;
+  nest: TempurifyNestConfig;
   /** Path configuration */
-  paths: TempuraPathsConfig;
+  paths: TempurifyPathsConfig;
   /** Template configuration */
-  templates: TempuraTemplateConfig;
+  templates: TempurifyTemplateConfig;
   /** Immutable configuration */
-  immutable: TempuraImmutableConfig;
+  immutable: TempurifyImmutableConfig;
   /** Mutable configuration */
-  mutable: TempuraMutableConfig;
+  mutable: TempurifyMutableConfig;
   /** Formatting configuration */
-  formatting: TempuraFormattingConfig;
+  formatting: TempurifyFormattingConfig;
   /** Git configuration */
-  git: TempuraGitConfig;
+  git: TempurifyGitConfig;
 }

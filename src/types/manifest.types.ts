@@ -1,18 +1,18 @@
 /**
- * Tempura Manifest Types
+ * Tempurify Manifest Types
  *
- * Types for Tempura manifest tracking and backup/session management.
+ * Types for Tempurify manifest tracking and backup/session management.
  * Provides contracts for file tracking and generation metadata.
  */
 
-export interface TempuraManifest {
+export interface TempurifyManifest {
   version: 1;
-  generator: 'tempura';
+  generator: 'tempurify';
   generatedAt: string | null;
-  entries: TempuraManifestEntry[];
+  entries: TempurifyManifestEntry[];
 }
 
-export interface TempuraManifestEntry {
+export interface TempurifyManifestEntry {
   path: string;
   absolutePath: string;
   source: string;

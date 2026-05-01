@@ -1,14 +1,14 @@
 /**
- * Tempura Error System
+ * Tempurify Error System
  *
  * Provides structured error handling with error codes and detailed information.
- * All Tempura errors should extend from TempuraError for consistent handling.
+ * All Tempurify errors should extend from TempurifyError for consistent handling.
  */
 
 /**
- * Error codes for different types of Tempura errors
+ * Error codes for different types of Tempurify errors
  */
-export enum TempuraErrorCode {
+export enum TempurifyErrorCode {
   CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
   CONFIG_INVALID = 'CONFIG_INVALID',
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
@@ -22,20 +22,20 @@ export enum TempuraErrorCode {
 }
 
 /**
- * Base error class for all Tempura errors
+ * Base error class for all Tempurify errors
  */
-export class TempuraError extends Error {
+export class TempurifyError extends Error {
   constructor(
-    public code: TempuraErrorCode,
+    public code: TempurifyErrorCode,
     message: string,
     public details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'TempuraError';
+    this.name = 'TempurifyError';
 
     // Maintains proper stack trace for where our error was thrown
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, TempuraError);
+      Error.captureStackTrace(this, TempurifyError);
     }
   }
 
@@ -70,23 +70,23 @@ export class TempuraError extends Error {
 }
 
 /**
- * Creates a TempuraError with the given code and message
+ * Creates a TempurifyError with the given code and message
  *
  * @param code - Error code
  * @param message - Error message
  * @param details - Optional error details
- * @returns TempuraError instance
+ * @returns TempurifyError instance
  */
-export function createTempuraError(code: TempuraErrorCode, message: string, details?: Record<string, unknown>): TempuraError {
-  return new TempuraError(code, message, details);
+export function createTempurifyError(code: TempurifyErrorCode, message: string, details?: Record<string, unknown>): TempurifyError {
+  return new TempurifyError(code, message, details);
 }
 
 /**
- * Type guard to check if an error is a TempuraError
+ * Type guard to check if an error is a TempurifyError
  *
  * @param error - Error to check
- * @returns True if error is a TempuraError
+ * @returns True if error is a TempurifyError
  */
-export function isTempuraError(error: unknown): error is TempuraError {
-  return error instanceof TempuraError;
+export function isTempurifyError(error: unknown): error is TempurifyError {
+  return error instanceof TempurifyError;
 }

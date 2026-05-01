@@ -1,42 +1,26 @@
 /**
- * Tempura Init Command
+ * Tempurify Init Command
  *
- * Initializes a Tempura project by creating:
- * - tempura.config.js
- * - .tempura/ directory
- * - .tempura/manifest.json
+ * Initializes a Tempurify project by creating:
+ * - tempurify.config.js
+ * - .tempurify/ directory
+ * - .tempurify/manifest.json
  */
 
 import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
-import { join, resolve } from 'node:path';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { writeFile } from 'node:fs/promises';
 import { ensureDirectory } from '../../utils';
-import { DEFAULT_TEMPURA_CONFIG } from '../../config/config-defaults';
-
-/**
- * Generates config file content from default config
- */
-function generateConfigContent(): string {
-  const config = DEFAULT_TEMPURA_CONFIG;
-
-  return `/**
- * Tempura Configuration
- * 
- * Configure your NestJS entity generation settings.
- */
-
-export default ${JSON.stringify(config, null, 2)};
-`;
-}
+import { generateTempurifyConfigFile } from '../../config/config-template-generator';
 
 /**
  * Default manifest template
  */
 const DEFAULT_MANIFEST = {
   version: 1,
-  generator: 'tempura',
+  generator: 'tempurify',
   generatedAt: null,
   entries: [],
 };
@@ -46,22 +30,22 @@ const DEFAULT_MANIFEST = {
  */
 export function createInitCommand(): Command {
   const command = new Command('init')
-    .description('Initialize Tempura in your project')
-    .option('-f, --force', 'Force initialization even if Tempura is already initialized')
+    .description('Initialize Tempurify in your project')
+    .option('-f, --force', 'Force initialization even if Tempurify is already initialized')
     .action(async (options) => {
       try {
-        intro('🚀 Tempura Init');
+        intro('🚀 Tempurify Init');
 
         const rootDir = process.cwd();
-        const configPath = join(rootDir, 'tempura.config.js');
-        const tempuraDir = join(rootDir, '.tempura');
-        const manifestPath = join(tempuraDir, 'manifest.json');
+        const configPath = join(rootDir, 'tempurify.config.ts');
+        const tempurifyDir = join(rootDir, '.tempurify');
+        const manifestPath = join(tempurifyDir, 'manifest.json');
 
         // Check if already initialized
         const { fileExists } = await import('../../utils');
         if (!options.force && (await fileExists(configPath))) {
           const shouldContinue = await confirm({
-            message: 'Tempura is already initialized. Re-initialize?',
+            message: 'Tempurify is already initialized. Re-initialize?',
           });
 
           if (!shouldContinue) {
@@ -72,20 +56,20 @@ export function createInitCommand(): Command {
 
         // Create config file
         const s = spinner();
-        s.start('Creating tempura.config.js');
+        s.start('Creating tempurify.config.ts');
 
-        await writeFile(configPath, generateConfigContent(), 'utf-8');
+        await writeFile(configPath, generateTempurifyConfigFile(), 'utf-8');
 
-        s.stop('Created tempura.config.js');
+        s.stop('Created tempurify.config.ts');
 
-        // Create .tempura directory structure
-        s.start('Creating .tempura directory');
+        // Create .tempurify directory structure
+        s.start('Creating .tempurify directory');
 
-        await ensureDirectory(tempuraDir);
-        await ensureDirectory(join(tempuraDir, 'cache'));
-        await ensureDirectory(join(tempuraDir, 'backups'));
+        await ensureDirectory(tempurifyDir);
+        await ensureDirectory(join(tempurifyDir, 'cache'));
+        await ensureDirectory(join(tempurifyDir, 'backups'));
 
-        s.stop('Created .tempura directory');
+        s.stop('Created .tempurify directory');
 
         // Create manifest file
         s.start('Creating manifest.json');
@@ -95,11 +79,11 @@ export function createInitCommand(): Command {
 
         s.stop('Created manifest.json');
 
-        consola.success('Tempura initialized successfully!');
-        consola.info('Configuration file: tempura.config.js');
-        consola.info('Working directory: .tempura/');
+        consola.success('Tempurify initialized successfully!');
+        consola.info('Configuration file: tempurify.config.ts');
+        consola.info('Working directory: .tempurify/');
 
-        outro('✨ Ready to generate entities with: tempura generate');
+        outro('✨ Ready to generate entities with: tempurify generate');
       } catch (error) {
         consola.error('Initialization failed:', error);
         process.exit(1);

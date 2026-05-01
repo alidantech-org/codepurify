@@ -1,5 +1,5 @@
 /**
- * Tempura Backup Manager
+ * Tempurify Backup Manager
  *
  * Manages backup sessions for files before overwriting.
  * Creates timestamped backup sessions and tracks file changes.
@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { readFile, writeFile, copyFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { ensureDirectory, readJsonFile, writeJsonFile, hashFile, fileExists } from '../utils';
-import { createTempuraError, TempuraErrorCode } from './errors';
+import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';
 
 /**
@@ -67,7 +67,7 @@ export class BackupManager {
    * Creates a new backup session
    *
    * @returns New backup session
-   * @throws TempuraError if session creation fails
+   * @throws TempurifyError if session creation fails
    */
   async createSession(): Promise<BackupSession> {
     const sessionId = this.generateSessionId();
@@ -94,7 +94,7 @@ export class BackupManager {
    * @param session - Backup session
    * @param filePath - File path to backup
    * @returns Backup record
-   * @throws TempuraError if backup fails
+   * @throws TempurifyError if backup fails
    */
   async backupFile(session: BackupSession, filePath: string): Promise<BackupRecord> {
     const sessionDir = this.getSessionDir(session.id);
@@ -110,7 +110,7 @@ export class BackupManager {
       hashBefore = await hashFile(filePath);
 
       if (hashBefore === null) {
-        throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Failed to hash existing file for backup', { filePath });
+        throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Failed to hash existing file for backup', { filePath });
       }
 
       // Copy file to backup location
@@ -120,7 +120,7 @@ export class BackupManager {
       try {
         await copyFile(filePath, backupPath);
       } catch (error) {
-        throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Failed to copy file to backup location', {
+        throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Failed to copy file to backup location', {
           filePath,
           backupPath,
           cause: error,
@@ -146,7 +146,7 @@ export class BackupManager {
    * Saves a backup session to disk
    *
    * @param session - Session to save
-   * @throws TempuraError if save fails
+   * @throws TempurifyError if save fails
    */
   async saveSession(session: BackupSession): Promise<void> {
     try {
@@ -158,7 +158,10 @@ export class BackupManager {
 
       logger.debug(`Saved backup session: ${session.id}`);
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Failed to save backup session', { sessionId: session.id, cause: error });
+      throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Failed to save backup session', {
+        sessionId: session.id,
+        cause: error,
+      });
     }
   }
 
@@ -167,7 +170,7 @@ export class BackupManager {
    *
    * @param sessionId - Session ID to load
    * @returns Loaded session or null if not found
-   * @throws TempuraError if session is invalid
+   * @throws TempurifyError if session is invalid
    */
   async loadSession(sessionId: string): Promise<BackupSession | null> {
     try {
@@ -184,13 +187,13 @@ export class BackupManager {
       return validated;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Backup session has invalid structure', {
+        throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Backup session has invalid structure', {
           errors: error.errors,
           sessionId,
         });
       }
 
-      throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Failed to load backup session', { sessionId, cause: error });
+      throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Failed to load backup session', { sessionId, cause: error });
     }
   }
 

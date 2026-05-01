@@ -1,7 +1,7 @@
 /**
- * Tempura Types Barrel Export
+ * Tempurify Types Barrel Export
  *
- * Central exports for all Tempura type definitions.
+ * Central exports for all Tempurify type definitions.
  * Provides a clean import interface for the shared contract layer.
  */
 

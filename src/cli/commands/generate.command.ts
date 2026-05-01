@@ -1,5 +1,5 @@
 /**
- * Tempura Generate Command
+ * Tempurify Generate Command
  *
  * Generates entity files from discovered entity folders.
  * MVP: generates app.context.ts and index.ts only.
@@ -10,7 +10,7 @@ import { intro, outro, confirm, multiselect, spinner } from '@clack/prompts';
 import { consola } from 'consola';
 import { join } from 'node:path';
 import { generate } from '../../core/generator';
-import { loadTempuraConfig } from '../../config/config-loader';
+import { loadTempurifyConfig } from '../../config/config-loader';
 import { discoverEntityFolders } from '../../_generator/nest/parser/entity-folder-parser';
 import { fileExists } from '../../utils';
 
@@ -25,14 +25,14 @@ export function createGenerateCommand(): Command {
     .option('--skip-manifest', 'Skip manifest update')
     .action(async (options) => {
       try {
-        intro('🔨 Tempura Generate');
+        intro('🔨 Tempurify Generate');
 
         const rootDir = process.cwd();
-        const configPath = join(rootDir, 'tempura.config.js');
+        const configPath = join(rootDir, 'tempurify.config.js');
 
-        // Check if Tempura is initialized
+        // Check if Tempurify is initialized
         if (!(await fileExists(configPath))) {
-          consola.error('Tempura is not initialized. Run: tempura init');
+          consola.error('Tempurify is not initialized. Run: tempurify init');
           process.exit(1);
         }
 
@@ -40,7 +40,7 @@ export function createGenerateCommand(): Command {
         const s = spinner();
         s.start('Loading configuration');
 
-        const config = await loadTempuraConfig(configPath);
+        const config = await loadTempurifyConfig(configPath);
 
         s.stop('Configuration loaded');
 

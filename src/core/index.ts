@@ -1,7 +1,7 @@
 /**
- * Tempura Core Module
+ * Tempurify Core Module
  *
- * Central exports for all Tempura core functionality.
+ * Central exports for all Tempurify core functionality.
  * Provides error handling, logging, manifest management, backup system,
  * file writing, rollback capabilities, and main generator orchestrator.
  */

@@ -1,5 +1,5 @@
 /**
- * Tempura Index Generator
+ * Tempurify Index Generator
  *
  * Generates index.ts barrel export files from NestEntityContext.
  * Accepts entity context → template renderer → generated file plan.

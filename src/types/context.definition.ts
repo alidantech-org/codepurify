@@ -1,6 +1,6 @@
 /**
- * Tempura Context Definition Types
- * 
+ * Tempurify Context Definition Types
+ *
  * Defines the structure for entity context generation.
  * Provides types for context creation and template generation.
  */

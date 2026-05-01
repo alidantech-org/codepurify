@@ -1,7 +1,7 @@
 /**
- * Tempura Utilities Module
- * 
- * Central exports for all Tempura utility functions.
+ * Tempurify Utilities Module
+ *
+ * Central exports for all Tempurify utility functions.
  * Provides path, JSON, glob, hash, shell, format, case, and object utilities.
  */
 

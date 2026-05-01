@@ -1,5 +1,5 @@
 /**
- * Tempura Context Generator
+ * Tempurify Context Generator
  *
  * Generates app.context.ts files from NestEntityContext.
  * Accepts entity context → template renderer → generated file plan.

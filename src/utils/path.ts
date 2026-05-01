@@ -1,5 +1,5 @@
 /**
- * Tempura Path Utilities
+ * Tempurify Path Utilities
  *
  * Provides path manipulation helpers with cross-platform support.
  * Normalizes Windows paths to POSIX when returning relative paths.

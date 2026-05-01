@@ -1,4 +1,4 @@
-# Tempura
+# Tempurify
 
 Convention-locked NestJS backend generator.
 
@@ -6,7 +6,7 @@ Convention-locked NestJS backend generator.
 
 ## Purpose
 
-Tempura generates predictable, production-grade NestJS backend code from strict project conventions.
+Tempurify generates predictable, production-grade NestJS backend code from strict project conventions.
 
 It is built to eliminate:
 
@@ -22,7 +22,7 @@ It is built to eliminate:
 ## Core Idea
 
 ```txt id="5j9ysu"
-tempura.config.js
+tempurify.config.js
       ↓
 entity files
       ↓
@@ -163,7 +163,7 @@ Supports:
 ## Installation
 
 ```bash id="24dyyg"
-npm install -D tempura
+npm install -D tempurify
 ```
 
 ---
@@ -171,11 +171,11 @@ npm install -D tempura
 ## Commands
 
 ```bash id="gtjlwm"
-npx tempura init
-npx tempura generate
-npx tempura check
-npx tempura rollback
-npx tempura clean
+npx tempurify init
+npx tempurify generate
+npx tempurify check
+npx tempurify rollback
+npx tempurify clean
 ```
 
 ---
@@ -183,11 +183,11 @@ npx tempura clean
 ## Example Config
 
 ```js id="1h98ti"
-// tempura.config.js
+// tempurify.config.js
 
-const { defineTempuraConfig } = require('tempura');
+const { defineTempurifyConfig } = require('tempurify');
 
-module.exports = defineTempuraConfig({
+module.exports = defineTempurifyConfig({
   project: {
     name: 'my-nest-app',
     rootDir: '.',
@@ -256,7 +256,7 @@ Generated files include trace metadata:
 AUTO-GENERATED
 source: user.entity.ts
 template: service.template
-generator: tempura@0.1.0
+generator: tempurify@0.1.0
 ```
 
 This enables:
@@ -271,7 +271,7 @@ This enables:
 
 ## Long-Term Vision
 
-Tempura aims to become:
+Tempurify aims to become:
 
 ```txt id="wb1t4m"
 backend architecture compiler
@@ -283,7 +283,7 @@ Where developers define:
 domain intent
 ```
 
-and Tempura produces:
+and Tempurify produces:
 
 ```txt id="wbhjpm"
 safe

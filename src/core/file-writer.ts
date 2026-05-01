@@ -1,5 +1,5 @@
 /**
- * Tempura File Writer
+ * Tempurify File Writer
  *
  * Safely writes generated files with backup, atomic writes, and manifest tracking.
  * Prevents writing outside root directory and ensures data integrity.
@@ -9,7 +9,7 @@ import { writeFile, rename, mkdir } from 'node:fs/promises';
 import { join, resolve, dirname } from 'node:path';
 import { hashContent, fileExists } from '../utils';
 import { ensureInsideRoot, getRelativePath, toPosixPath } from '../utils/path';
-import { createTempuraError, TempuraErrorCode } from './errors';
+import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';
 import type { BackupManager, BackupSession } from './backup-manager';
 import type { ManifestManager } from './manifest-manager';
@@ -69,7 +69,7 @@ export class FileWriter {
    *
    * @param input - File write input
    * @returns Write result
-   * @throws TempuraError if write fails
+   * @throws TempurifyError if write fails
    */
   async writeGeneratedFile(input: WriteGeneratedFileInput): Promise<WriteGeneratedFileResult> {
     const { rootDir, backupManager, manifestManager } = this.options;
@@ -81,7 +81,7 @@ export class FileWriter {
     try {
       ensureInsideRoot(rootDir, absolutePath);
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.FILE_WRITE_FAILED, 'File path escapes root directory', {
+      throw createTempurifyError(TempurifyErrorCode.FILE_WRITE_FAILED, 'File path escapes root directory', {
         filePath: input.filePath,
         absolutePath,
         rootDir,
@@ -116,7 +116,7 @@ export class FileWriter {
     try {
       await backupManager.backupFile(input.backupSession, absolutePath);
     } catch (error) {
-      throw createTempuraError(TempuraErrorCode.BACKUP_FAILED, 'Failed to backup file before write', {
+      throw createTempurifyError(TempurifyErrorCode.BACKUP_FAILED, 'Failed to backup file before write', {
         filePath: input.filePath,
         cause: error,
       });
@@ -138,7 +138,7 @@ export class FileWriter {
       });
     } catch (error) {
       // If manifest update fails, we should consider this a critical error
-      throw createTempuraError(TempuraErrorCode.MANIFEST_INVALID, 'Failed to update manifest after file write', {
+      throw createTempurifyError(TempurifyErrorCode.MANIFEST_INVALID, 'Failed to update manifest after file write', {
         filePath: input.filePath,
         cause: error,
       });
@@ -158,7 +158,7 @@ export class FileWriter {
    *
    * @param inputs - Array of file write inputs
    * @returns Array of write results
-   * @throws TempuraError if any write fails
+   * @throws TempurifyError if any write fails
    */
   async writeGeneratedFiles(inputs: WriteGeneratedFileInput[]): Promise<WriteGeneratedFileResult[]> {
     const results: WriteGeneratedFileResult[] = [];
@@ -177,7 +177,7 @@ export class FileWriter {
    *
    * @param filePath - File path to write
    * @param content - File content
-   * @throws TempuraError if write fails
+   * @throws TempurifyError if write fails
    */
   private async writeAtomically(filePath: string, content: string): Promise<void> {
     const tempPath = `${filePath}.temp.${Date.now()}.${Math.random().toString(36).substring(2)}`;
@@ -201,7 +201,11 @@ export class FileWriter {
         // Ignore cleanup errors
       }
 
-      throw createTempuraError(TempuraErrorCode.FILE_WRITE_FAILED, 'Failed to write file atomically', { filePath, tempPath, cause: error });
+      throw createTempurifyError(TempurifyErrorCode.FILE_WRITE_FAILED, 'Failed to write file atomically', {
+        filePath,
+        tempPath,
+        cause: error,
+      });
     }
   }
 

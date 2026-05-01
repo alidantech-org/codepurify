@@ -1,16 +1,16 @@
 /**
- * Tempura Logger
+ * Tempurify Logger
  *
  * Provides a simple wrapper around consola for consistent logging
- * throughout the Tempura application.
+ * throughout the Tempurify application.
  */
 
 import { consola } from 'consola';
 
 /**
- * Tempura logger instance
+ * Tempurify logger instance
  */
-export const logger = consola.withTag('tempura');
+export const logger = consola.withTag('tempurify');
 
 /**
  * Log an info message

@@ -3,5 +3,5 @@ dist
 .env
 .DS_Store
 coverage
-.tempura/cache
-.tempura/backups
+.tempurify/cache
+.tempurify/backups

@@ -1,7 +1,7 @@
 import { readdir, access } from 'node:fs/promises';
 import { join, basename, extname } from 'node:path';
 import { Project, Node } from 'ts-morph';
-import { loadTempuraConfig } from '../../../config/config-loader';
+import { loadTempurifyConfig } from '../../../config/config-loader';
 
 /**
  * Discovered entity folder information
@@ -18,19 +18,19 @@ export interface DiscoveredEntityFolder {
 }
 
 /**
- * Discover valid Tempura entity folders
+ * Discover valid Tempurify entity folders
  *
  * Scans config.nest.modulesDir to find folders containing both:
  * - *.types.ts
  * - *.config.ts
  *
- * @param config - Tempura configuration
+ * @param config - Tempurify configuration
  * @returns Promise<DiscoveredEntityFolder[]> - Array of discovered entity folders
  * @throws Error if folder structure is invalid
  */
 export async function discoverEntityFolders(config?: any): Promise<DiscoveredEntityFolder[]> {
-  const tempuraConfig = config || (await loadTempuraConfig());
-  const modulesDir = tempuraConfig.nest?.modulesDir || 'src/app';
+  const tempurifyConfig = config || (await loadTempurifyConfig());
+  const modulesDir = tempurifyConfig.nest?.modulesDir || 'src/app';
 
   const ignoredDirs = new Set(['__generated__', 'custom', 'node_modules', 'dist']);
   const discoveredFolders: DiscoveredEntityFolder[] = [];

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Tempura CLI
+ * Tempurify CLI
  *
- * Main entry point for the Tempura command-line interface.
+ * Main entry point for the Tempurify command-line interface.
  * Provides commands for initializing, generating, checking, and rolling back entity files.
  */
 
@@ -15,12 +15,12 @@ import { createRollbackCommand } from './commands/rollback.command';
 import { createCleanCommand } from './commands/clean.command';
 
 /**
- * Creates and configures the Tempura CLI program
+ * Creates and configures the Tempurify CLI program
  */
 function createProgram(): Command {
   const program = new Command();
 
-  program.name('tempura').description('Tempura - NestJS entity generation tool').version('0.1.0');
+  program.name('tempurify').description('Tempurify - NestJS entity generation tool').version('0.1.0');
 
   // Register commands
   program.addCommand(createInitCommand());

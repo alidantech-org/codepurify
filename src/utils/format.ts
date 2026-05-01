@@ -1,5 +1,5 @@
 /**
- * Tempura Format Utilities
+ * Tempurify Format Utilities
  *
  * Provides code formatting helpers for prettier, eslint, and TypeScript.
  * Uses shell utilities to run formatting commands.

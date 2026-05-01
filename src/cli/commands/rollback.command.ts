@@ -1,5 +1,5 @@
 /**
- * Tempura Rollback Command
+ * Tempurify Rollback Command
  *
  * Restores files from the latest backup session.
  */
@@ -21,10 +21,10 @@ export function createRollbackCommand(): Command {
     .option('-f, --force', 'Force rollback without confirmation')
     .action(async (options) => {
       try {
-        intro('🔄 Tempura Rollback');
+        intro('🔄 Tempurify Rollback');
 
         const rootDir = process.cwd();
-        const backupsDir = join(rootDir, '.tempura', 'backups');
+        const backupsDir = join(rootDir, '.tempurify', 'backups');
 
         // Check if backups exist
         if (!(await fileExists(backupsDir))) {
