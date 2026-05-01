@@ -8,9 +8,11 @@ export type IDateRange = {
   to?: Date;
 };
 
-export type IRelationQueryValue<TRelatedEntity, TSelectableField extends keyof TRelatedEntity & string, TSortableField extends keyof TRelatedEntity & string> =
-  | IAsOneRelationQuery<TRelatedEntity, TSelectableField>
-  | IAsManyRelationQuery<TRelatedEntity, TSelectableField, TSortableField>;
+export type IRelationQueryValue<
+  TRelatedEntity,
+  TSelectableField extends keyof TRelatedEntity & string,
+  TSortableField extends keyof TRelatedEntity & string,
+> = IAsOneRelationQuery<TRelatedEntity, TSelectableField> | IAsManyRelationQuery<TRelatedEntity, TSelectableField, TSortableField>;
 
 // //////////////////////////////////////////////////////////////////////////////
 //  RELATION QUERIES

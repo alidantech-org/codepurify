@@ -62,3 +62,50 @@
 
 10. support running the code and testing it and providing url for the user
 
+
+
+1. src/config/
+   - config.types.ts
+   - define-config.ts
+   - config-defaults.ts
+   - config-schema.ts
+   - config-loader.ts
+
+2. src/utils/
+   - path.ts
+   - json.ts
+   - glob.ts
+   - hash.ts
+   - shell.ts
+   - format.ts
+
+3. src/core/
+   - logger.ts
+   - errors.ts
+   - manifest-manager.ts
+   - file-writer.ts
+
+4. src/_generator/nest/templates/
+   - renderer.ts
+   - variables.ts
+   - registry.ts
+
+5. src/_generator/nest/context/
+   - entity-context.ts
+   - field-context.ts
+   - relation-context.ts
+   - nest-context-builder.ts
+
+6. src/_generator/nest/parser/
+   - entity-parser.ts
+   - field-parser.ts
+   - relation-parser.ts
+
+7. src/_generator/nest/generators/
+   - entity.generator.ts first
+   - then dto/repository/service/controller
+
+8. src/cli/
+   - index.ts
+   - commands/generate.command.ts
+   - commands/check.command.ts
