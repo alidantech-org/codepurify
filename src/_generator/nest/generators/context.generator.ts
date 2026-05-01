@@ -5,8 +5,7 @@
  * Accepts entity context → template renderer → generated file plan.
  */
 
-import { renderTemplate, TemplateRenderError } from '../templates/renderer';
-import { defaultRegistry } from '../templates/registry';
+import { renderNestTemplate, TemplateRenderError } from '../templates/renderer';
 import { validateTemplateVariables } from '../templates/variables';
 import type { NestEntityContext } from '../context/nest-context-builder';
 
@@ -32,8 +31,10 @@ export interface GeneratedFilePlan {
  * Context generator options
  */
 export interface ContextGeneratorOptions {
-  /** Template directory */
-  templateDir?: string;
+  /** Tempurify configuration */
+  config?: any;
+  /** Project root directory */
+  rootDir?: string;
   /** Whether to include debug information */
   debug?: boolean;
 }
@@ -42,11 +43,7 @@ export interface ContextGeneratorOptions {
  * Generates context files from NestEntityContext
  */
 export class ContextGenerator {
-  private templateDir: string;
-
-  constructor(private options: ContextGeneratorOptions = {}) {
-    this.templateDir = options.templateDir || 'templates';
-  }
+  constructor(private options: ContextGeneratorOptions = {}) {}
 
   /**
    * Generates context file plan for a single entity
@@ -63,21 +60,15 @@ export class ContextGenerator {
         throw new Error(`Template validation failed: ${validation.missing.join(', ')}`);
       }
 
-      // Get template path from registry
-      const templatePath = defaultRegistry.getPath('context');
-      if (!templatePath) {
-        throw new Error('Context template not found in registry');
-      }
-
-      // Render template using the renderer
-      const renderResult = await renderTemplate(templatePath, entityContext);
+      // Render template using the new renderer
+      const renderResult = await renderNestTemplate('context', entityContext, this.options.config, this.options.rootDir || process.cwd());
 
       const plan: GeneratedFilePlan = {
         kind: 'context',
         filePath: entityContext.entity.files.contextFile,
         content: renderResult.content,
         source: 'context.generator.ts',
-        template: templatePath,
+        template: renderResult.templatePath,
         immutable: true,
       };
 
@@ -114,29 +105,13 @@ export class ContextGenerator {
   }
 
   /**
-   * Validates that all required components are available
+   * Validates the generator setup
    *
    * @throws Error if validation fails
    */
   async validate(): Promise<void> {
-    // Check that context template exists
-    if (!defaultRegistry.has('context')) {
-      throw new Error('Context template not registered');
-    }
-
-    // Check that template file exists
-    const templatePath = defaultRegistry.getPath('context');
-    if (!templatePath) {
-      throw new Error('Context template path not found');
-    }
-
-    // Try to read the template file
-    try {
-      const { readFile } = await import('node:fs/promises');
-      await readFile(templatePath, 'utf-8');
-    } catch (error) {
-      throw new Error(`Context template file not readable: ${templatePath}`);
-    }
+    // Template validation is now handled by renderNestTemplate
+    // No additional validation needed here
   }
 
   /**
@@ -145,14 +120,10 @@ export class ContextGenerator {
    * @returns Generator statistics
    */
   getStats(): {
-    templateDir: string;
-    registeredTemplates: number;
     availableTemplates: string[];
   } {
     return {
-      templateDir: this.templateDir,
-      registeredTemplates: defaultRegistry.listTemplates().length,
-      availableTemplates: defaultRegistry.listTemplates(),
+      availableTemplates: ['context'],
     };
   }
 }

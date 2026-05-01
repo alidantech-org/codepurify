@@ -1,12 +1,18 @@
 import { readdir, access } from 'node:fs/promises';
-import { join, basename, extname } from 'node:path';
+import { join, basename, extname, resolve } from 'node:path';
 import { Project, Node } from 'ts-morph';
 import { loadTempurifyConfig } from '../../../config/config-loader';
+import { TEMPURIFY_FILE_REGISTRY } from '../../../config/file-registry';
+import { consola } from 'consola';
 
 /**
  * Discovered entity folder information
  */
 export interface DiscoveredEntityFolder {
+  /** Strategy used for discovery */
+  strategy: 'grouped';
+  /** Group name from path */
+  groupName: string;
   /** Entity name from folder name */
   entityName: string;
   /** Full path to entity folder */
@@ -15,85 +21,134 @@ export interface DiscoveredEntityFolder {
   typesFilePath: string;
   /** Path to config file */
   configFilePath: string;
+  /** Path to context file (generated) */
+  contextFilePath: string;
+  /** Path to barrel file (generated) */
+  barrelFilePath: string;
 }
 
 /**
- * Discover valid Tempurify entity folders
+ * Discover valid Tempurify entity folders using grouped strategy
  *
- * Scans config.nest.modulesDir to find folders containing both:
- * - *.types.ts
- * - *.config.ts
+ * Scans config.project.typesDir to find entity folders following the pattern:
+ * {typesDir}/{groupName}/{entityName}/
+ * Each entity folder must contain:
+ * - {entityName}.types.ts
+ * - {entityName}.config.ts
  *
  * @param config - Tempurify configuration
+ * @param debug - Enable debug output
  * @returns Promise<DiscoveredEntityFolder[]> - Array of discovered entity folders
  * @throws Error if folder structure is invalid
  */
-export async function discoverEntityFolders(config?: any): Promise<DiscoveredEntityFolder[]> {
+export async function discoverEntityFolders(config?: any, debug: boolean = false): Promise<DiscoveredEntityFolder[]> {
   const tempurifyConfig = config || (await loadTempurifyConfig());
-  const modulesDir = tempurifyConfig.nest?.modulesDir || 'src/app';
+
+  // Get the types directory from project config
+  const typesDir = tempurifyConfig.project?.typesDir || 'types';
+  const rootDir = tempurifyConfig.project?.rootDir || process.cwd();
+  const typesDirPath = resolve(rootDir, typesDir);
+  const strategy = tempurifyConfig.entity?.strategy || 'grouped';
+
+  if (debug) {
+    consola.info(`typesDir: ${typesDirPath}`);
+    consola.info(`strategy: ${strategy}`);
+  }
+
+  // Check if types directory exists
+  try {
+    await access(typesDirPath);
+  } catch {
+    consola.warn(`Types directory not found: ${typesDirPath}`);
+    return [];
+  }
 
   const ignoredDirs = new Set(['__generated__', 'custom', 'node_modules', 'dist']);
   const discoveredFolders: DiscoveredEntityFolder[] = [];
 
-  async function scanDirectory(dirPath: string): Promise<void> {
+  async function scanGroupDirectory(groupPath: string, groupName: string): Promise<void> {
     try {
-      const entries = await readdir(dirPath, { withFileTypes: true });
+      const entries = await readdir(groupPath, { withFileTypes: true });
 
       for (const entry of entries) {
         if (entry.isDirectory() && !ignoredDirs.has(entry.name)) {
-          const fullPath = join(dirPath, entry.name);
-          await scanDirectory(fullPath);
-        } else if (entry.isFile()) {
-          const parentDir = join(dirPath, '..');
-          const folderName = basename(parentDir);
+          const entityPath = join(groupPath, entry.name);
+          const entityName = entry.name;
 
-          // Skip if this is an ignored directory
-          if (ignoredDirs.has(folderName)) continue;
+          if (debug) {
+            consola.info(`checking: ${groupName}/${entityName}`);
+          }
 
-          // Check if this file matches our patterns
-          const fileName = entry.name;
-          const ext = extname(fileName);
-          const baseName = fileName.slice(0, -ext.length);
+          // Check for required files in entity folder
+          const typesFileName = `${entityName}.types.ts`;
+          const configFileName = `${entityName}.config.ts`;
 
-          if (ext === '.ts') {
-            if (baseName.includes('.types')) {
-              // Found a types file, check for corresponding config file
-              const configPattern = baseName.replace('.types', '.config') + '.ts';
-              const configPath = join(dirPath, configPattern);
+          const typesFilePath = join(entityPath, typesFileName);
+          const configFilePath = join(entityPath, configFileName);
 
-              try {
-                await access(configPath);
-                // Both files exist, this is a valid entity folder
-                const entityFolder: DiscoveredEntityFolder = {
-                  entityName: folderName,
-                  folderPath: parentDir,
-                  typesFilePath: join(dirPath, fileName),
-                  configFilePath: configPath,
-                };
+          try {
+            // Check if both required files exist
+            await access(typesFilePath);
+            await access(configFilePath);
 
-                // Check for duplicates
-                const existing = discoveredFolders.find((f) => f.entityName === folderName);
-                if (existing) {
-                  console.warn(`Warning: Multiple entity folders found for entity '${folderName}'. Using first one.`);
-                } else {
-                  discoveredFolders.push(entityFolder);
-                }
-              } catch {
-                // Config file doesn't exist, skip
-              }
+            if (debug) {
+              consola.info(`found: ${typesFileName}, ${configFileName}`);
             }
+
+            // Both files exist, this is a valid entity folder
+            const contextFileName = `${entityName}.context.ts`;
+            const barrelFileName = 'index.ts';
+
+            const entityFolder: DiscoveredEntityFolder = {
+              strategy: 'grouped',
+              groupName,
+              entityName,
+              folderPath: entityPath,
+              typesFilePath,
+              configFilePath,
+              contextFilePath: join(entityPath, contextFileName),
+              barrelFilePath: join(entityPath, barrelFileName),
+            };
+
+            discoveredFolders.push(entityFolder);
+          } catch {
+            // Missing required files, skip this folder
+            if (debug) {
+              consola.info(`missing required files in ${groupName}/${entityName}`);
+            }
+            continue;
           }
         }
       }
     } catch (error) {
-      console.warn(`Warning: Could not scan directory ${dirPath}:`, error);
+      consola.warn(`Warning: Could not scan group directory ${groupPath}:`, error);
     }
   }
 
-  await scanDirectory(modulesDir);
+  async function scanTypesDirectory(): Promise<void> {
+    try {
+      const entries = await readdir(typesDirPath, { withFileTypes: true });
 
-  // Sort results by entity name
-  discoveredFolders.sort((a, b) => a.entityName.localeCompare(b.entityName));
+      for (const entry of entries) {
+        if (entry.isDirectory() && !ignoredDirs.has(entry.name)) {
+          const groupPath = join(typesDirPath, entry.name);
+          const groupName = entry.name;
+          await scanGroupDirectory(groupPath, groupName);
+        }
+      }
+    } catch (error) {
+      consola.warn(`Warning: Could not scan types directory ${typesDirPath}:`, error);
+    }
+  }
+
+  await scanTypesDirectory();
+
+  // Sort results by groupName then entityName
+  discoveredFolders.sort((a, b) => {
+    const groupCompare = a.groupName.localeCompare(b.groupName);
+    if (groupCompare !== 0) return groupCompare;
+    return a.entityName.localeCompare(b.entityName);
+  });
 
   return discoveredFolders;
 }

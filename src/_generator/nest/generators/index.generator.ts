@@ -5,8 +5,7 @@
  * Accepts entity context → template renderer → generated file plan.
  */
 
-import { renderTemplate, TemplateRenderError } from '../templates/renderer';
-import { defaultRegistry } from '../templates/registry';
+import { renderNestTemplate, TemplateRenderError } from '../templates/renderer';
 import { validateTemplateVariables } from '../templates/variables';
 import type { NestEntityContext } from '../context/nest-context-builder';
 import type { GeneratedFilePlan } from './context.generator';
@@ -15,8 +14,10 @@ import type { GeneratedFilePlan } from './context.generator';
  * Index generator options
  */
 export interface IndexGeneratorOptions {
-  /** Template directory */
-  templateDir?: string;
+  /** Tempurify configuration */
+  config?: any;
+  /** Project root directory */
+  rootDir?: string;
   /** Whether to include debug information */
   debug?: boolean;
   /** Components to include in index */
@@ -34,11 +35,7 @@ export interface IndexGeneratorOptions {
  * Generates index files from NestEntityContext
  */
 export class IndexGenerator {
-  private templateDir: string;
-
-  constructor(private options: IndexGeneratorOptions = {}) {
-    this.templateDir = options.templateDir || 'templates';
-  }
+  constructor(private options: IndexGeneratorOptions = {}) {}
 
   /**
    * Generates index file plan for a single entity
@@ -49,30 +46,21 @@ export class IndexGenerator {
    */
   async generateIndexFile(entityContext: NestEntityContext): Promise<GeneratedFilePlan> {
     try {
-      // Prepare index context with component flags
-      const indexContext = this.prepareIndexContext(entityContext);
-
       // Validate template variables
-      const validation = validateTemplateVariables('index', indexContext);
+      const validation = validateTemplateVariables('index', entityContext);
       if (!validation.valid) {
         throw new Error(`Template validation failed: ${validation.missing.join(', ')}`);
       }
 
-      // Get template path from registry
-      const templatePath = defaultRegistry.getPath('index');
-      if (!templatePath) {
-        throw new Error('Index template not found in registry');
-      }
-
-      // Render template using the renderer
-      const renderResult = await renderTemplate(templatePath, indexContext);
+      // Render template using the new renderer
+      const renderResult = await renderNestTemplate('index', entityContext, this.options.config, this.options.rootDir || process.cwd());
 
       const plan: GeneratedFilePlan = {
         kind: 'index',
         filePath: entityContext.entity.files.indexFile,
         content: renderResult.content,
         source: 'index.generator.ts',
-        template: templatePath,
+        template: renderResult.templatePath,
         immutable: true,
       };
 
@@ -143,24 +131,8 @@ export class IndexGenerator {
    * @throws Error if validation fails
    */
   async validate(): Promise<void> {
-    // Check that index template exists
-    if (!defaultRegistry.has('index')) {
-      throw new Error('Index template not registered');
-    }
-
-    // Check that template file exists
-    const templatePath = defaultRegistry.getPath('index');
-    if (!templatePath) {
-      throw new Error('Index template path not found');
-    }
-
-    // Try to read the template file
-    try {
-      const { readFile } = await import('node:fs/promises');
-      await readFile(templatePath, 'utf-8');
-    } catch (error) {
-      throw new Error(`Index template file not readable: ${templatePath}`);
-    }
+    // Template validation is now handled by renderNestTemplate
+    // No additional validation needed here
   }
 
   /**
@@ -169,15 +141,11 @@ export class IndexGenerator {
    * @returns Generator statistics
    */
   getStats(): {
-    templateDir: string;
-    registeredTemplates: number;
     availableTemplates: string[];
     components: IndexGeneratorOptions['components'];
   } {
     return {
-      templateDir: this.templateDir,
-      registeredTemplates: defaultRegistry.listTemplates().length,
-      availableTemplates: defaultRegistry.listTemplates(),
+      availableTemplates: ['index'],
       components: this.options.components,
     };
   }

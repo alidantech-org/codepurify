@@ -161,13 +161,34 @@ export class FileWriter {
    * @throws TempurifyError if any write fails
    */
   async writeGeneratedFiles(inputs: WriteGeneratedFileInput[]): Promise<WriteGeneratedFileResult[]> {
+    console.log('DEBUG: writeGeneratedFiles called with', inputs.length, 'inputs');
+    console.log(
+      'DEBUG: inputs:',
+      inputs.map((i) => ({ filePath: i.filePath, hasContent: !!i.content, contentLength: i.content?.length || 0 })),
+    );
+
     const results: WriteGeneratedFileResult[] = [];
 
     for (const input of inputs) {
-      const result = await this.writeGeneratedFile(input);
-      results.push(result);
+      console.log('DEBUG: processing input:', input.filePath);
+      try {
+        const result = await this.writeGeneratedFile(input);
+        console.log('DEBUG: writeGeneratedFile result:', result);
+        results.push(result);
+      } catch (error) {
+        console.log('DEBUG: writeGeneratedFile error for', input.filePath, ':', error);
+        console.log('DEBUG: error type:', typeof error);
+        console.log('DEBUG: error message:', error instanceof Error ? error.message : String(error));
+        results.push({
+          filePath: input.filePath,
+          absolutePath: input.filePath,
+          hash: '',
+          written: false,
+        });
+      }
     }
 
+    console.log('DEBUG: writeGeneratedFiles completed, results:', results);
     logger.info(`Wrote ${results.filter((r) => r.written).length} files (skipped ${results.filter((r) => !r.written).length} unchanged)`);
     return results;
   }

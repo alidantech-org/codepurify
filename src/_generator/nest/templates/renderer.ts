@@ -1,6 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join, resolve, basename } from 'node:path';
 import { Eta } from 'eta';
+import { getPackageRootFromModule } from '../../../utils/package-root';
+import { logger } from '../../../core/logger';
+import { createTempurifyError, TempurifyErrorCode } from '../../../core/errors';
+import { REQUIRED_TEMPLATE_VARIABLES, TEMPLATE_VARIABLES } from '../data/template-variables';
 
 /**
  * Template rendering options
@@ -68,6 +73,9 @@ export class TemplateRenderer {
     this.eta = new Eta({
       cache: this.options.cache,
       autoEscape: this.options.autoEscape,
+      // Expose top-level variables directly (no 'it' prefix required)
+      varName: 'it',
+      useWith: true,
     });
   }
 
@@ -303,4 +311,115 @@ export async function renderTemplate(templatePath: string, context: any, options
 export function renderTemplateString(templateString: string, context: any, options?: RenderOptions): string {
   const renderer = options ? new TemplateRenderer(options) : defaultRenderer;
   return renderer.renderString(templateString, context);
+}
+
+/**
+ * Render NestJS template using package built-in templates or user overrides
+ *
+ * @param templateKey - Template key from registry ('context', 'index', etc.)
+ * @param context - Template context data
+ * @param config - Tempurify configuration
+ * @param rootDir - Project root directory
+ * @returns Promise<RenderResult> - Render result
+ * @throws TemplateRenderError if template not found or rendering fails
+ */
+export async function renderNestTemplate(templateKey: string, context: any, config: any, rootDir: string): Promise<RenderResult> {
+  try {
+    // Get template registry entry
+    const { getTemplateRegistry } = await import('./registry');
+    const registry = getTemplateRegistry();
+    const template = registry.get(templateKey);
+
+    if (!template) {
+      throw new TemplateRenderError(`Template '${templateKey}' not found in registry`, templateKey, context);
+    }
+
+    let templatePath: string | undefined;
+    let usingBuiltin = false;
+
+    // Check if user overrides are enabled and user template exists
+    if (config.templates?.allowUserOverrides) {
+      const userTemplatePath = join(rootDir, config.templates.userDir, 'nest', template.path);
+
+      try {
+        await readFile(userTemplatePath, 'utf8');
+        templatePath = userTemplatePath;
+        logger.info(`Using user template: ${template.path}`);
+      } catch (error) {
+        if (error instanceof Error && (error as any).code === 'ENOENT') {
+          // User template not found, fall back to built-in
+          usingBuiltin = true;
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Use built-in template if no user template found or overrides disabled
+    if (!templatePath || usingBuiltin) {
+      const packageRoot = await getPackageRootFromModule(import.meta.url);
+      templatePath = join(packageRoot, 'templates', template.path);
+      logger.debug(`Using built-in template: ${template.path}`);
+      logger.debug(`Resolved template file: ${templatePath}`);
+    }
+
+    // Validate that the template file exists
+    if (!existsSync(templatePath)) {
+      throw createTempurifyError(
+        TempurifyErrorCode.TEMPLATE_NOT_FOUND,
+        `Built-in template not found: ${template.path}. Resolved path: ${templatePath}`,
+      );
+    }
+
+    // Prepare template data with top-level variables expected by templates
+    const templateData = {
+      entity: context.entity,
+      fields: context.fields,
+      relations: context.relations,
+      basename: (path: string) => basename(path),
+      // Preserve TypeORM-specific data if it exists
+      ...(context.imports && { imports: context.imports }),
+      ...(context.base && { base: context.base }),
+      ...(context.schema && { schema: context.schema }),
+      ...(context.indexes && { indexes: context.indexes }),
+      ...(context.columns && { columns: context.columns }),
+      ...(context.typeormRelations && { typeormRelations: context.typeormRelations }),
+    };
+
+    // Validate required template variables
+    for (const key of REQUIRED_TEMPLATE_VARIABLES) {
+      if (!(key in templateData)) {
+        throw createTempurifyError(
+          TempurifyErrorCode.TEMPLATE_NOT_FOUND,
+          `Template data missing required key "${key}" for template "${templatePath}". Available keys: ${Object.keys(templateData).join(', ')}`,
+        );
+      }
+    }
+
+    // Debug logging
+    console.log('TEMPLATE DATA KEYS:', Object.keys(templateData));
+    console.log('ENTITY KEYS:', templateData.entity ? Object.keys(templateData.entity) : 'UNDEFINED');
+    console.log('IMPORTS:', templateData.imports ? 'PRESENT' : 'MISSING');
+    console.log('FULL TEMPLATE DATA:', JSON.stringify(templateData, null, 2));
+    logger.debug(`Rendering template: ${templatePath}`);
+    logger.debug(`Template keys: ${Object.keys(templateData).join(', ')}`);
+    logger.debug(`Entity data: ${JSON.stringify(templateData.entity, null, 2)}`);
+
+    // Render the template
+    const renderer = new TemplateRenderer();
+    const result = await renderer.render(templatePath, templateData);
+
+    return result;
+  } catch (error) {
+    if (error instanceof TemplateRenderError) {
+      throw error;
+    }
+
+    throw new TemplateRenderError(
+      `Failed to render NestJS template '${templateKey}': ${error instanceof Error ? error.message : String(error)}`,
+      templateKey,
+      context,
+      error instanceof Error ? error : undefined,
+    );
+  }
 }

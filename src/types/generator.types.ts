@@ -10,9 +10,11 @@ export type GeneratedFileKind = 'context' | 'index' | 'entity' | 'repository' | 
 export interface GeneratedFilePlan {
   kind: GeneratedFileKind;
   filePath: string;
+  content: string;
   template: string;
   source: string;
   immutable: boolean;
+  generator?: string;
 }
 
 export interface GenerationResult {

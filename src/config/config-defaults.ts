@@ -14,6 +14,13 @@ import { resolve } from 'node:path';
 export const DEFAULT_TEMPURA_CONFIG: TempurifyConfig = {
   project: {
     sourceDir: 'src',
+    typesDir: 'types',
+  },
+
+  entity: {
+    strategy: 'grouped',
+    groupPattern: '*',
+    entityFolderPattern: '*',
   },
 
   nest: {
@@ -35,7 +42,7 @@ export const DEFAULT_TEMPURA_CONFIG: TempurifyConfig = {
   templates: {
     builtinDir: 'templates/nest',
     userDir: 'tempurify.templates',
-    allowUserOverrides: true,
+    allowUserOverrides: false,
   },
 
   immutable: {

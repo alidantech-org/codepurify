@@ -16,19 +16,23 @@ import { join, resolve } from 'node:path';
 import { ensureDirectory } from '../utils';
 import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';
+import { ensureTempurifyFolders, saveEntityMetadata, type EntityMetadata } from './tempurify-folder';
 import { BackupManager } from './backup-manager';
 import { ManifestManager } from './manifest-manager';
 import { FileWriter } from './file-writer';
 import { RollbackManager } from './rollback-manager';
 import { loadTempurifyConfig } from '../config/config-loader';
 import { discoverEntityFolders } from '../_generator/nest/parser/entity-folder-parser';
-import { parseEntityConfigFile } from '../_generator/nest/parser/config-parser';
+import { parseEntityConfigFile, convertToParsedConfig } from '../_generator/nest/parser/config-parser';
+import { loadEntityConfigFile as loadExecutableEntityConfigFile } from '../_generator/nest/parser/entity-config-loader';
 import { parseEntityTypesFile } from '../_generator/nest/parser/entity-parser';
 import { buildNestEntityContext } from '../_generator/nest/context/nest-context-builder';
 import { generateContextFile } from '../_generator/nest/generators/context.generator';
 import { generateIndexFile } from '../_generator/nest/generators/index.generator';
-import type { GeneratedFilePlan } from '../_generator/nest/generators/context.generator';
+import { generateTypeOrmEntity } from '../_generator/nest/generators/entity.generator';
+import type { GeneratedFilePlan } from '../types/generator.types';
 import type { TempurifyConfig } from '../config/config.types';
+import type { DiscoveredEntityFolder } from '../_generator/nest/parser/entity-folder-parser';
 
 /**
  * Generator options
@@ -38,6 +42,8 @@ export interface GeneratorOptions {
   rootDir: string;
   /** Tempurify config file path */
   configFile?: string;
+  /** Pre-discovered entity folders (optional) */
+  entities?: DiscoveredEntityFolder[];
   /** Whether to generate only context files (MVP) */
   contextOnly?: boolean;
   /** Whether to skip backup */
@@ -175,8 +181,11 @@ export class TempurifyGenerator {
    */
   private async discoverEntityFolders() {
     try {
-      const entityFolders = await discoverEntityFolders(this.rootDir);
-      logger.debug(`Discovered ${entityFolders.length} entity folders`);
+      // Use passed entities if available, otherwise discover them
+      const entityFolders =
+        this.options.entities && this.options.entities.length > 0 ? this.options.entities : await discoverEntityFolders(this.rootDir);
+
+      logger.debug(`Using ${entityFolders.length} entity folders`);
       return entityFolders;
     } catch (error) {
       throw createTempurifyError(TempurifyErrorCode.GENERATION_FAILED, 'Failed to discover entity folders', { cause: error });
@@ -184,21 +193,20 @@ export class TempurifyGenerator {
   }
 
   /**
-   * Parses entity data from folders
+   * Parse entity configuration files
    *
-   * @param entityFolders - Array of entity folders
+   * @param folders - Array of discovered entity folders
    * @returns Array of parsed entities
-   * @throws TempurifyError if parsing fails
+   * @throws Error if parsing fails
    */
-  private async parseEntities(entityFolders: any[]) {
+  private async parseEntities(folders: any[]): Promise<any[]> {
     const parsedEntities = [];
 
-    for (const folder of entityFolders) {
+    for (const folder of folders) {
       try {
-        // Parse config file
-        const config = await parseEntityConfigFile(folder.configFilePath);
-
-        // Parse types file
+        // Use executable config loader for proper resolution of imports and spreads
+        const loadedConfig = await loadExecutableEntityConfigFile(folder.configFilePath);
+        const config = convertToParsedConfig(loadedConfig, folder.configFilePath);
         const entityType = await parseEntityTypesFile(folder.typesFilePath);
 
         parsedEntities.push({
@@ -218,7 +226,7 @@ export class TempurifyGenerator {
   }
 
   /**
-   * Builds entity contexts from parsed data
+   * Builds entity contexts from parsed entities
    *
    * @param parsedEntities - Array of parsed entities
    * @returns Array of entity contexts
@@ -226,11 +234,64 @@ export class TempurifyGenerator {
    */
   private async buildContexts(parsedEntities: any[]) {
     const entityContexts = [];
+    const tempurifyFolders = await ensureTempurifyFolders(this.rootDir);
 
     for (const parsed of parsedEntities) {
       try {
         const context = buildNestEntityContext(parsed.folder, parsed.config, parsed.entityType);
         entityContexts.push(context);
+
+        // Save entity metadata to .tempurify/context/entities/
+        const metadata: EntityMetadata = {
+          entityName: context.entity.names.kebab,
+          updatedAt: new Date().toISOString(),
+          folderPath: context.entity.files.folderPath,
+          names: context.entity.names,
+          files: {
+            typesFile: context.entity.files.typesFile,
+            contextFile: context.entity.files.contextFile,
+            indexFile: context.entity.files.indexFile,
+            configFile: context.entity.files.configFile,
+            folderPath: context.entity.files.folderPath,
+          },
+          exports: {
+            interfaceName: context.entity.exports.interfaceName,
+            contextName: context.entity.exports.fieldsExportName,
+            indexName: context.entity.exports.metaExportName,
+            fieldsExportName: context.entity.exports.fieldsExportName,
+            metaExportName: context.entity.exports.metaExportName,
+            dbExportName: context.entity.exports.dbExportName,
+          },
+          config: parsed.config, // Use loaded config from executable module
+          fields: {
+            groups: {
+              all: context.fields.groups.all.map((f: any) => f.name),
+              filterable: context.fields.selection.filterable,
+              creatable: context.fields.mutation.creatable,
+              updatable: context.fields.mutation.updatable,
+            },
+            metadata: {
+              relationKeys: context.fields.relationKeys,
+            },
+          },
+          relations: {
+            groups: {
+              all: context.relations.groups.all.map((r: any) => r.name),
+              hasMany: context.relations.groups.oneToMany.map((r: any) => r.name),
+              hasOne: context.relations.groups.oneToOne.map((r: any) => r.name),
+              belongsTo: context.relations.groups.manyToOne.map((r: any) => r.name),
+            },
+            metadata: {
+              relationKeys: context.relations.relationKeys,
+            },
+          },
+          generation: {
+            lastGenerated: new Date().toISOString(),
+            filesGenerated: [],
+          },
+        };
+
+        await saveEntityMetadata(tempurifyFolders, context.entity.names.kebab, metadata);
         logger.debug(`Built context for: ${parsed.folder.entityName}`);
       } catch (error) {
         logger.error(`Failed to build context for: ${parsed.folder.entityName}`, error);
@@ -250,21 +311,37 @@ export class TempurifyGenerator {
    */
   private async generateFilePlans(entityContexts: any[]): Promise<GeneratedFilePlan[]> {
     const filePlans: GeneratedFilePlan[] = [];
+    const config = await this.loadConfig();
 
     for (const entityContext of entityContexts) {
       try {
         // Generate context file plan
-        const contextPlan = await generateContextFile(entityContext);
+        const contextPlan = await generateContextFile(entityContext, {
+          config,
+          rootDir: this.rootDir,
+        });
         filePlans.push(contextPlan);
+
+        // Generate entity file plan (if not context-only)
+        if (!this.options.contextOnly) {
+          const entityPlan = await generateTypeOrmEntity(entityContext, {
+            config,
+            rootDir: this.rootDir,
+            debug: false,
+          });
+          filePlans.push(entityPlan);
+        }
 
         // Generate index file plan
         const indexPlan = await generateIndexFile(entityContext, {
+          config,
+          rootDir: this.rootDir,
           components: {
             context: true,
             controller: false,
             service: false,
             module: false,
-            entity: false,
+            entity: !this.options.contextOnly,
             dto: false,
           },
         });
@@ -273,7 +350,12 @@ export class TempurifyGenerator {
         logger.debug(`Generated file plans for: ${entityContext.entity.names.pascal}`);
       } catch (error) {
         logger.error(`Failed to generate file plans for: ${entityContext.entity.names.pascal}`, error);
-        // Continue with other entities
+        // Fail the entire generation if any entity fails
+        throw createTempurifyError(
+          TempurifyErrorCode.GENERATION_FAILED,
+          `Failed to generate file plans for entity: ${entityContext.entity.names.pascal}`,
+          { cause: error },
+        );
       }
     }
 
@@ -318,23 +400,34 @@ export class TempurifyGenerator {
    */
   private async writeFiles(filePlans: GeneratedFilePlan[], backupSessionId?: string) {
     try {
+      console.log('DEBUG: writeFiles called with', filePlans.length, 'file plans');
+      console.log(
+        'DEBUG: filePlans:',
+        filePlans.map((p) => ({ filePath: p.filePath, contentLength: p.content?.length || 0 })),
+      );
+
       // Ensure tempurify directory exists
       await ensureDirectory(this.tempurifyDir);
+      console.log('DEBUG: tempurify directory ensured:', this.tempurifyDir);
 
       const manifestManager = new ManifestManager(this.manifestFile);
       const backupManager = new BackupManager(this.backupsDir);
+      console.log('DEBUG: manifest and backup managers created');
 
       // Always ensure we have a backup session
       let backupSession = backupSessionId ? await backupManager.loadSession(backupSessionId) : null;
       if (!backupSession) {
+        console.log('DEBUG: creating new backup session');
         backupSession = await backupManager.createSession();
       }
+      console.log('DEBUG: backup session created/loaded:', backupSession?.id);
 
       const fileWriter = new FileWriter({
         rootDir: this.rootDir,
         backupManager,
         manifestManager,
       });
+      console.log('DEBUG: file writer created');
 
       const writeInputs = filePlans.map((plan) => ({
         filePath: plan.filePath,
@@ -344,14 +437,23 @@ export class TempurifyGenerator {
         immutable: plan.immutable,
         backupSession: backupSession!,
       }));
+      console.log('DEBUG: writeInputs prepared:', writeInputs.length);
 
+      console.log('DEBUG: calling fileWriter.writeGeneratedFiles...');
       const results = await fileWriter.writeGeneratedFiles(writeInputs);
+      console.log('DEBUG: fileWriter.writeGeneratedFiles completed, results:', results);
 
-      return {
+      const result = {
         generated: results.filter((r) => r.written).length,
         skipped: results.filter((r) => !r.written).length,
       };
+      console.log('DEBUG: writeFiles returning:', result);
+      return result;
     } catch (error) {
+      console.log('DEBUG: writeFiles error:', error);
+      console.log('DEBUG: error type:', typeof error);
+      console.log('DEBUG: error message:', error instanceof Error ? error.message : String(error));
+      console.log('DEBUG: error stack:', error instanceof Error ? error.stack : 'No stack');
       throw createTempurifyError(TempurifyErrorCode.FILE_WRITE_FAILED, 'Failed to write files', { cause: error });
     }
   }

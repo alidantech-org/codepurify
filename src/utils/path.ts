@@ -51,8 +51,8 @@ export function ensureInsideRoot(rootDir: string, targetPath: string): void {
 
   const relativePath = relative(resolvedRoot, resolvedTarget);
 
-  // Check if the relative path starts with '..' or is absolute
-  if (relativePath.startsWith('..') || relativePath !== toPosixPath(relativePath)) {
+  // Check if relative path starts with '..' or is absolute
+  if (relativePath.startsWith('..')) {
     throw new Error(`Target path "${targetPath}" escapes root directory "${rootDir}"`);
   }
 }

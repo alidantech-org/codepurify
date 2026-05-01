@@ -1,4 +1,5 @@
 import { createNameVariants } from '../../../utils/case';
+import { join } from 'node:path';
 import type { DiscoveredEntityFolder } from '../parser/entity-folder-parser';
 import type { ParsedEntityConfig } from '../parser/config-parser';
 import type { ParsedEntityType } from '../parser/entity-parser';
@@ -139,8 +140,8 @@ export function buildEntityContext(
     folderPath: folder.folderPath,
     typesFile: folder.typesFilePath,
     configFile: folder.configFilePath,
-    contextFile: `${folder.folderPath}/app.context.ts`,
-    indexFile: `${folder.folderPath}/index.ts`,
+    contextFile: join(folder.folderPath, `${folder.entityName}.context.ts`),
+    indexFile: join(folder.folderPath, 'index.ts'),
   };
 
   // Build export names context
@@ -225,10 +226,10 @@ export function createBasicEntityContext(entityName: string, folderPath: string,
     },
     files: {
       folderPath,
-      typesFile: `${folderPath}/app.types.ts`,
-      configFile: `${folderPath}/app.config.ts`,
-      contextFile: `${folderPath}/app.context.ts`,
-      indexFile: `${folderPath}/index.ts`,
+      typesFile: join(folderPath, `${entityName}.types.ts`),
+      configFile: join(folderPath, `${entityName}.config.ts`),
+      contextFile: join(folderPath, `${entityName}.context.ts`),
+      indexFile: join(folderPath, 'index.ts'),
     },
     exports: {
       interfaceName,

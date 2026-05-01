@@ -3,8 +3,13 @@ import type { TempurifyConfig } from './config.types';
 export const defaultTempurifyConfigTemplate: TempurifyConfig = {
   project: {
     sourceDir: 'src',
+    typesDir: 'types',
   },
-
+  entity: {
+    strategy: 'grouped',
+    groupPattern: '*',
+    entityFolderPattern: '*',
+  },
   nest: {
     modulesDir: 'src/modules',
     entityFolderPattern: '**/*',
@@ -13,38 +18,19 @@ export const defaultTempurifyConfigTemplate: TempurifyConfig = {
     generatedDirName: '__generated__',
     customDirName: 'custom',
   },
-
   paths: {
     tempurifyDir: '.tempurify',
     manifestFile: '.tempurify/manifest.json',
     cacheDir: '.tempurify/cache',
     backupsDir: '.tempurify/backups',
   },
-
   templates: {
     builtinDir: 'templates/nest',
     userDir: 'tempurify.templates',
-    allowUserOverrides: true,
+    allowUserOverrides: false,
   },
-
-  immutable: {
-    enabled: true,
-    include: ['**/__generated__/**/*.ts'],
-  },
-
-  mutable: {
-    include: ['**/custom/**/*.ts'],
-  },
-
-  formatting: {
-    prettier: true,
-    eslint: false,
-    tsc: true,
-  },
-
-  git: {
-    enabled: true,
-    requiredBranch: null,
-    preventDirtyCheckout: true,
-  },
+  immutable: { enabled: true, include: ['**/__generated__/**/*.ts'] },
+  mutable: { include: ['**/custom/**/*.ts'] },
+  formatting: { prettier: true, eslint: false, tsc: true },
+  git: { enabled: true, requiredBranch: null, preventDirtyCheckout: true },
 };

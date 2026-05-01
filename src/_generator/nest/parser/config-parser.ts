@@ -2,6 +2,24 @@ import { readFile } from 'node:fs/promises';
 import { Project } from 'ts-morph';
 
 /**
+ * Loaded entity configuration from executable module
+ */
+export interface LoadedEntityConfig {
+  /** Fields export */
+  fields: any;
+  /** Meta export */
+  meta: any;
+  /** Database export */
+  db: any;
+  /** Export names */
+  exportNames: {
+    fieldsExportName: string;
+    metaExportName: string;
+    dbExportName: string;
+  };
+}
+
+/**
  * Parsed entity configuration
  */
 export interface ParsedEntityConfig {
@@ -132,4 +150,47 @@ export async function parseEntityConfigFile(filePath: string): Promise<ParsedEnt
   }
 
   return config;
+}
+
+/**
+ * Convert loaded entity config to ParsedEntityConfig format
+ *
+ * @param loaded - Loaded configuration from jiti
+ * @param configFilePath - Path to config file (for error messages)
+ * @returns ParsedEntityConfig - Parsed configuration
+ */
+export function convertToParsedConfig(loaded: LoadedEntityConfig, configFilePath: string): ParsedEntityConfig {
+  // Extract relation keys from fields
+  let relationKeys: string[] = [];
+
+  if (loaded.fields && loaded.fields.relation && loaded.fields.relation.keys) {
+    if (Array.isArray(loaded.fields.relation.keys)) {
+      relationKeys = loaded.fields.relation.keys;
+    }
+  }
+
+  // Extract meta properties
+  const meta = {
+    name: loaded.meta?.name || '',
+    module: loaded.meta?.module || '',
+    schema: loaded.meta?.schema || '',
+    tableName: loaded.meta?.tableName || '',
+    route: loaded.meta?.route || '',
+    entityClass: loaded.meta?.entityClass || '',
+  };
+
+  // Validate required meta properties
+  for (const [key, value] of Object.entries(meta)) {
+    if (!value) {
+      throw new Error(`Missing required property '${key}' in ${loaded.exportNames.metaExportName} in ${configFilePath}`);
+    }
+  }
+
+  return {
+    fieldsExportName: loaded.exportNames.fieldsExportName,
+    metaExportName: loaded.exportNames.metaExportName,
+    dbExportName: loaded.exportNames.dbExportName,
+    relationKeys,
+    meta,
+  };
 }

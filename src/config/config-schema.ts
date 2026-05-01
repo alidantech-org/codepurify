@@ -9,21 +9,44 @@ import { z } from 'zod';
 import type { TempurifyConfig, ResolvedTempurifyConfig } from './config.types';
 
 /**
+ * Schema for entity strategy
+ */
+const entityStrategySchema = z.enum(['grouped', 'flat']);
+
+/**
  * Schema for project configuration (user-facing, all optional)
  */
 const projectConfigSchema = z.object({
-  name: z.string().optional(),
   rootDir: z.string().optional(),
   sourceDir: z.string().optional(),
+  typesDir: z.string().optional(),
 });
 
 /**
  * Schema for resolved project configuration (all required)
  */
 const resolvedProjectConfigSchema = z.object({
-  name: z.string().optional(),
   rootDir: z.string(),
   sourceDir: z.string(),
+  typesDir: z.string(),
+});
+
+/**
+ * Schema for entity configuration
+ */
+const entityConfigSchema = z.object({
+  strategy: entityStrategySchema.optional(),
+  groupPattern: z.string().optional(),
+  entityFolderPattern: z.string().optional(),
+});
+
+/**
+ * Schema for resolved entity configuration (all required)
+ */
+const resolvedEntityConfigSchema = z.object({
+  strategy: entityStrategySchema,
+  groupPattern: z.string(),
+  entityFolderPattern: z.string(),
 });
 
 /**
@@ -91,11 +114,12 @@ const gitConfigSchema = z.object({
 });
 
 /**
- * Main Tempurify configuration schema
+ * Tempurify configuration schema (user-facing, all optional)
  */
 export const tempurifyConfigSchema = z.object({
   project: projectConfigSchema.partial(),
-  nest: nestConfigSchema.partial(),
+  entity: entityConfigSchema.optional(),
+  nest: nestConfigSchema.optional(),
   paths: pathsConfigSchema.optional(),
   templates: templateConfigSchema.optional(),
   immutable: immutableConfigSchema.optional(),
@@ -109,6 +133,7 @@ export const tempurifyConfigSchema = z.object({
  */
 export const resolvedTempurifyConfigSchema = z.object({
   project: resolvedProjectConfigSchema,
+  entity: resolvedEntityConfigSchema,
   nest: nestConfigSchema,
   paths: pathsConfigSchema,
   templates: templateConfigSchema,

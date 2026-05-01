@@ -23,12 +23,13 @@ export function createGenerateCommand(): Command {
     .option('-f, --force', 'Force generation without confirmation')
     .option('--skip-backup', 'Skip backup before writing files')
     .option('--skip-manifest', 'Skip manifest update')
+    .option('--debug', 'Enable debug output')
     .action(async (options) => {
       try {
         intro('🔨 Tempurify Generate');
 
         const rootDir = process.cwd();
-        const configPath = join(rootDir, 'tempurify.config.js');
+        const configPath = join(rootDir, 'tempurify.config.ts');
 
         // Check if Tempurify is initialized
         if (!(await fileExists(configPath))) {
@@ -40,14 +41,14 @@ export function createGenerateCommand(): Command {
         const s = spinner();
         s.start('Loading configuration');
 
-        const config = await loadTempurifyConfig(configPath);
+        const config = await loadTempurifyConfig(rootDir);
 
         s.stop('Configuration loaded');
 
         // Discover entity folders
         s.start('Discovering entity folders');
 
-        const entityFolders = await discoverEntityFolders(rootDir);
+        const entityFolders = await discoverEntityFolders(config, options.debug);
 
         s.stop(`Found ${entityFolders.length} entity folders`);
 
@@ -84,8 +85,8 @@ export function createGenerateCommand(): Command {
         }
 
         // Show files to be generated
-        const filesToGenerate = selectedFolders.length * 2; // context + index per entity
-        consola.info(`Will generate ${filesToGenerate} files (${selectedFolders.length} entities × 2 files)`);
+        const filesToGenerate = selectedFolders.length * 3; // context + entity + index per entity
+        consola.info(`Will generate ${filesToGenerate} files (${selectedFolders.length} entities × 3 files)`);
 
         // Confirm if destructive
         if (!options.force) {
@@ -105,7 +106,8 @@ export function createGenerateCommand(): Command {
         const result = await generate({
           rootDir,
           configFile: configPath,
-          contextOnly: true, // MVP: only context files
+          entities: selectedFolders,
+          contextOnly: false, // Generate context and entity files
           skipBackup: options.skipBackup,
           skipManifest: options.skipManifest,
         });

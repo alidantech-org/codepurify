@@ -7,15 +7,32 @@
  */
 
 /**
- * Project-level configuration (user-facing, all optional)
+ * Entity strategy type
+ */
+export type EntityStrategy = 'grouped' | 'flat';
+
+/**
+ * Tempurify project configuration
  */
 export interface TempurifyProjectConfig {
-  /** Project name (optional) */
-  name?: string;
-  /** Root directory of the project (auto-resolved from process.cwd()) */
+  /** Root directory of the project (absolute path) */
   rootDir?: string;
-  /** Source directory containing source code */
+  /** Source directory for generated NestJS code */
   sourceDir?: string;
+  /** Types directory for user-owned entity contracts */
+  typesDir?: string;
+}
+
+/**
+ * Tempurify entity configuration
+ */
+export interface TempurifyEntityConfig {
+  /** Entity discovery strategy */
+  strategy?: EntityStrategy;
+  /** Group pattern for grouped strategy */
+  groupPattern?: string;
+  /** Entity folder pattern */
+  entityFolderPattern?: string;
 }
 
 /**
@@ -110,8 +127,10 @@ export interface TempurifyGitConfig {
 export interface TempurifyConfig {
   /** Project configuration */
   project: Partial<TempurifyProjectConfig>;
+  /** Entity configuration */
+  entity?: Partial<TempurifyEntityConfig>;
   /** NestJS configuration */
-  nest: Partial<TempurifyNestConfig>;
+  nest?: Partial<TempurifyNestConfig>;
   /** Path configuration */
   paths?: Partial<TempurifyPathsConfig>;
   /** Template configuration */
@@ -132,6 +151,8 @@ export interface TempurifyConfig {
 export interface ResolvedTempurifyConfig {
   /** Project configuration */
   project: TempurifyProjectConfig;
+  /** Entity configuration */
+  entity: TempurifyEntityConfig;
   /** NestJS configuration */
   nest: TempurifyNestConfig;
   /** Path configuration */

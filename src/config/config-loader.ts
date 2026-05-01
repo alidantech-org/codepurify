@@ -32,26 +32,30 @@ export class ConfigError extends Error {
 }
 
 /**
- * Finds a Tempurify configuration file in the given directory
+ * Finds a Tempurify configuration file in the given directory or validates a config file path
  *
- * @param rootDir - Directory to search in (defaults to process.cwd())
+ * @param input - Directory to search in or path to config file (defaults to process.cwd())
  * @returns Path to config file or null if not found
  */
-export async function findTempurifyConfigFile(rootDir: string = process.cwd()): Promise<string | null> {
-  try {
-    // Check if directory exists
-    await access(rootDir);
-    const dirStat = await stat(rootDir);
-    if (!dirStat.isDirectory()) {
-      throw new ConfigError(`Root directory is not a directory: ${rootDir}`);
+export async function findTempurifyConfigFile(input: string = process.cwd()): Promise<string | null> {
+  const resolved = resolve(input);
+  const stats = await stat(resolved).catch(() => null);
+
+  if (stats?.isFile()) {
+    const basename = resolved.split('\\').pop() || resolved.split('/').pop() || '';
+    if (CONFIG_FILE_NAMES.includes(basename as any)) {
+      return resolved;
     }
-  } catch (error) {
-    throw new ConfigError(`Cannot access root directory: ${rootDir}`, error as Error);
+    throw new ConfigError(`Invalid Tempurify config file: ${resolved}`);
+  }
+
+  if (!stats?.isDirectory()) {
+    throw new ConfigError(`Root directory is not a directory: ${resolved}`);
   }
 
   // Search for config files in order of preference
   for (const filename of CONFIG_FILE_NAMES) {
-    const configPath = resolve(rootDir, filename);
+    const configPath = resolve(resolved, filename);
     try {
       await access(configPath);
       const configStat = await stat(configPath);

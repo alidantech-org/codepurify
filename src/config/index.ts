@@ -39,3 +39,6 @@ export { findTempurifyConfigFile, loadTempurifyConfig, ConfigError } from './con
 // Configuration template generation
 export * from './default-config-template';
 export * from './config-template-generator';
+
+// File registry
+export * from './file-registry';
