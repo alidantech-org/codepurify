@@ -1,0 +1,32 @@
+[build_context]
+├─ root_directory: string
+├─ source_directory: string
+├─ types_directory: string
+│
+├─ base_entity
+│  ├─ type_file: string
+│  ├─ config_file: string
+│  ├─ base_entity_file: string
+│  └─ name: string
+│
+├─ templates[]
+│  └─ template
+│     ├─ template_file: string
+│     ├─ template_name: string
+│     ├─ template_description: string
+│     ├─ output_directory_pattern: string
+│     ├─ output_file_pattern: string
+│     ├─ immutable: boolean
+│     └─ overwrite: boolean
+│
+└─ entities[]
+   └─ entity
+      ├─ entity_file: string
+      ├─ entity_name: string
+      ├─ entity_description: string
+      ├─ entity_properties[]
+      ├─ entity_methods[]
+      ├─ entity_relations[]
+      ├─ entity_columns[]
+      ├─ entity_permissions[]
+      └─ entity_hooks[]
