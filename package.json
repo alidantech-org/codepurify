@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "description": "Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs",
   "type": "module",
+  "homepage": "https://github.com/alidantech-org/codepurify",
+  "author": "alidantech.org",
   "bin": {
     "codepurify": "dist/cli/index.js"
   },
