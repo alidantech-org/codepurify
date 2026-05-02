@@ -4,15 +4,15 @@ import { existsSync } from 'node:fs';
 import { logger } from './logger';
 
 /**
- * Tempurify folder structure manager
+ * Codepurify folder structure manager
  *
- * Manages the .tempurify folder structure including:
- * - .tempurify/manifest.json - Generation manifest
- * - .tempurify/context/ - Entity context and metadata
- * - .tempurify/cache/ - Cached data and temporary files
+ * Manages the .codepurify folder structure including:
+ * - .codepurify/manifest.json - Generation manifest
+ * - .codepurify/context/ - Entity context and metadata
+ * - .codepurify/cache/ - Cached data and temporary files
  */
 
-export interface TempurifyFolderStructure {
+export interface CodepurifyFolderStructure {
   root: string;
   manifest: string;
   context: string;
@@ -21,25 +21,25 @@ export interface TempurifyFolderStructure {
 }
 
 /**
- * Gets the .tempurify folder structure for a project
+ * Gets the .codepurify folder structure for a project
  */
-export function getTempurifyFolders(rootDir: string): TempurifyFolderStructure {
-  const tempurifyDir = join(rootDir, '.tempurify');
+export function getCodepurifyFolders(rootDir: string): CodepurifyFolderStructure {
+  const codepurifyDir = join(rootDir, '.codepurify');
 
   return {
-    root: tempurifyDir,
-    manifest: join(tempurifyDir, 'manifest.json'),
-    context: join(tempurifyDir, 'context'),
-    cache: join(tempurifyDir, 'cache'),
-    entities: join(tempurifyDir, 'context', 'entities'),
+    root: codepurifyDir,
+    manifest: join(codepurifyDir, 'manifest.json'),
+    context: join(codepurifyDir, 'context'),
+    cache: join(codepurifyDir, 'cache'),
+    entities: join(codepurifyDir, 'context', 'entities'),
   };
 }
 
 /**
- * Ensures the .tempurify folder structure exists
+ * Ensures the .codepurify folder structure exists
  */
-export async function ensureTempurifyFolders(rootDir: string): Promise<TempurifyFolderStructure> {
-  const folders = getTempurifyFolders(rootDir);
+export async function ensureCodepurifyFolders(rootDir: string): Promise<CodepurifyFolderStructure> {
+  const folders = getCodepurifyFolders(rootDir);
 
   // Create folders if they don't exist
   const foldersToCreate = [folders.root, folders.context, folders.cache, folders.entities];
@@ -55,7 +55,7 @@ export async function ensureTempurifyFolders(rootDir: string): Promise<Tempurify
   if (!existsSync(folders.manifest)) {
     const defaultManifest = {
       version: 1,
-      generator: 'tempurify',
+      generator: 'codepurify',
       generatedAt: null,
       entries: [],
     };
@@ -130,7 +130,7 @@ export interface EntityMetadata {
 /**
  * Saves entity metadata to a JSON file
  */
-export async function saveEntityMetadata(folders: TempurifyFolderStructure, entityName: string, metadata: EntityMetadata): Promise<void> {
+export async function saveEntityMetadata(folders: CodepurifyFolderStructure, entityName: string, metadata: EntityMetadata): Promise<void> {
   const metadataFile = join(folders.entities, `${entityName}.json`);
   await writeFile(metadataFile, JSON.stringify(metadata, null, 2), 'utf-8');
   logger.debug(`Saved entity metadata: ${metadataFile}`);
@@ -139,7 +139,7 @@ export async function saveEntityMetadata(folders: TempurifyFolderStructure, enti
 /**
  * Loads entity metadata from a JSON file
  */
-export async function loadEntityMetadata(folders: TempurifyFolderStructure, entityName: string): Promise<EntityMetadata | null> {
+export async function loadEntityMetadata(folders: CodepurifyFolderStructure, entityName: string): Promise<EntityMetadata | null> {
   const metadataFile = join(folders.entities, `${entityName}.json`);
 
   if (!existsSync(metadataFile)) {
@@ -158,7 +158,7 @@ export async function loadEntityMetadata(folders: TempurifyFolderStructure, enti
 /**
  * Lists all entity metadata files
  */
-export function listEntityMetadata(folders: TempurifyFolderStructure): string[] {
+export function listEntityMetadata(folders: CodepurifyFolderStructure): string[] {
   if (!existsSync(folders.entities)) {
     return [];
   }
@@ -176,10 +176,10 @@ export function listEntityMetadata(folders: TempurifyFolderStructure): string[] 
 /**
  * Updates the generation manifest
  */
-export async function updateManifest(folders: TempurifyFolderStructure, entries: any[]): Promise<void> {
+export async function updateManifest(folders: CodepurifyFolderStructure, entries: any[]): Promise<void> {
   const manifest = {
     version: 1,
-    generator: 'tempurify',
+    generator: 'codepurify',
     generatedAt: new Date().toISOString(),
     entries,
   };

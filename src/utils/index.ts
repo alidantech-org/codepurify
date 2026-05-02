@@ -1,7 +1,7 @@
 /**
- * Tempurify Utilities Module
+ * Codepurify Utilities Module
  *
- * Central exports for all Tempurify utility functions.
+ * Central exports for all Codepurify utility functions.
  * Provides path, JSON, glob, hash, shell, format, case, and object utilities.
  */
 

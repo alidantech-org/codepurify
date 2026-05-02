@@ -1,7 +1,7 @@
 /**
- * Tempurify Clean Command
+ * Codepurify Clean Command
  *
- * Clears the .tempurify/cache directory.
+ * Clears the .codepurify/cache directory.
  */
 
 import { Command } from 'commander';
@@ -16,14 +16,14 @@ import { fileExists } from '../../utils';
  */
 export function createCleanCommand(): Command {
   const command = new Command('clean')
-    .description('Clear the .tempurify/cache directory')
+    .description('Clear the .codepurify/cache directory')
     .option('-f, --force', 'Force clean without confirmation')
     .action(async (options) => {
       try {
-        intro('🧹 Tempurify Clean');
+        intro('🧹 Codepurify Clean');
 
         const rootDir = process.cwd();
-        const cacheDir = join(rootDir, '.tempurify', 'cache');
+        const cacheDir = join(rootDir, '.codepurify', 'cache');
 
         // Check if cache exists
         if (!(await fileExists(cacheDir))) {

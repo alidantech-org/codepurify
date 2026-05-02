@@ -1,8 +1,8 @@
-// ─── tempurify/fields/transition.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/transition.ts ─────────────────────────────────────────────────
 
-import { FieldConfig } from "../types/base";
-import { EnumFieldConfig } from "../types/enum";
-import { TransitionConfig } from "../types/transition";
+import { FieldConfig } from '../types/base';
+import { EnumFieldConfig } from '../types/enum';
+import { TransitionConfig } from '../types/transition';
 
 export function transition<TField extends FieldConfig>(config: TransitionConfig<TField>): TransitionConfig<TField> {
   return config;

@@ -1,4 +1,4 @@
-// ─── tempurify/fields/enum.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/enum.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig, TransitionState } from './base';
 

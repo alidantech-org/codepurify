@@ -1,12 +1,12 @@
 /**
- * Tempurify Configuration Validation Schemas
+ * Codepurify Configuration Validation Schemas
  *
- * Provides Zod schemas for runtime validation of Tempurify configuration.
+ * Provides Zod schemas for runtime validation of Codepurify configuration.
  * Ensures user configuration matches expected structure and types.
  */
 
 import { z } from 'zod';
-import type { TempurifyConfig, ResolvedTempurifyConfig } from '../types/config.types';
+import type { CodepurifyConfig, ResolvedCodepurifyConfig } from '../types/config.types';
 
 /**
  * Schema for entity strategy
@@ -65,7 +65,7 @@ const nestConfigSchema = z.object({
  * Schema for paths configuration
  */
 const pathsConfigSchema = z.object({
-  tempurifyDir: z.string(),
+  codepurifyDir: z.string(),
   manifestFile: z.string(),
   cacheDir: z.string(),
   backupsDir: z.string(),
@@ -114,9 +114,9 @@ const gitConfigSchema = z.object({
 });
 
 /**
- * Tempurify configuration schema (user-facing, all optional)
+ * Codepurify configuration schema (user-facing, all optional)
  */
-export const tempurifyConfigSchema = z.object({
+export const codepurifyConfigSchema = z.object({
   project: projectConfigSchema.partial(),
   entity: entityConfigSchema.optional(),
   nest: nestConfigSchema.optional(),
@@ -126,12 +126,12 @@ export const tempurifyConfigSchema = z.object({
   mutable: mutableConfigSchema.optional(),
   formatting: formattingConfigSchema.optional(),
   git: gitConfigSchema.optional(),
-}) satisfies z.ZodType<TempurifyConfig>;
+}) satisfies z.ZodType<CodepurifyConfig>;
 
 /**
- * Resolved Tempurify configuration schema (all properties required)
+ * Resolved Codepurify configuration schema (all properties required)
  */
-export const resolvedTempurifyConfigSchema = z.object({
+export const resolvedCodepurifyConfigSchema = z.object({
   project: resolvedProjectConfigSchema,
   entity: resolvedEntityConfigSchema,
   nest: nestConfigSchema,
@@ -141,26 +141,26 @@ export const resolvedTempurifyConfigSchema = z.object({
   mutable: mutableConfigSchema,
   formatting: formattingConfigSchema,
   git: gitConfigSchema,
-}) satisfies z.ZodType<ResolvedTempurifyConfig>;
+}) satisfies z.ZodType<ResolvedCodepurifyConfig>;
 
 /**
- * Validates a Tempurify configuration object
+ * Validates a Codepurify configuration object
  *
  * @param config - Configuration to validate
  * @returns Validated configuration
  * @throws ZodError if validation fails
  */
-export function validateTempurifyConfig(config: unknown): TempurifyConfig {
-  return tempurifyConfigSchema.parse(config);
+export function validateCodepurifyConfig(config: unknown): CodepurifyConfig {
+  return codepurifyConfigSchema.parse(config);
 }
 
 /**
- * Validates a resolved Tempurify configuration object
+ * Validates a resolved Codepurify configuration object
  *
  * @param config - Resolved configuration to validate
  * @returns Validated resolved configuration
  * @throws ZodError if validation fails
  */
-export function validateResolvedTempurifyConfig(config: unknown): ResolvedTempurifyConfig {
-  return resolvedTempurifyConfigSchema.parse(config);
+export function validateResolvedCodepurifyConfig(config: unknown): ResolvedCodepurifyConfig {
+  return resolvedCodepurifyConfigSchema.parse(config);
 }

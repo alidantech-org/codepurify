@@ -1,5 +1,5 @@
 /**
- * Tempurify Template Types
+ * Codepurify Template Types
  *
  * Types for template registry, rendering, and variable definitions.
  * Provides contracts for the template system.

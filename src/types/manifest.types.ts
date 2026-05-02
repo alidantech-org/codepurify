@@ -1,18 +1,18 @@
 /**
- * Tempurify Manifest Types
+ * Codepurify Manifest Types
  *
- * Types for Tempurify manifest tracking and backup/session management.
+ * Types for Codepurify manifest tracking and backup/session management.
  * Provides contracts for file tracking and generation metadata.
  */
 
-export interface TempurifyManifest {
+export interface CodepurifyManifest {
   version: 1;
-  generator: 'tempurify';
+  generator: 'codepurify';
   generatedAt: string | null;
-  entries: TempurifyManifestEntry[];
+  entries: CodepurifyManifestEntry[];
 }
 
-export interface TempurifyManifestEntry {
+export interface CodepurifyManifestEntry {
   path: string;
   absolutePath: string;
   source: string;

@@ -3,5 +3,5 @@ dist
 .env
 .DS_Store
 coverage
-.tempurify/cache
-.tempurify/backups
+.codepurify/cache
+.codepurify/backups

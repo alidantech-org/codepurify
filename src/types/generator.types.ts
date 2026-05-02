@@ -1,5 +1,5 @@
 /**
- * Tempurify Generator Types
+ * Codepurify Generator Types
  *
  * Shared types for generation inputs/outputs, file planning, and results.
  * Provides contracts for the generation system.

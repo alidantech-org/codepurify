@@ -1,9 +1,8 @@
-// ─── tempurify/fields/transition.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/transition.ts ─────────────────────────────────────────────────
 
-import { FieldConfig } from "./base";
-import { BooleanFieldConfig } from "./boolean";
-import { EnumFieldConfig } from "./enum";
-
+import { FieldConfig } from './base';
+import { BooleanFieldConfig } from './boolean';
+import { EnumFieldConfig } from './enum';
 
 // ─── Workflow Types ─────────────────────────────────────────────────────────────
 

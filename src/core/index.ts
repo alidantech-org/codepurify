@@ -1,7 +1,7 @@
 /**
- * Tempurify Core Module
+ * Codepurify Core Module
  *
- * Central exports for all Tempurify core functionality.
+ * Central exports for all Codepurify core functionality.
  * Provides error handling, logging, manifest management, backup system,
  * file writing, rollback capabilities, and main generator orchestrator.
  */
@@ -23,4 +23,3 @@ export * from './file-writer';
 
 // Rollback functionality
 export * from './rollback-manager';
-

@@ -1,7 +1,7 @@
 /**
- * Tempurify Configuration Types
+ * Codepurify Configuration Types
  *
- * Defines the structure for Tempurify's configuration system.
+ * Defines the structure for Codepurify's configuration system.
  * Supports project settings, NestJS paths, immutable/mutable rules,
  * formatting commands, git rules, and path management.
  */
@@ -12,9 +12,9 @@
 export type EntityStrategy = 'grouped' | 'flat';
 
 /**
- * Tempurify project configuration
+ * Codepurify project configuration
  */
-export interface TempurifyProjectConfig {
+export interface CodepurifyProjectConfig {
   /** Root directory of the project (absolute path) */
   rootDir?: string;
   /** Source directory for generated NestJS code */
@@ -24,9 +24,9 @@ export interface TempurifyProjectConfig {
 }
 
 /**
- * Tempurify entity configuration
+ * Codepurify entity configuration
  */
-export interface TempurifyEntityConfig {
+export interface CodepurifyEntityConfig {
   /** Entity discovery strategy */
   strategy?: EntityStrategy;
   /** Group pattern for grouped strategy */
@@ -38,7 +38,7 @@ export interface TempurifyEntityConfig {
 /**
  * NestJS-specific configuration
  */
-export interface TempurifyNestConfig {
+export interface CodepurifyNestConfig {
   /** Directory containing NestJS modules */
   modulesDir: string;
   /** Pattern to find entity folders */
@@ -54,11 +54,11 @@ export interface TempurifyNestConfig {
 }
 
 /**
- * Path configuration for various Tempurify resources
+ * Path configuration for various Codepurify resources
  */
-export interface TempurifyPathsConfig {
-  /** Tempurify working directory */
-  tempurifyDir: string;
+export interface CodepurifyPathsConfig {
+  /** Codepurify working directory */
+  codepurifyDir: string;
   /** Manifest file path */
   manifestFile: string;
   /** Cache directory path */
@@ -70,7 +70,7 @@ export interface TempurifyPathsConfig {
 /**
  * Template configuration
  */
-export interface TempurifyTemplateConfig {
+export interface CodepurifyTemplateConfig {
   /** Directory containing built-in templates */
   builtinDir: string;
   /** Directory containing user templates */
@@ -82,7 +82,7 @@ export interface TempurifyTemplateConfig {
 /**
  * Immutable file configuration
  */
-export interface TempurifyImmutableConfig {
+export interface CodepurifyImmutableConfig {
   /** Whether immutable validation is enabled */
   enabled: boolean;
   /** Glob patterns for immutable files */
@@ -92,7 +92,7 @@ export interface TempurifyImmutableConfig {
 /**
  * Mutable file configuration
  */
-export interface TempurifyMutableConfig {
+export interface CodepurifyMutableConfig {
   /** Glob patterns for mutable files */
   include: string[];
 }
@@ -100,7 +100,7 @@ export interface TempurifyMutableConfig {
 /**
  * Formatting configuration
  */
-export interface TempurifyFormattingConfig {
+export interface CodepurifyFormattingConfig {
   /** Whether to run prettier */
   prettier: boolean;
   /** Whether to run eslint */
@@ -112,7 +112,7 @@ export interface TempurifyFormattingConfig {
 /**
  * Git integration configuration
  */
-export interface TempurifyGitConfig {
+export interface CodepurifyGitConfig {
   /** Whether git integration is enabled */
   enabled: boolean;
   /** Required branch for generation operations */
@@ -122,49 +122,49 @@ export interface TempurifyGitConfig {
 }
 
 /**
- * Main Tempurify configuration interface
+ * Main Codepurify configuration interface
  */
-export interface TempurifyConfig {
+export interface CodepurifyConfig {
   /** Project configuration */
-  project: Partial<TempurifyProjectConfig>;
+  project: Partial<CodepurifyProjectConfig>;
   /** Entity configuration */
-  entity?: Partial<TempurifyEntityConfig>;
+  entity?: Partial<CodepurifyEntityConfig>;
   /** NestJS configuration */
-  nest?: Partial<TempurifyNestConfig>;
+  nest?: Partial<CodepurifyNestConfig>;
   /** Path configuration */
-  paths?: Partial<TempurifyPathsConfig>;
+  paths?: Partial<CodepurifyPathsConfig>;
   /** Template configuration */
-  templates?: Partial<TempurifyTemplateConfig>;
+  templates?: Partial<CodepurifyTemplateConfig>;
   /** Immutable configuration */
-  immutable?: Partial<TempurifyImmutableConfig>;
+  immutable?: Partial<CodepurifyImmutableConfig>;
   /** Mutable configuration */
-  mutable?: Partial<TempurifyMutableConfig>;
+  mutable?: Partial<CodepurifyMutableConfig>;
   /** Formatting configuration */
-  formatting?: Partial<TempurifyFormattingConfig>;
+  formatting?: Partial<CodepurifyFormattingConfig>;
   /** Git configuration */
-  git?: Partial<TempurifyGitConfig>;
+  git?: Partial<CodepurifyGitConfig>;
 }
 
 /**
- * Resolved Tempurify configuration with all paths absolute
+ * Resolved Codepurify configuration with all paths absolute
  */
-export interface ResolvedTempurifyConfig {
+export interface ResolvedCodepurifyConfig {
   /** Project configuration */
-  project: TempurifyProjectConfig;
+  project: CodepurifyProjectConfig;
   /** Entity configuration */
-  entity: TempurifyEntityConfig;
+  entity: CodepurifyEntityConfig;
   /** NestJS configuration */
-  nest: TempurifyNestConfig;
+  nest: CodepurifyNestConfig;
   /** Path configuration */
-  paths: TempurifyPathsConfig;
+  paths: CodepurifyPathsConfig;
   /** Template configuration */
-  templates: TempurifyTemplateConfig;
+  templates: CodepurifyTemplateConfig;
   /** Immutable configuration */
-  immutable: TempurifyImmutableConfig;
+  immutable: CodepurifyImmutableConfig;
   /** Mutable configuration */
-  mutable: TempurifyMutableConfig;
+  mutable: CodepurifyMutableConfig;
   /** Formatting configuration */
-  formatting: TempurifyFormattingConfig;
+  formatting: CodepurifyFormattingConfig;
   /** Git configuration */
-  git: TempurifyGitConfig;
+  git: CodepurifyGitConfig;
 }

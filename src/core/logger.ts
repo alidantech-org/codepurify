@@ -1,16 +1,16 @@
 /**
- * Tempurify Logger
+ * Codepurify Logger
  *
  * Provides a simple wrapper around consola for consistent logging
- * throughout the Tempurify application.
+ * throughout the Codepurify application.
  */
 
 import { consola } from 'consola';
 
 /**
- * Tempurify logger instance
+ * Codepurify logger instance
  */
-export const logger = consola.withTag('tempurify');
+export const logger = consola.withTag('codepurify');
 
 /**
  * Log an info message

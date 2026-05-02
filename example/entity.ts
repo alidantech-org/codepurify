@@ -1,4 +1,4 @@
-import { defineEntityConfig, stringField, booleanField, enumField, uuidField, relationField } from 'tempurify';
+import { defineEntityConfig, stringField, booleanField, enumField, uuidField, relationField } from 'codepurify';
 
 export default defineEntityConfig({
   key: 'app',

@@ -1,12 +1,12 @@
 /**
- * Tempurify Rollback Manager
+ * Codepurify Rollback Manager
  *
  * Restores files from backup sessions and updates manifest accordingly.
  * Provides safe rollback functionality with proper cleanup.
  */
 
 import { copyFile, unlink } from 'node:fs/promises';
-import { createTempurifyError, TempurifyErrorCode } from './errors';
+import { createCodepurifyError, CodepurifyErrorCode } from './errors';
 import { logger } from './logger';
 import type { ManifestManager } from './manifest-manager';
 
@@ -30,7 +30,7 @@ export class RollbackManager {
    * Rolls back files from a specific backup session
    *
    * @param sessionId - Session ID to rollback from
-   * @throws TempurifyError if rollback fails
+   * @throws CodepurifyError if rollback fails
    */
   async rollback(sessionId: string): Promise<void> {
     const { backupsDir, manifestManager } = this.options;
@@ -41,7 +41,7 @@ export class RollbackManager {
 
     const session = await backupManager.loadSession(sessionId);
     if (!session) {
-      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'Backup session not found', { sessionId });
+      throw createCodepurifyError(CodepurifyErrorCode.ROLLBACK_FAILED, 'Backup session not found', { sessionId });
     }
 
     logger.info(`Starting rollback from session: ${sessionId}`);
@@ -77,7 +77,7 @@ export class RollbackManager {
     const totalRecords = session.records.length;
 
     if (totalProcessed < totalRecords) {
-      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'Partial rollback completed - some files failed to rollback', {
+      throw createCodepurifyError(CodepurifyErrorCode.ROLLBACK_FAILED, 'Partial rollback completed - some files failed to rollback', {
         sessionId,
         totalRecords,
         processed: totalProcessed,
@@ -90,7 +90,7 @@ export class RollbackManager {
   /**
    * Rolls back from the latest backup session
    *
-   * @throws TempurifyError if no sessions exist or rollback fails
+   * @throws CodepurifyError if no sessions exist or rollback fails
    */
   async rollbackLatest(): Promise<void> {
     const { backupsDir } = this.options;
@@ -102,7 +102,7 @@ export class RollbackManager {
     const sessions = await backupManager.listSessions();
 
     if (sessions.length === 0) {
-      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'No backup sessions found for rollback');
+      throw createCodepurifyError(CodepurifyErrorCode.ROLLBACK_FAILED, 'No backup sessions found for rollback');
     }
 
     // Sort sessions by creation date (newest first)
@@ -118,11 +118,11 @@ export class RollbackManager {
    * Restores a file from backup
    *
    * @param record - Backup record
-   * @throws TempurifyError if restore fails
+   * @throws CodepurifyError if restore fails
    */
   private async restoreFile(record: { originalPath: string; backupPath: string }): Promise<void> {
     if (!record.backupPath) {
-      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'No backup path available for file restoration', {
+      throw createCodepurifyError(CodepurifyErrorCode.ROLLBACK_FAILED, 'No backup path available for file restoration', {
         originalPath: record.originalPath,
       });
     }
@@ -131,7 +131,7 @@ export class RollbackManager {
       await copyFile(record.backupPath, record.originalPath);
       logger.debug(`Restored file: ${record.originalPath}`);
     } catch (error) {
-      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'Failed to restore file from backup', {
+      throw createCodepurifyError(CodepurifyErrorCode.ROLLBACK_FAILED, 'Failed to restore file from backup', {
         originalPath: record.originalPath,
         backupPath: record.backupPath,
         cause: error,
@@ -158,7 +158,7 @@ export class RollbackManager {
       }
 
       // Otherwise, it's an error
-      throw createTempurifyError(TempurifyErrorCode.ROLLBACK_FAILED, 'Failed to delete generated file', {
+      throw createCodepurifyError(CodepurifyErrorCode.ROLLBACK_FAILED, 'Failed to delete generated file', {
         originalPath: record.originalPath,
         cause: error,
       });

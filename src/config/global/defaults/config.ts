@@ -1,15 +1,15 @@
 /**
- * Tempurify Default Configuration
+ * Codepurify Default Configuration
  *
- * Provides default values for all Tempurify configuration options.
+ * Provides default values for all Codepurify configuration options.
  * These defaults are merged with user configuration.
  */
-import type { TempurifyConfig } from '../types/config.types';
+import type { CodepurifyConfig } from '../types/config.types';
 
 /**
- * Default Tempurify configuration (user-facing, relative paths only)
+ * Default Codepurify configuration (user-facing, relative paths only)
  */
-export const DEFAULT_TEMPURA_CONFIG: TempurifyConfig = {
+export const DEFAULT_TEMPURA_CONFIG: CodepurifyConfig = {
   project: {
     sourceDir: 'src',
     typesDir: 'types',
@@ -31,15 +31,15 @@ export const DEFAULT_TEMPURA_CONFIG: TempurifyConfig = {
   },
 
   paths: {
-    tempurifyDir: '.tempurify',
-    manifestFile: '.tempurify/manifest.json',
-    cacheDir: '.tempurify/cache',
-    backupsDir: '.tempurify/backups',
+    codepurifyDir: '.codepurify',
+    manifestFile: '.codepurify/manifest.json',
+    cacheDir: '.codepurify/cache',
+    backupsDir: '.codepurify/backups',
   },
 
   templates: {
     builtinDir: 'templates/nest',
-    userDir: 'tempurify.templates',
+    userDir: 'codepurify.templates',
     allowUserOverrides: false,
   },
 

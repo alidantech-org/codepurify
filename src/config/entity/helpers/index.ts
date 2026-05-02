@@ -1,4 +1,4 @@
-// ─── tempurify/helpers/index.ts ─────────────────────────────────────────────────
+// ─── codepurify/helpers/index.ts ─────────────────────────────────────────────────
 
 // Export all helper functions
 export * from './entity';

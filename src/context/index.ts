@@ -1,5 +1,5 @@
 /**
- * Tempurify template context registry.
+ * Codepurify template context registry.
  *
  * This file merges all chunked context registry sections into one canonical
  * registry object. It intentionally contains no helper methods.
@@ -24,6 +24,5 @@ export const TEMPURIFY_VARIABLE_REGISTRY = {
   ...imports_context,
 } as const;
 
-export type TempurifyVariableRegistry = typeof TEMPURIFY_VARIABLE_REGISTRY;
-export type TempurifyVariableRegistryGroup = keyof TempurifyVariableRegistry;
-
+export type CodepurifyVariableRegistry = typeof TEMPURIFY_VARIABLE_REGISTRY;
+export type CodepurifyVariableRegistryGroup = keyof CodepurifyVariableRegistry;

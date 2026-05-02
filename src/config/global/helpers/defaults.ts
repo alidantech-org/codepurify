@@ -1,21 +1,21 @@
 /**
- * Tempurify Default Configuration
+ * Codepurify Default Configuration
  *
- * Provides default values for all Tempurify configuration options.
+ * Provides default values for all Codepurify configuration options.
  * These defaults are merged with user configuration.
  */
 
 import { DEFAULT_TEMPURA_CONFIG } from '../defaults/config';
-import type { TempurifyConfig } from '../types/config.types';
+import type { CodepurifyConfig } from '../types/config.types';
 import { resolve } from 'node:path';
 
 /**
- * Creates a default Tempurify configuration with resolved paths
+ * Creates a default Codepurify configuration with resolved paths
  *
  * @param rootDir - Root directory to resolve paths from (defaults to process.cwd())
  * @returns Default configuration with absolute paths
  */
-export function createDefaultTempurifyConfig(rootDir: string = process.cwd()): TempurifyConfig {
+export function createDefaultCodepurifyConfig(rootDir: string = process.cwd()): CodepurifyConfig {
   const config = { ...DEFAULT_TEMPURA_CONFIG };
 
   // Add rootDir to project config (internal only, not in user config)

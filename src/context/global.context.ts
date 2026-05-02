@@ -1,5 +1,5 @@
 /**
- * Tempurify template context registry chunk: discovery
+ * Codepurify template context registry chunk: discovery
  *
  * This file is generated from the monolithic variable registry.
  * It intentionally exports only a const object chunk.
@@ -31,11 +31,11 @@ export const discovery_context = {
   },
 
   /**
-   * File system paths used by Tempurify itself.
+   * File system paths used by Codepurify itself.
    */
   paths: {
-    /** Tempurify working directory. */
-    tempurify_dir: 'paths.tempurify_dir',
+    /** Codepurify working directory. */
+    codepurify_dir: 'paths.codepurify_dir',
 
     /** Manifest file path. */
     manifest_file: 'paths.manifest_file',
@@ -61,7 +61,7 @@ export const discovery_context = {
     types_dir: 'project.types_dir',
   },
   /**
-   * Tempurify template context registry chunk: output
+   * Codepurify template context registry chunk: output
    *
    * This file is generated from the monolithic variable registry.
    * It intentionally exports only a const object chunk.

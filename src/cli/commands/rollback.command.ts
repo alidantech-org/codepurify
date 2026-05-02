@@ -1,5 +1,5 @@
 /**
- * Tempurify Rollback Command
+ * Codepurify Rollback Command
  *
  * Restores files from the latest backup session.
  */
@@ -20,10 +20,10 @@ export function createRollbackCommand(): Command {
     .option('-f, --force', 'Force rollback without confirmation')
     .action(async (options) => {
       try {
-        intro('🔄 Tempurify Rollback');
+        intro('🔄 Codepurify Rollback');
 
         const rootDir = process.cwd();
-        const backupsDir = join(rootDir, '.tempurify', 'backups');
+        const backupsDir = join(rootDir, '.codepurify', 'backups');
 
         // Check if backups exist
         if (!(await fileExists(backupsDir))) {

@@ -1,22 +1,22 @@
 /**
- * Tempurify Config Definition Helper
+ * Codepurify Config Definition Helper
  *
- * Provides the defineTempurifyConfig helper function for users to define
- * their Tempurify configuration with type safety and validation.
+ * Provides the defineCodepurifyConfig helper function for users to define
+ * their Codepurify configuration with type safety and validation.
  */
 
-import type { TempurifyConfig } from '../types/config.types';
+import type { CodepurifyConfig } from '../types/config.types';
 
 /**
- * Helper function to define Tempurify configuration
+ * Helper function to define Codepurify configuration
  *
  * This function provides type safety and validation for user-defined
- * Tempurify configuration. It can be used in config files like:
+ * Codepurify configuration. It can be used in config files like:
  *
  * ```js
- * const { defineTempurifyConfig } = require("tempurify");
+ * const { defineCodepurifyConfig } = require("codepurify");
  *
- * module.exports = defineTempurifyConfig({
+ * module.exports = defineCodepurifyConfig({
  *   project: {
  *     name: "my-app"
  *   }
@@ -26,10 +26,10 @@ import type { TempurifyConfig } from '../types/config.types';
  * @param config - User configuration object
  * @returns Validated configuration object
  */
-export function defineTempurifyConfig(config: TempurifyConfig): TempurifyConfig {
+export function defineCodepurifyConfig(config: CodepurifyConfig): CodepurifyConfig {
   // Basic validation to ensure config is an object
   if (typeof config !== 'object' || config === null) {
-    throw new Error('Tempurify config must be an object');
+    throw new Error('Codepurify config must be an object');
   }
 
   // Return the config as-is for now

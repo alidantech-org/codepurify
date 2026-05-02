@@ -1,4 +1,4 @@
-// ─── tempurify/fields/string.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/string.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig } from './base';
 

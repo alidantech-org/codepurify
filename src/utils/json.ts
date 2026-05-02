@@ -1,5 +1,5 @@
 /**
- * Tempurify JSON Utilities
+ * Codepurify JSON Utilities
  *
  * Provides JSON file operations with error handling and formatting.
  * Uses Node.js built-in JSON with consistent formatting.

@@ -1,14 +1,14 @@
 /**
- * Tempurify Error System
+ * Codepurify Error System
  *
  * Provides structured error handling with error codes and detailed information.
- * All Tempurify errors should extend from TempurifyError for consistent handling.
+ * All Codepurify errors should extend from CodepurifyError for consistent handling.
  */
 
 /**
- * Error codes for different types of Tempurify errors
+ * Error codes for different types of Codepurify errors
  */
-export enum TempurifyErrorCode {
+export enum CodepurifyErrorCode {
   CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
   CONFIG_INVALID = 'CONFIG_INVALID',
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
@@ -23,20 +23,20 @@ export enum TempurifyErrorCode {
 }
 
 /**
- * Base error class for all Tempurify errors
+ * Base error class for all Codepurify errors
  */
-export class TempurifyError extends Error {
+export class CodepurifyError extends Error {
   constructor(
-    public code: TempurifyErrorCode,
+    public code: CodepurifyErrorCode,
     message: string,
     public details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'TempurifyError';
+    this.name = 'CodepurifyError';
 
     // Maintains proper stack trace for where our error was thrown
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, TempurifyError);
+      Error.captureStackTrace(this, CodepurifyError);
     }
   }
 
@@ -71,23 +71,23 @@ export class TempurifyError extends Error {
 }
 
 /**
- * Creates a TempurifyError with the given code and message
+ * Creates a CodepurifyError with the given code and message
  *
  * @param code - Error code
  * @param message - Error message
  * @param details - Optional error details
- * @returns TempurifyError instance
+ * @returns CodepurifyError instance
  */
-export function createTempurifyError(code: TempurifyErrorCode, message: string, details?: Record<string, unknown>): TempurifyError {
-  return new TempurifyError(code, message, details);
+export function createCodepurifyError(code: CodepurifyErrorCode, message: string, details?: Record<string, unknown>): CodepurifyError {
+  return new CodepurifyError(code, message, details);
 }
 
 /**
- * Type guard to check if an error is a TempurifyError
+ * Type guard to check if an error is a CodepurifyError
  *
  * @param error - Error to check
- * @returns True if error is a TempurifyError
+ * @returns True if error is a CodepurifyError
  */
-export function isTempurifyError(error: unknown): error is TempurifyError {
-  return error instanceof TempurifyError;
+export function isCodepurifyError(error: unknown): error is CodepurifyError {
+  return error instanceof CodepurifyError;
 }

@@ -1,5 +1,5 @@
 /**
- * Tempurify Check Command
+ * Codepurify Check Command
  *
  * Checks generated files against manifest for drift detection.
  * Reports clean, changed, and missing files.
@@ -29,14 +29,14 @@ interface FileCheckResult {
 export function createCheckCommand(): Command {
   const command = new Command('check').description('Check generated files against manifest for drift').action(async () => {
     try {
-      intro('🔍 Tempurify Check');
+      intro('🔍 Codepurify Check');
 
       const rootDir = process.cwd();
-      const manifestPath = join(rootDir, '.tempurify', 'manifest.json');
+      const manifestPath = join(rootDir, '.codepurify', 'manifest.json');
 
       // Check if manifest exists
       if (!(await fileExists(manifestPath))) {
-        consola.error('Manifest not found. Run: tempurify init');
+        consola.error('Manifest not found. Run: codepurify init');
         process.exit(1);
       }
 

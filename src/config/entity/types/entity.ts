@@ -1,4 +1,4 @@
-// ─── tempurify/fields/entity.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/entity.ts ─────────────────────────────────────────────────
 
 import { FieldConfig } from './base';
 import { CheckConfig } from './check';

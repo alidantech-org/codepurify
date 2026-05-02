@@ -1,5 +1,5 @@
 /**
- * Tempurify template context registry chunk: field
+ * Codepurify template context registry chunk: field
  *
  * This file is generated from the monolithic variable registry.
  * It intentionally exports only a const object chunk.

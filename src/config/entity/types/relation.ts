@@ -1,4 +1,4 @@
-// ─── tempurify/fields/relation.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/relation.ts ─────────────────────────────────────────────────
 
 import type { FieldConfig } from './base';
 import { IEntityConfig } from './entity';

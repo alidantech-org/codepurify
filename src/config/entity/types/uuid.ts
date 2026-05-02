@@ -1,4 +1,4 @@
-// ─── tempurify/fields/uuid.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/uuid.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig } from './base';
 

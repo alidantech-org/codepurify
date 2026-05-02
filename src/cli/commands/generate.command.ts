@@ -1,5 +1,5 @@
 /**
- * Tempurify Generate Command
+ * Codepurify Generate Command
  *
  * Generates entity files from discovered entity folders.
  * MVP: generates app.context.ts and index.ts only.

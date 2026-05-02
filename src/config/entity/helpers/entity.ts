@@ -1,9 +1,6 @@
-// ─── tempurify/fields/entity.ts ─────────────────────────────────────────────────
+// ─── codepurify/fields/entity.ts ─────────────────────────────────────────────────
 
-import { FieldConfig, RelationConfigUnion, IndexConfig, IEntityConfig } from "../types";
-
-
-
+import { FieldConfig, RelationConfigUnion, IndexConfig, IEntityConfig } from '../types';
 
 // ─── Helper functions for entity configurations ───────────────────────────────────
 
@@ -18,7 +15,6 @@ export function defineRelations<const T extends Record<string, RelationConfigUni
 export function defineIndexes<const T extends readonly IndexConfig[]>(indexes: T): T {
   return indexes;
 }
-
 
 // ─── Entity definition ────────────────────────────────────────────────────────
 

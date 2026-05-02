@@ -25,23 +25,23 @@ export async function findPackageRoot(startDir: string): Promise<string> {
     try {
       await access(packageJsonPath, constants.F_OK);
 
-      // Verify this is the tempurify package
+      // Verify this is the codepurify package
       const { readFile } = await import('node:fs/promises');
       const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'));
 
-      if (packageJson.name === 'tempurify') {
+      if (packageJson.name === 'codepurify') {
         return currentDir;
       }
     } catch {
-      // Continue searching if not tempurify package or file not found
+      // Continue searching if not codepurify package or file not found
     }
 
-    // package.json not found or not tempurify package, go up one level
+    // package.json not found or not codepurify package, go up one level
     const parentDir = dirname(currentDir);
 
     // If we've reached the root directory and still haven't found package.json
     if (parentDir === currentDir) {
-      throw new Error('tempurify package.json not found in directory tree');
+      throw new Error('codepurify package.json not found in directory tree');
     }
 
     currentDir = parentDir;

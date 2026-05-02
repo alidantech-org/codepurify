@@ -1,4 +1,4 @@
-// ─── tempurify/types/index.ts ─────────────────────────────────────────────────
+// ─── codepurify/types/index.ts ─────────────────────────────────────────────────
 
 // Export all types
 export * from './base';
