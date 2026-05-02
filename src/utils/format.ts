@@ -60,7 +60,7 @@ export async function formatWithPrettier(filePaths: string[], cwd: string): Prom
  */
 export async function runTypecheck(cwd: string): Promise<void> {
   try {
-    const result = await runCommand('npx', ['tsc', '--noEmit'], {
+    await runCommand('npx', ['tsc', '--noEmit'], {
       cwd,
       reject: true,
       stdio: 'pipe',
@@ -100,7 +100,7 @@ export async function runEslint(filePaths: string[], cwd: string): Promise<void>
   }
 
   try {
-    const result = await runCommand('npx', ['eslint', ...filePaths], {
+    await runCommand('npx', ['eslint', ...filePaths], {
       cwd,
       reject: true,
       stdio: 'pipe',

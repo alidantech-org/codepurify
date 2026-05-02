@@ -5,7 +5,7 @@
  * Normalizes Windows paths to POSIX when returning relative paths.
  */
 
-import { resolve, relative, dirname, basename, extname, join, sep } from 'node:path';
+import { resolve, relative, dirname, basename, extname, join } from 'node:path';
 
 /**
  * Converts a path to POSIX format (forward slashes)

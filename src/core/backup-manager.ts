@@ -6,8 +6,8 @@
  */
 
 import { z } from 'zod';
-import { readFile, writeFile, copyFile } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { copyFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { ensureDirectory, readJsonFile, writeJsonFile, hashFile, fileExists } from '../utils';
 import { createTempurifyError, TempurifyErrorCode } from './errors';
 import { logger } from './logger';

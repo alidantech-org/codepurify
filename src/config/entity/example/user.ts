@@ -1,5 +1,16 @@
-
-import { defineFields, uuidField, query, mutation, stringField, booleanField, toggle, enumField, relationField, field, enumTransition } from '../helpers';
+import {
+  defineFields,
+  uuidField,
+  query,
+  mutation,
+  stringField,
+  booleanField,
+  toggle,
+  enumField,
+  relationField,
+  field,
+  enumTransition,
+} from '../helpers';
 import { IEntityConfig, DefineRelation } from '../types';
 import AppEntityConfig from './app';
 
@@ -82,7 +93,7 @@ export default class UserEntityConfig implements IEntityConfig {
     },
     {
       name: 'email_format',
-      rule: field(() => this.fields.email).regex('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+      rule: field(() => this.fields.email).regex('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'),
     },
   ];
 

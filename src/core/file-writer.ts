@@ -6,7 +6,7 @@
  */
 
 import { writeFile, rename, mkdir } from 'node:fs/promises';
-import { join, resolve, dirname } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { hashContent, fileExists } from '../utils';
 import { ensureInsideRoot, getRelativePath, toPosixPath } from '../utils/path';
 import { createTempurifyError, TempurifyErrorCode } from './errors';
@@ -80,7 +80,7 @@ export class FileWriter {
     // Ensure file is within root directory
     try {
       ensureInsideRoot(rootDir, absolutePath);
-    } catch (error) {
+    } catch {
       throw createTempurifyError(TempurifyErrorCode.FILE_WRITE_FAILED, 'File path escapes root directory', {
         filePath: input.filePath,
         absolutePath,
@@ -107,7 +107,7 @@ export class FileWriter {
             written: false,
           };
         }
-      } catch (error) {
+      } catch {
         logger.warn(`Failed to read existing file for comparison: ${input.filePath}`);
       }
     }

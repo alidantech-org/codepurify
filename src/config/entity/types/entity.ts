@@ -15,16 +15,6 @@ export interface EntityOptions {
   softDelete?: boolean;
 }
 
-// ─── sealed token ─────────────────────────────────────────────────────────────
-
-const __sealed = Symbol('sealed');
-
-abstract class SealedEntityBase {
-  readonly [__sealed] = true;
-  // nobody outside this module can extend this
-  // because the symbol is not exported
-}
-
 // ─── Entity config interface ─────────────────────────────────────────────────────
 
 /**

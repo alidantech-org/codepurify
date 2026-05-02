@@ -15,33 +15,33 @@ export type OnDelete = 'CASCADE' | 'SET NULL' | 'RESTRICT' | 'NO ACTION';
 
 export type FieldOf<T extends IEntityConfig> = keyof T['fields'] & string;
 
-export interface ManyToOneRelation<Local extends IEntityConfig, Remote extends IEntityConfig> {
+export interface ManyToOneRelation {
   kind: 'many_to_one';
   local_field: () => FieldConfig;
   remote_field: () => FieldConfig;
   on_delete?: OnDelete;
 }
 
-export interface OneToManyRelation<Remote extends IEntityConfig> {
+export interface OneToManyRelation {
   kind: 'one_to_many';
   remote_field: () => FieldConfig;
   cascade?: boolean;
 }
 
-export interface OneToOneRelation<Local extends IEntityConfig, Remote extends IEntityConfig> {
+export interface OneToOneRelation {
   kind: 'one_to_one';
   local_field: () => FieldConfig;
   remote_field: () => FieldConfig;
   on_delete?: OnDelete;
 }
 
-export type RelationConfigUnion = ManyToOneRelation<any, any> | OneToManyRelation<any> | OneToOneRelation<any, any>;
+export type RelationConfigUnion = ManyToOneRelation | OneToManyRelation | OneToOneRelation;
 
-export type DefineRelation = Record<string, RelationConfigUnion>; 
+export type DefineRelation = Record<string, RelationConfigUnion>;
 
 // ─── Relation field ───────────────────────────────────────────────────────────
 
-export interface RelationFieldConfig<Local extends IEntityConfig = IEntityConfig, Remote extends IEntityConfig = IEntityConfig> {
+export interface RelationFieldConfig {
   relation: RelationConfigUnion;
   query?: {
     select?: boolean;

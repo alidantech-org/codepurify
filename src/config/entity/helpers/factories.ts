@@ -7,7 +7,6 @@ import {
   UuidFieldConfig,
   ForeignFieldConfig,
   SecurityConfig,
-  FieldConfig,
   EqRule,
   NeqRule,
   EmptyRule,
@@ -23,7 +22,6 @@ import {
   IsNotNullRule,
   FieldOperand,
   RuleValue,
-  Primitive,
   CheckRule,
   NotRule,
   AndRule,
@@ -32,7 +30,6 @@ import {
   RelationConfigUnion,
   IEntityConfig,
   EntityConfigClass,
-  EntityInstance,
 } from '../types';
 
 // ─── Field Rule Helpers ─────────────────────────────────────────────────────────
@@ -104,8 +101,58 @@ export function or(...rules: CheckRule[]): OrRule {
 // ─── Query rule assertion ───────────────────────────────────────────────────────
 
 function assertQueryRules(query?: any, security?: SecurityConfig): void {
-  // Implementation would validate query and security configurations
-  // This is a placeholder for actual validation logic
+  // Validate query configuration
+  if (query) {
+    // Check for valid query operations
+    const validOperations = ['select', 'filter', 'sort', 'search', 'defaultSelect'];
+    const queryOps = Object.keys(query);
+
+    for (const op of queryOps) {
+      if (!validOperations.includes(op)) {
+        throw new Error(`Invalid query operation: ${op}. Valid operations are: ${validOperations.join(', ')}`);
+      }
+    }
+
+    // Validate specific query configurations
+    if (query.select !== undefined && typeof query.select !== 'boolean') {
+      throw new Error('query.select must be a boolean');
+    }
+
+    if (query.filter !== undefined && typeof query.filter !== 'boolean') {
+      throw new Error('query.filter must be a boolean');
+    }
+
+    if (query.sort !== undefined && typeof query.sort !== 'boolean') {
+      throw new Error('query.sort must be a boolean');
+    }
+
+    if (query.search !== undefined && typeof query.search !== 'boolean') {
+      throw new Error('query.search must be a boolean');
+    }
+
+    if (query.defaultSelect !== undefined && typeof query.defaultSelect !== 'boolean') {
+      throw new Error('query.defaultSelect must be a boolean');
+    }
+  }
+
+  // Validate security configuration
+  if (security) {
+    // Check for valid security properties
+    const validSecurityProps = ['level'];
+    const securityProps = Object.keys(security);
+
+    for (const prop of securityProps) {
+      if (!validSecurityProps.includes(prop)) {
+        throw new Error(`Invalid security property: ${prop}. Valid properties are: ${validSecurityProps.join(', ')}`);
+      }
+    }
+
+    // Validate security level
+    const validSecurityLevels = ['public', 'internal', 'private', 'pii', 'secret'];
+    if (security.level && !validSecurityLevels.includes(security.level)) {
+      throw new Error(`Invalid security level: ${security.level}. Valid levels are: ${validSecurityLevels.join(', ')}`);
+    }
+  }
 }
 
 // ─── Field factories ──────────────────────────────────────────────────────────

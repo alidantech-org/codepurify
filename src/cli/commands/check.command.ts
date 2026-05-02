@@ -10,7 +10,7 @@ import { intro, outro, spinner } from '@clack/prompts';
 import { consola } from 'consola';
 import { join } from 'node:path';
 import Table from 'cli-table3';
-import { fileExists, hashFile, hashContent } from '../../utils';
+import { fileExists, hashFile } from '../../utils';
 import { ManifestManager } from '../../core/manifest-manager';
 
 /**

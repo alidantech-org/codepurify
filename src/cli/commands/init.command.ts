@@ -11,7 +11,6 @@ import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
 import { join } from 'node:path';
-import { writeFile } from 'node:fs/promises';
 import { ensureDirectory } from '../../utils';
 
 /**
