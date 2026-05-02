@@ -6,22 +6,22 @@
  */
 export const output_context = {
   /**
-     * Generated output file plan information.
-     */
-    output: {
-      /** Generated output kind, for example context, entity, service, controller. */
-      kind: 'output.kind',
+   * Generated output file plan information.
+   */
+  output: {
+    /** Generated output kind, for example context, entity, service, controller. */
+    kind: 'output.kind',
 
-      /** Template used to produce this output. */
-      template: 'output.template',
+    /** Template used to produce this output. */
+    template: 'output.template',
 
-      /** Output file path. */
-      file_path: 'output.file_path',
+    /** Output file path. */
+    file_path: 'output.file_path',
 
-      /** Whether output is immutable/generated-only. */
-      immutable: 'output.immutable',
+    /** Whether output is immutable/generated-only. */
+    immutable: 'output.immutable',
 
-      /** Generator name that produced this file. */
-      generator: 'output.generator',
-    },
+    /** Generator name that produced this file. */
+    generator: 'output.generator',
+  },
 } as const;

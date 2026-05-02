@@ -6,13 +6,13 @@
  */
 export const check_context = {
   /**
-     * Check constraint metadata.
-     */
-    check: {
-      /** Check constraint name. */
-      name: 'check.name',
+   * Check constraint metadata.
+   */
+  check: {
+    /** Check constraint name. */
+    name: 'check.name',
 
-      /** Raw check expression. */
-      expression: 'check.expression',
-    },
+    /** Raw check expression. */
+    expression: 'check.expression',
+  },
 } as const;

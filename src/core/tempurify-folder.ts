@@ -5,7 +5,7 @@ import { logger } from './logger';
 
 /**
  * Tempurify folder structure manager
- * 
+ *
  * Manages the .tempurify folder structure including:
  * - .tempurify/manifest.json - Generation manifest
  * - .tempurify/context/ - Entity context and metadata
@@ -25,7 +25,7 @@ export interface TempurifyFolderStructure {
  */
 export function getTempurifyFolders(rootDir: string): TempurifyFolderStructure {
   const tempurifyDir = join(rootDir, '.tempurify');
-  
+
   return {
     root: tempurifyDir,
     manifest: join(tempurifyDir, 'manifest.json'),
@@ -40,22 +40,17 @@ export function getTempurifyFolders(rootDir: string): TempurifyFolderStructure {
  */
 export async function ensureTempurifyFolders(rootDir: string): Promise<TempurifyFolderStructure> {
   const folders = getTempurifyFolders(rootDir);
-  
+
   // Create folders if they don't exist
-  const foldersToCreate = [
-    folders.root,
-    folders.context,
-    folders.cache,
-    folders.entities,
-  ];
-  
+  const foldersToCreate = [folders.root, folders.context, folders.cache, folders.entities];
+
   for (const folder of foldersToCreate) {
     if (!existsSync(folder)) {
       await mkdir(folder, { recursive: true });
       logger.debug(`Created folder: ${folder}`);
     }
   }
-  
+
   // Ensure manifest.json exists
   if (!existsSync(folders.manifest)) {
     const defaultManifest = {
@@ -67,7 +62,7 @@ export async function ensureTempurifyFolders(rootDir: string): Promise<Tempurify
     await writeFile(folders.manifest, JSON.stringify(defaultManifest, null, 2), 'utf-8');
     logger.debug(`Created manifest: ${folders.manifest}`);
   }
-  
+
   return folders;
 }
 
@@ -135,11 +130,7 @@ export interface EntityMetadata {
 /**
  * Saves entity metadata to a JSON file
  */
-export async function saveEntityMetadata(
-  folders: TempurifyFolderStructure,
-  entityName: string,
-  metadata: EntityMetadata
-): Promise<void> {
+export async function saveEntityMetadata(folders: TempurifyFolderStructure, entityName: string, metadata: EntityMetadata): Promise<void> {
   const metadataFile = join(folders.entities, `${entityName}.json`);
   await writeFile(metadataFile, JSON.stringify(metadata, null, 2), 'utf-8');
   logger.debug(`Saved entity metadata: ${metadataFile}`);
@@ -148,16 +139,13 @@ export async function saveEntityMetadata(
 /**
  * Loads entity metadata from a JSON file
  */
-export async function loadEntityMetadata(
-  folders: TempurifyFolderStructure,
-  entityName: string
-): Promise<EntityMetadata | null> {
+export async function loadEntityMetadata(folders: TempurifyFolderStructure, entityName: string): Promise<EntityMetadata | null> {
   const metadataFile = join(folders.entities, `${entityName}.json`);
-  
+
   if (!existsSync(metadataFile)) {
     return null;
   }
-  
+
   try {
     const content = await readFile(metadataFile, 'utf-8');
     return JSON.parse(content) as EntityMetadata;
@@ -174,13 +162,11 @@ export function listEntityMetadata(folders: TempurifyFolderStructure): string[] 
   if (!existsSync(folders.entities)) {
     return [];
   }
-  
+
   try {
     const { readdirSync } = require('node:fs');
     const files = readdirSync(folders.entities);
-    return files
-      .filter((file: string) => file.endsWith('.json'))
-      .map((file: string) => file.replace('.json', ''));
+    return files.filter((file: string) => file.endsWith('.json')).map((file: string) => file.replace('.json', ''));
   } catch (error) {
     logger.error(`Failed to list entity metadata: ${folders.entities}`, error);
     return [];
@@ -190,17 +176,14 @@ export function listEntityMetadata(folders: TempurifyFolderStructure): string[] 
 /**
  * Updates the generation manifest
  */
-export async function updateManifest(
-  folders: TempurifyFolderStructure,
-  entries: any[]
-): Promise<void> {
+export async function updateManifest(folders: TempurifyFolderStructure, entries: any[]): Promise<void> {
   const manifest = {
     version: 1,
     generator: 'tempurify',
     generatedAt: new Date().toISOString(),
     entries,
   };
-  
+
   await writeFile(folders.manifest, JSON.stringify(manifest, null, 2), 'utf-8');
   logger.debug(`Updated manifest: ${folders.manifest}`);
 }

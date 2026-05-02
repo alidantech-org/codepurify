@@ -16,9 +16,7 @@ function toTsValue(value: unknown, indent = 2): string {
   if (typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>);
 
-    return `{\n${entries
-      .map(([key, val]) => `${nextSpace}${key}: ${toTsValue(val, indent + 2)},`)
-      .join('\n')}\n${space}}`;
+    return `{\n${entries.map(([key, val]) => `${nextSpace}${key}: ${toTsValue(val, indent + 2)},`).join('\n')}\n${space}}`;
   }
 
   return 'undefined';

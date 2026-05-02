@@ -6,16 +6,16 @@
  */
 export const discovery_context = {
   /**
-     * Entity discovery and folder strategy configuration.
-     */
-    discovery: {
-      /** Entity layout strategy, for example grouped or flat. */
-      strategy: 'discovery.strategy',
+   * Entity discovery and folder strategy configuration.
+   */
+  discovery: {
+    /** Entity layout strategy, for example grouped or flat. */
+    strategy: 'discovery.strategy',
 
-      /** Pattern used to resolve grouped entity folders. */
-      group_pattern: 'discovery.group_pattern',
+    /** Pattern used to resolve grouped entity folders. */
+    group_pattern: 'discovery.group_pattern',
 
-      /** Pattern used to resolve a single entity folder. */
-      entity_folder_pattern: 'discovery.entity_folder_pattern',
-    },
+    /** Pattern used to resolve a single entity folder. */
+    entity_folder_pattern: 'discovery.entity_folder_pattern',
+  },
 } as const;
