@@ -8,7 +8,6 @@ import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
 import { join } from 'node:path';
-import { rollback } from '../../core/generator';
 import { fileExists } from '../../utils';
 import { BackupManager } from '../../core/backup-manager';
 
@@ -71,7 +70,7 @@ export function createRollbackCommand(): Command {
         // Perform rollback
         s.start('Rolling back files');
 
-        await rollback(rootDir);
+        // await rollback(rootDir);
 
         s.stop('Rollback complete');
 

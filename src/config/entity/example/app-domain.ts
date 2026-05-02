@@ -1,15 +1,6 @@
-import {
-  IEntityConfig,
-  defineFields,
-  query,
-  mutation,
-  toggle,
-  RelationConfigUnion,
-  defineRelations,
-  relationField,
-  transition,
-} from '../entity';
-import { uuidField, stringField, booleanField, enumField, field } from '../entity/helpers/factories';
+
+import { defineFields, uuidField, query, mutation, stringField, booleanField, toggle, enumField, defineRelations, relationField, field, transition } from '../helpers';
+import { IEntityConfig, RelationConfigUnion } from '../types';
 import AppEntityConfig from './app';
 
 export default class AppDomainEntityConfig implements IEntityConfig {

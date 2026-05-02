@@ -1,6 +1,18 @@
-import { IEntityConfig, defineFields, RelationConfigUnion, transition, defineTemplates } from '../entity';
-import { uuidField, stringField, booleanField, enumField, field, relationField } from '../entity/helpers/factories';
-import { query, mutation, toggle, secretStringField } from '../entity/helpers/presets';
+import {
+  defineFields,
+  uuidField,
+  query,
+  mutation,
+  stringField,
+  secretStringField,
+  booleanField,
+  toggle,
+  enumField,
+  relationField,
+  field,
+  transition,
+} from '../helpers';
+import { IEntityConfig, RelationConfigUnion } from '../types';
 import AppEntityConfig from './app';
 
 export default class AppApiKeyEntityConfig implements IEntityConfig {
@@ -108,5 +120,5 @@ export default class AppApiKeyEntityConfig implements IEntityConfig {
   ];
 
   options = { timestamps: true, audit: true };
-  templates = defineTemplates(['entity.meta', 'entity.types', 'entity.fields', 'entity.constants', 'typeorm.entity', 'typeorm.repository']);
+  templates = ['entity.meta', 'entity.types', 'entity.fields', 'entity.constants', 'typeorm.entity', 'typeorm.repository'];
 }

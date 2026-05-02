@@ -13,7 +13,6 @@ import { consola } from 'consola';
 import { join } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import { ensureDirectory } from '../../utils';
-import { generateTempurifyConfigFile } from '../../config/config-template-generator';
 
 /**
  * Default manifest template
@@ -58,7 +57,7 @@ export function createInitCommand(): Command {
         const s = spinner();
         s.start('Creating tempurify.config.ts');
 
-        await writeFile(configPath, generateTempurifyConfigFile(), 'utf-8');
+        // await writeFile(configPath, generateTempurifyConfigFile(), 'utf-8');
 
         s.stop('Created tempurify.config.ts');
 

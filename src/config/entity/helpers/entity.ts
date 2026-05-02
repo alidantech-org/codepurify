@@ -1,6 +1,6 @@
 // ─── tempurify/fields/entity.ts ─────────────────────────────────────────────────
 
-import { FieldConfig, RelationConfigUnion, IndexConfig, Template, IEntityConfig } from "../types";
+import { FieldConfig, RelationConfigUnion, IndexConfig, IEntityConfig } from "../types";
 
 
 
@@ -19,9 +19,6 @@ export function defineIndexes<const T extends readonly IndexConfig[]>(indexes: T
   return indexes;
 }
 
-export function defineTemplates<T extends readonly Template[]>(templates: T): T {
-  return templates;
-}
 
 // ─── Entity definition ────────────────────────────────────────────────────────
 

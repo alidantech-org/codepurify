@@ -1,15 +1,6 @@
-import {
-  IEntityConfig,
-  defineFields,
-  query,
-  mutation,
-  toggle,
-  relationField,
-  transition,
-  EntityConfigConstructor,
-  WorkflowConfig,
-} from '../entity';
-import { stringField, booleanField, enumField, foreignField, field } from '../entity/helpers/factories';
+
+import { defineFields, stringField, query, mutation, booleanField, toggle, enumField, foreignField, relationField, field, transition } from '../helpers';
+import { DefineRelation, IEntityConfig } from '../types';
 import AppApiKeyEntityConfig from './app-api-key';
 import AppDomainEntityConfig from './app-domain';
 import UserEntityConfig from './user';
@@ -66,7 +57,7 @@ export default class AppEntityConfig implements IEntityConfig {
     }),
   });
 
-  relations = {
+  relations: DefineRelation = {
     owner: relationField(this, UserEntityConfig, {
       relation: {
         kind: 'many_to_one',
