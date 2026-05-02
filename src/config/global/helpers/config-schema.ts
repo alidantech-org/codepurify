@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import type { TempurifyConfig, ResolvedTempurifyConfig } from './config.types';
+import type { TempurifyConfig, ResolvedTempurifyConfig } from '../types/config.types';
 
 /**
  * Schema for entity strategy

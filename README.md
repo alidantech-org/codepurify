@@ -1,295 +1,491 @@
 # Tempurify
 
-Convention-locked NestJS backend generator.
+> Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs.
 
 ---
 
-## Purpose
+# What is Tempurify?
 
-Tempurify generates predictable, production-grade NestJS backend code from strict project conventions.
+Tempurify is **not** a CRUD generator.
 
-It is built to eliminate:
+Tempurify is a:
 
-- repeated file copying
-- inconsistent architecture
-- AI-generated drift
-- surprise files
-- broken patterns
-- manual boilerplate work
+* semantic metadata DSL
+* normalized manifest compiler
+* inference engine
+* template-driven code generator
+
+You define **facts** about your domain.
+
+Tempurify infers:
+
+* query capabilities
+* mutation semantics
+* relation groups
+* workflows
+* validation groups
+* reusable template contexts
+
+Templates decide final architecture output.
 
 ---
 
-## Core Idea
+# Core Philosophy
 
-```txt id="5j9ysu"
-tempurify.config.js
-      ↓
-entity files
-      ↓
-context builder
-      ↓
-templates
-      ↓
-generated NestJS code
+```txt id="8zfr52"
+Configs define facts
+        ↓
+Inference engine derives semantics
+        ↓
+Normalized context is generated
+        ↓
+Handlebars templates render output
+```
+
+Tempurify does **not** hardcode:
+
+* NestJS
+* TypeORM
+* FastAPI
+* GraphQL
+* React
+* REST
+* DTO patterns
+* folder structures
+
+All architecture styles are implemented through templates.
+
+---
+
+# Features
+
+* Strongly typed TypeScript configs
+* Semantic metadata inference
+* Handlebars-based generation
+* Framework agnostic
+* Runtime metadata compilation
+* Query/mutation capability inference
+* Typed enum transitions/workflows
+* Semantic validation rule AST
+* Relation graph inference
+* JSON-safe normalized manifests
+* Extensible template ecosystem
+
+---
+
+# Example Use Cases
+
+Generate:
+
+* DTOs
+* ORM entities
+* repositories
+* GraphQL schemas
+* Zod schemas
+* Pydantic models
+* React forms
+* OpenAPI specs
+* validation layers
+* constants
+* metadata registries
+* query builders
+* admin panels
+* SDKs
+
+from a single semantic source of truth.
+
+---
+
+# Installation
+
+```bash
+npm install @tempurify/core
 ```
 
 ---
 
-## Philosophy
+# Quick Example
 
-Generated code should be:
+## Entity Config
 
-- readable
-- predictable
-- traceable
-- regeneratable
-- convention-safe
+```ts
+import {
+  EntityConfigBase,
+  stringField,
+  enumField,
+  query,
+  mutation,
+  transition,
+} from '@tempurify/core';
 
-Generated code is **visible source code**, not hidden runtime magic.
+export default class UserEntityConfig extends EntityConfigBase {
+  key = 'user';
 
----
+  fields = this.defineFields({
+    email: stringField({
+      length: 255,
 
-## Immutable vs Mutable
+      query: query()
+        .select()
+        .defaultSelect()
+        .search()
+        .sort()
+        .build(),
 
-### Immutable (Generator Owned)
+      mutation: mutation()
+        .apiWritable()
+        .build(),
+    }),
 
-These files are fully generated and should not be edited manually:
+    status: enumField(
+      ['active', 'suspended', 'deleted'] as const,
+      {
+        default: 'active',
+      },
+    ),
+  });
 
-- entities
-- repositories
-- generated DTOs
-- generated services
-- generated controllers
-- generated modules
+  transitions = [
+    transition({
+      field: () => this.fields.status,
 
-### Mutable (Developer Owned)
+      initial: this.fields.status.values.active,
 
-These files are safe extension points:
+      terminal: [
+        this.fields.status.values.deleted,
+      ],
 
-- use-cases
-- custom business logic
-- additional DTOs
-- permission hooks
-- decorators
-- custom validators
+      transitions: {
+        [this.fields.status.values.active]: [
+          this.fields.status.values.suspended,
+          this.fields.status.values.deleted,
+        ],
 
----
+        [this.fields.status.values.suspended]: [
+          this.fields.status.values.active,
+          this.fields.status.values.deleted,
+        ],
 
-## Features
+        [this.fields.status.values.deleted]: [],
+      },
+    }),
+  ];
 
-### Convention Locking
-
-Enforces:
-
-- naming conventions
-- folder structure
-- imports
-- decorators
-- file placement
-- generated architecture
-
----
-
-### Entity Parsing
-
-Detects:
-
-- primitive field types
-- relations
-- enums
-- foreign keys
-- config constants
-- exports/imports
-- invalid definitions
-
----
-
-### Context Building
-
-Builds complete entity context:
-
-```txt id="qb4l4d"
-camelCase
-PascalCase
-snake_case
-kebab-case
-SHOUTING_CASE
-plural
-singular
-```
-
-And grouped field metadata:
-
-```txt id="gwyjlwm"
-string fields
-number fields
-boolean fields
-relations
-enums
-foreign keys
+  templates = [
+    'dto.create',
+    'dto.update',
+    'typeorm.entity',
+    'schema.zod',
+  ] as const;
+}
 ```
 
 ---
 
-### Template Generation
+# Semantic Inference
 
-Generates:
+Tempurify automatically infers semantic groups from metadata.
 
-- entities
-- repositories
-- DTOs
-- services
-- controllers
-- modules
-- use-cases
-- guards
-- decorators
+You never manually define groups.
 
----
+For example:
 
-### Safety Systems
+```ts
+query()
+  .select()
+  .defaultSelect()
+  .search()
+  .build()
+```
 
-Supports:
+automatically contributes the field into:
 
-- immutable validation
-- backup before overwrite
-- rollback
-- manifest tracking
-- generation history
-- git integration
+```txt id="i0j75l"
+entity.fields.query.select
+entity.fields.query.default_select
+entity.fields.query.search
+```
 
----
+Likewise:
 
-## Installation
+```ts
+mutation()
+  .apiWritable()
+  .immutableAfterCreate()
+  .build()
+```
 
-```bash id="24dyyg"
-npm install -D tempurify
+automatically contributes the field into:
+
+```txt id="vs7rmi"
+entity.fields.mutation.api_create
+entity.fields.mutation.immutable_after_create
 ```
 
 ---
 
-## Commands
+# Handlebars Templates
 
-```bash id="gtjlwm"
-npx tempurify init
-npx tempurify generate
-npx tempurify check
-npx tempurify rollback
-npx tempurify clean
+Tempurify uses Handlebars for rendering generated artifacts.
+
+Templates receive a normalized semantic context.
+
+---
+
+# Example Template
+
+## `dto.create.hbs`
+
+```hbs
+export class Create{{entity.pascal_case_key}}Dto {
+{{#each entity.fields.mutation.api_create}}
+  {{snake_case_key}}!: {{typescript_type}};
+{{/each}}
+}
 ```
 
 ---
 
-## Example Config
+# Example Generated Output
 
-```js id="1h98ti"
-// tempurify.config.js
+```ts
+export class CreateUserDto {
+  email!: string;
+  status!: UserStatus;
+}
+```
 
-const { defineTempurifyConfig } = require('tempurify');
+---
 
-module.exports = defineTempurifyConfig({
-  project: {
-    name: 'my-nest-app',
-    rootDir: '.',
-    sourceDir: 'src',
+# Template Context
+
+All exposed template variables are normalized to `snake_case`.
+
+Example context:
+
+```json
+{
+  "entity": {
+    "key": "user",
+
+    "pascal_case_key": "User",
+
+    "fields": {
+      "all": [],
+
+      "strings": [],
+
+      "enums": [],
+
+      "query": {
+        "select": [],
+        "default_select": [],
+        "search": [],
+        "sort": []
+      },
+
+      "mutation": {
+        "api_create": [],
+        "api_update": [],
+        "immutable": [],
+        "generated": []
+      }
+    },
+
+    "relations": {
+      "all": []
+    },
+
+    "checks": {
+      "all": []
+    },
+
+    "indexes": {
+      "all": []
+    }
+  }
+}
+```
+
+---
+
+# Query Builder
+
+Semantic query capabilities are defined fluently.
+
+```ts
+query()
+  .select()
+  .defaultSelect()
+  .sort()
+  .search()
+  .build()
+```
+
+---
+
+# Mutation Builder
+
+Mutation semantics describe API/system behavior.
+
+```ts
+mutation()
+  .apiWritable()
+  .immutableAfterCreate()
+  .build()
+```
+
+Supported semantics include:
+
+* api writable
+* system writable
+* readonly
+* immutable
+* immutable after create
+* generated
+* computed
+* persisted
+
+---
+
+# Relations
+
+Relations are fully typed semantic metadata.
+
+```ts
+relationField(this, AppEntityConfig, {
+  relation: {
+    kind: 'one_to_many',
+
+    remote_field: () => new AppEntityConfig().fields.ownerId,
+
+    cascade: true,
   },
 
-  nest: {
-    modulesDir: 'src/modules',
-    entityPattern: '**/*.entity.ts',
-    generatedDirName: '__generated__',
-    customDirName: 'custom',
-  },
-
-  immutable: {
-    enabled: true,
-    include: ['__generated__/**/*.ts'],
-  },
-
-  mutable: {
-    include: ['custom/**/*.ts'],
-  },
-
-  formatting: {
-    prettier: true,
-    eslint: true,
-    tsc: true,
-  },
-
-  git: {
-    enabled: true,
-    requiredBranch: 'generated',
-    preventDirtyCheckout: true,
+  query: {
+    select: true,
   },
 });
 ```
 
 ---
 
-## Recommended Project Structure
+# Semantic Validation Rules
 
-```txt id="k2n8w9"
-src/
-  modules/
-    users/
-      user.entity.ts
+Checks are represented as semantic ASTs.
 
-      __generated__/
-        user.repository.ts
-        user.service.ts
-        user.controller.ts
-        dto/
+No raw SQL.
 
-      custom/
-        use-cases/
-        hooks/
-        permissions/
+```ts
+checks = [
+  {
+    name: 'email_not_empty',
+
+    rule: field(() => this.fields.email)
+      .notEmpty(),
+  },
+];
 ```
 
 ---
 
-## Generated File Ownership
+# Workflows / Transitions
 
-Generated files include trace metadata:
+Transitions are defined independently from enum fields.
 
-```txt id="ru3p9w"
-AUTO-GENERATED
-source: user.entity.ts
-template: service.template
-generator: tempurify@0.1.0
+```ts
+transition({
+  field: () => this.fields.status,
+
+  initial: this.fields.status.values.active,
+
+  terminal: [
+    this.fields.status.values.deleted,
+  ],
+
+  transitions: {
+    active: ['suspended', 'deleted'],
+    suspended: ['active', 'deleted'],
+    deleted: [],
+  },
+});
 ```
-
-This enables:
-
-- regeneration
-- drift detection
-- rollback
-- debugging
-- traceability
 
 ---
 
-## Long-Term Vision
+# Compiler Pipeline
 
-Tempurify aims to become:
-
-```txt id="wb1t4m"
-backend architecture compiler
+```txt id="urvq4h"
+TypeScript Configs
+        ↓
+Runtime Metadata Extraction
+        ↓
+Semantic Inference Engine
+        ↓
+Normalized Manifest
+        ↓
+Handlebars Template Compilation
+        ↓
+Generated Source Code
 ```
 
-Where developers define:
+---
 
-```txt id="y6oqem"
-domain intent
+# Design Goals
+
+## Tempurify SHOULD:
+
+* infer semantic groups automatically
+* remain architecture agnostic
+* support multiple output ecosystems
+* expose normalized template context
+* prioritize metadata semantics over implementation details
+
+## Tempurify SHOULD NOT:
+
+* hardcode framework architecture
+* assume NestJS patterns
+* assume ORM implementations
+* force a specific folder structure
+* expose raw database concerns directly
+
+---
+
+# Long-Term Vision
+
+Tempurify aims to become a universal semantic metadata compiler capable of generating:
+
+* backend architectures
+* frontend forms
+* APIs
+* SDKs
+* validation layers
+* schemas
+* admin systems
+* documentation
+* infrastructure metadata
+
+from a single semantic domain definition.
+
+---
+
+# Example Future Ecosystem
+
+```txt id="phl2a6"
+@tempurify/core
+@tempurify/compiler
+@tempurify/runtime
+@tempurify/templates
+@tempurify/typeorm
+@tempurify/graphql
+@tempurify/zod
+@tempurify/react-form
+@tempurify/openapi
+@tempurify/fastapi
 ```
 
-and Tempurify produces:
+---
 
-```txt id="wbhjpm"
-safe
-repeatable
-production-grade
-convention-locked backend code
-```
+# License
 
-with no architectural drift.
+MIT

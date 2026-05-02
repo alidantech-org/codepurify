@@ -5,7 +5,7 @@
  * their Tempurify configuration with type safety and validation.
  */
 
-import type { TempurifyConfig } from './config.types';
+import type { TempurifyConfig } from '../types/config.types';
 
 /**
  * Helper function to define Tempurify configuration

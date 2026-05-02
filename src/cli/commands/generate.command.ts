@@ -11,7 +11,6 @@ import { consola } from 'consola';
 import { join } from 'node:path';
 import { generate } from '../../core/generator';
 import { loadTempurifyConfig } from '../../config/config-loader';
-import { discoverEntityFolders } from '../../_generator/nest/parser/entity-folder-parser';
 import { fileExists } from '../../utils';
 
 /**

@@ -24,5 +24,3 @@ export * from './file-writer';
 // Rollback functionality
 export * from './rollback-manager';
 
-// Main generator orchestrator
-export * from './generator';

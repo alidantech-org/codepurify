@@ -5,11 +5,7 @@
  */
 
 // Re-export configuration utilities
-export { defineTempurifyConfig } from './config/define-config';
-export * from './config';
+export { defineTempurifyConfig } from './config/global/helpers/define-config';
 
 // Re-export types for convenience
 export * from './types';
-
-// Re-export configuration loading utilities
-export { loadTempurifyConfig, ConfigError } from './config/config-loader';
