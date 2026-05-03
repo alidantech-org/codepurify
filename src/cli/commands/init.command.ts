@@ -1,27 +1,13 @@
 /**
  * Codepurify Init Command
  *
- * Initializes a Codepurify project by creating:
- * - codepurify.config.js
- * - .codepurify/ directory
- * - .codepurify/manifest.json
+ * Initializes a Codepurify project using the Codepurify API.
  */
 
 import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
-import { join } from 'node:path';
-import { ensureDirectory } from '../../utils';
-
-/**
- * Default manifest template
- */
-const DEFAULT_MANIFEST = {
-  version: 1,
-  generator: 'codepurify',
-  generatedAt: null,
-  entries: [],
-};
+import { Codepurify } from '@/api/codepurify';
 
 /**
  * Creates the init command
@@ -30,56 +16,66 @@ export function createInitCommand(): Command {
   const command = new Command('init')
     .description('Initialize Codepurify in your project')
     .option('-f, --force', 'Force initialization even if Codepurify is already initialized')
+    .option('--dry-run', 'Show what would be created without writing files')
     .action(async (options) => {
       try {
         intro('🚀 Codepurify Init');
 
-        const rootDir = process.cwd();
-        const configPath = join(rootDir, 'codepurify.config.ts');
-        const codepurifyDir = join(rootDir, '.codepurify');
-        const manifestPath = join(codepurifyDir, 'manifest.json');
+        const codepurify = new Codepurify();
 
-        // Check if already initialized
-        const { fileExists } = await import('../../utils');
-        if (!options.force && (await fileExists(configPath))) {
-          const shouldContinue = await confirm({
-            message: 'Codepurify is already initialized. Re-initialize?',
-          });
+        // Check if already initialized using Codepurify API
+        if (!options.force) {
+          try {
+            const codepurify = new Codepurify();
+            const configPath = 'codepurify.config.ts';
+            const configExists = await codepurify.files.exists(configPath);
 
-          if (!shouldContinue) {
-            outro('Initialization cancelled');
-            return;
+            if (configExists) {
+              const shouldContinue = await confirm({
+                message: 'Codepurify is already initialized. Re-initialize?',
+              });
+
+              if (!shouldContinue) {
+                outro('Initialization cancelled');
+                return;
+              }
+            }
+          } catch {
+            // Continue with initialization if check fails
           }
         }
 
-        // Create config file
+        // Initialize using Codepurify API
         const s = spinner();
-        s.start('Creating codepurify.config.ts');
+        s.start('Initializing Codepurify project...');
 
-        // await writeFile(configPath, generateCodepurifyConfigFile(), 'utf-8');
+        const result = await codepurify.init({
+          force: options.force,
+          dryRun: options.dryRun,
+        });
 
-        s.stop('Created codepurify.config.ts');
+        s.stop('Project initialized successfully');
 
-        // Create .codepurify directory structure
-        s.start('Creating .codepurify directory');
+        if (options.dryRun) {
+          consola.info('Dry run completed. Files that would be created:');
+          result.createdFiles.forEach((file) => {
+            consola.info(`  ✓ ${file.path}`);
+          });
+        } else {
+          consola.success(`Codepurify initialized successfully!`);
+          consola.info(`Created ${result.createdFiles.length} files`);
 
-        await ensureDirectory(codepurifyDir);
-        await ensureDirectory(join(codepurifyDir, 'cache'));
-        await ensureDirectory(join(codepurifyDir, 'backups'));
+          result.createdFiles.forEach((file) => {
+            consola.info(`  ✓ ${file.path}`);
+          });
 
-        s.stop('Created .codepurify directory');
-
-        // Create manifest file
-        s.start('Creating manifest.json');
-
-        const { writeJsonFile } = await import('../../utils/json');
-        await writeJsonFile(manifestPath, DEFAULT_MANIFEST);
-
-        s.stop('Created manifest.json');
-
-        consola.success('Codepurify initialized successfully!');
-        consola.info('Configuration file: codepurify.config.ts');
-        consola.info('Working directory: .codepurify/');
+          if (result.skippedFiles.length > 0) {
+            consola.warn(`Skipped ${result.skippedFiles.length} files:`);
+            result.skippedFiles.forEach((file) => {
+              consola.info(`  ⏭ ${file}`);
+            });
+          }
+        }
 
         outro('✨ Ready to generate entities with: codepurify generate');
       } catch (error) {

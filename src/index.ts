@@ -1,11 +1,33 @@
 /**
  * Codepurify
  *
- * Convention-locked NestJS backend generator.
+ * Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs.
  */
 
-// Re-export configuration utilities
-export { defineCodepurifyConfig } from './config/global/helpers/define-config';
+// Public API - Configuration
+export { defineCodepurifyConfig } from '@/config/global/helpers/define-config';
+export { defineCodepurifyTemplates } from '@/config/global/helpers/define-templates';
 
-// Re-export types for convenience
-export * from './types';
+// Public API - Template utilities
+export { paths, file } from '@/config/global/helpers/template-paths';
+
+// Public API - Configuration types
+export type { CodepurifyConfig, ResolvedCodepurifyConfig } from '@/config/global/types/codepurify.config.types';
+
+export type {
+  CodepurifyPathToken,
+  CodepurifyOutputFolderPart,
+  CodepurifyOutputFolder,
+  CodepurifyOutputFileName,
+  CodepurifyTemplateRegistration,
+  CodepurifyTemplatesFile,
+} from '@/config/global/types/codepurify.templates.types';
+
+// Public API - Core functionality
+export * as Core from '@/core';
+
+// Public API - Types
+export * as Types from '@/types';
+
+// Public API - Utilities
+export * from '@/utils';

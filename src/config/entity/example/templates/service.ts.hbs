@@ -1,0 +1,38 @@
+/**
+ * Service Template
+ *
+ * Generates a service class for entity operations.
+ */
+
+import { Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { {{entity.pascal_case_key}} } from './{{entity.kebab_case_key}}.entity';
+
+@Injectable()
+export class {{entity.pascal_case_key}}Service {
+  constructor(
+    private readonly {{entity.camel_case_key}}Repository: Repository&lt;{{entity.pascal_case_key}}&gt;,
+  ) {}
+
+  async create(create{{entity.pascal_case_key}}Dto: Create{{entity.pascal_case_key}}Dto): Promise&lt;{{entity.pascal_case_key}}&gt; {
+    const {{entity.camel_case_key}} = this.{{entity.camel_case_key}}Repository.create(create{{entity.pascal_case_key}}Dto);
+    return await this.{{entity.camel_case_key}}Repository.save({{entity.camel_case_key}});
+  }
+
+  async findAll(): Promise<{{entity.pascal_case_key}}[]> {
+    return await this.{{entity.camel_case_key}}Repository.find();
+  }
+
+  async findOne(id: string): Promise&lt;{{entity.pascal_case_key}}&gt; {
+    return await this.{{entity.camel_case_key}}Repository.findOne({ where: { id } });
+  }
+
+  async update(id: string, update{{entity.pascal_case_key}}Dto: Update{{entity.pascal_case_key}}Dto): Promise<{{entity.pascal_case_key}}> {
+    await this.{{entity.camel_case_key}}Repository.update(id, update{{entity.pascal_case_key}}Dto);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.{{entity.camel_case_key}}Repository.delete(id);
+  }
+}

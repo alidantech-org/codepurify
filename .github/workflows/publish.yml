@@ -40,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test || true  # Allow to pass if no tests exist
+        run: npm test || true # Allow to pass if no tests exist
 
       - name: Type check
         run: npm run typecheck
@@ -56,7 +56,7 @@ jobs:
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
-          
+
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
             TAG_VERSION=${{ github.ref_name }}
             # Remove 'v' prefix if present
@@ -113,14 +113,14 @@ jobs:
           prerelease: false
           body: |
             ## Changes in ${{ github.ref_name }}
-            
+
             Auto-generated release from tag ${{ github.ref_name }}
-            
+
             ### Installation
             ```bash
             npm install codepurify@${{ steps.publish_version.outputs.version }}
             ```
-            
+
             ### Verification
             - ✅ Type check passed
             - ✅ Linting passed  

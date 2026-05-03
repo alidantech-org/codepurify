@@ -1,25 +1,9 @@
 /**
  * Codepurify Core Module
  *
- * Central exports for all Codepurify core functionality.
- * Provides error handling, logging, manifest management, backup system,
- * file writing, rollback capabilities, and main generator orchestrator.
+ * Barrel export for all core functionality.
  */
 
-// Error handling
-export * from './errors';
-
-// Logging
-export * from './logger';
-
-// Manifest management
-export * from './manifest-manager';
-
-// Backup system
-export * from './backup-manager';
-
-// File writing
-export * from './file-writer';
-
-// Rollback functionality
-export * from './rollback-manager';
+export { logger, info, success, warn, error, debug, start, box } from './logger';
+export { createCodepurifyError, CodepurifyError, CodepurifyErrorCode } from './errors';
+export * from './files';

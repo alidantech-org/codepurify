@@ -3,56 +3,53 @@
  *
  * Clears the .codepurify/cache directory.
  */
-
 import { Command } from 'commander';
-import { intro, outro, confirm, spinner } from '@clack/prompts';
+import { intro, outro, confirm, spinner, isCancel } from '@clack/prompts';
 import { consola } from 'consola';
-import { join } from 'node:path';
-import { rm } from 'node:fs/promises';
-import { fileExists } from '../../utils';
 
-/**
- * Creates the clean command
- */
+import { Codepurify } from '@/api/codepurify';
+import { CLEAN_PATHS, CLEAN_LOG_MESSAGES } from '@/api/constants';
+
 export function createCleanCommand(): Command {
-  const command = new Command('clean')
+  return new Command('clean')
     .description('Clear the .codepurify/cache directory')
     .option('-f, --force', 'Force clean without confirmation')
-    .action(async (options) => {
+    .action(async (options: { force?: boolean }) => {
+      intro('🧹 Codepurify Clean');
+
       try {
-        intro('🧹 Codepurify Clean');
+        const codepurify = new Codepurify({
+          cwd: process.cwd(),
+        });
 
-        const rootDir = process.cwd();
-        const cacheDir = join(rootDir, '.codepurify', 'cache');
+        const cacheDir = CLEAN_PATHS.cacheDir;
+        const cacheExists = await codepurify.files.exists(cacheDir);
 
-        // Check if cache exists
-        if (!(await fileExists(cacheDir))) {
-          consola.warn('Cache directory does not exist');
-          outro('Nothing to clean');
+        if (!cacheExists) {
+          consola.warn(CLEAN_LOG_MESSAGES.cacheNotFound);
+          outro(CLEAN_LOG_MESSAGES.nothingToClean);
           return;
         }
 
-        // Confirm clean
         if (!options.force) {
           const shouldContinue = await confirm({
-            message: 'Clear the cache directory?',
+            message: `Clear ${cacheDir}?`,
           });
 
-          if (!shouldContinue) {
-            outro('Clean cancelled');
+          if (isCancel(shouldContinue) || !shouldContinue) {
+            outro(CLEAN_LOG_MESSAGES.cancelled);
             return;
           }
         }
 
-        // Perform clean
         const s = spinner();
         s.start('Clearing cache');
 
-        await rm(cacheDir, { recursive: true, force: true });
+        await codepurify.files.deletePath(cacheDir);
 
         s.stop('Cache cleared');
 
-        consola.success('Cache cleared successfully!');
+        consola.success(CLEAN_LOG_MESSAGES.cacheCleared);
         consola.info(`Removed: ${cacheDir}`);
 
         outro('✨ Clean complete');
@@ -61,6 +58,4 @@ export function createCleanCommand(): Command {
         process.exit(1);
       }
     });
-
-  return command;
 }

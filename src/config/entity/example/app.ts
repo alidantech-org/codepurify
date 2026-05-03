@@ -1,5 +1,16 @@
-
-import { defineFields, stringField, query, mutation, booleanField, toggle, enumField, foreignField, relationField, field, transition } from '../helpers';
+import {
+  defineFields,
+  stringField,
+  query,
+  mutation,
+  booleanField,
+  toggle,
+  enumField,
+  foreignField,
+  relationField,
+  field,
+  transition,
+} from '../helpers';
 import { DefineRelation, IEntityConfig } from '../types';
 import AppApiKeyEntityConfig from './app-api-key';
 import AppDomainEntityConfig from './app-domain';

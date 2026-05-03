@@ -1,5 +1,17 @@
-
-import { defineFields, uuidField, query, mutation, stringField, booleanField, toggle, enumField, defineRelations, relationField, field, transition } from '../helpers';
+import {
+  defineFields,
+  uuidField,
+  query,
+  mutation,
+  stringField,
+  booleanField,
+  toggle,
+  enumField,
+  defineRelations,
+  relationField,
+  field,
+  transition,
+} from '../helpers';
 import { IEntityConfig, RelationConfigUnion } from '../types';
 import AppEntityConfig from './app';
 

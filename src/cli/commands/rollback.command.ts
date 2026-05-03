@@ -1,64 +1,33 @@
 /**
  * Codepurify Rollback Command
  *
- * Restores files from the latest backup session.
+ * Restores files from backup sessions using the Codepurify API.
  */
 
 import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
-import { join } from 'node:path';
-import { fileExists } from '../../utils';
-import { BackupManager } from '../../core/backup-manager';
+import { Codepurify } from '@/api/codepurify';
 
 /**
  * Creates the rollback command
  */
 export function createRollbackCommand(): Command {
   const command = new Command('rollback')
-    .description('Rollback to the latest backup session')
+    .description('Rollback to a backup session')
     .option('-f, --force', 'Force rollback without confirmation')
+    .option('-i, --id <sessionId>', 'Rollback to specific session ID')
+    .option('-t, --timestamp <timestamp>', 'Rollback to session before timestamp')
     .action(async (options) => {
       try {
         intro('🔄 Codepurify Rollback');
 
-        const rootDir = process.cwd();
-        const backupsDir = join(rootDir, '.codepurify', 'backups');
-
-        // Check if backups exist
-        if (!(await fileExists(backupsDir))) {
-          consola.error('No backup sessions found');
-          outro('Nothing to rollback');
-          return;
-        }
-
-        // List backup sessions
-        const s = spinner();
-        s.start('Loading backup sessions');
-
-        const backupManager = new BackupManager(backupsDir);
-        const sessions = await backupManager.listSessions();
-
-        s.stop(`Found ${sessions.length} backup sessions`);
-
-        if (sessions.length === 0) {
-          consola.warn('No backup sessions available');
-          outro('Nothing to rollback');
-          return;
-        }
-
-        // Show latest session
-        const latestSession = sessions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-        consola.info('Latest backup session:');
-        consola.info(`  ID: ${latestSession.id}`);
-        consola.info(`  Created: ${latestSession.createdAt}`);
-        consola.info(`  Files: ${latestSession.records.length}`);
+        const codepurify = new Codepurify();
 
         // Confirm rollback
         if (!options.force) {
           const shouldContinue = await confirm({
-            message: 'Rollback to this session?',
+            message: 'This will restore files from a backup session. Continue?',
           });
 
           if (!shouldContinue) {
@@ -67,15 +36,41 @@ export function createRollbackCommand(): Command {
           }
         }
 
-        // Perform rollback
-        s.start('Rolling back files');
+        // Perform rollback using Codepurify API
+        const s = spinner();
+        s.start('Rolling back files...');
 
-        // await rollback(rootDir);
+        const result = await codepurify.rollback({
+          backupId: options.id,
+          timestamp: options.timestamp,
+        });
 
-        s.stop('Rollback complete');
+        s.stop('Rollback completed');
 
         consola.success('Rollback completed successfully!');
-        consola.info(`Restored session: ${latestSession.id}`);
+        consola.info(`Session ID: ${result.backupId}`);
+        consola.info(`Timestamp: ${result.backupTimestamp.toISOString()}`);
+
+        if (result.restoredFiles.length > 0) {
+          consola.info(`Restored ${result.restoredFiles.length} files:`);
+          result.restoredFiles.forEach((file) => {
+            consola.info(`  ✓ ${file}`);
+          });
+        }
+
+        if (result.errors.length > 0) {
+          consola.warn(`${result.errors.length} errors occurred:`);
+          result.errors.forEach((error) => {
+            consola.error(`  ✗ ${error}`);
+          });
+        }
+
+        if (result.warnings.length > 0) {
+          consola.warn(`${result.warnings.length} warnings:`);
+          result.warnings.forEach((warning) => {
+            consola.warn(`  ⚠ ${warning}`);
+          });
+        }
 
         outro('✨ Rollback complete');
       } catch (error) {

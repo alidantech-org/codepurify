@@ -7,4 +7,3 @@
 
 export * from './generator.types';
 export * from './manifest.types';
-export * from './template.types';

@@ -6,10 +6,6 @@
 
 # What is Codepurify?
 
-Codepurify is **not** a CRUD generator.
-
-Codepurify is a:
-
 - semantic metadata DSL
 - normalized manifest compiler
 - inference engine

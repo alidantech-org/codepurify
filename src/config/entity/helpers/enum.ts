@@ -1,4 +1,4 @@
-import { FieldConfig, TransitionConfig, EnumFieldConfig } from "../types";
+import { FieldConfig, TransitionConfig, EnumFieldConfig } from '../types';
 
 // Helper function to create typed enum value map
 export function makeEnumValueMap<const T extends readonly string[]>(values: T): Record<T[number], T[number]> {

@@ -5,7 +5,7 @@
  * their Codepurify configuration with type safety and validation.
  */
 
-import type { CodepurifyConfig } from '../types/config.types';
+import { CodepurifyConfig } from '../types/codepurify.config.types';
 
 /**
  * Helper function to define Codepurify configuration
