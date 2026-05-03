@@ -17,12 +17,24 @@ export const INIT_ASSET_PATHS = {
 
 export const INIT_TEMPLATE_SYMBOLS = {
   templateRootDir: '__CODEPURIFY_TEMPLATE_ROOT_DIR__',
+  entitiesDir: '__CODEPURIFY_ENTITIES_DIR__',
+  resourcesDir: '__CODEPURIFY_RESOURCES_DIR__',
 } as const;
 
 export const INIT_OUTPUTS = {
-  codeDir: 'code',
+  codeDir: '.',
   templatesRootDir: './code/templates',
   gitignore: '.gitignore',
+  // Root-level config files
+  configFile: 'codepurify.config.ts',
+  templatesFile: 'codepurify.templates.ts',
+} as const;
+
+export const INIT_CONFIG_DIRS = {
+  codeDir: './code',
+  configsDir: './code/configs',
+  entitiesDir: './code/configs/entities',
+  resourcesDir: './code/configs/resources',
 } as const;
 
 export const INIT_GITIGNORE_ENTRIES = ['.codepurify/'] as const;
@@ -46,7 +58,7 @@ export const INIT_TEMPLATE_NAMES = {
 } as const;
 
 export const ASSET_PATHS = {
-  distRoot: '../../code',
+  distRoot: '../../examples',
   initRoot: '',
 } as const;
 

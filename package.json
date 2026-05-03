@@ -29,10 +29,10 @@
   "scripts": {
     "dev": "tsx src/cli/index.ts",
     "clean": "shx rm -rf dist",
-    "copy:code": "shx rm -rf dist/code && shx cp -r code dist/code",
-    "build": "npm run clean && tsup && npm run copy:code",
+    "copy:examples": "shx rm -rf dist/examples && shx cp -r examples dist/examples",
+    "build": "npm run clean && tsup && npm run copy:examples",
     "build:bundle": "tsup",
-    "watch": "tsup --watch --onSuccess \"npm run copy:code\"",
+    "watch": "npm run copy:examples && tsup --watch --onSuccess \"npm run copy:examples\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write .",

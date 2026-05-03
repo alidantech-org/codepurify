@@ -25,6 +25,18 @@ export interface CodepurifyConfig {
    * Optional generated output root.
    */
   outputDir?: string;
+
+  /**
+   * Optional entities configuration directory.
+   * Defaults to './code/configs/entities' if not specified.
+   */
+  entitiesDir?: string;
+
+  /**
+   * Optional resources configuration directory.
+   * Defaults to './code/configs/resources' if not specified.
+   */
+  resourcesDir?: string;
 }
 
 /**
@@ -34,4 +46,6 @@ export interface ResolvedCodepurifyConfig {
   rootDir: string;
   manifestPath: string;
   outputDir: string;
+  entitiesDir: string;
+  resourcesDir: string;
 }

@@ -4,6 +4,8 @@
  * Initializes Codepurify by copying package init assets into the project.
  */
 
+import { mkdir } from 'node:fs/promises';
+
 import type { GeneratedFileResult, InitOptions, InitResult } from '@/api/types';
 
 import type { CodepurifyAction, CodepurifyRuntime } from '@/api/runtime';
@@ -12,6 +14,7 @@ import { FileAction } from '@/api/types';
 
 import {
   INIT_ACTION,
+  INIT_CONFIG_DIRS,
   INIT_GITIGNORE_ENTRIES,
   INIT_LOG_MESSAGES,
   INIT_OUTPUTS,
@@ -44,9 +47,22 @@ async function ensureGitignoreEntries(runtime: CodepurifyRuntime): Promise<void>
   });
 }
 
+async function ensureConfigDirectories(runtime: CodepurifyRuntime): Promise<void> {
+  // Create the config directories structure
+  const directories = [INIT_CONFIG_DIRS.configsDir, INIT_CONFIG_DIRS.entitiesDir, INIT_CONFIG_DIRS.resourcesDir];
+
+  for (const dir of directories) {
+    await mkdir(dir, { recursive: true });
+    debug(`Created config directory: ${dir}`);
+  }
+}
+
 function applyInitTemplateSymbols(content: string): string {
   // Replace the template root directory placeholder
-  return content.replaceAll(INIT_TEMPLATE_SYMBOLS.templateRootDir, INIT_OUTPUTS.templatesRootDir);
+  return content
+    .replaceAll(INIT_TEMPLATE_SYMBOLS.templateRootDir, INIT_OUTPUTS.templatesRootDir)
+    .replaceAll(INIT_TEMPLATE_SYMBOLS.entitiesDir, INIT_CONFIG_DIRS.entitiesDir)
+    .replaceAll(INIT_TEMPLATE_SYMBOLS.resourcesDir, INIT_CONFIG_DIRS.resourcesDir);
 }
 
 export const initAction: CodepurifyAction<InitOptions, InitResult> = {
@@ -65,6 +81,7 @@ export const initAction: CodepurifyAction<InitOptions, InitResult> = {
 
     if (!options.dryRun) {
       await ensureGitignoreEntries(runtime);
+      await ensureConfigDirectories(runtime);
     }
 
     const backupSession = options.dryRun ? undefined : await runtime.files.createBackupSession(INIT_ACTION.name);
@@ -86,7 +103,14 @@ export const initAction: CodepurifyAction<InitOptions, InitResult> = {
 
     // Copy all asset files with symbol patching for templates registry
     for (const asset of assetFiles) {
-      const outputPath = `${INIT_OUTPUTS.codeDir}/${asset.path}`;
+      // Determine output path: config files go to root, others go to code/ directory
+      let outputPath: string;
+      if (asset.path === INIT_OUTPUTS.configFile || asset.path === INIT_OUTPUTS.templatesFile) {
+        outputPath = asset.path; // Place at root level
+      } else {
+        outputPath = `${INIT_OUTPUTS.codeDir}/${asset.path}`; // Place in code/ directory
+      }
+
       const exists = await runtime.files.exists(outputPath);
 
       if (exists && !options.force) {
@@ -95,8 +119,11 @@ export const initAction: CodepurifyAction<InitOptions, InitResult> = {
         continue;
       }
 
-      // Apply symbol patching for templates registry file
-      const content = asset.path === 'codepurify.templates.ts' ? applyInitTemplateSymbols(asset.content) : asset.content;
+      // Apply symbol patching for templates registry and config files
+      const content =
+        asset.path === INIT_OUTPUTS.templatesFile || asset.path === INIT_OUTPUTS.configFile
+          ? applyInitTemplateSymbols(asset.content)
+          : asset.content;
 
       if (!options.dryRun) {
         await runtime.files.writeGenerated({

@@ -2,7 +2,7 @@ import * as cpy from 'codepurify';
 import AppApiKeyEntityConfig from './app-api-key';
 import AppDomainEntityConfig from './app-domain';
 import UserEntityConfig from './user';
-import codepurifyTemplates from '../../codepurify.templates';
+import codepurifyTemplates from '../../../codepurify.templates';
 
 export default class AppEntityConfig implements cpy.IEntityConfig {
   base = null;

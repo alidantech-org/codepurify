@@ -10,7 +10,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'constants',
-      templatePath: './constants/constants.ts.hbs',
+      templatePath: './code/constants/constants.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.constants').ext('ts'),
       description: 'Creates entity constants.',
@@ -19,7 +19,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'entity',
-      templatePath: './entity.ts.hbs',
+      templatePath: './code/entity.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.entity').ext('ts'),
       description: 'Creates a TypeORM entity.',
@@ -28,7 +28,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'schema.entity',
-      templatePath: './schema/entity.ts.hbs',
+      templatePath: './code/schema/entity.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.schema').ext('ts'),
       description: 'Creates an entity schema.',
@@ -37,7 +37,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'dto.create',
-      templatePath: './dto.create.ts.hbs',
+      templatePath: './code/dto.create.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab, 'dto'],
       fileName: file(paths.entity.names.kebab).prefix('create-').suffix('.dto').ext('ts'),
       description: 'Creates a create DTO.',
@@ -46,7 +46,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'dto.update',
-      templatePath: './dto.update.ts.hbs',
+      templatePath: './code/dto.update.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab, 'dto'],
       fileName: file(paths.entity.names.kebab).prefix('update-').suffix('.dto').ext('ts'),
       description: 'Creates an update DTO.',
@@ -55,7 +55,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'types.context',
-      templatePath: './types/context.ts.hbs',
+      templatePath: './code/types/context.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.types').ext('ts'),
       description: 'Creates type context.',
@@ -68,7 +68,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'controller',
-      templatePath: './controller.ts.hbs',
+      templatePath: './code/controller.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.controller').ext('ts'),
       description: 'Creates a NestJS controller.',
@@ -77,7 +77,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'repository',
-      templatePath: './repository.ts.hbs',
+      templatePath: './code/repository.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.repository').ext('ts'),
       description: 'Creates a TypeORM repository.',
@@ -86,7 +86,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'service',
-      templatePath: './service.ts.hbs',
+      templatePath: './code/service.ts.hbs',
       outputFolder: [paths.entity.groupKey, paths.entity.names.kebab],
       fileName: file(paths.entity.names.kebab).suffix('.service').ext('ts'),
       description: 'Creates a service.',
