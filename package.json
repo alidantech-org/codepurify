@@ -29,7 +29,7 @@
   "scripts": {
     "dev": "tsx src/cli/index.ts",
     "clean": "shx rm -rf dist",
-    "copy:examples": "shx rm -rf dist/examples && shx cp -r examples dist/examples",
+    "copy:examples": "shx mkdir -p dist && shx rm -rf dist/examples && shx cp -r examples dist/",
     "build": "npm run clean && tsup && npm run copy:examples",
     "build:bundle": "tsup",
     "watch": "npm run copy:examples && tsup --watch --onSuccess \"npm run copy:examples\"",

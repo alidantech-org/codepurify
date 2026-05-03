@@ -1,56 +1,73 @@
 import * as typeorm from 'typeorm';
 
 {{#if imports.schema_constant}}
-import { {{imports.schema_constant.name}} } from '{{imports.schema_constant.path}}';
+  import {
+  {{imports.schema_constant.name}}
+  } from '{{imports.schema_constant.path}}';
 {{/if}}
 
-import { {{entity.exports.interface_name}} } from '{{imports.interface.path}}';
+import {
+{{entity.exports.interface_name}}
+} from '{{imports.interface.path}}';
 
 {{#if imports.enums}}
-import * as E from '{{imports.enums.path}}';
+  import * as E from '{{imports.enums.path}}';
 {{/if}}
 
 {{#each imports.relations}}
-import { {{class.name.pascal}} } from '{{path}}';
+  import {
+  {{class.name.pascal}}
+  } from '{{path}}';
 {{/each}}
 
-import { {{base.class.name.pascal}} } from '{{base.import.path}}';
-
-/**
- * {{entity.name.pascal}} Entity
- *
- * Auto-generated TypeORM entity for the `{{entity.module.name.kebab}}` module.
- *
- * This file maps the `{{entity.name.pascal}}` domain contract to its database
- * representation using the configured schema constant, table constant, columns,
- * indexes, and relations supplied by the entity generation context.
- */
+import {
+{{base.class.name.pascal}}
+} from '{{base.import.path}}'; /** *
+{{entity.name.pascal}}
+Entity * * Auto-generated TypeORM entity for the `{{entity.module.name.kebab}}` module. * * This file maps the `{{entity.name.pascal}}`
+domain contract to its database * representation using the configured schema constant, table constant, columns, * indexes, and relations
+supplied by the entity generation context. */
 
 {{#each indexes}}
-@typeorm.Index({{{expression}}})
+  @typeorm.Index({{{expression}}})
 {{/each}}
-@typeorm.Entity({ name: {{{schema.table.expression}}}, schema: {{{schema.database.expression}}} })
-export class {{entity.name.pascal}}Entity extends {{base.class.name.pascal}} implements {{entity.exports.interface_name}} {
+@typeorm.Entity({ name:
+{{{schema.table.expression}}}, schema:
+{{{schema.database.expression}}}
+}) export class
+{{entity.name.pascal}}Entity extends
+{{base.class.name.pascal}}
+implements
+{{entity.exports.interface_name}}
+{
 
 {{#each columns.groups}}
   {{#if items.length}}
-  // ========================== {{title}} ==========================
-  {{#each items}}
-  @typeorm.Column({{{decorator.options}}})
-  {{property.name.camel}}{{#if property.optional}}?{{/if}}: {{type.ts}};
+    // ==========================
+    {{title}}
+    ==========================
+    {{#each items}}
+      @typeorm.Column({{{decorator.options}}})
+      {{property.name.camel}}{{#if property.optional}}?{{/if}}:
+      {{type.ts}};
 
-  {{/each}}
+    {{/each}}
   {{/if}}
 {{/each}}
 
 {{#each typeorm_relations.groups}}
   {{#if items.length}}
-  // ========================== {{title}} ==========================
-  {{#each items}}
-  @typeorm.{{decorator.name}}(() => {{target.entity.class.name.pascal}}, entity => entity.{{inverse_side.name.camel}}{{#if options.expression}}, {{{options.expression}}}{{/if}})
-  {{#if property.readonly}}readonly {{/if}}{{property.name.camel}}{{#if property.optional}}?{{/if}}: {{type.ts}};
+    // ==========================
+    {{title}}
+    ==========================
+    {{#each items}}
+      @typeorm.{{decorator.name}}(() =>
+      {{target.entity.class.name.pascal}}, entity => entity.{{inverse_side.name.camel}}{{#if options.expression}},
+        {{{options.expression}}}{{/if}})
+      {{#if property.readonly}}readonly {{/if}}{{property.name.camel}}{{#if property.optional}}?{{/if}}:
+      {{type.ts}};
 
-  {{/each}}
+    {{/each}}
   {{/if}}
 {{/each}}
 }

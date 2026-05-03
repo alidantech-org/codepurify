@@ -108,9 +108,7 @@ export class CodepurifyFileWriter {
       const info = await stat(dir);
 
       if (!info.isDirectory()) {
-        throw new Error(
-          `Expected directory but found file: ${dir}`,
-        );
+        throw new Error(`Expected directory but found file: ${dir}`);
       }
 
       return;

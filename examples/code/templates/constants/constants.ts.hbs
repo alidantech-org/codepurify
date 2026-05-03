@@ -1,58 +1,39 @@
-import { ERelationType } from '../../../shared/enums/shared';
-import type * as C from './{{it.entity.fileName}}.context';
-import * as TC from './{{it.entity.fileName}}.config';
+import { ERelationType } from '../../../shared/enums/shared'; import type * as C from './{{it.entity.fileName}}.context'; import * as TC
+from './{{it.entity.fileName}}.config';
 
 {{#each it.relations}}
-import {
-  {{this.pascalName}}_QUERY_OPTIONS,
-} from '{{this.importPath}}';
+  import {
+  {{this.pascalName}}_QUERY_OPTIONS, } from '{{this.importPath}}';
 {{/each}}
 
-// /////////////////////////////////////////////////////////////////////////////
-// RELATION CONFIGS
-// /////////////////////////////////////////////////////////////////////////////
-
-export const {{it.entity.constantName}}_ONE_RELATIONS = [
+// ///////////////////////////////////////////////////////////////////////////// // RELATION CONFIGS //
+///////////////////////////////////////////////////////////////////////////// export const
+{{it.entity.constantName}}_ONE_RELATIONS = [
 {{#each it.relations}}
-{{#ifEquals this.relationType "One"}}
-  {
-    relation: '{{this.propertyName}}',
-    type: ERelationType.One,
-    selectableFields: {{this.pascalName}}_QUERY_OPTIONS.selectableFields,
-    defaultSelectFields: {{this.pascalName}}_QUERY_OPTIONS.defaultSelectFields,
-  },
-{{/ifEquals}}
+  {{#ifEquals this.relationType 'One'}}
+    { relation: '{{this.propertyName}}', type: ERelationType.One, selectableFields:
+    {{this.pascalName}}_QUERY_OPTIONS.selectableFields, defaultSelectFields:
+    {{this.pascalName}}_QUERY_OPTIONS.defaultSelectFields, },
+  {{/ifEquals}}
 {{/each}}
-] as const satisfies readonly C.I{{it.entity.pascalName}}AsOneRelationConfig[];
-
-export const {{it.entity.constantName}}_MANY_RELATIONS = [
+] as const satisfies readonly C.I{{it.entity.pascalName}}AsOneRelationConfig[]; export const
+{{it.entity.constantName}}_MANY_RELATIONS = [
 {{#each it.relations}}
-{{#ifEquals this.relationType "Many"}}
-  {
-    relation: '{{this.propertyName}}',
-    type: ERelationType.Many,
-    selectableFields: {{this.pascalName}}_QUERY_OPTIONS.selectableFields,
-    defaultSelectFields: {{this.pascalName}}_QUERY_OPTIONS.defaultSelectFields,
-    sortableFields: {{this.pascalName}}_QUERY_OPTIONS.sortableFields,
-    defaultLimit: {{this.defaultLimit}},
-    maxLimit: {{this.maxLimit}},
-  },
-{{/ifEquals}}
+  {{#ifEquals this.relationType 'Many'}}
+    { relation: '{{this.propertyName}}', type: ERelationType.Many, selectableFields:
+    {{this.pascalName}}_QUERY_OPTIONS.selectableFields, defaultSelectFields:
+    {{this.pascalName}}_QUERY_OPTIONS.defaultSelectFields, sortableFields:
+    {{this.pascalName}}_QUERY_OPTIONS.sortableFields, defaultLimit:
+    {{this.defaultLimit}}, maxLimit:
+    {{this.maxLimit}}, },
+  {{/ifEquals}}
 {{/each}}
-] as const satisfies readonly C.I{{it.entity.pascalName}}AsManyRelationConfig[];
-
-// /////////////////////////////////////////////////////////////////////////////
-// ENTITY QUERY OPTIONS
-// /////////////////////////////////////////////////////////////////////////////
-
-export const {{it.entity.constantName}}_QUERY_OPTIONS = {
-  searchableFields: TC.{{it.entity.constantName}}_FIELDS.query.searchable,
-  selectableFields: TC.{{it.entity.constantName}}_FIELDS.query.selectable,
-  defaultSelectFields: TC.{{it.entity.constantName}}_FIELDS.query.defaultSelect,
-  sortableFields: TC.{{it.entity.constantName}}_FIELDS.query.sortable,
-  filterFields: TC.{{it.entity.constantName}}_FIELDS.query.filterable,
-  dateRangeFields: TC.{{it.entity.constantName}}_FIELDS.query.dateRange,
-
-  oneRelations: {{it.entity.constantName}}_ONE_RELATIONS,
-  manyRelations: {{it.entity.constantName}}_MANY_RELATIONS,
-} as const satisfies C.I{{it.entity.pascalName}}EntityQueryOptions;
+] as const satisfies readonly C.I{{it.entity.pascalName}}AsManyRelationConfig[]; //
+///////////////////////////////////////////////////////////////////////////// // ENTITY QUERY OPTIONS //
+///////////////////////////////////////////////////////////////////////////// export const
+{{it.entity.constantName}}_QUERY_OPTIONS = { searchableFields: TC.{{it.entity.constantName}}_FIELDS.query.searchable, selectableFields: TC.{{it.entity.constantName}}_FIELDS.query.selectable,
+defaultSelectFields: TC.{{it.entity.constantName}}_FIELDS.query.defaultSelect, sortableFields: TC.{{it.entity.constantName}}_FIELDS.query.sortable,
+filterFields: TC.{{it.entity.constantName}}_FIELDS.query.filterable, dateRangeFields: TC.{{it.entity.constantName}}_FIELDS.query.dateRange,
+oneRelations:
+{{it.entity.constantName}}_ONE_RELATIONS, manyRelations:
+{{it.entity.constantName}}_MANY_RELATIONS, } as const satisfies C.I{{it.entity.pascalName}}EntityQueryOptions;

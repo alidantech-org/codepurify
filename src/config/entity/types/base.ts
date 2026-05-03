@@ -74,6 +74,16 @@ export interface BaseFieldConfig {
   query?: QueryConfig;
   mutation?: MutationConfig;
   security?: SecurityConfig;
+  /** Field identity metadata assigned by defineFields */
+  key?: string;
+  /** Field name alias for template convenience */
+  name?: string;
+  /** Field naming conventions */
+  names?: NameCases;
+  /** Type name alias (PascalCase) */
+  type_name?: string;
+  /** Constant name alias (UPPER_CASE) */
+  constant_name?: string;
 }
 
 import type { StringFieldConfig } from './string';
@@ -81,5 +91,6 @@ import type { BooleanFieldConfig } from './boolean';
 import type { EnumFieldConfig } from './enum';
 import type { UuidFieldConfig } from './uuid';
 import type { ForeignFieldConfig } from './foreign';
+import { NameCases } from '../helpers';
 
 export type FieldConfig = StringFieldConfig | BooleanFieldConfig | EnumFieldConfig<string> | UuidFieldConfig | ForeignFieldConfig;

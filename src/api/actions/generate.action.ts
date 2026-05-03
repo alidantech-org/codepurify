@@ -3,30 +3,19 @@
  *
  * Handles semantic artifact generation from entity configurations.
  *
- * Pipeline:
- *
- * configs
- *   ↓
- * entity discovery
- *   ↓
- * normalized contexts
- *   ↓
- * template execution
- *   ↓
- * file generation
- *   ↓
- * file db update
+ * This action now serves as a thin orchestration layer that delegates
+ * to the GeneratePipeline service for the actual generation work.
  */
 
-import type { GenerateOptions, GenerateResult, GeneratedFileResult } from '@/api/types';
+import { FileAction, type GenerateOptions, type GenerateResult, type GeneratedFileResult } from '@/api/types';
 
 import type { CodepurifyAction } from '@/api/runtime/action-contract';
-
-import type { WriteGeneratedFileInput, WriteGeneratedFileResult } from '@/core/files';
 
 import { debug, info, success } from '@/core/logger';
 
 import { GENERATE_ACTION, GENERATE_DEFAULTS, GENERATE_LOG_MESSAGES } from '@/api/constants';
+
+import { GeneratePipeline } from '@/api/runtime/generate-pipeline';
 
 export const generateAction: CodepurifyAction<GenerateOptions, GenerateResult> = {
   name: GENERATE_ACTION.name,
@@ -41,210 +30,45 @@ export const generateAction: CodepurifyAction<GenerateOptions, GenerateResult> =
   async run(runtime, options) {
     info(GENERATE_LOG_MESSAGES.starting);
 
-    /**
-     * STEP 1
-     * -----------------------------------------
-     * Create generation backup session.
-     *
-     * This session should track all generated file changes
-     * so rollback can restore the previous state.
-     */
-
+    // Create backup session for tracking changes
     const backupSession = options.dryRun ? undefined : await runtime.files.createBackupSession(GENERATE_ACTION.name);
 
     if (backupSession) {
       debug(GENERATE_LOG_MESSAGES.backupCreated(backupSession.id));
     }
 
-    /**
-     * STEP 2
-     * -----------------------------------------
-     * Load global config.
-     *
-     * Expected:
-     * - codepurify.config.ts
-     * - codepurify.templates.ts
-     *
-     * TODO:
-     * - create config loader
-     * - cache config loading later
-     * - validate config schema
-     */
+    // Initialize and execute the generation pipeline
+    const pipeline = new GeneratePipeline(runtime);
 
-    // TODO: const globalConfig = ...
+    const pipelineResult = await pipeline.execute({
+      writing: {
+        backupSession,
+        dryRun: options.dryRun,
+      },
+    });
 
-    /**
-     * STEP 3
-     * -----------------------------------------
-     * Discover entity config files.
-     *
-     * Expected:
-     * - user entity configs
-     * - grouped entity strategy support
-     * - filtering support
-     *
-     * TODO:
-     * - entity discovery service
-     * - glob utilities
-     * - incremental changed-only support
-     */
-
-    // TODO: const entityConfigFiles = ...
-
-    /**
-     * STEP 4
-     * -----------------------------------------
-     * Load entity config instances.
-     *
-     * Expected:
-     * - dynamic imports
-     * - validation
-     * - duplicate key checks
-     * - semantic normalization
-     */
-
-    // TODO: const entityConfigs = ...
-
-    /**
-     * STEP 5
-     * -----------------------------------------
-     * Build normalized contexts.
-     *
-     * Expected:
-     * - entity context
-     * - field groups
-     * - relation context
-     * - generated constants
-     * - generated types
-     * - semantic query groups
-     * - semantic mutation groups
-     *
-     * Output:
-     * normalized handlebars-safe manifest context
-     */
-
-    // TODO: const entityContexts = ...
-
-    /**
-     * STEP 6
-     * -----------------------------------------
-     * Resolve templates for entities.
-     *
-     * Expected:
-     * - template registry lookup
-     * - imported template object support
-     * - output path resolution
-     * - filename resolution
-     */
-
-    // TODO: const templateExecutions = ...
-
-    /**
-     * STEP 7
-     * -----------------------------------------
-     * Execute Handlebars templates.
-     *
-     * Expected:
-     * - compile templates
-     * - render contexts
-     * - support helpers
-     * - support partials later
-     *
-     * Output:
-     * generated source strings
-     */
-
-    // TODO: const renderedTemplates = ...
-
-    /**
-     * STEP 8
-     * -----------------------------------------
-     * Convert rendered templates into
-     * write operations.
-     *
-     * Expected:
-     * - resolve output folders
-     * - resolve filenames
-     * - normalize paths
-     * - create write inputs
-     */
-
-    const fileInputs: WriteGeneratedFileInput[] = [];
-
-    // TODO:
-    // fileInputs.push({
-    //   path,
-    //   content,
-    //   source,
-    //   template,
-    //   immutable,
-    //   backupSession,
-    // });
-
-    /**
-     * STEP 9
-     * -----------------------------------------
-     * Write generated files.
-     *
-     * Expected:
-     * - atomic writes
-     * - backup tracking
-     * - hash comparison
-     * - file DB updates
-     */
-
-    let writeResults: WriteGeneratedFileResult[] = [];
-
-    if (!options.dryRun && fileInputs.length > 0) {
-      writeResults = await runtime.files.writeManyGenerated(fileInputs);
-    }
-
-    /**
-     * STEP 10
-     * -----------------------------------------
-     * Convert write results into API results.
-     */
-
-    const generatedFiles: GeneratedFileResult[] = writeResults.map((result) => ({
-      path: result.path,
-
-      action: result.action === 'unchanged' ? 'unchanged' : 'created',
-
-      templateName: fileInputs.find((input) => input.path === result.path)?.template ?? 'unknown',
-
-      size: result.sizeBytes,
-
-      changed: result.action !== 'unchanged',
+    // Convert pipeline results to action results
+    const generatedFiles: GeneratedFileResult[] = pipelineResult.generatedFiles.map((file) => ({
+      path: file.path,
+      action: FileAction.CREATED,
+      templateName: file.template,
+      size: Buffer.byteLength(file.content, 'utf-8'),
+      changed: true,
     }));
 
-    /**
-     * STEP 11
-     * -----------------------------------------
-     * Compute metrics.
-     */
-
-    const entitiesProcessed = 0;
-
-    // TODO:
-    // entityConfigs.length
-
-    const templatesExecuted = 0;
-
-    // TODO:
-    // renderedTemplates.length
-
-    /**
-     * STEP 12
-     * -----------------------------------------
-     * Finalize generation.
-     */
+    // Log warnings if any
+    if (pipelineResult.warnings.length > 0) {
+      for (const warning of pipelineResult.warnings) {
+        debug(`Pipeline warning: ${warning}`);
+      }
+    }
 
     success(GENERATE_LOG_MESSAGES.completed);
 
     return {
       generatedFiles,
-      entitiesProcessed,
-      templatesExecuted,
+      entitiesProcessed: pipelineResult.metrics.entitiesProcessed,
+      templatesExecuted: pipelineResult.metrics.templatesRendered,
       dryRun: options.dryRun ?? false,
     };
   },
