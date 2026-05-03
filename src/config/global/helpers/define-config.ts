@@ -24,7 +24,7 @@ import { CodepurifyConfig } from '../types/codepurify.config.types';
  * ```
  *
  * @param config - User configuration object
- * @returns Validated configuration object
+ * @returns Enhanced configuration object with template filtering methods
  */
 export function defineCodepurifyConfig(config: CodepurifyConfig): CodepurifyConfig {
   // Basic validation to ensure config is an object
@@ -32,7 +32,5 @@ export function defineCodepurifyConfig(config: CodepurifyConfig): CodepurifyConf
     throw new Error('Codepurify config must be an object');
   }
 
-  // Return the config as-is for now
-  // Runtime validation will happen in config-loader.ts
   return config;
 }

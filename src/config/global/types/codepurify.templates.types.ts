@@ -56,6 +56,11 @@ export interface CodepurifyTemplateRegistration {
    * Optional description for tooling/debug output.
    */
   description?: string;
+
+  /**
+   * Template type classification.
+   */
+  type: 'entity' | 'resource';
 }
 
 /**

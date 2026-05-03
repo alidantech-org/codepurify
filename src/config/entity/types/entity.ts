@@ -6,6 +6,7 @@ import { RelationConfigUnion } from './relation';
 import { TransitionConfig } from './transition';
 import { WorkflowConfig } from './workflow';
 import { IndexConfig } from './indexes';
+import { CodepurifyTemplatesFile } from '@/config/global';
 
 // ─── Entity options ───────────────────────────────────────────────────────────
 
@@ -73,7 +74,7 @@ export interface IEntityConfig {
    * Code generation templates to be applied
    * @type {readonly string[]}
    */
-  templates: readonly string[];
+  templates: readonly CodepurifyTemplatesFile[];
 
   /**
    * State transition definitions for entity lifecycle

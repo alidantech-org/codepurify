@@ -1,40 +1,31 @@
 /**
  * Init Action
  *
- * Initializes Codepurify by copying template files from the init directory.
- * Creates the basic project structure needed for Codepurify operations.
- *
- * Pipeline:
- *
- * backup session creation
- *   ↓
- * ensure gitignore entries
- *   ↓
- * copy template directory
- *   ↓
- * result mapping
+ * Initializes Codepurify by copying package init assets into the project.
  */
 
 import type { GeneratedFileResult, InitOptions, InitResult } from '@/api/types';
+
 import type { CodepurifyAction, CodepurifyRuntime } from '@/api/runtime';
+
 import { FileAction } from '@/api/types';
-import { INIT_OUTPUTS, INIT_GITIGNORE_ENTRIES } from '@/api/constants';
+
+import {
+  INIT_ACTION,
+  INIT_GITIGNORE_ENTRIES,
+  INIT_LOG_MESSAGES,
+  INIT_OUTPUTS,
+  INIT_TEMPLATE_NAMES,
+  INIT_TEMPLATE_SYMBOLS,
+} from '@/api/constants';
+
 import { debug, info, success } from '@/core/logger';
 
-/**
- * Ensure gitignore entries are present.
- *
- * Expected:
- * - read existing .gitignore if it exists
- * - add .codepurify/ entry if not present
- * - write updated .gitignore
- */
 async function ensureGitignoreEntries(runtime: CodepurifyRuntime): Promise<void> {
   const existing = await runtime.files.read(INIT_OUTPUTS.gitignore);
 
-  const current = existing.exists ? existing.content : '';
   const lines = new Set(
-    current
+    (existing.exists ? existing.content : '')
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean),
@@ -47,14 +38,19 @@ async function ensureGitignoreEntries(runtime: CodepurifyRuntime): Promise<void>
   await runtime.files.writeGenerated({
     path: INIT_OUTPUTS.gitignore,
     content: `${Array.from(lines).join('\n')}\n`,
-    source: 'init',
-    template: 'init.gitignore',
+    source: INIT_ACTION.source,
+    template: INIT_TEMPLATE_NAMES.gitignore,
     immutable: false,
   });
 }
 
+function applyInitTemplateSymbols(content: string): string {
+  // Replace the template root directory placeholder
+  return content.replaceAll(INIT_TEMPLATE_SYMBOLS.templateRootDir, INIT_OUTPUTS.templatesRootDir);
+}
+
 export const initAction: CodepurifyAction<InitOptions, InitResult> = {
-  name: 'init',
+  name: INIT_ACTION.name,
 
   defaults: () => ({
     createdFiles: [],
@@ -62,87 +58,67 @@ export const initAction: CodepurifyAction<InitOptions, InitResult> = {
   }),
 
   async run(runtime, options) {
-    info('Initializing Codepurify project...');
+    info(INIT_LOG_MESSAGES.starting);
 
     const createdFiles: GeneratedFileResult[] = [];
     const skippedFiles: string[] = [];
 
-    /**
-     * STEP 1
-     * -----------------------------------------
-     * Ensure gitignore entries are present.
-     *
-     * This adds .codepurify/ to .gitignore to prevent committing
-     * internal runtime state.
-     */
     if (!options.dryRun) {
       await ensureGitignoreEntries(runtime);
     }
 
-    /**
-     * STEP 2
-     * -----------------------------------------
-     * Create backup session for init operations.
-     *
-     * This session will track all file changes made during initialization
-     * so they can be rolled back if needed.
-     */
-    const backupSession = options.dryRun ? undefined : await runtime.files.createBackupSession('init');
+    const backupSession = options.dryRun ? undefined : await runtime.files.createBackupSession(INIT_ACTION.name);
 
     if (backupSession) {
-      debug(`Created init backup session: ${backupSession.id}`);
+      debug(INIT_LOG_MESSAGES.backupCreated(backupSession.id));
     }
 
-    /**
-     * STEP 3
-     * -----------------------------------------
-     * Copy template directory from init templates.
-     *
-     * This copies the entire code/ directory from the init templates
-     * to the project root, maintaining the directory structure.
-     */
+    const assetFiles = await runtime.assets.listInitFiles();
+
     if (options.debug) {
-      debug('Copying init template directory...');
+      debug(
+        INIT_LOG_MESSAGES.assetsFound(
+          assetFiles.length,
+          assetFiles.map((file) => file.path),
+        ),
+      );
     }
 
-    const copyResult = await runtime.assets.copyDirectory({
-      from: 'code',
-      to: 'code',
-      runtime,
-      overwrite: options.force,
-      backupSession,
-    });
+    // Copy all asset files with symbol patching for templates registry
+    for (const asset of assetFiles) {
+      const outputPath = `${INIT_OUTPUTS.codeDir}/${asset.path}`;
+      const exists = await runtime.files.exists(outputPath);
 
-    /**
-     * STEP 4
-     * -----------------------------------------
-     * Map copy results to API results.
-     *
-     * Expected:
-     * - action mapping (created/skipped)
-     * - template name resolution
-     * - size extraction
-     */
-    createdFiles.push(
-      ...copyResult.created.map((file) => ({
-        path: file.path,
+      if (exists && !options.force) {
+        skippedFiles.push(outputPath);
+        debug(INIT_LOG_MESSAGES.skipped(outputPath));
+        continue;
+      }
+
+      // Apply symbol patching for templates registry file
+      const content = asset.path === 'codepurify.templates.ts' ? applyInitTemplateSymbols(asset.content) : asset.content;
+
+      if (!options.dryRun) {
+        await runtime.files.writeGenerated({
+          path: outputPath,
+          content,
+          source: INIT_ACTION.source,
+          template: INIT_TEMPLATE_NAMES.asset,
+          immutable: false,
+          backupSession,
+        });
+      }
+
+      createdFiles.push({
+        path: outputPath,
         action: FileAction.CREATED,
-        templateName: 'init.template',
-        size: file.size,
+        templateName: INIT_TEMPLATE_NAMES.asset,
+        size: content.length,
         changed: true,
-      })),
-    );
+      });
+    }
 
-    skippedFiles.push(...copyResult.skipped);
-
-    /**
-     * STEP 5
-     * -----------------------------------------
-     * Finalize initialization.
-     *
-     * Return structured result with initialization details.
-     */
-    success('Codepurify project initialized successfully.');
+    success(options.dryRun ? INIT_LOG_MESSAGES.dryRunCompleted : INIT_LOG_MESSAGES.completed);
 
     return {
       createdFiles,
