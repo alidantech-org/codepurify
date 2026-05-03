@@ -8,6 +8,7 @@ import { CodepurifyFileRollback } from './file-rollback';
 import { CodepurifyFileValidator } from './file-validator';
 import { CodepurifyFileWriter } from './file-writer';
 import { relativeFromRoot, resolveInsideRoot } from './file-paths';
+import { FILE_DB_CONSTANTS, FILE_BACKUP_CONSTANTS } from './file.constants';
 
 import type {
   CodepurifyBackupSession,
@@ -47,9 +48,9 @@ export class CodepurifyFiles {
   constructor(options: CodepurifyFilesOptions) {
     this.rootDir = resolve(options.rootDir);
 
-    this.db = new CodepurifyFileDb(this.rootDir, options.dbPath);
+    this.db = new CodepurifyFileDb(this.rootDir, options.dbPath ?? FILE_DB_CONSTANTS.defaultFileName);
     this.reader = new CodepurifyFileReader(this.rootDir, this.db);
-    this.backups = new CodepurifyFileBackups(this.rootDir, options.backupDir);
+    this.backups = new CodepurifyFileBackups(this.rootDir, options.backupDir ?? FILE_BACKUP_CONSTANTS.defaultDirName);
     this.writer = new CodepurifyFileWriter(this.rootDir, this.db, this.reader, this.backups);
     this.rollbacker = new CodepurifyFileRollback(this.rootDir, this.db, this.backups);
     this.validator = new CodepurifyFileValidator(this.db, this.reader);

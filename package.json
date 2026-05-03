@@ -18,7 +18,6 @@
   },
   "files": [
     "dist",
-    "templates",
     "README.md",
     "LICENSE",
     "package.json"
@@ -28,9 +27,11 @@
   },
   "scripts": {
     "dev": "tsx src/cli/index.ts",
-    "build": "tsc && tsc-alias",
+    "clean": "shx rm -rf dist",
+    "copy:templates": "shx rm -rf dist/templates && shx cp -r src/templates dist/templates",
+    "build": "npm run clean && tsup && npm run copy:templates",
     "build:bundle": "tsup",
-    "watch": "tsup --watch",
+    "watch": "tsup --watch --onSuccess \"npm run copy:templates\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write .",
@@ -58,6 +59,7 @@
     "@typescript-eslint/parser": "^8.59.1",
     "eslint": "^9.6.0",
     "prettier": "^3.3.2",
+    "shx": "^0.4.0",
     "tsc-alias": "^1.8.8",
     "tsup": "^8.1.0",
     "tsx": "^4.16.2",

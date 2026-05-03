@@ -8,6 +8,7 @@ import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
 import { Codepurify } from '@/api/codepurify';
+import { INIT_OUTPUTS } from '@/api/constants';
 
 /**
  * Creates the init command
@@ -17,6 +18,7 @@ export function createInitCommand(): Command {
     .description('Initialize Codepurify in your project')
     .option('-f, --force', 'Force initialization even if Codepurify is already initialized')
     .option('--dry-run', 'Show what would be created without writing files')
+    .option('--debug', 'Show debug information for troubleshooting')
     .action(async (options) => {
       try {
         intro('🚀 Codepurify Init');
@@ -27,8 +29,7 @@ export function createInitCommand(): Command {
         if (!options.force) {
           try {
             const codepurify = new Codepurify();
-            const configPath = 'codepurify.config.ts';
-            const configExists = await codepurify.files.exists(configPath);
+            const configExists = await codepurify.files.exists(INIT_OUTPUTS.codeDir);
 
             if (configExists) {
               const shouldContinue = await confirm({
@@ -52,7 +53,39 @@ export function createInitCommand(): Command {
         const result = await codepurify.init({
           force: options.force,
           dryRun: options.dryRun,
+          debug: options.debug,
         });
+
+        // Check if initialization failed
+        if (!result.success) {
+          s.stop('Initialization failed');
+
+          if (result.errors.length > 0) {
+            consola.error('Initialization failed with errors:');
+            result.errors.forEach((error, index) => {
+              consola.error(`  Error ${index + 1}:`);
+              consola.error(`    Message: ${error.message}`);
+              consola.error(`    Full error object:`, JSON.stringify(error, null, 2));
+              if (error.cause) {
+                // Handle different types of error causes
+                if (error.cause instanceof Error) {
+                  consola.error(`    Cause: ${error.cause.message}`);
+                  if (error.cause.stack) {
+                    consola.error(`    Stack: ${error.cause.stack}`);
+                  }
+                } else {
+                  consola.error(`    Cause: ${error.cause}`);
+                }
+              } else {
+                consola.error(`    No cause found`);
+              }
+            });
+          } else {
+            consola.error('Initialization failed for unknown reasons');
+          }
+
+          process.exit(1);
+        }
 
         s.stop('Project initialized successfully');
 
@@ -75,6 +108,14 @@ export function createInitCommand(): Command {
               consola.info(`  ⏭ ${file}`);
             });
           }
+        }
+
+        // Show warnings if any
+        if (result.warnings.length > 0) {
+          consola.warn(`Warnings:`);
+          result.warnings.forEach((warning) => {
+            consola.warn(`  ${warning}`);
+          });
         }
 
         outro('✨ Ready to generate entities with: codepurify generate');

@@ -1,22 +1,18 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 
 import type { CodepurifyFileRecord, CodepurifyFilesDb } from './file-types';
+import { FILE_DB_CONSTANTS, createTempFilePath, formatDbJson, createEmptyFileDb } from './file.constants';
 
 export class CodepurifyFileDb {
   readonly dbPath: string;
 
-  constructor(rootDir: string, dbPath = '.codepurify/files.json') {
-    this.dbPath = resolve(rootDir, dbPath);
+  constructor(rootDir: string, dbPath?: string) {
+    this.dbPath = resolve(rootDir, dbPath ?? FILE_DB_CONSTANTS.defaultFileName);
   }
 
   createEmpty(): CodepurifyFilesDb {
-    return {
-      version: 1,
-      generator: 'codepurify',
-      updatedAt: null,
-      records: [],
-    };
+    return createEmptyFileDb();
   }
 
   async load(): Promise<CodepurifyFilesDb> {
@@ -24,7 +20,11 @@ export class CodepurifyFileDb {
       const content = await readFile(this.dbPath, 'utf-8');
       const parsed = JSON.parse(content) as CodepurifyFilesDb;
 
-      if (parsed.version !== 1 || parsed.generator !== 'codepurify' || !Array.isArray(parsed.records)) {
+      if (
+        parsed.version !== FILE_DB_CONSTANTS.version ||
+        parsed.generator !== FILE_DB_CONSTANTS.generator ||
+        !Array.isArray(parsed.records)
+      ) {
         throw new Error('Invalid Codepurify file DB structure.');
       }
 
@@ -48,8 +48,8 @@ export class CodepurifyFileDb {
 
     await mkdir(dirname(this.dbPath), { recursive: true });
 
-    const tempPath = `${this.dbPath}.tmp.${Date.now()}`;
-    await writeFile(tempPath, JSON.stringify(nextDb, null, 2) + '\n', 'utf-8');
+    const tempPath = createTempFilePath(this.dbPath);
+    await writeFile(tempPath, formatDbJson(nextDb), 'utf-8');
     await rename(tempPath, this.dbPath);
   }
 

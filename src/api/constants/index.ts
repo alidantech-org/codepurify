@@ -8,4 +8,4 @@ export * from './action.constants';
 export * from './clean.constants';
 export * from './generate.constants';
 export * from './init.constants';
-export * from './rollback.constsnts';
+export * from './rollback.constants';

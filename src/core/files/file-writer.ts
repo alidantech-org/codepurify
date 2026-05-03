@@ -1,11 +1,14 @@
-import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { mkdir, rename, writeFile, stat } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { FileAction } from '@/api/types';
+import { createTempFilePath } from './file.constants';
 import { hashContent } from './file-hash';
 import { relativeFromRoot, resolveInsideRoot } from './file-paths';
 import type { CodepurifyFileBackups } from './file-backups';
 import type { CodepurifyFileDb } from './file-db';
 import type { CodepurifyFileReader } from './file-reader';
 import type { WriteGeneratedFileInput, WriteGeneratedFileResult } from './file-types';
+import { CodepurifyFileKind } from './file-types';
 
 export class CodepurifyFileWriter {
   constructor(
@@ -29,7 +32,7 @@ export class CodepurifyFileWriter {
         absolutePath,
         hash,
         sizeBytes,
-        action: 'unchanged',
+        action: FileAction.UNCHANGED,
       };
     }
 
@@ -44,7 +47,7 @@ export class CodepurifyFileWriter {
     await this.db.upsert({
       path: relativePath,
       absolutePath,
-      kind: 'generated',
+      kind: CodepurifyFileKind.GENERATED,
       source: input.source,
       template: input.template,
       hash,
@@ -68,7 +71,7 @@ export class CodepurifyFileWriter {
       absolutePath,
       hash,
       sizeBytes,
-      action: existing.exists ? 'updated' : 'created',
+      action: existing.exists ? FileAction.UPDATED : FileAction.CREATED,
       backupPath: backupRecord.backupPath ?? undefined,
     };
   }
@@ -90,11 +93,37 @@ export class CodepurifyFileWriter {
   }
 
   private async writeAtomically(path: string, content: string): Promise<void> {
-    await mkdir(dirname(path), { recursive: true });
+    await this.ensureDirectory(path);
 
-    const tempPath = `${path}.tmp.${Date.now()}.${Math.random().toString(36).slice(2)}`;
+    const tempPath = createTempFilePath(path);
 
     await writeFile(tempPath, content, 'utf-8');
     await rename(tempPath, path);
+  }
+
+  private async ensureDirectory(path: string): Promise<void> {
+    const dir = dirname(path);
+
+    try {
+      const info = await stat(dir);
+
+      if (!info.isDirectory()) {
+        throw new Error(
+          `Expected directory but found file: ${dir}`,
+        );
+      }
+
+      return;
+    } catch (error) {
+      const fsError = error as NodeJS.ErrnoException;
+
+      if (fsError.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    await mkdir(dir, {
+      recursive: true,
+    });
   }
 }

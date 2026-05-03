@@ -5,7 +5,7 @@
  */
 
 import type { CodepurifyWatchEvent } from '@/api/types';
-import { FilePatternUtils } from '@/constants';
+import { FilePatternUtils } from './file-pattern-utils';
 
 /**
  * Classify file change type based on path patterns.

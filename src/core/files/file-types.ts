@@ -1,3 +1,5 @@
+import { FileAction } from '@/api/types';
+
 /**
  * Codepurify file management types.
  *
@@ -5,7 +7,16 @@
  * result/input types.
  */
 
-export type CodepurifyFileKind = 'generated' | 'config' | 'template' | 'backup' | 'unknown';
+/**
+ * File kind enum for type safety.
+ */
+export enum CodepurifyFileKind {
+  GENERATED = 'generated',
+  CONFIG = 'config',
+  TEMPLATE = 'template',
+  BACKUP = 'backup',
+  UNKNOWN = 'unknown',
+}
 
 export interface CodepurifyFilesOptions {
   /**
@@ -116,7 +127,7 @@ export interface WriteGeneratedFileResult {
   absolutePath: string;
   hash: string;
   sizeBytes: number;
-  action: 'created' | 'updated' | 'unchanged';
+  action: FileAction;
   backupPath?: string;
 }
 

@@ -162,6 +162,11 @@ export interface InitOptions {
    * Run in dry-run mode without writing files.
    */
   dryRun?: boolean;
+
+  /**
+   * Show debug information for troubleshooting.
+   */
+  debug?: boolean;
 }
 
 /**

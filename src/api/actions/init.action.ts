@@ -1,105 +1,60 @@
 /**
  * Init Action
  *
- * Initializes Codepurify configuration and template registry files.
+ * Initializes Codepurify by copying template files from the init directory.
  * Creates the basic project structure needed for Codepurify operations.
  *
  * Pipeline:
  *
  * backup session creation
  *   ↓
- * template discovery
+ * ensure gitignore entries
  *   ↓
- * file queuing
- *   ↓
- * file writing
+ * copy template directory
  *   ↓
  * result mapping
  */
 
-import { resolve } from 'node:path';
-
 import type { GeneratedFileResult, InitOptions, InitResult } from '@/api/types';
-
 import type { CodepurifyAction, CodepurifyRuntime } from '@/api/runtime';
-
-import type { WriteGeneratedFileInput } from '@/core/files';
-
-import {
-  INIT_ACTION,
-  INIT_EXAMPLE_TEMPLATE_FILES,
-  INIT_FILES,
-  INIT_LOG_MESSAGES,
-  INIT_TEMPLATE_NAMES,
-  TEMPLATE_SEARCH_PATHS,
-} from '@/api/constants';
-
+import { FileAction } from '@/api/types';
+import { INIT_OUTPUTS, INIT_GITIGNORE_ENTRIES } from '@/api/constants';
 import { debug, info, success } from '@/core/logger';
 
 /**
- * Read an init template file from multiple possible locations.
+ * Ensure gitignore entries are present.
  *
  * Expected:
- * - template discovery from multiple search paths
- * - file reading using files module
- * - error handling for missing templates
+ * - read existing .gitignore if it exists
+ * - add .codepurify/ entry if not present
+ * - write updated .gitignore
  */
-async function readInitTemplate(runtime: CodepurifyRuntime, templatePath: string): Promise<string> {
-  const candidates = TEMPLATE_SEARCH_PATHS.map((basePath) => resolve(runtime.cwd, basePath, templatePath));
+async function ensureGitignoreEntries(runtime: CodepurifyRuntime): Promise<void> {
+  const existing = await runtime.files.read(INIT_OUTPUTS.gitignore);
 
-  for (const candidate of candidates) {
-    const relativePath = candidate.replace(runtime.cwd, '').replace(/^[\\/]/, '');
+  const current = existing.exists ? existing.content : '';
+  const lines = new Set(
+    current
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean),
+  );
 
-    const result = await runtime.files.read(relativePath);
-
-    if (result.exists) {
-      return result.content;
-    }
+  for (const entry of INIT_GITIGNORE_ENTRIES) {
+    lines.add(entry);
   }
 
-  throw new Error(INIT_LOG_MESSAGES.templateNotFound(templatePath, candidates));
-}
-
-/**
- * Queue a file for writing during initialization.
- *
- * Expected:
- * - file existence checking
- * - force mode handling
- * - backup session tracking
- * - immutable file marking
- */
-async function queueFile(input: {
-  runtime: CodepurifyRuntime;
-  options: InitOptions;
-  path: string;
-  content: string;
-  template: string;
-  immutable: boolean;
-  backupSession?: WriteGeneratedFileInput['backupSession'];
-  fileInputs: WriteGeneratedFileInput[];
-  skippedFiles: string[];
-}): Promise<void> {
-  const exists = await input.runtime.files.exists(input.path);
-
-  if (exists && !input.options.force) {
-    input.skippedFiles.push(input.path);
-    debug(INIT_LOG_MESSAGES.skipped(input.path));
-    return;
-  }
-
-  input.fileInputs.push({
-    path: input.path,
-    content: input.content,
-    source: INIT_ACTION.name,
-    template: input.template,
-    immutable: input.immutable,
-    backupSession: input.backupSession,
+  await runtime.files.writeGenerated({
+    path: INIT_OUTPUTS.gitignore,
+    content: `${Array.from(lines).join('\n')}\n`,
+    source: 'init',
+    template: 'init.gitignore',
+    immutable: false,
   });
 }
 
 export const initAction: CodepurifyAction<InitOptions, InitResult> = {
-  name: INIT_ACTION.name,
+  name: 'init',
 
   defaults: () => ({
     createdFiles: [],
@@ -107,184 +62,87 @@ export const initAction: CodepurifyAction<InitOptions, InitResult> = {
   }),
 
   async run(runtime, options) {
-    info(INIT_LOG_MESSAGES.starting);
+    info('Initializing Codepurify project...');
 
     const createdFiles: GeneratedFileResult[] = [];
     const skippedFiles: string[] = [];
-    const fileInputs: WriteGeneratedFileInput[] = [];
 
     /**
      * STEP 1
      * -----------------------------------------
-     * Create backup session for init operations.
+     * Ensure gitignore entries are present.
      *
-     * This session will track all file changes made during initialization
-     * so they can be rolled back if needed.
-     *
-     * Expected:
-     * - backup session creation
-     * - session ID generation
-     * - dry-run mode support
+     * This adds .codepurify/ to .gitignore to prevent committing
+     * internal runtime state.
      */
-
-    const backupSession = options.dryRun ? undefined : await runtime.files.createBackupSession(INIT_ACTION.name);
-
-    if (backupSession) {
-      debug(INIT_LOG_MESSAGES.backupCreated(backupSession.id));
+    if (!options.dryRun) {
+      await ensureGitignoreEntries(runtime);
     }
 
     /**
      * STEP 2
      * -----------------------------------------
-     * Queue configuration files for creation.
+     * Create backup session for init operations.
      *
-     * These are the core configuration files needed for Codepurify:
-     * - codepurify.config.ts: main configuration
-     * - codepurify.templates.ts: template registry
-     *
-     * Expected:
-     * - template discovery and reading
-     * - file existence checking
-     * - force mode handling
-     * - immutable file marking
+     * This session will track all file changes made during initialization
+     * so they can be rolled back if needed.
      */
+    const backupSession = options.dryRun ? undefined : await runtime.files.createBackupSession('init');
 
-    await queueFile({
-      runtime,
-      options,
-      path: INIT_FILES.config,
-      content: await readInitTemplate(runtime, INIT_FILES.config),
-      template: INIT_TEMPLATE_NAMES.config,
-      immutable: true,
-      backupSession,
-      fileInputs,
-      skippedFiles,
-    });
-
-    await queueFile({
-      runtime,
-      options,
-      path: INIT_FILES.templates,
-      content: await readInitTemplate(runtime, INIT_FILES.templates),
-      template: INIT_TEMPLATE_NAMES.templates,
-      immutable: true,
-      backupSession,
-      fileInputs,
-      skippedFiles,
-    });
+    if (backupSession) {
+      debug(`Created init backup session: ${backupSession.id}`);
+    }
 
     /**
      * STEP 3
      * -----------------------------------------
-     * Queue example template files for creation.
+     * Copy template directory from init templates.
      *
-     * These are example templates that users can reference:
-     * - entity.ts.hbs: entity template
-     * - dto.create.ts.hbs: create DTO template
-     * - dto.update.ts.hbs: update DTO template
-     * - service.ts.hbs: service template
-     *
-     * Expected:
-     * - template discovery and reading
-     * - file existence checking
-     * - path resolution
-     * - template name mapping
+     * This copies the entire code/ directory from the init templates
+     * to the project root, maintaining the directory structure.
      */
-
-    for (const fileName of INIT_EXAMPLE_TEMPLATE_FILES) {
-      const outputPath = `${INIT_FILES.templatesDir}/example/${fileName}`;
-
-      await queueFile({
-        runtime,
-        options,
-        path: outputPath,
-        content: await readInitTemplate(runtime, `templates/${fileName}`),
-        template: `init.${fileName.replace('.hbs', '')}`,
-        immutable: false,
-        backupSession,
-        fileInputs,
-        skippedFiles,
-      });
+    if (options.debug) {
+      debug('Copying init template directory...');
     }
+
+    const copyResult = await runtime.assets.copyDirectory({
+      from: 'code',
+      to: 'code',
+      runtime,
+      overwrite: options.force,
+      backupSession,
+    });
 
     /**
      * STEP 4
      * -----------------------------------------
-     * Handle dry-run mode.
-     *
-     * In dry-run mode, files are not actually written.
-     * Instead, we return what would be created.
+     * Map copy results to API results.
      *
      * Expected:
-     * - file input mapping to results
-     * - size calculation
-     * - action marking
+     * - action mapping (created/skipped)
+     * - template name resolution
+     * - size extraction
      */
+    createdFiles.push(
+      ...copyResult.created.map((file) => ({
+        path: file.path,
+        action: FileAction.CREATED,
+        templateName: 'init.template',
+        size: file.size,
+        changed: true,
+      })),
+    );
 
-    if (options.dryRun) {
-      createdFiles.push(
-        ...fileInputs.map((input) => ({
-          path: input.path,
-          action: 'created' as const,
-          templateName: input.template,
-          size: input.content.length,
-          changed: true,
-        })),
-      );
-
-      success(INIT_LOG_MESSAGES.dryRunCompleted);
-      return { createdFiles, skippedFiles };
-    }
+    skippedFiles.push(...copyResult.skipped);
 
     /**
      * STEP 5
-     * -----------------------------------------
-     * Write queued files to disk.
-     *
-     * Expected:
-     * - atomic file writes
-     * - backup tracking
-     * - hash comparison
-     * - file DB updates
-     */
-
-    const writeResults = await runtime.files.writeManyGenerated(fileInputs);
-
-    /**
-     * STEP 6
-     * -----------------------------------------
-     * Map write results to API results.
-     *
-     * Expected:
-     * - action mapping (created/updated/unchanged)
-     * - template name resolution
-     * - size extraction
-     * - change detection
-     */
-
-    createdFiles.push(
-      ...writeResults.map((result) => {
-        const input = fileInputs.find((item) => item.path === result.path);
-
-        return {
-          path: result.path,
-          action: result.action === 'unchanged' ? 'unchanged' : 'created',
-          templateName: input?.template ?? INIT_TEMPLATE_NAMES.unknown,
-          size: result.sizeBytes,
-          changed: result.action !== 'unchanged',
-        } satisfies GeneratedFileResult;
-      }),
-    );
-
-    /**
-     * STEP 7
      * -----------------------------------------
      * Finalize initialization.
      *
      * Return structured result with initialization details.
      */
-
-    success(INIT_LOG_MESSAGES.completed);
+    success('Codepurify project initialized successfully.');
 
     return {
       createdFiles,

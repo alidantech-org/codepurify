@@ -50,7 +50,13 @@ export function normalizeCodepurifyError(actionName: string, error: unknown): Co
     return error;
   }
 
-  return new CodepurifyError(CodepurifyErrorCode.GENERATION_FAILED, `${actionName} failed`, { cause: error });
+  // Create a new CodepurifyError with the original error as cause
+  const normalizedError = new CodepurifyError(CodepurifyErrorCode.GENERATION_FAILED, `${actionName} failed`);
+
+  // Set the cause property directly for proper error reporting
+  (normalizedError as any).cause = error;
+
+  return normalizedError;
 }
 
 /**

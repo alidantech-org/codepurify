@@ -9,6 +9,7 @@ import { watch as chokidarWatch, type FSWatcher } from 'chokidar';
 
 import { debug } from '@/core/logger';
 import { CodepurifyFiles } from '@/core/files';
+import { CodepurifyAssets } from './codepurify-assets';
 import type { CodepurifyOptions } from '@/api/types';
 
 /**
@@ -23,6 +24,7 @@ export class CodepurifyRuntime {
   readonly configPath?: string;
   readonly templatesPath?: string;
   public readonly files: CodepurifyFiles;
+  public readonly assets: CodepurifyAssets;
   watcher?: FSWatcher;
 
   constructor(options: CodepurifyOptions = {}) {
@@ -36,6 +38,9 @@ export class CodepurifyRuntime {
       dbPath: '.codepurify/files.json',
       backupDir: '.codepurify/backups',
     });
+
+    // Initialize assets module
+    this.assets = new CodepurifyAssets();
 
     debug(`Codepurify runtime initialized in: ${this.cwd}`);
   }

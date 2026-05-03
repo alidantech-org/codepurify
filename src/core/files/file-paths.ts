@@ -14,7 +14,11 @@ export function ensureInsideRoot(rootDir: string, absolutePath: string): void {
   const root = resolve(rootDir);
   const target = resolve(absolutePath);
 
-  if (target !== root && !target.startsWith(root + '/')) {
+  // Normalize paths to use forward slashes for comparison
+  const normalizedRoot = toPosixPath(root);
+  const normalizedTarget = toPosixPath(target);
+
+  if (normalizedTarget !== normalizedRoot && !normalizedTarget.startsWith(normalizedRoot + '/')) {
     throw new Error(`File path escapes root directory: ${absolutePath}`);
   }
 }

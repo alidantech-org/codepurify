@@ -8,11 +8,11 @@
  */
 
 import { Command } from 'commander';
-import { createInitCommand } from './commands/init.command';
-import { createGenerateCommand } from './commands/generate.command';
-import { createCheckCommand } from './commands/check.command';
-import { createRollbackCommand } from './commands/rollback.command';
-import { createCleanCommand } from './commands/clean.command';
+import { createInitCommand } from './commands/init.command.js';
+import { createGenerateCommand } from './commands/generate.command.js';
+import { createCheckCommand } from './commands/check.command.js';
+import { createRollbackCommand } from './commands/rollback.command.js';
+import { createCleanCommand } from './commands/clean.command.js';
 
 /**
  * Creates and configures the Codepurify CLI program

@@ -5,4 +5,5 @@
  */
 
 export * from './codepurify.types';
+export * from './file-action.types';
 export * from './result.types';

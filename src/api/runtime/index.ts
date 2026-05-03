@@ -8,5 +8,5 @@ export * from './codepurify-runtime';
 export * from './action-contract';
 export * from './codepurify-errors';
 export * from './watch-classifier';
+export * from './file-pattern-utils';
 export * from './debounce';
-export * from '../../constants';
