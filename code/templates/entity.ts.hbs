@@ -1,0 +1,20 @@
+/** * Entity Template * * Generates a TypeScript entity class with properties and methods. */ export class
+{{entity.pascal_case_key}}
+{
+{{#each entity.fields}}
+  {{#if this.required}}
+    {{this.name}}:
+    {{this.type}};
+  {{else}}
+    {{this.name}}?:
+    {{this.type}};
+  {{/if}}
+{{/each}}
+
+constructor({{#each entity.fields}}{{#unless @first}}, {{/unless}}{{this.name}}{{#if this.optional}}?{{/if}}{{/each}}) {
+{{#each entity.fields}}
+  this.{{this.name}}
+  =
+  {{this.name}};
+{{/each}}
+} // Add your custom methods here }

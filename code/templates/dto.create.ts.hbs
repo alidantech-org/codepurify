@@ -1,0 +1,11 @@
+/** * Create DTO Template * * Generates a Data Transfer Object for creating entities. */ export class Create{{entity.pascal_case_key}}Dto {
+{{#each entity.fields}}
+  {{#if this.required}}
+    {{this.name}}:
+    {{this.type}};
+  {{else}}
+    {{this.name}}?:
+    {{this.type}};
+  {{/if}}
+{{/each}}
+}
