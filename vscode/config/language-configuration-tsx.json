@@ -1,0 +1,133 @@
+{
+  "comments": {
+    "blockComment": [
+      "{!*#",
+      "#*!}"
+    ]
+  },
+  "brackets": [
+    [
+      "(",
+      ")"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "{",
+      "}"
+    ],
+    [
+      "{!*",
+      "*!}"
+    ]
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "{!*",
+      "close": "*!}",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "{!*#",
+      "close": "#*!}",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "{!**",
+      "close": "**!}",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "\"",
+      "close": "\"",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "'",
+      "close": "'",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "`",
+      "close": "`",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    }
+  ],
+  "surroundingPairs": [
+    [
+      "{!*",
+      "*!}"
+    ],
+    [
+      "{!*#",
+      "#*!}"
+    ],
+    [
+      "{!**",
+      "**!}"
+    ],
+    [
+      "(",
+      ")"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "{",
+      "}"
+    ],
+    [
+      "\"",
+      "\""
+    ],
+    [
+      "'",
+      "'"
+    ],
+    [
+      "`",
+      "`"
+    ]
+  ],
+  "folding": {
+    "markers": {
+      "start": "^\\s*\\{!*\\s*(if|loop|raw|unless|with)\\b.*~\\)",
+      "end": "^\\s*\\{!*\\s*\\/(if|loop|raw|unless|with)\\s*~\\)"
+    }
+  },
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\s\\(\\)\\[\\]\\{\\}\"'`,;]+)"
+}

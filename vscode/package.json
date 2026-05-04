@@ -1,0 +1,143 @@
+{
+  "name": "codepurify-templates",
+  "displayName": "Codepurify Templates",
+  "version": "0.0.1",
+  "description": "Template language for deterministic code generation with syntax highlighting, autocomplete, and error validation",
+  "publisher": "alidantechorg",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "codepurify",
+        "aliases": [
+          "Codepurify"
+        ],
+        "extensions": [
+          ".codepurify",
+          ".code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-ts",
+        "aliases": [
+          "Codepurify TypeScript"
+        ],
+        "extensions": [
+          ".ts.code"
+        ],
+        "configuration": "./config/language-configuration-ts.json"
+      },
+      {
+        "id": "codepurify-tsx",
+        "aliases": [
+          "Codepurify TSX"
+        ],
+        "extensions": [
+          ".tsx.code"
+        ],
+        "configuration": "./config/language-configuration-tsx.json"
+      },
+      {
+        "id": "codepurify-md",
+        "aliases": [
+          "Codepurify Markdown"
+        ],
+        "extensions": [
+          ".md.code"
+        ],
+        "configuration": "./config/language-configuration-md.json"
+      },
+      {
+        "id": "codepurify-html",
+        "aliases": [
+          "Codepurify HTML"
+        ],
+        "extensions": [
+          ".html.code"
+        ],
+        "configuration": "./config/language-configuration-html.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "codepurify",
+        "scopeName": "source.codepurify",
+        "path": "./syntaxes/codepurify.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-ts",
+        "scopeName": "source.codepurify.ts",
+        "path": "./syntaxes/codepurify-ts.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-tsx",
+        "scopeName": "source.codepurify.tsx",
+        "path": "./syntaxes/codepurify-tsx.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-md",
+        "scopeName": "text.codepurify.markdown",
+        "path": "./syntaxes/codepurify-md.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-html",
+        "scopeName": "text.codepurify.html",
+        "path": "./syntaxes/codepurify-html.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "codepurify",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-ts",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-tsx",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-md",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-html",
+        "path": "./snippets/codepurify.json"
+      }
+    ]
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alidantech-org/codepurify"
+  },
+  "keywords": [
+    "code generation",
+    "templates",
+    "syntax highlighting",
+    "auto complete"
+  ],
+  "author": "alidantech.org",
+  "license": "MIT",
+  "icon": "icon.png",
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^4.9.4"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {}
+}

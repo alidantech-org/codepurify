@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{!* entity.names.pascal_case *!} - {!* entity.names.words_title *!}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="title">{!* entity.names.pascal_case *!}</h1>
+            <p class="subtitle">Generated from {!* entity.key *!} in {!* entity.group_key *!}</p>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="entity-info">
+                <h2>Entity Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Key:</label>
+                        <span>~ entity.key ~</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Group:</label>
+                        <span>~ entity.group_key ~</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Module:</label>
+                        <span>~ entity.identity.module_key ~</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="name-variations">
+                <h2>Name Variations</h2>
+                <div class="name-grid">
+                    <div class="name-item">
+                        <label>Original:</label>
+                        <code>~ entity.names.original ~</code>
+                    </div>
+                    <div class="name-item">
+                        <label>Camel Case:</label>
+                        <code>~ entity.names.camel_case ~</code>
+                    </div>
+                    <div class="name-item">
+                        <label>Pascal Case:</label>
+                        <code>~ entity.names.pascal_case ~</code>
+                    </div>
+                    <div class="name-item">
+                        <label>Snake Case:</label>
+                        <code>~ entity.names.snake_case ~</code>
+                    </div>
+                    <div class="name-item">
+                        <label>Kebab Case:</label>
+                        <code>~ entity.names.kebab_case ~</code>
+                    </div>
+                    <div class="name-item">
+                        <label>Constant:</label>
+                        <code>~ entity.names.constant_case ~</code>
+                    </div>
+                </div>
+            </section>
+
+            <section class="fields">
+                <h2>Fields</h2>
+                <div class="field-list">
+                    {!* loop entity.fields.all as field *!}
+                    <div class="field-card">
+                        <h3>~ field.names.pascal_case ~</h3>
+                        <div class="field-details">
+                            <span class="field-type">~ field.type ~</span>
+                            {!* if field.optional *!}
+                            <span class="field-optional">Optional</span>
+                            {!* else *!}
+                            <span class="field-required">Required</span>
+                            {!* /if *!}
+                        </div>
+                        <div class="field-names">
+                            <small>Camel: <code>~ field.names.camel_case ~</code></small><br>
+                            <small>Snake: <code>~ field.names.snake_case ~</code></small>
+                        </div>
+                    </div>
+                    {!* /loop *!}
+                </div>
+            </section>
+
+            {!* if entity.fields.flags.has_string *!}
+            <section class="validation">
+                <h2>String Field Validation</h2>
+                <div class="validation-rules">
+                    {!*  loop entity.fields.all as field *!}
+                    {!* if field.type === 'string' *!}
+                    <div class="validation-rule">
+                        <input type="text" 
+                               id="~ field.names.kebab_case ~" 
+                               placeholder="Enter ~ field.names.words_lower ~"
+                               class="validation-input">
+                        <label for="~ field.names.kebab_case ~">~ field.names.pascal_case ~</label>
+                        <span class="validation-message"></span>
+                    </div>
+                    {!* /if *!}
+                    {!* /loop *!}
+                    <button class="validate-btn" onclick="validateForm()">Validate Fields</button>
+                </div>
+            </section>
+            {!* /if *!}
+
+            {!* if entity.fields.flags.has_array *!}
+            <section class="arrays">
+                <h2>Array Fields</h2>
+                <div class="array-list">
+                    {!* loop entity.fields.all as field *!}
+                    {!* if field.type === 'array' *!}
+                    <div class="array-item">
+                        <h4>~ field.names.pascal_case ~</h4>
+                        <ul class="array-items">
+                            <li>Item 1</li>
+                            <li>Item 2</li>
+                            <li>Item 3</li>
+                        </ul>
+                        <button class="add-item-btn">Add Item</button>
+                    </div>
+                    {!* /if *!}
+                    {!* /loop *!}
+                </div>
+            </section>
+            {!* /if *!}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Generated on ~ context.generated_at ~ using Codepurify Templates</p>
+            <p>Version: ~ context.version ~</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
