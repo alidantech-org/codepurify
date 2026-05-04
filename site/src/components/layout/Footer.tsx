@@ -1,7 +1,7 @@
 export function Footer() {
   return (
     <footer className="relative z-10 border-t border-border py-8">
-      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-xs text-muted-foreground sm:flex-row">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-xs text-muted-foreground sm:flex-row">
         <span> {new Date().getFullYear()} Codepurify · MIT License</span>
         <div className="flex gap-5">
           <a
@@ -12,16 +12,11 @@ export function Footer() {
           >
             GitHub
           </a>
-          <a
-            href="https://github.com/alidantech-org/codepurify#readme"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition-colors hover:text-foreground"
-          >
+          <a href="/docs" className="transition-colors hover:text-foreground">
             Docs
           </a>
           <a
-            href="https://www.npmjs.com/package/@codepurify/core"
+            href="https://www.npmjs.com/package/codepurify"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-foreground"

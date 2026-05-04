@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { HeroDecoration } from "@/components/decorative/HeroDecoration";
+
 export function Hero() {
   return (
-    <section className="flex flex-col items-center py-28 text-center sm:items-start sm:text-left">
+    <section className="relative flex flex-col items-center py-28 text-center sm:items-start sm:text-left">
       {/* Badge */}
       <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 font-mono text-[11px] tracking-wider text-primary">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
@@ -29,7 +32,7 @@ export function Hero() {
       {/* Install */}
       <div className="mt-8 w-full max-w-sm rounded-lg border-border bg-card px-4 py-2.5 font-mono text-sm text-foreground sm:w-auto">
         <span className="mr-2 text-muted-foreground">$</span>
-        npm install <span className="text-primary">@codepurify/core</span>
+        npm install <span className="text-primary">codepurify</span>
       </div>
 
       {/* CTAs */}
@@ -55,14 +58,16 @@ export function Hero() {
             />
           </svg>
         </a>
-        <a
-          href="https://github.com/alidantech-org/codepurify#readme"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/docs"
           className="flex h-11 items-center justify-center gap-2 rounded-full border-border px-6 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-card-muted/60 hover:text-foreground"
         >
           Documentation
-        </a>
+        </Link>
+      </div>
+
+      <div className="opacity-20 md:opacity-50 lg:opacity-100">
+        <HeroDecoration />
       </div>
     </section>
   );

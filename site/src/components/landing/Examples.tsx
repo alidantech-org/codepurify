@@ -1,8 +1,5 @@
-interface CodeExample {
-  filename: string;
-  language: string;
-  code: string;
-}
+import type { CodeExample } from "@/data/types";
+import { CodeHighlight } from "@/components/code-highlight";
 
 interface CodeBlockProps {
   example: CodeExample;
@@ -21,9 +18,9 @@ function CodeBlock({ example }: CodeBlockProps) {
         </span>
       </div>
       {/* Code */}
-      <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-6 text-foreground">
-        <code>{example.code}</code>
-      </pre>
+      <div className="p-0">
+        <CodeHighlight code={example.code} language={example.language} />
+      </div>
     </div>
   );
 }
@@ -45,22 +42,38 @@ export function Examples({
         Examples
       </p>
       <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">
-        Config → Template → Output
+        Define Once, Generate Everywhere
       </h2>
-      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted">
-        One entity config drives unlimited template outputs. Add a template, get
-        a new artifact — no changes to your domain config.
+      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
+        Single source of truth for your domain. Generate consistent architecture
+        across any language or framework without repetitive AI prompts.
       </p>
 
-      {/* Entity Config (full width) */}
-      <div className="mb-6">
-        <CodeBlock example={entityCode} />
-      </div>
+      {/* Simple examples grid */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="rounded-xl border-border bg-card p-6">
+          <h3 className="mb-3 font-semibold text-foreground">Domain Config</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Define your entities once with language-neutral facts
+          </p>
+          <CodeBlock example={entityCode} />
+        </div>
 
-      {/* Template + Output (side by side) */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <CodeBlock example={templateCode} />
-        <CodeBlock example={outputCode} />
+        <div className="rounded-xl border-border bg-card p-6">
+          <h3 className="mb-3 font-semibold text-foreground">Template Logic</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Simple Handlebars templates render your deterministic context
+          </p>
+          <CodeBlock example={templateCode} />
+        </div>
+
+        <div className="rounded-xl border-border bg-card p-6">
+          <h3 className="mb-3 font-semibold text-foreground">Generated Code</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Consistent output across any language or framework
+          </p>
+          <CodeBlock example={outputCode} />
+        </div>
       </div>
     </section>
   );

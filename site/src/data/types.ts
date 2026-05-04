@@ -6,6 +6,8 @@ export interface Feature {
 export interface PipelineStep {
   step: string;
   description: string;
+  details: string;
+  icon?: string;
 }
 
 export interface UseCase {

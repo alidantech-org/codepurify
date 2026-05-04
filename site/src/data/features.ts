@@ -1,14 +1,14 @@
 import type { Feature } from "./types";
 
 export const FEATURES: Feature[] = [
-  { label: "Strongly typed TypeScript configs", color: "blue" },
-  { label: "Semantic metadata inference", color: "purple" },
-  { label: "Handlebars-based generation", color: "blue" },
-  { label: "Framework agnostic", color: "purple" },
-  { label: "Runtime metadata compilation", color: "teal" },
-  { label: "Query / mutation capability inference", color: "blue" },
-  { label: "Typed enum transitions & workflows", color: "purple" },
-  { label: "Relation graph inference", color: "teal" },
-  { label: "JSON-safe normalized manifests", color: "blue" },
-  { label: "Extensible template ecosystem", color: "purple" },
+  { label: "Deterministic architecture generation", color: "blue" },
+  { label: "AI-efficient token usage", color: "purple" },
+  { label: "Language-neutral domain modeling", color: "blue" },
+  { label: "Framework agnostic templates", color: "purple" },
+  { label: "Zero architectural drift", color: "teal" },
+  { label: "Single source of truth", color: "blue" },
+  { label: "Consistent code generation", color: "purple" },
+  { label: "Reduced AI hallucinations", color: "teal" },
+  { label: "Scalable across languages", color: "blue" },
+  { label: "Template-driven architecture", color: "purple" },
 ];

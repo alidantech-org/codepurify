@@ -2,14 +2,15 @@ import { Metadata } from "next";
 
 export const siteConfig = {
   name: "Codepurify",
-  description: "Semantic metadata inference engine and template compiler. Define facts once, generate infinite architecture outputs.",
+  description:
+    "Semantic metadata inference engine and template compiler. Define facts once, generate infinite architecture outputs.",
   url: "https://codepurify.dev",
   ogImage: "https://codepurify.dev/og-image.png",
   links: {
     twitter: "https://twitter.com/codepurify",
     github: "https://github.com/alidantech-org/codepurify",
     docs: "https://github.com/alidantech-org/codepurify#readme",
-    npm: "https://www.npmjs.com/package/@codepurify/core",
+    npm: "https://www.npmjs.com/package/codepurify",
   },
 };
 
@@ -17,7 +18,8 @@ export type SiteConfig = typeof siteConfig;
 
 export function generateMetadata(): Metadata {
   const title = "Codepurify - Semantic Metadata Inference Engine";
-  const description = "Define facts once, generate infinite architecture outputs. Strongly typed TypeScript configs, semantic metadata inference, and template compilation for modern development.";
+  const description =
+    "Define facts once, generate infinite architecture outputs. Strongly typed TypeScript configs, semantic metadata inference, and template compilation for modern development.";
 
   return {
     title: {
@@ -121,7 +123,8 @@ export function generateStructuredData() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Codepurify",
-    description: "Semantic metadata inference engine and template compiler. Define facts once, generate infinite architecture outputs.",
+    description:
+      "Semantic metadata inference engine and template compiler. Define facts once, generate infinite architecture outputs.",
     url: siteConfig.url,
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Any",

@@ -95,7 +95,7 @@ from a single semantic source of truth.
 # Installation
 
 ```bash
-npm install @codepurify/core
+npm install codepurify
 ```
 
 ---
@@ -105,7 +105,7 @@ npm install @codepurify/core
 ## Entity Config
 
 ```ts
-import { EntityConfigBase, stringField, enumField, query, mutation, transition } from '@codepurify/core';
+import { EntityConfigBase, stringField, enumField, query, mutation, transition } from 'codepurify';
 
 export default class UserEntityConfig extends EntityConfigBase {
   key = 'user';
@@ -421,7 +421,7 @@ from a single semantic domain definition.
 # Example Future Ecosystem
 
 ```txt id="phl2a6"
-@codepurify/core
+codepurify
 @codepurify/compiler
 @codepurify/runtime
 @codepurify/templates

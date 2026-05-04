@@ -34,8 +34,9 @@ export function Features({ features }: FeaturesProps) {
         Core Features
       </h2>
       <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
-        Everything inferred from a single typed config. No boilerplate groups,
-        no manual plumbing — just semantic facts and generated output.
+        Stop wasting tokens on repetitive AI prompts. Generate consistent
+        architecture across any language with deterministic, template-driven
+        code generation.
       </p>
 
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">

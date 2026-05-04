@@ -95,7 +95,7 @@ from a single semantic source of truth.
 # Installation
 
 ```bash
-npm install @codepurify/core
+npm install codepurify
 ```
 
 ---
@@ -105,10 +105,17 @@ npm install @codepurify/core
 ## Entity Config
 
 ```ts
-import { EntityConfigBase, stringField, enumField, query, mutation, transition } from '@codepurify/core';
+import {
+  EntityConfigBase,
+  stringField,
+  enumField,
+  query,
+  mutation,
+  transition,
+} from "codepurify";
 
 export default class UserEntityConfig extends EntityConfigBase {
-  key = 'user';
+  key = "user";
 
   fields = this.defineFields({
     email: stringField({
@@ -119,8 +126,8 @@ export default class UserEntityConfig extends EntityConfigBase {
       mutation: mutation().apiWritable().build(),
     }),
 
-    status: enumField(['active', 'suspended', 'deleted'] as const, {
-      default: 'active',
+    status: enumField(["active", "suspended", "deleted"] as const, {
+      default: "active",
     }),
   });
 
@@ -133,16 +140,27 @@ export default class UserEntityConfig extends EntityConfigBase {
       terminal: [this.fields.status.values.deleted],
 
       transitions: {
-        [this.fields.status.values.active]: [this.fields.status.values.suspended, this.fields.status.values.deleted],
+        [this.fields.status.values.active]: [
+          this.fields.status.values.suspended,
+          this.fields.status.values.deleted,
+        ],
 
-        [this.fields.status.values.suspended]: [this.fields.status.values.active, this.fields.status.values.deleted],
+        [this.fields.status.values.suspended]: [
+          this.fields.status.values.active,
+          this.fields.status.values.deleted,
+        ],
 
         [this.fields.status.values.deleted]: [],
       },
     }),
   ];
 
-  templates = ['dto.create', 'dto.update', 'typeorm.entity', 'schema.zod'] as const;
+  templates = [
+    "dto.create",
+    "dto.update",
+    "typeorm.entity",
+    "schema.zod",
+  ] as const;
 }
 ```
 
@@ -307,7 +325,7 @@ Relations are fully typed semantic metadata.
 ```ts
 relationField(this, AppEntityConfig, {
   relation: {
-    kind: 'one_to_many',
+    kind: "one_to_many",
 
     remote_field: () => new AppEntityConfig().fields.ownerId,
 
@@ -331,7 +349,7 @@ No raw SQL.
 ```ts
 checks = [
   {
-    name: 'email_not_empty',
+    name: "email_not_empty",
 
     rule: field(() => this.fields.email).notEmpty(),
   },
@@ -353,8 +371,8 @@ transition({
   terminal: [this.fields.status.values.deleted],
 
   transitions: {
-    active: ['suspended', 'deleted'],
-    suspended: ['active', 'deleted'],
+    active: ["suspended", "deleted"],
+    suspended: ["active", "deleted"],
     deleted: [],
   },
 });
@@ -421,7 +439,7 @@ from a single semantic domain definition.
 # Example Future Ecosystem
 
 ```txt id="phl2a6"
-@codepurify/core
+codepurify
 @codepurify/compiler
 @codepurify/runtime
 @codepurify/templates
