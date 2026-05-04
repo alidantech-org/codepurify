@@ -76,26 +76,5 @@
     "typescript",
     "cli"
   ],
-  "license": "MIT",
-  "contributes": {
-    "languages": [
-      {
-        "id": "codepurify",
-        "aliases": [
-          "Codepurify"
-        ],
-        "extensions": [
-          ".cpt"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "codepurify",
-        "scopeName": "source.codepurify",
-        "path": "./syntaxes/codepurify.tmLanguage.json"
-      }
-    ]
-  }
+  "license": "MIT"
 }

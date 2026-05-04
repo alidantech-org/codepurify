@@ -1,0 +1,114 @@
+{
+      "Entity Pascal Name": {
+            "prefix": "entity.pascal",
+            "body": "(~ entity.names.pascal_case ~)",
+            "description": "Entity PascalCase name"
+      },
+      "Entity Camel Name": {
+            "prefix": "entity.camel",
+            "body": "(~ entity.names.camel_case ~)",
+            "description": "Entity camelCase name"
+      },
+      "Entity Kebab Name": {
+            "prefix": "entity.kebab",
+            "body": "(~ entity.names.kebab_case ~)",
+            "description": "Entity kebab-case name"
+      },
+      "Entity Snake Name": {
+            "prefix": "entity.snake",
+            "body": "(~ entity.names.snake_case ~)",
+            "description": "Entity snake_case name"
+      },
+      "Entity Constant Name": {
+            "prefix": "entity.constant",
+            "body": "(~ entity.names.constant_case ~)",
+            "description": "Entity CONSTANT_CASE name"
+      },
+      "Entity Singular Pascal": {
+            "prefix": "entity.singular.pascal",
+            "body": "(~ entity.names.singular.pascal_case ~)",
+            "description": "Entity singular PascalCase name"
+      },
+      "Entity Plural Pascal": {
+            "prefix": "entity.plural.pascal",
+            "body": "(~ entity.names.plural.pascal_case ~)",
+            "description": "Entity plural PascalCase name"
+      },
+      "Field Pascal Name": {
+            "prefix": "field.pascal",
+            "body": "(~ field.names.pascal_case ~)",
+            "description": "Field PascalCase name"
+      },
+      "Field Camel Name": {
+            "prefix": "field.camel",
+            "body": "(~ field.names.camel_case ~)",
+            "description": "Field camelCase name"
+      },
+      "Field Snake Name": {
+            "prefix": "field.snake",
+            "body": "(~ field.names.snake_case ~)",
+            "description": "Field snake_case name"
+      },
+      "Field Kebab Name": {
+            "prefix": "field.kebab",
+            "body": "(~ field.names.kebab_case ~)",
+            "description": "Field kebab-case name"
+      },
+      "Field Constant Name": {
+            "prefix": "field.constant",
+            "body": "(~ field.names.constant_case ~)",
+            "description": "Field CONSTANT_CASE name"
+      },
+      "Each Fields": {
+            "prefix": "each.fields",
+            "body": [
+                  "(~ each entity.fields.arrays.all.items as field ~)",
+                  "  $0",
+                  "(~ /each ~)"
+            ],
+            "description": "Loop over all entity fields"
+      },
+      "If Statement": {
+            "prefix": "~if",
+            "body": [
+                  "(~ if ${1:condition} ~)",
+                  "$0",
+                  "(~ /if ~)"
+            ],
+            "description": "Insert Codepurify if statement"
+      },
+      "Each Loop": {
+            "prefix": "~each",
+            "body": [
+                  "(~ each ${1:array} as ${2:item} ~)",
+                  "$0",
+                  "(~ /each ~)"
+            ],
+            "description": "Insert Codepurify each loop"
+      },
+      "Comment": {
+            "prefix": "~#",
+            "body": "(~# ${1:comment} #~)",
+            "description": "Insert Codepurify comment"
+      },
+      "Context Version": {
+            "prefix": "context.version",
+            "body": "(~ context.version ~)",
+            "description": "Context version"
+      },
+      "Project Root Dir": {
+            "prefix": "project.root",
+            "body": "(~ context.project.root_dir ~)",
+            "description": "Project root directory"
+      },
+      "Entity Key": {
+            "prefix": "entity.key",
+            "body": "(~ entity.key ~)",
+            "description": "Entity key"
+      },
+      "Entity Group Key": {
+            "prefix": "entity.group",
+            "body": "(~ entity.group_key ~)",
+            "description": "Entity group key"
+      }
+}

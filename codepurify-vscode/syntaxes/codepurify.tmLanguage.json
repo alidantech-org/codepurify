@@ -1,34 +1,48 @@
 {
+  "name": "Codepurify",
   "scopeName": "source.codepurify",
   "patterns": [
     {
-      "include": "#comments"
+      "include": "#comment"
     },
     {
-      "include": "#keywords"
-    },
-    {
-      "include": "#variables"
-    },
-    {
-      "include": "#control-flow"
-    },
-    {
-      "include": "#typescript"
+      "include": "#expression"
     }
   ],
   "repository": {
-    "comments": {
+    "comment": {
       "patterns": [
         {
           "name": "comment.block.codepurify",
           "begin": "\\(~#",
-          "end": "#~\\)",
-          "captures": {
+          "end": "#~\\)"
+        }
+      ]
+    },
+    "expression": {
+      "patterns": [
+        {
+          "name": "meta.expression.codepurify",
+          "begin": "\\(~",
+          "end": "~\\)",
+          "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.comment.codepurify"
+              "name": "punctuation.definition.template.begin.codepurify"
             }
-          }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.template.end.codepurify"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#keywords"
+            },
+            {
+              "include": "#variables"
+            }
+          ]
         }
       ]
     },
@@ -36,12 +50,7 @@
       "patterns": [
         {
           "name": "keyword.control.codepurify",
-          "match": "\\(~\\s*(if|else|each|raw|/if|/each|/raw)\\s*~\\)",
-          "captures": {
-            "0": {
-              "name": "punctuation.definition.keyword.codepurify"
-            }
-          }
+          "match": "\\b(if|else|each|raw|\\/if|\\/each|\\/raw)\\b"
         }
       ]
     },
@@ -49,77 +58,7 @@
       "patterns": [
         {
           "name": "variable.other.codepurify",
-          "match": "\\(~\\s*[a-zA-Z0-9._]+\\s*~\\)",
-          "captures": {
-            "0": {
-              "name": "punctuation.definition.variable.codepurify"
-            }
-          }
-        }
-      ]
-    },
-    "control-flow": {
-      "patterns": [
-        {
-          "name": "keyword.control.codepurify",
-          "begin": "\\(~\\s*(if|else|each|raw)\\s+",
-          "end": "\\s*~\\)",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.definition.control.codepurify"
-            }
-          },
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.control.codepurify"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#variables"
-            },
-            {
-              "include": "#expressions"
-            }
-          ]
-        },
-        {
-          "name": "keyword.control.codepurify",
-          "match": "\\(~\\s*(/if|/each|/raw)\\s*~\\)",
-          "captures": {
-            "0": {
-              "name": "punctuation.definition.control.codepurify"
-            }
-          }
-        }
-      ]
-    },
-    "expressions": {
-      "patterns": [
-        {
-          "name": "variable.parameter.codepurify",
-          "match": "[a-zA-Z_][a-zA-Z0-9_]*",
-          "captures": {
-            "0": {
-              "name": "variable.parameter.codepurify"
-            }
-          }
-        },
-        {
-          "name": "keyword.operator.codepurify",
-          "match": "[.]+",
-          "captures": {
-            "0": {
-              "name": "punctuation.accessor.codepurify"
-            }
-          }
-        }
-      ]
-    },
-    "typescript": {
-      "patterns": [
-        {
-          "include": "source.ts"
+          "match": "[a-zA-Z_$][a-zA-Z0-9_$.]*"
         }
       ]
     }

@@ -1,21 +1,21 @@
 {
-  "name": "codepurify",
+  "name": "codepurify-vscode",
   "displayName": "Codepurify",
   "version": "0.0.1",
-  "description": "Syntax highlighting for Codepurify templates",
+  "description": "Syntax highlighting and auto-complete for Codepurify templates",
+  "publisher": "local",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Languages"
+    "Programming Languages"
   ],
   "contributes": {
     "languages": [
       {
         "id": "codepurify",
         "aliases": [
-          "Codepurify",
-          "codepurify"
+          "Codepurify"
         ],
         "extensions": [
           ".cpt"
@@ -31,15 +31,30 @@
       }
     ]
   },
+  "main": "./out/src/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alidantech/codepurify"
+    "url": "https://github.com/alidantech-org/codepurify"
   },
   "keywords": [
     "code generation",
     "templates",
-    "syntax highlighting"
+    "syntax highlighting",
+    "auto complete"
   ],
-  "author": "Alidan Tech",
-  "license": "MIT"
+  "author": "alidantech.org",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^4.9.4"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "vscode": "^1.1.37"
+  }
 }

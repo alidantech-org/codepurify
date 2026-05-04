@@ -1,0 +1,11 @@
+(~ entity.names.casing.pascal ~)
+
+(~ if entity.fields.flags.has_string ~)
+hello
+(~ /if ~)
+
+(~ each entity.fields.arrays.all.items as field ~)
+  (~ field.names.casing.camel ~)
+(~ /each ~)
+
+(~# ignored comment #~)
