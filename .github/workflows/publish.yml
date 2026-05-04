@@ -37,24 +37,24 @@ jobs:
           scope: '@codepurify'
 
       - name: Install dependencies
-        run: npm ci
+        run: cd packages/nodejs && npm ci
 
       - name: Run tests
-        run: npm test || true # Allow to pass if no tests exist
+        run: cd packages/nodejs && npm test || true # Allow to pass if no tests exist
 
       - name: Type check
-        run: npm run typecheck
+        run: cd packages/nodejs && npm run typecheck
 
       - name: Lint
-        run: npm run lint
+        run: cd packages/nodejs && npm run lint
 
       - name: Build
-        run: npm run build
+        run: cd packages/nodejs && npm run build
 
       - name: Check package version
         id: version_check
         run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_VERSION=$(node -p "require('./packages/nodejs/package.json').version")
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
 
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
@@ -85,7 +85,7 @@ jobs:
 
       - name: Update package version (if needed)
         if: github.event.inputs.version != ''
-        run: npm version ${{ steps.publish_version.outputs.version }} --no-git-tag-version
+        run: cd packages/nodejs && npm version ${{ steps.publish_version.outputs.version }} --no-git-tag-version
 
       - name: Create npmrc
         run: |
@@ -95,11 +95,11 @@ jobs:
 
       - name: Publish to NPM (Dry Run)
         if: github.event.inputs.dry_run == 'true'
-        run: npm publish --dry-run --access public
+        run: cd packages/nodejs && npm publish --dry-run --access public
 
       - name: Publish to NPM
         if: github.event.inputs.dry_run != 'true'
-        run: npm publish --access public
+        run: cd packages/nodejs && npm publish --access public
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref_type == 'tag'
@@ -153,7 +153,7 @@ jobs:
 
       - name: Unpublish failed version
         run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_VERSION=$(node -p "require('./packages/nodejs/package.json').version")
           echo "Unpublishing failed version: $PACKAGE_VERSION"
           npm unpublish codepurify@$PACKAGE_VERSION --force || true
 
