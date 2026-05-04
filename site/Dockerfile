@@ -12,11 +12,11 @@ WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm i --frozen-lockfile; \
+    npm install -g pnpm && pnpm i --frozen-lockfile; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
   elif [ -f yarn.lock ]; then \
-    corepack enable yarn && yarn install --frozen-lockfile; \
+    npm install -g yarn && yarn install --frozen-lockfile; \
   else \
     npm i; \
   fi
@@ -34,11 +34,11 @@ COPY . .
 
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm run build; \
+    npm install -g pnpm && pnpm run build; \
   elif [ -f package-lock.json ]; then \
     npm run build; \
   elif [ -f yarn.lock ]; then \
-    corepack enable yarn && yarn build; \
+    npm install -g yarn && yarn build; \
   else \
     npm run build; \
   fi
