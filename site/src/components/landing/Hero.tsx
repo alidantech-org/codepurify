@@ -19,7 +19,7 @@ export function Hero() {
       </h1>
 
       {/* Sub */}
-      <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
+      <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
         Codepurify is a semantic metadata inference engine and template
         compiler. Describe your domain once — it infers query capabilities,
         mutation semantics, relation graphs, workflows, and validation rules,
@@ -59,7 +59,7 @@ export function Hero() {
           href="https://github.com/alidantech-org/codepurify#readme"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-11 items-center justify-center gap-2 rounded-full border-border px-6 text-sm text-muted transition-colors hover:border-border hover:bg-card-muted/60 hover:text-foreground"
+          className="flex h-11 items-center justify-center gap-2 rounded-full border-border px-6 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-card-muted/60 hover:text-foreground"
         >
           Documentation
         </a>

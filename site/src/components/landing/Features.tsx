@@ -33,7 +33,7 @@ export function Features({ features }: FeaturesProps) {
       <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">
         Core Features
       </h2>
-      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted">
+      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
         Everything inferred from a single typed config. No boilerplate groups,
         no manual plumbing — just semantic facts and generated output.
       </p>

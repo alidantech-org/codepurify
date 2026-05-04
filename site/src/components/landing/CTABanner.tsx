@@ -7,7 +7,7 @@ export function CTABanner() {
           semantic facts
         </span>
       </h2>
-      <p className="mx-auto mb-8 max-w-md text-[15px] leading-7 text-muted">
+      <p className="mx-auto mb-8 max-w-md text-[15px] leading-7 text-muted-foreground">
         MIT licensed. Framework agnostic. One config, infinite architecture
         outputs. Open source and ready for your contributions.
       </p>
