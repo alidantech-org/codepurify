@@ -1,14 +1,14 @@
 services:
   www:
     build:
-      context: ./www
+      context: ./site
       dockerfile: Dockerfile
     ports:
       - "3020:3000"
     environment:
       - NODE_ENV=production
     volumes:
-      - ./www:/app
+      - ./site:/app
       - /app/node_modules
     restart: unless-stopped
-    container_name: codepurify-www
+    container_name: codepurify-site
