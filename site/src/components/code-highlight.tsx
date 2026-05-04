@@ -21,9 +21,10 @@ export function CodeHighlight({
       customStyle={{
         margin: 0,
         padding: "1rem",
-        borderRadius: "0.5rem",
+        borderRadius: "0",
         fontSize: "0.875rem",
-        background: "var(--card)",
+        background: "var(--background)",
+        height: "100%"
       }}
       codeTagProps={{
         style: {

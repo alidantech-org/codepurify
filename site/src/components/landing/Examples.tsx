@@ -51,7 +51,7 @@ export function Examples({
 
       {/* Simple examples grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border-border bg-card p-6">
+        <div className="rounded-xl border-border bg-card p-6 px-3">
           <h3 className="mb-3 font-semibold text-foreground">Domain Config</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             Define your entities once with language-neutral facts
@@ -59,15 +59,15 @@ export function Examples({
           <CodeBlock example={entityCode} />
         </div>
 
-        <div className="rounded-xl border-border bg-card p-6">
+        <div className="rounded-xl border-border bg-card  p-6 px-3">
           <h3 className="mb-3 font-semibold text-foreground">Template Logic</h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Simple Handlebars templates render your deterministic context
+            Simple Codepurify templates render your deterministic context
           </p>
           <CodeBlock example={templateCode} />
         </div>
 
-        <div className="rounded-xl border-border bg-card p-6">
+        <div className="rounded-xl border-border bg-card  p-6 px-3">
           <h3 className="mb-3 font-semibold text-foreground">Generated Code</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             Consistent output across any language or framework
