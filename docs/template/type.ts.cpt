@@ -134,7 +134,7 @@ export type I(~ entity.names.casing.pascal ~)AsOneRelationConfig =
     (~ entity.names.casing.pascal ~)SelectableField
   >;
 
-export type I(* entity.names.casing.pascal *)AsManyRelationConfig =
+export type I( entity.names.casing.pascal *)AsManyRelationConfig =
   Q.IManyRelationConfig<
     (~ entity.names.casing.pascal ~)RelationKey,
     (~ entity.names.casing.pascal ~)SelectableField,

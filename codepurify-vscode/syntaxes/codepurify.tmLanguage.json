@@ -3,15 +3,23 @@
   "scopeName": "source.codepurify",
   "patterns": [
     {
-      "include": "#comment"
+      "include": "#comments"
     },
     {
-      "include": "#expression"
+      "include": "#blocks"
+    },
+    {
+      "include": "#expressions"
     }
   ],
   "repository": {
-    "comment": {
+    "comments": {
       "patterns": [
+        {
+          "name": "comment.block.documentation.codepurify",
+          "begin": "\\(~\\*",
+          "end": "\\*~\\)"
+        },
         {
           "name": "comment.block.codepurify",
           "begin": "\\(~#",
@@ -19,7 +27,46 @@
         }
       ]
     },
-    "expression": {
+    "blocks": {
+      "patterns": [
+        {
+          "name": "meta.block.codepurify",
+          "begin": "\\(~\\s*(if|each|raw|unless|with)\\b",
+          "beginCaptures": {
+            "0": {
+              "name": "meta.tag.template.begin.codepurify"
+            },
+            "1": {
+              "name": "keyword.control.codepurify"
+            }
+          },
+          "end": "~\\)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.template.end.codepurify"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#operators"
+            },
+            {
+              "include": "#literals"
+            },
+            {
+              "include": "#aliases"
+            },
+            {
+              "include": "#variables"
+            },
+            {
+              "include": "#keywords"
+            }
+          ]
+        }
+      ]
+    },
+    "expressions": {
       "patterns": [
         {
           "name": "meta.expression.codepurify",
@@ -40,7 +87,19 @@
               "include": "#keywords"
             },
             {
+              "include": "#operators"
+            },
+            {
+              "include": "#literals"
+            },
+            {
+              "include": "#aliases"
+            },
+            {
               "include": "#variables"
+            },
+            {
+              "include": "#properties"
             }
           ]
         }
@@ -49,16 +108,90 @@
     "keywords": {
       "patterns": [
         {
-          "name": "keyword.control.codepurify",
-          "match": "\\b(if|else|each|raw|\\/if|\\/each|\\/raw)\\b"
+          "name": "keyword.control.conditional.codepurify",
+          "match": "\\b(if|else|unless|with|raw)\\b"
+        },
+        {
+          "name": "keyword.control.repeat.codepurify",
+          "match": "\\b(each|for)\\b"
+        },
+        {
+          "name": "keyword.control.end.codepurify",
+          "match": "\\b(/if|/each|/for|/raw|/unless|/with)\\b"
+        },
+        {
+          "name": "keyword.operator.word.codepurify",
+          "match": "\\b(as|in|not|and|or|is)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.codepurify",
+          "match": "(==|!=|<=|>=|<|>|!)"
+        },
+        {
+          "name": "keyword.operator.logical.codepurify",
+          "match": "(&&|\\|\\|)"
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.codepurify",
+          "match": "\\b(true|false|null|undefined)\\b"
+        },
+        {
+          "name": "constant.numeric.codepurify",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        },
+        {
+          "name": "string.quoted.single.codepurify",
+          "begin": "'",
+          "end": "'"
+        },
+        {
+          "name": "string.quoted.double.codepurify",
+          "begin": "\"",
+          "end": "\""
+        }
+      ]
+    },
+    "aliases": {
+      "patterns": [
+        {
+          "name": "variable.parameter.alias.codepurify",
+          "match": "(?<=\\bas\\s+)[a-zA-Z_$][a-zA-Z0-9_$]*"
         }
       ]
     },
     "variables": {
       "patterns": [
         {
-          "name": "variable.other.codepurify",
-          "match": "[a-zA-Z_$][a-zA-Z0-9_$.]*"
+          "name": "variable.language.root.codepurify",
+          "match": "\\b(entity|global|resource|field|relation|template|item|index)\\b"
+        },
+        {
+          "name": "variable.other.path.codepurify",
+          "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)+\\b"
+        },
+        {
+          "name": "variable.other.identifier.codepurify",
+          "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "name": "support.type.namespace.codepurify",
+          "match": "\\b(arrays|flags|counts|maps|names|casing|items|length)\\b"
+        },
+        {
+          "name": "support.constant.casing.codepurify",
+          "match": "\\b(camel|pascal|snake|kebab|constant|dot|slash|path|lower|upper|title|train)\\b"
         }
       ]
     }

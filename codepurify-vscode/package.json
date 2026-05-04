@@ -18,9 +18,51 @@
           "Codepurify"
         ],
         "extensions": [
-          ".cpt"
+          ".cpt",
+          ".codepurify",
+          ".code"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "codepurify-ts",
+        "aliases": [
+          "Codepurify TypeScript"
+        ],
+        "extensions": [
+          ".ts.cpt"
+        ],
+        "configuration": "./language-configuration-ts.json"
+      },
+      {
+        "id": "codepurify-tsx",
+        "aliases": [
+          "Codepurify TSX"
+        ],
+        "extensions": [
+          ".tsx.cpt"
+        ],
+        "configuration": "./language-configuration-tsx.json"
+      },
+      {
+        "id": "codepurify-md",
+        "aliases": [
+          "Codepurify Markdown"
+        ],
+        "extensions": [
+          ".md.cpt"
+        ],
+        "configuration": "./language-configuration-md.json"
+      },
+      {
+        "id": "codepurify-html",
+        "aliases": [
+          "Codepurify HTML"
+        ],
+        "extensions": [
+          ".html.cpt"
+        ],
+        "configuration": "./language-configuration-html.json"
       }
     ],
     "grammars": [
@@ -28,6 +70,48 @@
         "language": "codepurify",
         "scopeName": "source.codepurify",
         "path": "./syntaxes/codepurify.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-ts",
+        "scopeName": "source.codepurify.ts",
+        "path": "./syntaxes/codepurify-ts.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-tsx",
+        "scopeName": "source.codepurify.tsx",
+        "path": "./syntaxes/codepurify-tsx.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-md",
+        "scopeName": "text.codepurify.markdown",
+        "path": "./syntaxes/codepurify-md.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-html",
+        "scopeName": "text.codepurify.html",
+        "path": "./syntaxes/codepurify-html.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "codepurify",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-ts",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-tsx",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-md",
+        "path": "./snippets/codepurify.json"
+      },
+      {
+        "language": "codepurify-html",
+        "path": "./snippets/codepurify.json"
       }
     ]
   },
@@ -54,7 +138,5 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
   },
-  "dependencies": {
-    "vscode": "^1.1.37"
-  }
+  "dependencies": {}
 }

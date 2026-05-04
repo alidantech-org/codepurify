@@ -31,7 +31,7 @@ export const (~ entity.names.casing.constant ~)_QUERY_OPTIONS = {
   
   selectableFields: [
 (~ each entity.fields.arrays.parts.items as field ~)
-    '(~ field.names.casing.snake ~)',
+    '(~ field.names.casing.pascal ~)',
 (~ /each ~)
   ],
   

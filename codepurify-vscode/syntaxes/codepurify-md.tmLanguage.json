@@ -1,0 +1,25 @@
+{
+  "name": "Codepurify Markdown",
+  "scopeName": "text.codepurify.markdown",
+  "patterns": [
+    { "include": "#codepurify" },
+    { "include": "text.html.markdown" }
+  ],
+  "repository": {
+    "codepurify": {
+      "patterns": [
+        {
+          "name": "meta.expression.codepurify",
+          "begin": "\\(~",
+          "end": "~\\)",
+          "patterns": [
+            { "name": "keyword.control.codepurify", "match": "\\b(if|else|each|raw|\\/if|\\/each|\\/raw)\\b" },
+            { "name": "keyword.operator.word.codepurify", "match": "\\b(as|in|and|or|not|is)\\b" },
+            { "name": "variable.other.path.codepurify", "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)+\\b" },
+            { "name": "variable.other.identifier.codepurify", "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*\\b" }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,63 +1,123 @@
 {
-      "Entity Pascal Name": {
-            "prefix": "entity.pascal",
-            "body": "(~ entity.names.pascal_case ~)",
-            "description": "Entity PascalCase name"
+      "Name Original": {
+            "prefix": "name.original",
+            "body": [
+                  "(~ ${1:entity}.names.original ~)"
+            ],
+            "description": "Original source name"
       },
-      "Entity Camel Name": {
-            "prefix": "entity.camel",
-            "body": "(~ entity.names.camel_case ~)",
-            "description": "Entity camelCase name"
+      "Name Length": {
+            "prefix": "name.length",
+            "body": [
+                  "(~ ${1:entity}.names.length ~)"
+            ],
+            "description": "Original name length"
       },
-      "Entity Kebab Name": {
-            "prefix": "entity.kebab",
-            "body": "(~ entity.names.kebab_case ~)",
-            "description": "Entity kebab-case name"
+      "Name Casing": {
+            "prefix": "name.casing",
+            "body": [
+                  "(~ ${1:entity}.names.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Any casing variant"
       },
-      "Entity Snake Name": {
-            "prefix": "entity.snake",
-            "body": "(~ entity.names.snake_case ~)",
-            "description": "Entity snake_case name"
+      "Entity Casing": {
+            "prefix": "entity.name",
+            "body": [
+                  "(~ entity.names.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Entity casing variant"
       },
-      "Entity Constant Name": {
-            "prefix": "entity.constant",
-            "body": "(~ entity.names.constant_case ~)",
-            "description": "Entity CONSTANT_CASE name"
+      "Field Casing": {
+            "prefix": "field.name",
+            "body": [
+                  "(~ field.names.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Field casing variant"
       },
-      "Entity Singular Pascal": {
-            "prefix": "entity.singular.pascal",
-            "body": "(~ entity.names.singular.pascal_case ~)",
-            "description": "Entity singular PascalCase name"
+      "Relation Casing": {
+            "prefix": "relation.name",
+            "body": [
+                  "(~ relation.names.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Relation casing variant"
       },
-      "Entity Plural Pascal": {
-            "prefix": "entity.plural.pascal",
-            "body": "(~ entity.names.plural.pascal_case ~)",
-            "description": "Entity plural PascalCase name"
+      "Module Casing": {
+            "prefix": "module.name",
+            "body": [
+                  "(~ ${1:relation}.module.names.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Module casing variant"
       },
-      "Field Pascal Name": {
-            "prefix": "field.pascal",
-            "body": "(~ field.names.pascal_case ~)",
-            "description": "Field PascalCase name"
+      "Property Casing": {
+            "prefix": "property.name",
+            "body": [
+                  "(~ ${1:relation}.property.names.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Property casing variant"
       },
-      "Field Camel Name": {
-            "prefix": "field.camel",
-            "body": "(~ field.names.camel_case ~)",
-            "description": "Field camelCase name"
+      "Singular Casing": {
+            "prefix": "name.singular",
+            "body": [
+                  "(~ ${1:entity}.names.singular.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Singular name casing variant"
       },
-      "Field Snake Name": {
-            "prefix": "field.snake",
-            "body": "(~ field.names.snake_case ~)",
-            "description": "Field snake_case name"
+      "Plural Casing": {
+            "prefix": "name.plural",
+            "body": [
+                  "(~ ${1:entity}.names.plural.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)"
+            ],
+            "description": "Plural name casing variant"
       },
-      "Field Kebab Name": {
-            "prefix": "field.kebab",
-            "body": "(~ field.names.kebab_case ~)",
-            "description": "Field kebab-case name"
+      "Each Name Parts": {
+            "prefix": "each.name.parts",
+            "body": [
+                  "(~ each ${1:entity}.names.arrays.parts.items as part ~)",
+                  "  (~ part.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)",
+                  "(~ /each ~)"
+            ],
+            "description": "Loop over name parts"
       },
-      "Field Constant Name": {
-            "prefix": "field.constant",
-            "body": "(~ field.names.constant_case ~)",
-            "description": "Field CONSTANT_CASE name"
+      "Each Name Words": {
+            "prefix": "each.name.words",
+            "body": [
+                  "(~ each ${1:entity}.names.arrays.words.items as word ~)",
+                  "  (~ word.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)",
+                  "(~ /each ~)"
+            ],
+            "description": "Loop over name words"
+      },
+      "Each Name Characters": {
+            "prefix": "each.name.characters",
+            "body": [
+                  "(~ each ${1:entity}.names.arrays.characters.items as character ~)",
+                  "  (~ character.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} ~)",
+                  "(~ /each ~)"
+            ],
+            "description": "Loop over name characters"
+      },
+      "Array Length": {
+            "prefix": "array.length",
+            "body": [
+                  "(~ ${1:entity.fields.arrays.all}.length ~)"
+            ],
+            "description": "Array child length"
+      },
+      "Array Items Loop": {
+            "prefix": "each.array",
+            "body": [
+                  "(~ each ${1:entity.fields.arrays.all.items} as ${2:item} ~)",
+                  "  $0",
+                  "(~ /each ~)"
+            ],
+            "description": "Loop over any ArrayChildContext items"
+      },
+      "Item Index": {
+            "prefix": "item.index",
+            "body": [
+                  "(~ ${1:item}.index ~)"
+            ],
+            "description": "Current array item index"
       },
       "Each Fields": {
             "prefix": "each.fields",
@@ -68,47 +128,49 @@
             ],
             "description": "Loop over all entity fields"
       },
-      "If Statement": {
-            "prefix": "~if",
+      "Each Relations": {
+            "prefix": "each.relations",
             "body": [
-                  "(~ if ${1:condition} ~)",
-                  "$0",
-                  "(~ /if ~)"
-            ],
-            "description": "Insert Codepurify if statement"
-      },
-      "Each Loop": {
-            "prefix": "~each",
-            "body": [
-                  "(~ each ${1:array} as ${2:item} ~)",
-                  "$0",
+                  "(~ each entity.relations.arrays.all.items as relation ~)",
+                  "  $0",
                   "(~ /each ~)"
             ],
-            "description": "Insert Codepurify each loop"
+            "description": "Loop over all entity relations"
+      },
+      "If Block": {
+            "prefix": "if",
+            "body": [
+                  "(~ if ${1:condition} ~)",
+                  "  $0",
+                  "(~ /if ~)"
+            ],
+            "description": "Codepurify if block"
+      },
+      "If Else Block": {
+            "prefix": "ifelse",
+            "body": [
+                  "(~ if ${1:condition} ~)",
+                  "  ${2:if_content}",
+                  "(~ else ~)",
+                  "  $0",
+                  "(~ /if ~)"
+            ],
+            "description": "Codepurify if/else block"
       },
       "Comment": {
-            "prefix": "~#",
-            "body": "(~# ${1:comment} #~)",
-            "description": "Insert Codepurify comment"
+            "prefix": "cp.comment",
+            "body": [
+                  "(~# ${1:comment} #~)"
+            ],
+            "description": "Codepurify comment"
       },
-      "Context Version": {
-            "prefix": "context.version",
-            "body": "(~ context.version ~)",
-            "description": "Context version"
-      },
-      "Project Root Dir": {
-            "prefix": "project.root",
-            "body": "(~ context.project.root_dir ~)",
-            "description": "Project root directory"
-      },
-      "Entity Key": {
-            "prefix": "entity.key",
-            "body": "(~ entity.key ~)",
-            "description": "Entity key"
-      },
-      "Entity Group Key": {
-            "prefix": "entity.group",
-            "body": "(~ entity.group_key ~)",
-            "description": "Entity group key"
+      "Raw Block": {
+            "prefix": "raw",
+            "body": [
+                  "(~ raw ~)",
+                  "$0",
+                  "(~ /raw ~)"
+            ],
+            "description": "Raw block"
       }
 }

@@ -29,7 +29,7 @@ export class (~ entity.names.casing.pascal ~)UpdateDto extends (~ entity.names.c
 }
 
 (~# Export all DTOs #~)
-export const UserDTOs = {
+export const (~ entity.names.casing.pascal ~)DTOs = {
   Create: (~ entity.names.casing.pascal ~)CreateDto,
   Update: (~ entity.names.casing.pascal ~)UpdateDto,
 };
