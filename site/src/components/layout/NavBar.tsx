@@ -22,7 +22,7 @@ export function NavBar() {
       />
 
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 items-center justify-between gap-3 px-2 sm:px-6">
+        <div className="mx-auto flex h-14 items-center justify-between gap-3 px-2 md:px-6">
           {/* Left */}
           <div className="flex min-w-0 items-center gap-3 lg:gap-8">
             <button
@@ -84,7 +84,7 @@ export function NavBar() {
               type="button"
               onClick={() => setSearchOpen(true)}
               aria-label="Search documentation"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl md:border border-border md:bg-card text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground sm:w-auto sm:px-3 lg:min-w-52 lg:justify-start"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl md:border border-border md:bg-card text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground sm:w-auto md:px-3 lg:min-w-52 lg:justify-start"
             >
               <Search className="h-4 w-4 shrink-0" />
               <span className="ml-2 hidden text-sm sm:inline">Search...</span>

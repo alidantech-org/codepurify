@@ -19,7 +19,7 @@ export const metadata: Metadata = generateMetadata();
 
 const Home: NextPage = () => {
   return (
-    <div className="mx-auto w-full max-w-7xl px-6">
+    <div className="mx-auto w-full max-w-7xl px-3 md:px-6">
       <Hero />
       <Features features={FEATURES} />
       <Pipeline steps={PIPELINE_STEPS} />
