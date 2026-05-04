@@ -1,0 +1,24 @@
+{
+      "editor.tokenColorCustomizations": {
+            "textMateRules": [
+                  {
+                        "scope": "keyword.control.codepurify",
+                        "settings": {
+                              "foreground": "#C586C0"
+                        }
+                  },
+                  {
+                        "scope": "variable.other.codepurify",
+                        "settings": {
+                              "foreground": "#4FC1FF"
+                        }
+                  },
+                  {
+                        "scope": "comment.block.codepurify",
+                        "settings": {
+                              "foreground": "#6A9955"
+                        }
+                  }
+            ]
+      }
+}

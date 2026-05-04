@@ -1,0 +1,45 @@
+{
+  "name": "codepurify",
+  "displayName": "Codepurify",
+  "version": "0.0.1",
+  "description": "Syntax highlighting for Codepurify templates",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "codepurify",
+        "aliases": [
+          "Codepurify",
+          "codepurify"
+        ],
+        "extensions": [
+          ".cpt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "codepurify",
+        "scopeName": "source.codepurify",
+        "path": "./syntaxes/codepurify.tmLanguage.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alidantech/codepurify"
+  },
+  "keywords": [
+    "code generation",
+    "templates",
+    "syntax highlighting"
+  ],
+  "author": "Alidan Tech",
+  "license": "MIT"
+}

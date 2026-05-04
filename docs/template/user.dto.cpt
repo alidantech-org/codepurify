@@ -1,0 +1,35 @@
+(~# User DTO template #~)
+
+export class (~ entity.names.casing.pascal ~)CreateDto {
+  (~# Generate fields #~)
+  
+(~ each entity.fields.arrays.parts.items as field ~)
+  
+  (~ if field.flags.is_string ~)
+  @IsString()
+  @IsOptional()
+  (~ /if ~)
+  
+  (~ if field.flags.is_uuid ~)
+  @IsUUID()
+  @IsOptional()
+  (~ /if ~)
+  
+  (~ field.names.casing.camel ~)(~ if field.flags.nullable ~)?(~ /if ~): (~ field.types.typescript ~);
+  
+(~ /each ~)
+
+  (~# Add metadata #~)
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class (~ entity.names.casing.pascal ~)UpdateDto extends (~ entity.names.casing.pascal ~)CreateDto {
+  id: string;
+}
+
+(~# Export all DTOs #~)
+export const UserDTOs = {
+  Create: (~ entity.names.casing.pascal ~)CreateDto,
+  Update: (~ entity.names.casing.pascal ~)UpdateDto,
+};

@@ -1,0 +1,51 @@
+(~# Query Types Template #~)
+
+import type { (~ entity.names.casing.pascal ~)Type } from './(~ entity.names.casing.kebab ~).types';
+
+(~# Generate query filter types #~)
+export interface (~ entity.names.casing.pascal ~)QueryFilter {
+(~ each entity.fields.arrays.parts.items as field ~)
+  (~ field.names.casing.pascal ~)(~ if field.flags.nullable ~)?(~ /if ~): (~ field.types.query_filter ~);
+(~ /each ~)
+}
+
+(~# Generate query sort types #~)
+export type (~ entity.names.casing.pascal ~)QuerySort = 
+(~ each entity.fields.arrays.parts.items as field ~)
+  (~ if field.flags.sortable ~)
+  | '(~ field.names.casing.snake ~):asc'
+  | '(~ field.names.casing.snake ~):desc'
+  (~ /if ~)
+(~ /each ~);
+
+(~# Generate query options #~)
+export interface (~ entity.names.casing.pascal ~)QueryOptions {
+  select?: (~ entity.names.casing.pascal ~)QuerySelect;
+  where?: (~ entity.names.casing.pascal ~)QueryFilter;
+  orderBy?: (~ entity.names.casing.pascal ~)QuerySort[];
+  limit?: number;
+  offset?: number;
+}
+
+(~# Generate query select type #~)
+export type (~ entity.names.casing.pascal ~)QuerySelect = 
+(~ each entity.fields.arrays.parts.items as field ~)
+  | '(~ field.names.casing.snake ~)'
+(~ /each ~)[];
+
+(~# Generate query result type #~)
+export interface (~ entity.names.casing.pascal ~)QueryResult<T = (~ entity.names.casing.pascal ~)Type> {
+  data: T[];
+  total: number;
+  page?: number;
+  limit?: number;
+}
+
+(~# Export all query types #~)
+export type {
+  (~ entity.names.casing.pascal ~)QueryFilter,
+  (~ entity.names.casing.pascal ~)QuerySort,
+  (~ entity.names.casing.pascal ~)QueryOptions,
+  (~ entity.names.casing.pascal ~)QuerySelect,
+  (~ entity.names.casing.pascal ~)QueryResult,
+};
