@@ -1,41 +1,201 @@
-# Codepurify VS Code Extension
+# Codepurify Templates
 
-Syntax highlighting for Codepurify templates using the `(~ ... ~)` syntax.
+VS Code extension for Codepurify template language with syntax highlighting, intelligent autocomplete, and real-time error validation.
 
 ## Features
 
-- **Syntax Highlighting**: Highlights Codepurify template syntax
-- **File Association**: `.cpt` files are treated as TypeScript
+- **Multi-Language Support**: Works with TypeScript, TSX, Markdown, and HTML files
+- **Syntax Highlighting**: Full highlighting for `(~ ... ~)` template expressions
+- **Intelligent Autocomplete**: Context-aware variable completion from CSV definitions
+- **Real-time Validation**: Instant error highlighting for unknown variables and syntax errors
+- **Control Flow Support**: Proper highlighting for `if`, `each`, `raw` blocks
 - **Comment Support**: `(~# comment #~)` syntax highlighting
-- **Control Flow**: `(~ if ~)`, `(~ each ~)`, `(~ /if ~)`, `(~ /each ~)` highlighting
-- **Variable Access**: `(~ entity.names.casing.pascal ~)` highlighting
+- **Smart Delimiters**: Auto-closing `(~` and `~)` pairs
+
+## Supported File Extensions
+
+- `.cpt` - Standalone Codepurify templates
+- `.ts.cpt` - TypeScript with Codepurify templates
+- `.tsx.cpt` - TSX with Codepurify templates
+- `.md.cpt` - Markdown with Codepurify templates
+- `.html.cpt` - HTML with Codepurify templates
 
 ## Installation
 
-### Development Mode
+### From VS Code Marketplace
 
-1. Open this folder in VS Code:
-   ```bash
-   code codepurify-vscode
-   ```
+1. Open VS Code
+2. Go to Extensions (`Ctrl+Shift+X`)
+3. Search for "Codepurify Templates"
+4. Click Install
 
-2. Press `F5` to launch the Extension Development Host
+### Manual Installation (VSIX)
 
-3. Open a `.cpt` file to test syntax highlighting
+1. Download the latest `.vsix` file from [Releases](https://github.com/alidantech-org/codepurify/releases)
+2. In VS Code: Extensions → "..." → "Install from VSIX..."
+3. Select the downloaded `.vsix` file
 
-### Manual Installation
+## Syntax Examples
 
-1. Package the extension:
-   ```bash
-   cd codepurify-vscode
-   vsce package
-   ```
+### Variables and Properties
 
-2. Install the `.vsix` file in VS Code
+```typescript
+(~ entity.names.casing.pascal ~)
+(~ field.names.casing.camel ~)
+(~ relation.target_entity.names.kebab ~)
+(~ entity.names.singular.casing.snake ~)
+```
+
+### Control Flow
+
+```typescript
+(~ if field.flags.is_string ~)
+  @IsString()
+(~ /if ~)
+
+(~ each entity.fields.arrays.parts.items as field ~)
+  (~ field.names.casing.camel ~): string;
+(~ /each ~)
+
+(~ raw ~)
+// This code will be output exactly as written
+(~ /raw ~)
+```
+
+### Comments
+
+```typescript
+(~# This is a comment #~)
+(~# Multi-line comment
+   spanning multiple lines #~)
+```
+
+### Error Validation
+
+The extension provides real-time validation:
+
+✅ **Valid**: `(~ entity.names.casing.camel ~)`
+❌ **Error**: `(~ entity.names.casings.camel ~)` - Unknown variable `casings`
+
+✅ **Valid**: `(~ if condition ~) ... (~ /if ~)`
+❌ **Error**: `(~ if condition ~)` - Unclosed control flow
+
+## Autocomplete
+
+The extension provides intelligent autocomplete for:
+
+- **Variables**: All available variables from your template context
+- **Properties**: Nested properties with dot notation
+- **Keywords**: `if`, `each`, `raw`, `else`, etc.
+- **Snippets**: Common template patterns
+
+Type `(~` inside any supported file to see available completions.
+
+## Configuration
+
+### Variable Definitions
+
+The extension reads variable definitions from a CSV file. Place your `tempurify_v1_template_context_variables.csv` in the `data/` folder with the format:
+
+```csv
+path,name,description,type
+entity.names.casing.camel,Camel Case,Camel case version of entity name,string
+entity.fields.arrays.all,All Fields,Array of all field objects,array
+```
+
+### Theme Customization
+
+Customize colors in your VS Code settings:
+
+```json
+{
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "keyword.control.codepurify",
+        "settings": {
+          "foreground": "#C586C0"
+        }
+      },
+      {
+        "scope": "variable.other.codepurify",
+        "settings": {
+          "foreground": "#4FC1FF"
+        }
+      },
+      {
+        "scope": "comment.block.codepurify",
+        "settings": {
+          "foreground": "#6A9955"
+        }
+      }
+    ]
+  }
+}
+```
+
+## Grammar Scopes
+
+- `keyword.control.codepurify` - Control flow keywords (`if`, `each`, `/if`, `/each`)
+- `keyword.operator.word.codepurify` - Operators (`as`, `in`, `and`, `or`, `not`, `is`)
+- `variable.other.path.codepurify` - Variable paths with dot notation
+- `variable.other.identifier.codepurify` - Simple identifiers
+- `comment.block.codepurify` - Template comments
+- `meta.expression.codepurify` - Complete template expressions
+
+## Development
+
+### File Structure
+
+```
+codepurify-vscode/
+├── package.json                    # Extension manifest
+├── language-configuration.json     # Language configuration
+├── language-configuration-*.json   # Multi-language configs
+├── syntaxes/
+│   ├── codepurify.tmLanguage.json  # Base grammar
+│   ├── codepurify-ts.tmLanguage.json
+│   ├── codepurify-tsx.tmLanguage.json
+│   ├── codepurify-md.tmLanguage.json
+│   └── codepurify-html.tmLanguage.json
+├── snippets/
+│   └── codepurify.json            # Code snippets
+├── data/
+│   └── tempurify_v1_template_context_variables.csv
+└── src/
+    └── extension.ts               # Extension logic
+```
+
+### Building and Testing
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Compile: `npm run compile`
+4. Test: Press `F5` to open Extension Development Host
+5. Package: `vsce package`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Update grammar or add new features
+4. Test thoroughly with various template files
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+- 🐛 Report bugs: [GitHub Issues](https://github.com/alidantech-org/codepurify/issues)
+- 💬 Feature requests: [GitHub Discussions](https://github.com/alidantech-org/codepurify/discussions)
+- 📖 Documentation: [Codepurify Docs](https://github.com/alidantech-org/codepurify)
 
 ## Syntax Examples
 
 ### Variables
+
 ```typescript
 (~ entity.names.casing.pascal ~)
 (~ field.names.casing.camel ~)
@@ -43,6 +203,7 @@ Syntax highlighting for Codepurify templates using the `(~ ... ~)` syntax.
 ```
 
 ### Control Flow
+
 ```typescript
 (~ if field.flags.is_string ~)
   @IsString()
@@ -54,6 +215,7 @@ Syntax highlighting for Codepurify templates using the `(~ ... ~)` syntax.
 ```
 
 ### Comments
+
 ```typescript
 (~# This is a comment #~)
 (~# Multi-line comment
@@ -65,7 +227,7 @@ Syntax highlighting for Codepurify templates using the `(~ ... ~)` syntax.
 `.cpt` files are automatically associated with TypeScript, providing:
 
 - TypeScript syntax highlighting
-- JSX/TSX support  
+- JSX/TSX support
 - IntelliSense for TypeScript code
 - Proper indentation
 - Comment toggling

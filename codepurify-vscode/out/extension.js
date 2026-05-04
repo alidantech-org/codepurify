@@ -35,7 +35,14 @@ function loadVariablesFromCSV() {
         console.warn(`CSV file not found at ${csvPath}. Variable completion will be disabled.`);
         return [];
     }
-    const content = fs.readFileSync(csvPath, 'utf8');
+    let content;
+    try {
+        content = fs.readFileSync(csvPath, 'utf8');
+    }
+    catch (error) {
+        console.error(`Failed to read CSV file at ${csvPath}:`, error);
+        return [];
+    }
     const variables = [];
     const lines = content.split('\n');
     // Skip header and parse data
@@ -43,19 +50,25 @@ function loadVariablesFromCSV() {
         const line = lines[i].trim();
         if (!line)
             continue;
-        // Simple CSV parsing (handles quoted values)
-        const parts = parseCSVLine(line);
-        if (parts.length >= 3) {
-            const variablePath = parts[0];
-            const name = parts[1];
-            const description = parts[2];
-            const type = parts[4] || 'unknown';
-            variables.push({
-                path: variablePath,
-                name: name,
-                description: description,
-                type: type,
-            });
+        try {
+            // Simple CSV parsing (handles quoted values)
+            const parts = parseCSVLine(line);
+            if (parts.length >= 3) {
+                const variablePath = parts[0];
+                const name = parts[1];
+                const description = parts[2];
+                const type = parts[4] || 'unknown';
+                variables.push({
+                    path: variablePath,
+                    name: name,
+                    description: description,
+                    type: type,
+                });
+            }
+        }
+        catch (error) {
+            console.warn(`Failed to parse CSV line ${i + 1}: ${line}`, error);
+            // Continue with next line
         }
     }
     return variables;
@@ -112,7 +125,7 @@ class CodepurifyDiagnosticProvider {
             const line = lines[lineIndex];
             let match;
             // Find expressions in this line
-            const regex = /\(~([^]*?)~\)/g;
+            const regex = /\(~([^~]*?)~\)/g;
             while ((match = regex.exec(line)) !== null) {
                 const startPos = new vscode.Position(lineIndex, match.index);
                 const endPos = new vscode.Position(lineIndex, match.index + match[0].length);
@@ -190,7 +203,25 @@ class CodepurifyDiagnosticProvider {
 }
 class CodepurifyCompletionProvider {
     constructor(variables) {
-        this.keywords = ['if', 'else', 'each', 'raw', '/if', '/each', '/raw'];
+        this.keywords = [
+            'if',
+            'else',
+            'each',
+            'raw',
+            'unless',
+            'with',
+            '/if',
+            '/each',
+            '/raw',
+            '/unless',
+            '/with',
+            'as',
+            'in',
+            'not',
+            'and',
+            'or',
+            'is',
+        ];
         this.variables = variables;
     }
     provideCompletionItems(document, position) {

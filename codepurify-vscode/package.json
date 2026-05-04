@@ -1,9 +1,9 @@
 {
-  "name": "codepurify-vscode",
-  "displayName": "Codepurify",
+  "name": "codepurify-templates",
+  "displayName": "Codepurify Templates",
   "version": "0.0.1",
-  "description": "Syntax highlighting and auto-complete for Codepurify templates",
-  "publisher": "local",
+  "description": "Template language for deterministic code generation with syntax highlighting, autocomplete, and error validation",
+  "publisher": "alidantechorg",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -115,7 +115,8 @@
       }
     ]
   },
-  "main": "./out/src/extension.js",
+  "main": "./out/extension.js",
+  "activationEvents": [],
   "repository": {
     "type": "git",
     "url": "https://github.com/alidantech-org/codepurify"
@@ -128,6 +129,7 @@
   ],
   "author": "alidantech.org",
   "license": "MIT",
+  "icon": "icon.png",
   "devDependencies": {
     "@types/node": "16.x",
     "@types/vscode": "^1.80.0",
