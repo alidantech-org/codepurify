@@ -5,7 +5,7 @@ description: Real-time error detection and validation
 
 # Diagnostics
 
-The extension provides real-time error detection for template syntax and context.
+The extension provides real-time error detection for Codepurify template syntax and context paths.
 
 ## Error Types
 
@@ -13,13 +13,13 @@ The extension provides real-time error detection for template syntax and context
 
 ❌ Invalid:
 
-```
+```txt
 {! entity.names.casings.camel !}
 ```
 
 ✅ Valid:
 
-```
+```txt
 {! entity.names.casing.camel !}
 ```
 
@@ -27,13 +27,13 @@ The extension provides real-time error detection for template syntax and context
 
 ❌ Invalid:
 
-```
+```txt
 {! entity.unknown_property !}
 ```
 
 ✅ Valid:
 
-```
+```txt
 {! entity.names.original !}
 ```
 
@@ -41,69 +41,92 @@ The extension provides real-time error detection for template syntax and context
 
 ❌ Invalid:
 
-```
-{!#if condition!} // content {!#if!} // Missing closing tag
+```txt
+{!#if condition!}
+content
+{!#if!}
 ```
 
 ✅ Valid:
 
-```
-{!#if condition!} // content {!/if!}
+```txt
+{!#if condition!}
+content
+{!/if!}
 ```
 
 ## Error Display
 
 Errors appear as:
 
-- **Red underline** - Syntax errors
-- **Yellow underline** - Warnings
-- **Hover tooltip** - Error description
-
-<!-- screenshot: Red underline under invalid syntax -->
+- **Red underline** — syntax errors
+- **Yellow underline** — warnings
+- **Hover tooltip** — error description
 
 ## Real-Time Validation
 
 Errors are detected as you type:
 
+```txt
+{! entity. !}
+{! entity.names. !}
+{! entity.names.casings.camel !}
 ```
-{! entity. !} // No error
-{! entity.names. !} // No error
-{! entity.names.casings.camel !} // Error: "casings" not found
-```
+
+The first two examples are incomplete but not necessarily invalid while typing. The final example is invalid because `casings` is not a valid property.
 
 ## Common Validation Rules
 
 ### Casing Properties
 
-Must use `casing` (not `casings` or `case`):
+Use `casing`, not `casings` or `case`.
 
+```txt
+{! entity.names.casing.camel !}
 ```
-{! entity.names.casing.camel !} // ✅ Valid
-{! entity.names.casings.camel !} // ❌ Invalid
-{! entity.names.case.camel !} // ❌ Invalid
+
+Invalid examples:
+
+```txt
+{! entity.names.casings.camel !}
+{! entity.names.case.camel !}
 ```
 
 ### Array Access
 
-Must use proper array structure:
+Use the normalized array structure.
 
+```txt
+{! entity.fields.arrays.all.items !}
 ```
-{! entity.fields.arrays.all.items !} // ✅ Valid
-{! entity.fields.items !} // ❌ Invalid
+
+Invalid example:
+
+```txt
+{! entity.fields.items !}
 ```
 
 ### Control Flow Tags
 
-Must have proper opening/closing tags:
+Control flow blocks must have matching opening and closing tags.
 
+```txt
+{!#if condition!}
+content
+{!/if!}
 ```
-{!#if condition!} {!/if!} // ✅ Valid
-{!#if condition!} {!#if!} // ❌ Invalid (missing closing)
+
+Invalid example:
+
+```txt
+{!#if condition!}
+content
+{!#if!}
 ```
 
 ## Error Messages
 
-Hover over errors to see detailed messages:
+Hover over diagnostics to see detailed messages, such as:
 
 - `"casings" is not a valid property of "entity.names"`
 - `Missing closing tag for "if"`
