@@ -221,3 +221,40 @@
       color-mix(in srgb, var(--accent-light) 40%, transparent) 0%,
       transparent 70%);
 }
+
+/* Code block wrapper spacing */
+[data-rehype-pretty-code-figure] {
+  margin: 1.5rem 0;
+}
+
+/* Pre (container for code) */
+[data-rehype-pretty-code-figure] pre {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  /* let parent control bg */
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+/* Code element layout */
+[data-rehype-pretty-code-figure] code {
+  display: grid;
+  min-width: 100%;
+}
+
+/* Individual lines */
+[data-rehype-pretty-code-figure] [data-line] {
+  padding-inline: 0.25rem;
+}
+
+/* Shiki token colors */
+[data-rehype-pretty-code-figure] span {
+  color: var(--shiki-light);
+}
+
+.dark [data-rehype-pretty-code-figure] span {
+  color: var(--shiki-dark);
+}

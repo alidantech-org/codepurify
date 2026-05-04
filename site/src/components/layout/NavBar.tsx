@@ -50,19 +50,19 @@ export function NavBar() {
 
             <div className="hidden items-center gap-1 text-sm text-muted-foreground lg:flex">
               <Link
-                href="#features"
+                href="/#features"
                 className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground"
               >
                 Features
               </Link>
               <Link
-                href="#pipeline"
+                href="/#pipeline"
                 className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground"
               >
                 Pipeline
               </Link>
               <Link
-                href="#examples"
+                href="/#examples"
                 className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground"
               >
                 Examples

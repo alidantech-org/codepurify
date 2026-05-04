@@ -6,7 +6,7 @@ export default async function DocsPage() {
   const docs = await getAllDocs();
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl px-4 md:px-6">
       <section className="border-b border-border pb-10">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">
           Documentation

@@ -1,7 +1,7 @@
-import fs from "fs/promises";
-import path from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
 import matter from "gray-matter";
-import { notFound } from "next/navigation";
+import GithubSlugger from "github-slugger";
 
 export interface DocFrontmatter {
   title?: string;
@@ -9,7 +9,18 @@ export interface DocFrontmatter {
   order?: number;
   published?: boolean;
   lastModified?: string;
-  [key: string]: any;
+  group?: string;
+  children?: Array<{
+    slug: string;
+    title: string;
+  }>;
+  [key: string]: unknown;
+}
+
+export interface Heading {
+  id: string;
+  text: string;
+  level: number;
 }
 
 export interface Doc {
@@ -19,14 +30,16 @@ export interface Doc {
   content: string;
   frontmatter: DocFrontmatter;
   headings: Heading[];
-  prev?: Doc;
-  next?: Doc;
+  prev?: Pick<Doc, "slug" | "title" | "description">;
+  next?: Pick<Doc, "slug" | "title" | "description">;
 }
 
-export interface Heading {
-  id: string;
-  text: string;
-  level: number;
+export interface DocItem {
+  slug: string;
+  title: string;
+  description?: string;
+  group?: string;
+  children?: DocItem[];
 }
 
 export interface DocNavigation {
@@ -41,104 +54,178 @@ export interface DocNavItem {
   children?: DocNavItem[];
 }
 
-const docsDirectory = path.join(process.cwd(), "..", "docs");
+const docsDirectory = path.resolve(process.cwd(), "..", "docs");
 
-// Extract headings from markdown content
+function normalizeSlug(slug: string): string {
+  return slug
+    .replace(/\\/g, "/")
+    .replace(/^\//, "")
+    .replace(/\.md$/, "")
+    .replace(/\/index$/, "");
+}
+
+function slugToFilePath(slug: string): string {
+  const cleanSlug = normalizeSlug(slug);
+  return path.join(docsDirectory, `${cleanSlug}.md`);
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function createHeadingId(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[`*_~[\]()]/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function extractHeadings(content: string): Heading[] {
   const headings: Heading[] = [];
-  const lines = content.split("\n");
+  const slugger = new GithubSlugger();
 
-  for (const line of lines) {
+  for (const line of content.split("\n")) {
     const match = line.match(/^(#{1,6})\s+(.+)$/);
-    if (match) {
-      const level = match[1].length;
-      const text = match[2].trim();
-      const id = text
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
 
-      headings.push({ id, text, level });
-    }
+    if (!match) continue;
+
+    const level = match[1].length;
+    const rawText = match[2].replace(/#+$/, "").trim();
+
+    if (!rawText) continue;
+
+    const text = rawText
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .trim();
+
+    headings.push({
+      id: slugger.slug(text),
+      text,
+      level,
+    });
   }
 
   return headings;
 }
 
-// Get all markdown files recursively
-async function getAllMarkdownFiles(
-  dir: string,
-  basePath: string = "",
-): Promise<string[]> {
-  const files: string[] = [];
-
+async function pathExists(targetPath: string): Promise<boolean> {
   try {
-    const items = await fs.readdir(dir);
-
-    for (const item of items) {
-      const fullPath = path.join(dir, item);
-      const stat = await fs.stat(fullPath);
-
-      if (stat.isDirectory()) {
-        files.push(
-          ...(await getAllMarkdownFiles(fullPath, path.join(basePath, item))),
-        );
-      } else if (item.endsWith(".md")) {
-        const relativePath = path.join(basePath, item.replace(".md", ""));
-        files.push(relativePath);
-      }
-    }
-  } catch (error) {
-    // Directory doesn't exist or is not accessible
-    console.warn(`Warning: Could not read directory ${dir}:`, error);
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
   }
-
-  return files;
 }
 
-// Load and parse a single doc
+async function getAllMarkdownFiles(
+  dir: string,
+  basePath = "",
+): Promise<string[]> {
+  if (!(await pathExists(dir))) {
+    return [];
+  }
+
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+
+  // Sort entries: files first, then folders, both in ascending order
+  const sortedEntries = entries.sort((a, b) => {
+    // Files come before folders
+    if (a.isFile() && b.isDirectory()) return -1;
+    if (a.isDirectory() && b.isFile()) return 1;
+
+    // Both are files or both are folders - sort by name ascending
+    return a.name.localeCompare(b.name);
+  });
+
+  const slugs: string[] = [];
+
+  for (const entry of sortedEntries) {
+    if (entry.name.startsWith(".")) continue;
+
+    const fullPath = path.join(dir, entry.name);
+    const relativePath = path.join(basePath, entry.name);
+
+    if (entry.isDirectory()) {
+      const nested = await getAllMarkdownFiles(fullPath, relativePath);
+      slugs.push(...nested);
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.endsWith(".md")) {
+      slugs.push(normalizeSlug(relativePath));
+    }
+  }
+
+  return slugs.sort((a, b) => a.localeCompare(b));
+}
+
+function getDocTitle(slug: string, frontmatter: DocFrontmatter): string {
+  if (typeof frontmatter.title === "string" && frontmatter.title.trim()) {
+    return frontmatter.title.trim();
+  }
+
+  const lastPart = slug.split("/").filter(Boolean).pop();
+
+  return lastPart ? toTitleCase(lastPart) : "Untitled";
+}
+
+function isPublished(frontmatter: DocFrontmatter): boolean {
+  return frontmatter.published !== false;
+}
+
+function toDocSummary(doc: Doc): Pick<Doc, "slug" | "title" | "description"> {
+  return {
+    slug: doc.slug,
+    title: doc.title,
+    description: doc.description,
+  };
+}
+
 async function loadDoc(slug: string): Promise<Doc | null> {
+  const normalizedSlug = normalizeSlug(slug);
+
   try {
-    const fullPath = path.join(docsDirectory, `${slug}.md`);
-
+    const fullPath = slugToFilePath(normalizedSlug);
     const fileContents = await fs.readFile(fullPath, "utf8");
-    const { data, content } = matter(fileContents);
+    const parsed = matter(fileContents);
 
-    const headings = extractHeadings(content);
+    const frontmatter = parsed.data as DocFrontmatter;
+    const content = parsed.content.trim();
+
+    if (!isPublished(frontmatter)) {
+      return null;
+    }
 
     return {
-      slug,
-      title: data.title || slug.split("/").pop() || "Untitled",
-      description: data.description,
-      content: content,
-      frontmatter: data,
-      headings,
+      slug: normalizedSlug,
+      title: getDocTitle(normalizedSlug, frontmatter),
+      description:
+        typeof frontmatter.description === "string"
+          ? frontmatter.description
+          : undefined,
+      content,
+      frontmatter,
+      headings: extractHeadings(content),
     };
   } catch (error) {
-    console.error(`Error loading doc ${slug}:`, error);
+    console.error(`Failed to load doc "${normalizedSlug}":`, error);
     return null;
   }
 }
 
-// Load all docs
-async function loadAllDocs(): Promise<Doc[]> {
-  const slugs = await getAllMarkdownFiles(docsDirectory);
-  const docs = await Promise.all(
-    slugs.map(async (slug) => {
-      const doc = await loadDoc(slug);
-      return doc;
-    }),
-  );
-
-  // Filter out nulls and unpublished docs
-  const validDocs = docs.filter(
-    (doc): doc is Doc => doc !== null && doc.frontmatter.published !== false,
-  );
-
-  // Sort by order then by title
-  return validDocs.sort((a, b) => {
-    const orderA = a.frontmatter.order ?? Infinity;
-    const orderB = b.frontmatter.order ?? Infinity;
+function sortDocs(docs: Doc[]): Doc[] {
+  return [...docs].sort((a, b) => {
+    const orderA = a.frontmatter.order ?? Number.POSITIVE_INFINITY;
+    const orderB = b.frontmatter.order ?? Number.POSITIVE_INFINITY;
 
     if (orderA !== orderB) {
       return orderA - orderB;
@@ -148,71 +235,99 @@ async function loadAllDocs(): Promise<Doc[]> {
   });
 }
 
-// Get previous and next docs for navigation
+async function loadAllDocs(): Promise<Doc[]> {
+  const slugs = await getAllMarkdownFiles(docsDirectory);
+  const docs = await Promise.all(slugs.map((slug) => loadDoc(slug)));
+
+  return sortDocs(docs.filter((doc): doc is Doc => doc !== null));
+}
+
 function getNavigationDocs(
   currentSlug: string,
   allDocs: Doc[],
-): { prev?: Doc; next?: Doc } {
-  const index = allDocs.findIndex((doc) => doc.slug === currentSlug);
+): {
+  prev?: Pick<Doc, "slug" | "title" | "description">;
+  next?: Pick<Doc, "slug" | "title" | "description">;
+} {
+  const normalizedSlug = normalizeSlug(currentSlug);
+  const index = allDocs.findIndex((doc) => doc.slug === normalizedSlug);
 
   if (index === -1) {
-    return { prev: undefined, next: undefined };
+    return {};
   }
 
   return {
-    prev: index > 0 ? allDocs[index - 1] : undefined,
-    next: index < allDocs.length - 1 ? allDocs[index + 1] : undefined,
+    prev: index > 0 ? toDocSummary(allDocs[index - 1]) : undefined,
+    next:
+      index < allDocs.length - 1 ? toDocSummary(allDocs[index + 1]) : undefined,
   };
 }
 
-// Generate navigation structure
+function getSectionTitle(section: string): string {
+  return toTitleCase(section);
+}
+
 function generateNavigation(docs: Doc[]): DocNavigation[] {
-  const navigation: DocNavigation[] = [];
   const sections = new Map<string, Doc[]>();
 
-  // Group docs by section (first part of slug)
   for (const doc of docs) {
-    const parts = doc.slug.split("/");
-    const section = parts[0];
+    const [section = "docs"] = doc.slug.split("/");
+    const sectionKey = doc.frontmatter.group || section;
 
-    if (!sections.has(section)) {
-      sections.set(section, []);
-    }
-    sections.get(section)!.push(doc);
+    const existing = sections.get(sectionKey) ?? [];
+    existing.push(doc);
+    sections.set(sectionKey, existing);
   }
 
-  // Create navigation structure
-  for (const [section, sectionDocs] of sections) {
-    const items: DocNavItem[] = sectionDocs.map((doc) => ({
-      title: doc.title,
-      href: `/docs/${doc.slug}`,
+  return Array.from(sections.entries())
+    .sort(([a], [b]) => {
+      // Extract numeric prefix for proper sorting
+      const aMatch = a.match(/^(\d+)-/);
+      const bMatch = b.match(/^(\d+)-/);
+
+      if (aMatch && bMatch) {
+        // Both have numeric prefixes - compare numerically
+        const aNum = parseInt(aMatch[1], 10);
+        const bNum = parseInt(bMatch[1], 10);
+        return aNum - bNum;
+      } else if (aMatch) {
+        // Only a has numeric prefix - comes first
+        return -1;
+      } else if (bMatch) {
+        // Only b has numeric prefix - comes first
+        return 1;
+      } else {
+        // Neither has numeric prefix - alphabetical fallback
+        return a.localeCompare(b);
+      }
+    })
+    .map(([section, sectionDocs]) => ({
+      title: getSectionTitle(section),
+      items: sortDocs(sectionDocs).map((doc) => ({
+        title: doc.title,
+        href: `/docs/${doc.slug}`,
+      })),
     }));
-
-    navigation.push({
-      title: section.charAt(0).toUpperCase() + section.slice(1),
-      items,
-    });
-  }
-
-  return navigation;
 }
 
-// Generate static params for dynamic routes
 export async function generateStaticParams(): Promise<{ doc: string[] }[]> {
-  const slugs = await getAllMarkdownFiles(docsDirectory);
-  return slugs.map((slug) => ({ doc: slug.split("/") }));
+  const docs = await loadAllDocs();
+
+  return docs.map((doc) => ({
+    doc: doc.slug.split("/").filter(Boolean),
+  }));
 }
 
-// Get doc by slug with navigation
 export async function getDocBySlug(slug: string): Promise<Doc | null> {
-  const doc = await loadDoc(slug);
+  const normalizedSlug = normalizeSlug(slug);
+  const allDocs = await loadAllDocs();
+  const doc = allDocs.find((item) => item.slug === normalizedSlug);
 
   if (!doc) {
     return null;
   }
 
-  const allDocs = await loadAllDocs();
-  const { prev, next } = getNavigationDocs(slug, allDocs);
+  const { prev, next } = getNavigationDocs(normalizedSlug, allDocs);
 
   return {
     ...doc,
@@ -221,49 +336,114 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
   };
 }
 
-// Get all docs for navigation
 export async function getAllDocsForNavigation(): Promise<DocNavigation[]> {
   const docs = await loadAllDocs();
   return generateNavigation(docs);
 }
 
-// Generate metadata for a doc
 export function generateDocMetadata(doc: Doc): {
   title: string;
   description: string;
 } {
   return {
     title: `${doc.title} - CodePurify Documentation`,
-    description: doc.description || `Documentation for ${doc.title}`,
+    description: doc.description ?? `Documentation for ${doc.title}`,
   };
 }
 
-// Search docs (simple text search)
 export async function searchDocs(query: string): Promise<Doc[]> {
-  const allDocs = await loadAllDocs();
-  const lowercaseQuery = query.toLowerCase();
+  const trimmedQuery = query.trim().toLowerCase();
 
-  return allDocs.filter(
-    (doc) =>
-      doc.title.toLowerCase().includes(lowercaseQuery) ||
-      doc.description?.toLowerCase().includes(lowercaseQuery) ||
-      doc.content.toLowerCase().includes(lowercaseQuery),
-  );
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const allDocs = await loadAllDocs();
+
+  return allDocs.filter((doc) => {
+    const searchableText = [doc.title, doc.description, doc.content, doc.slug]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchableText.includes(trimmedQuery);
+  });
 }
 
-// Get all docs for index page (simplified metadata)
-export async function getAllDocs(): Promise<
-  Array<{
-    slug: string;
-    title: string;
-    description?: string;
-  }>
-> {
+function getFolderOrder(folder?: string): number {
+  if (!folder) return 0;
+
+  const match = folder.match(/^(\d+)\.-/);
+  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+}
+
+function cleanFolderName(folder?: string): string {
+  if (!folder) return "";
+  return folder.replace(/-/g, " ");
+}
+
+export async function getAllDocs(): Promise<DocItem[]> {
   const allDocs = await loadAllDocs();
 
-  return allDocs.map((doc) => ({
-    slug: doc.slug,
-    title: doc.title,
-    description: doc.description,
-  }));
+  // Group docs by folder
+  const grouped = allDocs.reduce(
+    (acc, doc) => {
+      const parts = doc.slug.split("/");
+      const folder = parts.length > 1 ? parts[0] : undefined;
+
+      if (!folder) {
+        acc.ungrouped.push(doc);
+      } else {
+        if (!acc.groups[folder]) {
+          acc.groups[folder] = [];
+        }
+        acc.groups[folder].push(doc);
+      }
+
+      return acc;
+    },
+    { groups: {} as Record<string, Doc[]>, ungrouped: [] as Doc[] },
+  );
+
+  // Sort groups by folder order
+  const sortedGroups = Object.entries(grouped.groups).sort(([a], [b]) => {
+    return getFolderOrder(a) - getFolderOrder(b);
+  });
+
+  // Sort docs within each group by order frontmatter, then by title
+  for (const [, docs] of sortedGroups) {
+    sortDocs(docs);
+  }
+
+  // Sort ungrouped docs
+  sortDocs(grouped.ungrouped);
+
+  // Convert to DocItem format
+  const result: DocItem[] = [];
+
+  // Add ungrouped docs first (like quick-guide.md)
+  result.push(
+    ...grouped.ungrouped.map((doc) => ({
+      slug: doc.slug,
+      title: doc.title,
+      description: doc.description,
+      group: undefined,
+    })),
+  );
+
+  // Add grouped docs after
+  for (const [folder, docs] of sortedGroups) {
+    const cleanName = cleanFolderName(folder);
+
+    result.push(
+      ...docs.map((doc) => ({
+        slug: doc.slug,
+        title: doc.title,
+        description: doc.description,
+        group: cleanName,
+      })),
+    );
+  }
+
+  return result;
 }

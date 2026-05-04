@@ -5,14 +5,14 @@ import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
-import { DocsToc } from "@/components/docs/DocsToc";
-import { DocsPager } from "@/components/docs/DocsPager";
-import { MarkdownRenderer } from "@/components/docs/MarkdownRenderer";
 import {
-  getDocBySlug,
-  generateStaticParams,
   generateDocMetadata,
+  generateStaticParams,
+  getDocBySlug,
 } from "@/lib/docs";
+import { MarkdownRenderer } from "@/components/docs/MarkdownRenderer";
+import { DocsPager } from "@/components/docs/DocsPager";
+import { TocRenderer } from "@/components/docs/TocRenderer";
 
 interface DocPageProps {
   params: Promise<{
@@ -56,7 +56,11 @@ export default async function DocPage({ params }: DocPageProps) {
         [
           rehypeAutolinkHeadings,
           {
-            behavior: "wrap",
+            behavior: "append",
+            properties: {
+              className: ["anchor"],
+              ariaLabel: "Link to section",
+            },
           },
         ],
         [
@@ -73,33 +77,15 @@ export default async function DocPage({ params }: DocPageProps) {
     },
   });
 
+
   return (
     <>
-      {/* TOC for right sidebar - positioned at top of right sidebar */}
-      <div className="hidden xl:block fixed top-20 right-4 w-[240px]">
-        <DocsToc headings={page.headings} />
-      </div>
+      {/* TOC rendered via client component */}
+      <TocRenderer headings={page.headings} />
 
       {/* Main content */}
       <article className="px-4 md:px-6">
-        <div className="mb-10 border-b border-border pb-8">
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">
-            Documentation
-          </p>
-
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            {page.title}
-          </h1>
-
-          {page.description && (
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              {page.description}
-            </p>
-          )}
-        </div>
-
         <MarkdownRenderer source={source} />
-
         <DocsPager doc={page} />
       </article>
     </>

@@ -25,7 +25,7 @@ export default async function DocsLayout({
 
       <div className="flex w-full gap-6">
         {/* Sidebar (independent scroll) */}
-        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-[260px] overflow-x-hidden overflow-y-auto border-r border-border pr-4 lg:block scrollbar-thin">
+        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-[260px] overflow-x-hidden overflow-y-auto border-r border-border lg:block scrollbar-thin">
           <DocsSidebar docs={docs} />
         </aside>
 
@@ -35,8 +35,8 @@ export default async function DocsLayout({
         </main>
 
         {/* Right TOC (independent scroll) */}
-        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-[240px] overflow-x-hidden overflow-y-auto border-l border-border pl-4 xl:block scrollbar-thin">
-          {/* TOC will be rendered here by pages */}
+        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-[240px] shrink-0 overflow-x-hidden overflow-y-auto border-l border-border pl-4 xl:block scrollbar-thin">
+          <div id="toc-placeholder" />
         </aside>
       </div>
     </>

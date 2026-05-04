@@ -1,4 +1,0 @@
-|-----> base_entities[config_file, type_file, base_entity_file] (enities can extend base and base_entities can extend other base entities)
-|-----> entities, in entities folder
-|   |-------> entity[config_file, type_file, entity_file]
-|   |

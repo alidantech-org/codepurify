@@ -14,7 +14,7 @@ export function MobileDocsBar({ docs }: { docs: DocItem[] }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="sticky top-14 z-40 border-b border-border bg-background/90 backdrop-blur-xl lg:hidden">
+    <div className="sticky top-14 z-100 h-full border-b border-border bg-background/90 backdrop-blur-xl lg:hidden">
       <div className="flex h-12 items-center justify-between px-4">
         <button
           onClick={() => setOpen(true)}
