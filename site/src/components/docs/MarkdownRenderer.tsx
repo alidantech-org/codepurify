@@ -46,7 +46,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         }}
         components={{
           h1: ({ children }) => (
-            <h1 className="mb-6 mt-2 scroll-mt-24 text-4xl font-bold tracking-tight text-foreground">
+            <h1 className="mb-6 mt-2 scroll-mt-24 text-3xl font-bold tracking-tight text-foreground">
               {children}
             </h1>
           ),
@@ -54,7 +54,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           h2: ({ children, id }) => (
             <h2
               id={id}
-              className="mb-4 mt-12 scroll-mt-24 border-b border-border pb-2 text-2xl font-semibold tracking-tight text-foreground"
+              className="mb-4 mt-12 scroll-mt-24 border-b border-border pb-2 text-xl font-semibold tracking-tight text-foreground"
             >
               {children}
             </h2>
@@ -63,7 +63,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           h3: ({ children, id }) => (
             <h3
               id={id}
-              className="mb-3 mt-8 scroll-mt-24 text-xl font-semibold tracking-tight text-foreground"
+              className="mb-3 mt-8 scroll-mt-24 text-lg font-semibold tracking-tight text-foreground"
             >
               {children}
             </h3>
@@ -72,7 +72,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           h4: ({ children, id }) => (
             <h4
               id={id}
-              className="mb-2 mt-6 scroll-mt-24 text-lg font-semibold text-foreground"
+              className="mb-2 mt-6 scroll-mt-24 text-base font-semibold text-foreground"
             >
               {children}
             </h4>
@@ -137,7 +137,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
             return (
               <code
-                className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.875em] text-foreground"
+                className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.8em] text-foreground"
                 {...props}
               >
                 {children}

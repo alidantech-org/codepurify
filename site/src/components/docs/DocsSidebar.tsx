@@ -37,15 +37,14 @@ function SidebarLink({
         href={`/docs/${doc.slug}`}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-all duration-150",
+          "group relative text-foreground flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-all duration-150",
           depth > 0 &&
             "ml-3 border-l border-border pl-4 rounded-none rounded-r-md",
           isActive
-            ? "bg-primary/8 text-primary font-medium"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+            ? "bg-primary/10 text-primary font-medium"
+            : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/60",
         )}
       >
-        {/* Active left accent bar */}
         {isActive && (
           <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-primary" />
         )}
@@ -62,7 +61,6 @@ function SidebarLink({
         )}
       </Link>
 
-      {/* Nested children */}
       {hasChildren && (isActive || isChildActive) && (
         <div className="mt-0.5 space-y-0.5">
           {doc.children!.map((child) => (
@@ -83,13 +81,10 @@ function SidebarLink({
 export function DocsSidebar({ docs, className, onNavigate }: DocsSidebarProps) {
   const pathname = usePathname();
 
-  // Group docs by their group field
   const grouped = docs.reduce(
     (acc, doc) => {
       const group = doc.group || "__ungrouped__";
-      if (!acc[group]) {
-        acc[group] = [];
-      }
+      acc[group] ??= [];
       acc[group].push(doc);
       return acc;
     },
@@ -97,49 +92,43 @@ export function DocsSidebar({ docs, className, onNavigate }: DocsSidebarProps) {
   );
 
   return (
-    <aside className={cn("w-64 shrink-0 hidden lg:flex flex-col", className)}>
-      {/* Sticky scrollable inner */}
-      <div
-        className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden py-6 pr-2
-                      scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
-      >
-        <nav className="space-y-6 px-4">
-          {Object.entries(grouped).map(([group, groupDocs]) => {
-            if (group === "__ungrouped__") {
-              // Ungrouped items - no header
-              return (
-                <div key={group} className="space-y-0.5">
-                  {groupDocs.map((doc) => (
-                    <SidebarLink
-                      key={doc.slug}
-                      doc={doc}
-                      pathname={pathname}
-                      onNavigate={onNavigate}
-                    />
-                  ))}
-                </div>
-              );
-            }
+    <nav className={cn("space-y-6 px-4 py-6", className)}>
+      {Object.entries(grouped).map(([group, groupDocs]) => {
+        if (group === "__ungrouped__") {
+          return (
+            <div key={group} className="space-y-0.5">
+              {groupDocs.map((doc) => (
+                <SidebarLink
+                  key={doc.slug}
+                  doc={doc}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
+          );
+        }
 
-            // Grouped items - show header
-            return (
-              <div key={group} className="space-y-0.5">
-                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
-                  {group}
-                </p>
-                {groupDocs.map((doc) => (
-                  <SidebarLink
-                    key={doc.slug}
-                    doc={doc}
-                    pathname={pathname}
-                    onNavigate={onNavigate}
-                  />
-                ))}
-              </div>
-            );
-          })}
-        </nav>
-      </div>
-    </aside>
+        return (
+          <div key={group} className="space-y-0.5">
+            <div className="mb-3 px-3 pb-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {group}
+              </p>
+              <div className="mt-1.5 h-px bg-border" />
+            </div>
+
+            {groupDocs.map((doc) => (
+              <SidebarLink
+                key={doc.slug}
+                doc={doc}
+                pathname={pathname}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        );
+      })}
+    </nav>
   );
 }

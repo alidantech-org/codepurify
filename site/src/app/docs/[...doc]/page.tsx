@@ -54,7 +54,7 @@ export default async function DocPage({ params }: DocPageProps) {
       <TocRenderer headings={page.headings} />
 
       <article className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 lg:py-10">
-        <header className="mb-10 border-b border-border pb-8">
+        {/* <header className="mb-10 border-b border-border pb-8">
           <p className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">
             Documentation
           </p>
@@ -68,7 +68,7 @@ export default async function DocPage({ params }: DocPageProps) {
               {page.description}
             </p>
           )}
-        </header>
+        </header> */}
 
         <MarkdownRenderer content={page.content} />
 

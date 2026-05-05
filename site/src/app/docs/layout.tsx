@@ -1,9 +1,7 @@
-// src/app/docs/layout.tsx
-
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import { DocsSidebar } from "@/components/docs/DocsSidebar";
 import { MobileDocsBar } from "@/components/docs/MobileDocsBar";
-import type { Metadata } from "next";
 import { getAllDocs } from "@/lib/docs";
 
 export const metadata: Metadata = {
@@ -23,19 +21,16 @@ export default async function DocsLayout({
     <>
       <MobileDocsBar docs={docs} />
 
-      <div className="flex w-full gap-6">
-        {/* Sidebar (independent scroll) */}
-        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-[260px] overflow-x-hidden overflow-y-auto border-r border-border lg:block scrollbar-thin">
+      <div className="relative flex w-full gap-6">
+        <aside className="sticky top-14 z-30 hidden h-[calc(100dvh-3.5rem)] w-[260px] shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background lg:block scrollbar-thin">
           <DocsSidebar docs={docs} />
         </aside>
 
-        {/* Main content (uses page scroll) */}
         <main className="min-w-0 flex-1 py-8">
           <div className="mx-auto max-w-5xl">{children}</div>
         </main>
 
-        {/* Right TOC (independent scroll) */}
-        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-[240px] shrink-0 overflow-x-hidden overflow-y-auto border-l border-border pl-4 xl:block scrollbar-thin">
+        <aside className="sticky top-14 z-20 hidden h-[calc(100dvh-3.5rem)] w-[240px] shrink-0 overflow-y-auto overflow-x-hidden border-l border-border bg-background pl-4 xl:block scrollbar-thin">
           <div id="toc-placeholder" />
         </aside>
       </div>
