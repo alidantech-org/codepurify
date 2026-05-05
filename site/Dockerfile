@@ -18,7 +18,7 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY site/ ./
-COPY docs/ ../docs/
+COPY docs/ ./docs/
 
 RUN \
   if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm build; \
