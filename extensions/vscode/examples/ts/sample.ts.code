@@ -1,54 +1,54 @@
-// Generated TypeScript interface for {!* entity.names.pascal_case *!}
-// Generated at: {!* context.generated_at *!}
+// Generated TypeScript interface for {! entity.names.pascal_case !}
+// Generated at: {! context.generated_at !}
 
-export interface {!* entity.names.pascal_case *!}Interface {
-  {!*# Generate properties for loop field #*!}
-  {!* loop entity.fields as field *!}
-  {!* field.names.camel_case *!}: {!* field.type *!};{!* if field.optional *!}?{!* /if *!}
-  {!* /loop *!}
+export interface {! entity.names.pascal_case !}Interface {
+  {!# Generate properties for loop field #!}
+  {! loop entity.fields as field !}
+  {! field.names.camel_case !}: {! field.type !};{! if field.optional !}?{! /if !}
+  {! /loop !}
 }
 
 // Generated class implementation
-export class {!* entity.names.pascal_case *!}Class implements {!* entity.names.pascal_case *!}Interface {
+export class {! entity.names.pascal_case !}Class implements {! entity.names.pascal_case !}Interface {
   constructor(
-    {!*# Generate constructor parameters #*!}
-    {!* loop entity.fields.all as field *!}
-    private {!* field.names.camel_case *!}{!* if field.optional *!}?{!* /if *!}: {!* field.type *!},
-    {!* /loop *!}
+    {!# Generate constructor parameters #!}
+    {! loop entity.fields.all as field !}
+    private {! field.names.camel_case !}{! if field.optional !}?{! /if !}: {! field.type !},
+    {! /loop !}
   ) {}
 
-  {!*# Generate getter methods #*!}
-  {!* loop entity.fields.all as field *!}
-  get {!* field.names.camel_case *!}(): {!* field.type *!}{!* if field.optional *!} | undefined{!* /if *!} {
-    return this.{!* field.names.camel_case *!};
+  {!# Generate getter methods #!}
+  {! loop entity.fields.all as field !}
+  get {! field.names.camel_case !}(): {! field.type !}{! if field.optional !} | undefined{! /if !} {
+    return this.{! field.names.camel_case !};
   }
-  {!* /loop *!}
+  {! /loop !}
 
-  {!*# Generate validation method if entity has string fields #*!}
-  {!* if entity.fields.flags.has_string *!}
+  {!# Generate validation method if entity has string fields #!}
+  {! if entity.fields.flags.has_string !}
   validate(): boolean {
-    {!* loop entity.fields.all as field *!}
-    {!* if field.type === 'string' *!}
-    if (!this.{!* field.names.camel_case *!} || this.{!* field.names.camel_case *!}.trim() === '') {
+    {! loop entity.fields.all as field !}
+    {! if field.type === 'string' !}
+    if (!this.{! field.names.camel_case !} || this.{! field.names.camel_case !}.trim() === '') {
       return false;
     }
-    {!* /if *!}
-    {!* /loop *!}
+    {! /if !}
+    {! /loop !}
     return true;
   }
-  {!* /if *!}
+  {! /if !}
 }
 
 // Export type alias
-export type {!* entity.names.camel_case *!}Type = {!* entity.names.pascal_case *!}Interface;
+export type {! entity.names.camel_case !}Type = {! entity.names.pascal_case !}Interface;
 
-{!*# Generate enum if entity has constant fields #*!}
-{!* if entity.fields.flags.has_constant *!}
-export enum {!* entity.names.pascal_case *!}Constants {
-  {!* loop entity.fields.all as field *!}
-  {!* if field.type === 'constant' *!}
-  {!* field.names.upper_case *!} = "{!* field.names.constant_case *!}",
-  {!* /if *!}
-  {!* /loop *!}
+{!# Generate enum if entity has constant fields #!}
+{! if entity.fields.flags.has_constant !}
+export enum {! entity.names.pascal_case !}Constants {
+  {! loop entity.fields.all as field !}
+  {! if field.type === 'constant' !}
+  {! field.names.upper_case !} = "{! field.names.constant_case !}",
+  {! /if !}
+  {! /loop !}
 }
-{!* /if *!}
+{! /if !}

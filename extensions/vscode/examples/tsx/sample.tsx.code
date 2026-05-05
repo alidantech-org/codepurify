@@ -1,67 +1,67 @@
 import React from 'react';
 
-// Generated React component for {!* entity.names.pascal_case *!}
-export interface {!* entity.names.pascal_case *!}Props {
-  {!*# Generate props for loop field #*!}
-  {!* loop entity.fields.all as field *!}
-  {!* field.names.camel_case *!}: {!* field.type *!}{!* if field.optional *!} | undefined{!* /if *!};
-  {!* /loop *!}
-  {!* if entity.fields.flags.has_string *!}
+// Generated React component for {! entity.names.pascal_case !}
+export interface {! entity.names.pascal_case !}Props {
+  {!# Generate props for loop field #!}
+  {! loop entity.fields.all as field !}
+  {! field.names.camel_case !}: {! field.type !}{! if field.optional !} | undefined{! /if !};
+  {! /loop !}
+  {! if entity.fields.flags.has_string !}
   onValidate?: (isValid: boolean) => void;
-  {!* /if *!}
+  {! /if !}
 }
 
-export const {!** entity.names.pascal_case **!}Component: React.FC<{!* entity.names.pascal_case *!}Props> = ({
-  {!* loop entity.fields.all as field *!}
-  {!* field.names.camel_case *!},
-  {!* /loop *!}
-  {!* if entity.fields.flags.has_string *!}
+export const {!* entity.names.pascal_case *!}Component: React.FC<{! entity.names.pascal_case !}Props> = ({
+  {! loop entity.fields.all as field !}
+  {! field.names.camel_case !},
+  {! /loop !}
+  {! if entity.fields.flags.has_string !}
   onValidate,
-  {!* /if *!}
+  {! /if !}
 }) => {
   const [errors, setErrors] = React.useState<string[]>([]);
 
   const validateForm = () => {
     const newErrors: string[] = [];
     
-    {!* loop entity.fields.all as field *!}
-    {!* if field.type === 'string' *!}
-    if (!{!* field.names.camel_case *!} || {!* field.names.camel_case *!}.trim() === '') {
-      newErrors.push('{!* field.names.pascal_case *!} is required');
+    {! loop entity.fields.all as field !}
+    {! if field.type === 'string' !}
+    if (!{! field.names.camel_case !} || {! field.names.camel_case !}.trim() === '') {
+      newErrors.push('{! field.names.pascal_case !} is required');
     }
-    {!* /if *!}
-    {!* /loop *!}
+    {! /if !}
+    {! /loop !}
     
     setErrors(newErrors);
-    {!* if entity.fields.flags.has_string *!}
+    {! if entity.fields.flags.has_string !}
     onValidate?.(newErrors.length === 0);
-    {!* /if *!}
+    {! /if !}
     
     return newErrors.length === 0;
   };
 
   return (
-    <div className="{!* entity.names.kebab_case *!}-container">
-      <h2>{!* entity.names.pascal_case *!} Form</h2>
+    <div className="{! entity.names.kebab_case !}-container">
+      <h2>{! entity.names.pascal_case !} Form</h2>
       
       <form onSubmit={(e) => { e.preventDefault(); validateForm(); }}>
-        {!*# Generate form fields #*!}
-        {!* loop entity.fields.all as field *!}
+        {!# Generate form fields #!}
+        {! loop entity.fields.all as field !}
         <div className="form-group">
-          <label htmlFor="{!* field.names.kebab_case *!}">
-            {!* field.names.pascal_case *!}{!* if field.optional *!} (optional){!* /if *!}:
+          <label htmlFor="{! field.names.kebab_case !}">
+            {! field.names.pascal_case !}{! if field.optional !} (optional){! /if !}:
           </label>
           <input
-            id="{!* field.names.kebab_case *!}"
+            id="{! field.names.kebab_case !}"
             type="text"
-            value={{!* field.names.camel_case *!} || ''}
+            value={{! field.names.camel_case !} || ''}
             onChange={(e) => {
               // Handle field change
             }}
-            placeholder="Enter {!* field.names.words_lower *!}"
+            placeholder="Enter {! field.names.words_lower !}"
           />
         </div>
-        {!* /loop *!}
+        {! /loop !}
         
         <button type="submit">Submit</button>
       </form>
@@ -81,4 +81,4 @@ export const {!** entity.names.pascal_case **!}Component: React.FC<{!* entity.na
 };
 
 // Export default
-export default {!* entity.names.pascal_case *!}Component;
+export default {! entity.names.pascal_case !}Component;

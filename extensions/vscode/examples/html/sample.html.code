@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{!* entity.names.pascal_case *!} - {!* entity.names.words_title *!}</title>
+    <title>{! entity.names.pascal_case !} - {! entity.names.words_title !}</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1 class="title">{!* entity.names.pascal_case *!}</h1>
-            <p class="subtitle">Generated from {!* entity.key *!} in {!* entity.group_key *!}</p>
+            <h1 class="title">{! entity.names.pascal_case !}</h1>
+            <p class="subtitle">Generated from {! entity.key !} in {! entity.group_key !}</p>
         </div>
     </header>
 
@@ -67,32 +67,32 @@
             <section class="fields">
                 <h2>Fields</h2>
                 <div class="field-list">
-                    {!* loop entity.fields.all as field *!}
+                    {! loop entity.fields.all as field !}
                     <div class="field-card">
                         <h3>~ field.names.pascal_case ~</h3>
                         <div class="field-details">
                             <span class="field-type">~ field.type ~</span>
-                            {!* if field.optional *!}
+                            {! if field.optional !}
                             <span class="field-optional">Optional</span>
-                            {!* else *!}
+                            {! else !}
                             <span class="field-required">Required</span>
-                            {!* /if *!}
+                            {! /if !}
                         </div>
                         <div class="field-names">
                             <small>Camel: <code>~ field.names.camel_case ~</code></small><br>
                             <small>Snake: <code>~ field.names.snake_case ~</code></small>
                         </div>
                     </div>
-                    {!* /loop *!}
+                    {! /loop !}
                 </div>
             </section>
 
-            {!* if entity.fields.flags.has_string *!}
+            {! if entity.fields.flags.has_string !}
             <section class="validation">
                 <h2>String Field Validation</h2>
                 <div class="validation-rules">
-                    {!*  loop entity.fields.all as field *!}
-                    {!* if field.type === 'string' *!}
+                    {!  loop entity.fields.all as field !}
+                    {! if field.type === 'string' !}
                     <div class="validation-rule">
                         <input type="text" 
                                id="~ field.names.kebab_case ~" 
@@ -101,19 +101,19 @@
                         <label for="~ field.names.kebab_case ~">~ field.names.pascal_case ~</label>
                         <span class="validation-message"></span>
                     </div>
-                    {!* /if *!}
-                    {!* /loop *!}
+                    {! /if !}
+                    {! /loop !}
                     <button class="validate-btn" onclick="validateForm()">Validate Fields</button>
                 </div>
             </section>
-            {!* /if *!}
+            {! /if !}
 
-            {!* if entity.fields.flags.has_array *!}
+            {! if entity.fields.flags.has_array !}
             <section class="arrays">
                 <h2>Array Fields</h2>
                 <div class="array-list">
-                    {!* loop entity.fields.all as field *!}
-                    {!* if field.type === 'array' *!}
+                    {! loop entity.fields.all as field !}
+                    {! if field.type === 'array' !}
                     <div class="array-item">
                         <h4>~ field.names.pascal_case ~</h4>
                         <ul class="array-items">
@@ -123,11 +123,11 @@
                         </ul>
                         <button class="add-item-btn">Add Item</button>
                     </div>
-                    {!* /if *!}
-                    {!* /loop *!}
+                    {! /if !}
+                    {! /loop !}
                 </div>
             </section>
-            {!* /if *!}
+            {! /if !}
         </div>
     </main>
 

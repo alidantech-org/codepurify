@@ -14,7 +14,7 @@
       "patterns": [
         {
           "name": "meta.expression.codepurify",
-          "begin": "\\{!*",
+          "begin": "\\{!",
           "end": "~\\)",
           "patterns": [
             {

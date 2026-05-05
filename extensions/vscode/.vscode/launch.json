@@ -17,7 +17,9 @@
                   "name": "Run Codepurify Extension",
                   "type": "extensionHost",
                   "request": "launch",
-                  "extensionDevelopmentPath": "${workspaceFolder}"
+                  "args": [
+                        "--folder-uri=${workspaceFolder}"
+                  ]
             }
       ]
 }

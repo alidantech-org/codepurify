@@ -17,12 +17,12 @@
       "patterns": [
         {
           "name": "comment.block.documentation.codepurify",
-          "begin": "\\{!*\\*",
+          "begin": "\\{!\\*",
           "end": "\\*~\\)"
         },
         {
           "name": "comment.block.codepurify",
-          "begin": "\\{!*#",
+          "begin": "\\{!#",
           "end": "#~\\)"
         }
       ]
@@ -31,7 +31,7 @@
       "patterns": [
         {
           "name": "meta.block.codepurify",
-          "begin": "\\{!*\\s*(if|loop|raw|unless|with)\\b",
+          "begin": "\\{!\\s*(if|loop|raw|unless|with)\\b",
           "beginCaptures": {
             "0": {
               "name": "meta.tag.template.begin.codepurify"
@@ -70,7 +70,7 @@
       "patterns": [
         {
           "name": "meta.expression.codepurify",
-          "begin": "\\{!*",
+          "begin": "\\{!",
           "end": "~\\)",
           "beginCaptures": {
             "0": {
