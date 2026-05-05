@@ -1,8 +1,8 @@
 services:
   site:
     build:
-      context: ./site
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./site/Dockerfile
     ports:
       - "3020:3000"
     environment:

@@ -4,7 +4,7 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache curl
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+COPY site/package.json site/package-lock.json* site/pnpm-lock.yaml* site/yarn.lock* ./
 
 RUN \
   if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install --frozen-lockfile; \
@@ -17,7 +17,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY site/ ./
+COPY docs/ ../docs/
 
 RUN \
   if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm build; \
@@ -37,6 +38,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.* ./
+COPY --from=builder /app/docs ../docs/
 
 EXPOSE 3000
 
