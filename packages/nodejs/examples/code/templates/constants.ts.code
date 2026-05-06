@@ -1,0 +1,19 @@
+export const {|entity.name.pascal|}_CONSTANTS = {
+{|loop field in entity.fields|}
+  {|field.name.upper|}: '{|field.name|}',
+{|/loop|}
+} as const;
+
+export const {|entity.name.pascal|}_DEFAULTS = {
+{|loop field in entity.fields|}
+  {|if field.default|}
+  {|field.name|}: {|field.default|},
+  {|/if|}
+{|/loop|}
+} as const;
+
+export const {|entity.name.pascal|}_VALIDATION = {
+{|loop field in entity.fields|}
+  {|field.name|}: {|field.type|},
+{|/loop|}
+} as const;

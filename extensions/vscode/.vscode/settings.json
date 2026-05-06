@@ -6,7 +6,7 @@
             "generators": "gear"
       },
       "material-icon-theme.files.associations": {
-            "*.codepurify": "handlebars",
+            "*.codepurify": "settings",
             "*.code": "settings"
       }
 }

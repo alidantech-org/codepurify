@@ -1,0 +1,38 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { {|entity.name.pascal|} } from './{|entity.name.kebab|}.entity';
+
+@Injectable()
+export class {|entity.name.pascal|}Repository {
+  constructor(
+    @InjectRepository({|entity.name.pascal|})
+    private readonly repository: Repository<{|entity.name.pascal|}>,
+  ) {}
+
+  async create(data: Partial<{|entity.name.pascal|}>): Promise<{|entity.name.pascal|}> {
+    const {|entity.name.camel|} = this.repository.create(data);
+    return this.repository.save({|entity.name.camel|});
+  }
+
+  async findAll(options?: any): Promise<{|entity.name.pascal|}[]> {
+    return this.repository.find(options);
+  }
+
+  async findOne(id: string): Promise<{|entity.name.pascal|}> {
+    return this.repository.findOne({ where: { id } });
+  }
+
+  async update(id: string, data: Partial<{|entity.name.pascal|}>): Promise<{|entity.name.pascal|}> {
+    await this.repository.update(id, data);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.repository.delete(id);
+  }
+
+  async count(options?: any): Promise<number> {
+    return this.repository.count(options);
+  }
+}

@@ -6,7 +6,7 @@
 
   &__item {
     {|loop field in entity.fields|}
-    {|--field.name.kebab--}: var(--{|field.name.kebab|});
+    {|--field.name.kebab--|}: var(--{|field.name.kebab|});
     {|/loop|}
   }
 }
