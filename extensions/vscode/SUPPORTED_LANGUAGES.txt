@@ -1,0 +1,117 @@
+Codepurify Supported Languages
+
+Base extensions:
+- .codepurify
+- .code
+
+Host language template extensions:
+
+JavaScript:
+- .js.codepurify
+- .js.code
+
+JavaScript React:
+- .jsx.codepurify
+- .jsx.code
+
+TypeScript:
+- .ts.codepurify
+- .ts.code
+
+TypeScript React:
+- .tsx.codepurify
+- .tsx.code
+
+SQL:
+- .sql.codepurify
+- .sql.code
+
+Java:
+- .java.codepurify
+- .java.code
+
+Go:
+- .go.codepurify
+- .go.code
+
+Rust:
+- .rs.codepurify
+- .rs.code
+
+Python:
+- .py.codepurify
+- .py.code
+
+C#:
+- .cs.codepurify
+- .cs.code
+
+C++:
+- .cpp.codepurify
+- .cpp.code
+- .cc.codepurify
+- .cc.code
+- .cxx.codepurify
+- .cxx.code
+- .hpp.codepurify
+- .hpp.code
+- .h.codepurify
+- .h.code
+
+C:
+- .c.codepurify
+- .c.code
+
+PHP:
+- .php.codepurify
+- .php.code
+
+Ruby:
+- .rb.codepurify
+- .rb.code
+
+Kotlin:
+- .kt.codepurify
+- .kt.code
+
+Swift:
+- .swift.codepurify
+- .swift.code
+
+HTML:
+- .html.codepurify
+- .html.code
+
+CSS:
+- .css.codepurify
+- .css.code
+
+SCSS:
+- .scss.codepurify
+- .scss.code
+
+JSON:
+- .json.codepurify
+- .json.code
+
+YAML:
+- .yaml.codepurify
+- .yaml.code
+- .yml.codepurify
+- .yml.code
+
+Markdown:
+- .md.codepurify
+- .md.code
+
+Dockerfile:
+- .dockerfile.codepurify
+- .dockerfile.code
+
+Shell:
+- .sh.codepurify
+- .sh.code
+- .bash.codepurify
+- .bash.code
+- .zsh.codepurify
+- .zsh.code

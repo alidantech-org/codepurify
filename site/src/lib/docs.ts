@@ -10,10 +10,6 @@ export interface DocFrontmatter {
   published?: boolean;
   lastModified?: string;
   group?: string;
-  children?: Array<{
-    slug: string;
-    title: string;
-  }>;
   [key: string]: unknown;
 }
 
@@ -30,6 +26,7 @@ export interface Doc {
   content: string;
   frontmatter: DocFrontmatter;
   headings: Heading[];
+  filePath: string;
   prev?: Pick<Doc, "slug" | "title" | "description">;
   next?: Pick<Doc, "slug" | "title" | "description">;
 }
@@ -39,7 +36,6 @@ export interface DocItem {
   title: string;
   description?: string;
   group?: string;
-  children?: DocItem[];
 }
 
 export interface DocNavigation {
@@ -54,7 +50,21 @@ export interface DocNavItem {
   children?: DocNavItem[];
 }
 
+interface RegistryEntry {
+  slug: string;
+  realSlug: string;
+  filePath: string;
+}
+
+interface DocsRegistry {
+  entries: RegistryEntry[];
+  slugToEntry: Map<string, RegistryEntry>;
+}
+
 const docsDirectory = path.resolve(process.cwd(), "..", "docs");
+
+let registryCache: Promise<DocsRegistry> | null = null;
+let docsCache: Promise<Doc[]> | null = null;
 
 function normalizeSlug(slug: string): string {
   return slug
@@ -64,26 +74,109 @@ function normalizeSlug(slug: string): string {
     .replace(/\/index$/, "");
 }
 
-function slugToFilePath(slug: string): string {
-  const cleanSlug = normalizeSlug(slug);
-  return path.join(docsDirectory, `${cleanSlug}.md`);
+function cleanRouteSegment(segment: string): string {
+  return segment.replace(/^(\d+)-/, "");
+}
+
+function toPublicSlug(realSlug: string): string {
+  return normalizeSlug(realSlug).split("/").map(cleanRouteSegment).join("/");
+}
+
+function getFolderOrder(folder?: string): number {
+  if (!folder) return Number.POSITIVE_INFINITY;
+
+  const match = folder.match(/^(\d+)-/);
+  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+}
+
+function cleanFolderName(folder?: string): string {
+  if (!folder) return "";
+
+  return folder
+    .replace(/^(\d+)-/, "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function toTitleCase(value: string): string {
   return value
+    .replace(/^(\d+)-/, "")
     .replace(/[-_]+/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function createHeadingId(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[`*_~[\]()]/g, "")
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+async function pathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function getAllMarkdownFiles(
+  dir: string,
+  basePath = "",
+): Promise<string[]> {
+  if (!(await pathExists(dir))) return [];
+
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+
+  const sortedEntries = entries.sort((a, b) => {
+    if (a.isFile() && b.isDirectory()) return -1;
+    if (a.isDirectory() && b.isFile()) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const files: string[] = [];
+
+  for (const entry of sortedEntries) {
+    if (entry.name.startsWith(".")) continue;
+
+    const fullPath = path.join(dir, entry.name);
+    const relativePath = path.join(basePath, entry.name);
+
+    if (entry.isDirectory()) {
+      const nested = await getAllMarkdownFiles(fullPath, relativePath);
+      files.push(...nested);
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.endsWith(".md")) {
+      files.push(normalizeSlug(relativePath));
+    }
+  }
+
+  return files;
+}
+
+async function buildRegistry(): Promise<DocsRegistry> {
+  const realSlugs = await getAllMarkdownFiles(docsDirectory);
+  const entries: RegistryEntry[] = realSlugs.map((realSlug) => {
+    const normalizedRealSlug = normalizeSlug(realSlug);
+
+    return {
+      slug: toPublicSlug(normalizedRealSlug),
+      realSlug: normalizedRealSlug,
+      filePath: path.join(docsDirectory, `${normalizedRealSlug}.md`),
+    };
+  });
+
+  const slugToEntry = new Map<string, RegistryEntry>();
+
+  for (const entry of entries) {
+    slugToEntry.set(entry.slug, entry);
+  }
+
+  return {
+    entries,
+    slugToEntry,
+  };
+}
+
+async function getRegistry(): Promise<DocsRegistry> {
+  registryCache ??= buildRegistry();
+  return registryCache;
 }
 
 function extractHeadings(content: string): Heading[] {
@@ -92,12 +185,10 @@ function extractHeadings(content: string): Heading[] {
 
   for (const line of content.split("\n")) {
     const match = line.match(/^(#{1,6})\s+(.+)$/);
-
     if (!match) continue;
 
     const level = match[1].length;
     const rawText = match[2].replace(/#+$/, "").trim();
-
     if (!rawText) continue;
 
     const text = rawText
@@ -117,64 +208,12 @@ function extractHeadings(content: string): Heading[] {
   return headings;
 }
 
-async function pathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function getAllMarkdownFiles(
-  dir: string,
-  basePath = "",
-): Promise<string[]> {
-  if (!(await pathExists(dir))) {
-    return [];
-  }
-
-  const entries = await fs.readdir(dir, { withFileTypes: true });
-
-  // Sort entries: files first, then folders, both in ascending order
-  const sortedEntries = entries.sort((a, b) => {
-    // Files come before folders
-    if (a.isFile() && b.isDirectory()) return -1;
-    if (a.isDirectory() && b.isFile()) return 1;
-
-    // Both are files or both are folders - sort by name ascending
-    return a.name.localeCompare(b.name);
-  });
-
-  const slugs: string[] = [];
-
-  for (const entry of sortedEntries) {
-    if (entry.name.startsWith(".")) continue;
-
-    const fullPath = path.join(dir, entry.name);
-    const relativePath = path.join(basePath, entry.name);
-
-    if (entry.isDirectory()) {
-      const nested = await getAllMarkdownFiles(fullPath, relativePath);
-      slugs.push(...nested);
-      continue;
-    }
-
-    if (entry.isFile() && entry.name.endsWith(".md")) {
-      slugs.push(normalizeSlug(relativePath));
-    }
-  }
-
-  return slugs.sort((a, b) => a.localeCompare(b));
-}
-
 function getDocTitle(slug: string, frontmatter: DocFrontmatter): string {
   if (typeof frontmatter.title === "string" && frontmatter.title.trim()) {
     return frontmatter.title.trim();
   }
 
   const lastPart = slug.split("/").filter(Boolean).pop();
-
   return lastPart ? toTitleCase(lastPart) : "Untitled";
 }
 
@@ -190,24 +229,22 @@ function toDocSummary(doc: Doc): Pick<Doc, "slug" | "title" | "description"> {
   };
 }
 
-async function loadDoc(slug: string): Promise<Doc | null> {
-  const normalizedSlug = normalizeSlug(slug);
-
+async function loadDocFromEntry(entry: RegistryEntry): Promise<Doc | null> {
   try {
-    const fullPath = slugToFilePath(normalizedSlug);
-    const fileContents = await fs.readFile(fullPath, "utf8");
+    const fileContents = await fs.readFile(entry.filePath, "utf8");
     const parsed = matter(fileContents);
 
     const frontmatter = parsed.data as DocFrontmatter;
-    const content = parsed.content.trim();
 
     if (!isPublished(frontmatter)) {
       return null;
     }
 
+    const content = parsed.content.trim();
+
     return {
-      slug: normalizedSlug,
-      title: getDocTitle(normalizedSlug, frontmatter),
+      slug: entry.slug,
+      title: getDocTitle(entry.slug, frontmatter),
       description:
         typeof frontmatter.description === "string"
           ? frontmatter.description
@@ -215,15 +252,33 @@ async function loadDoc(slug: string): Promise<Doc | null> {
       content,
       frontmatter,
       headings: extractHeadings(content),
+      filePath: entry.filePath,
     };
   } catch (error) {
-    console.error(`Failed to load doc "${normalizedSlug}":`, error);
+    console.error(`Failed to load doc "${entry.slug}":`, error);
     return null;
   }
 }
 
 function sortDocs(docs: Doc[]): Doc[] {
   return [...docs].sort((a, b) => {
+    const aSection = a.filePath
+      .replace(docsDirectory, "")
+      .split(path.sep)
+      .filter(Boolean)[0];
+
+    const bSection = b.filePath
+      .replace(docsDirectory, "")
+      .split(path.sep)
+      .filter(Boolean)[0];
+
+    const sectionOrderA = getFolderOrder(aSection);
+    const sectionOrderB = getFolderOrder(bSection);
+
+    if (sectionOrderA !== sectionOrderB) {
+      return sectionOrderA - sectionOrderB;
+    }
+
     const orderA = a.frontmatter.order ?? Number.POSITIVE_INFINITY;
     const orderB = b.frontmatter.order ?? Number.POSITIVE_INFINITY;
 
@@ -236,10 +291,14 @@ function sortDocs(docs: Doc[]): Doc[] {
 }
 
 async function loadAllDocs(): Promise<Doc[]> {
-  const slugs = await getAllMarkdownFiles(docsDirectory);
-  const docs = await Promise.all(slugs.map((slug) => loadDoc(slug)));
+  docsCache ??= (async () => {
+    const registry = await getRegistry();
+    const docs = await Promise.all(registry.entries.map(loadDocFromEntry));
 
-  return sortDocs(docs.filter((doc): doc is Doc => doc !== null));
+    return sortDocs(docs.filter((doc): doc is Doc => doc !== null));
+  })();
+
+  return docsCache;
 }
 
 function getNavigationDocs(
@@ -252,19 +311,13 @@ function getNavigationDocs(
   const normalizedSlug = normalizeSlug(currentSlug);
   const index = allDocs.findIndex((doc) => doc.slug === normalizedSlug);
 
-  if (index === -1) {
-    return {};
-  }
+  if (index === -1) return {};
 
   return {
     prev: index > 0 ? toDocSummary(allDocs[index - 1]) : undefined,
     next:
       index < allDocs.length - 1 ? toDocSummary(allDocs[index + 1]) : undefined,
   };
-}
-
-function getSectionTitle(section: string): string {
-  return toTitleCase(section);
 }
 
 function generateNavigation(docs: Doc[]): DocNavigation[] {
@@ -281,28 +334,14 @@ function generateNavigation(docs: Doc[]): DocNavigation[] {
 
   return Array.from(sections.entries())
     .sort(([a], [b]) => {
-      // Extract numeric prefix for proper sorting
-      const aMatch = a.match(/^(\d+)-/);
-      const bMatch = b.match(/^(\d+)-/);
+      const orderA = getFolderOrder(a);
+      const orderB = getFolderOrder(b);
 
-      if (aMatch && bMatch) {
-        // Both have numeric prefixes - compare numerically
-        const aNum = parseInt(aMatch[1], 10);
-        const bNum = parseInt(bMatch[1], 10);
-        return aNum - bNum;
-      } else if (aMatch) {
-        // Only a has numeric prefix - comes first
-        return -1;
-      } else if (bMatch) {
-        // Only b has numeric prefix - comes first
-        return 1;
-      } else {
-        // Neither has numeric prefix - alphabetical fallback
-        return a.localeCompare(b);
-      }
+      if (orderA !== orderB) return orderA - orderB;
+      return a.localeCompare(b);
     })
     .map(([section, sectionDocs]) => ({
-      title: getSectionTitle(section),
+      title: cleanFolderName(section),
       items: sortDocs(sectionDocs).map((doc) => ({
         title: doc.title,
         href: `/docs/${doc.slug}`,
@@ -323,9 +362,7 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
   const allDocs = await loadAllDocs();
   const doc = allDocs.find((item) => item.slug === normalizedSlug);
 
-  if (!doc) {
-    return null;
-  }
+  if (!doc) return null;
 
   const { prev, next } = getNavigationDocs(normalizedSlug, allDocs);
 
@@ -354,9 +391,7 @@ export function generateDocMetadata(doc: Doc): {
 export async function searchDocs(query: string): Promise<Doc[]> {
   const trimmedQuery = query.trim().toLowerCase();
 
-  if (!trimmedQuery) {
-    return [];
-  }
+  if (!trimmedQuery) return [];
 
   const allDocs = await loadAllDocs();
 
@@ -370,80 +405,17 @@ export async function searchDocs(query: string): Promise<Doc[]> {
   });
 }
 
-function getFolderOrder(folder?: string): number {
-  if (!folder) return 0;
-
-  const match = folder.match(/^(\d+)\.-/);
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
-}
-
-function cleanFolderName(folder?: string): string {
-  if (!folder) return "";
-  return folder.replace(/-/g, " ");
-}
-
 export async function getAllDocs(): Promise<DocItem[]> {
   const allDocs = await loadAllDocs();
 
-  // Group docs by folder
-  const grouped = allDocs.reduce(
-    (acc, doc) => {
-      const parts = doc.slug.split("/");
-      const folder = parts.length > 1 ? parts[0] : undefined;
+  return allDocs.map((doc) => {
+    const [section] = doc.slug.split("/");
 
-      if (!folder) {
-        acc.ungrouped.push(doc);
-      } else {
-        if (!acc.groups[folder]) {
-          acc.groups[folder] = [];
-        }
-        acc.groups[folder].push(doc);
-      }
-
-      return acc;
-    },
-    { groups: {} as Record<string, Doc[]>, ungrouped: [] as Doc[] },
-  );
-
-  // Sort groups by folder order
-  const sortedGroups = Object.entries(grouped.groups).sort(([a], [b]) => {
-    return getFolderOrder(a) - getFolderOrder(b);
-  });
-
-  // Sort docs within each group by order frontmatter, then by title
-  for (const [, docs] of sortedGroups) {
-    sortDocs(docs);
-  }
-
-  // Sort ungrouped docs
-  sortDocs(grouped.ungrouped);
-
-  // Convert to DocItem format
-  const result: DocItem[] = [];
-
-  // Add ungrouped docs first (like quick-guide.md)
-  result.push(
-    ...grouped.ungrouped.map((doc) => ({
+    return {
       slug: doc.slug,
       title: doc.title,
       description: doc.description,
-      group: undefined,
-    })),
-  );
-
-  // Add grouped docs after
-  for (const [folder, docs] of sortedGroups) {
-    const cleanName = cleanFolderName(folder);
-
-    result.push(
-      ...docs.map((doc) => ({
-        slug: doc.slug,
-        title: doc.title,
-        description: doc.description,
-        group: cleanName,
-      })),
-    );
-  }
-
-  return result;
+      group: section ? cleanFolderName(section) : undefined,
+    };
+  });
 }

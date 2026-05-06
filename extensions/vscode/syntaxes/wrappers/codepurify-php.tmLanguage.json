@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify PHP",
+  "scopeName": "source.php.codepurify",
+  "patterns": [
+    {
+      "include": "source.php"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

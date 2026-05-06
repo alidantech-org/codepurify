@@ -1,0 +1,18 @@
+{!# Simple TypeORM Entity Template #!}
+import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
+
+@Entity()
+export class {!entity.name.pascal!} {
+
+  {!# Fields #!}
+  {!loop field in entity.fields!}
+  
+  {!if field.primary!}
+  @PrimaryGeneratedColumn()
+  {!else!}
+  @Column()
+  {!/if!}
+  {!field.name.camel!}: {!field.type!};
+
+  {!/loop!}
+}

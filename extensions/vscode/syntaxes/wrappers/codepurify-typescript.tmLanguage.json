@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify TypeScript",
+  "scopeName": "source.ts.codepurify",
+  "patterns": [
+    {
+      "include": "source.ts"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

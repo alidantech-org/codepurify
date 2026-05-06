@@ -1,0 +1,13 @@
+{!# Java example #!}
+
+public class {!entity.name.pascal!} {
+  {!loop field in entity.fields!}
+  private {!field.type!} {!field.name.camel!};
+  {!/loop!}
+
+  public {!entity.name.pascal!}() {
+    {!loop field in entity.fields!}
+    this.{!field.name.camel!} = null;
+    {!/loop!}
+  }
+}

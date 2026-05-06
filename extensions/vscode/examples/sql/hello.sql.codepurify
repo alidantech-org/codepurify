@@ -1,0 +1,9 @@
+{!# SQL example #!}
+
+CREATE TABLE {!entity.name.snake!} (
+  id SERIAL PRIMARY KEY,
+  {!loop field in entity.fields!}
+  {!field.name.snake!} {!field.databaseType!} NOT NULL,
+  {!/loop!}
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

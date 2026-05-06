@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Swift",
+  "scopeName": "source.swift.codepurify",
+  "patterns": [
+    {
+      "include": "source.swift"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

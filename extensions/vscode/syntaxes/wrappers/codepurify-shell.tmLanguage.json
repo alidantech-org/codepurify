@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Shell",
+  "scopeName": "source.shell.codepurify",
+  "patterns": [
+    {
+      "include": "source.shell"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

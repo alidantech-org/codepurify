@@ -1,0 +1,10 @@
+{!# Shell example #!}
+#!/bin/bash
+
+{!entity.name.snake!}_dir="/var/{!entity.name.snake!}"
+
+mkdir -p ${!entity.name.snake!}_dir
+
+{!loop field in entity.fields!}
+echo "{!field.name.snake!}={!field.type!}" >> ${!entity.name.snake!}_dir/config.env
+{/loop!}

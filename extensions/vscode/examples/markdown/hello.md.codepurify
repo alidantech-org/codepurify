@@ -1,0 +1,6 @@
+{!# Markdown example #!}
+# {!entity.name.pascal!}
+
+{!loop field in entity.fields!}
+- **{!field.name.pascal!}**: {!field.type!}
+{/loop!}

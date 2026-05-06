@@ -1,0 +1,179 @@
+{
+  "name": "codepurify-templates",
+  "displayName": "Codepurify Templates",
+  "version": "0.0.1",
+  "description": "Template language support for deterministic Codepurify code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
+  "publisher": "alidantechorg",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "codepurify",
+    "code generation",
+    "templates",
+    "syntax highlighting",
+    "autocomplete"
+  ],
+  "author": "alidantech.org",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alidantech-org/codepurify.git"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "codepurify",
+        "aliases": [
+          "Codepurify",
+          "codepurify"
+        ],
+        "extensions": [
+          ".codepurify",
+          ".code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "codepurify",
+        "scopeName": "source.codepurify",
+        "path": "./syntaxes/codepurify.tmLanguage.json"
+      },
+      {
+        "scopeName": "template.codepurify.injection",
+        "path": "./syntaxes/codepurify.injection.tmLanguage.json",
+        "injectTo": [
+          "source.java",
+          "source.ts",
+          "source.tsx",
+          "source.js",
+          "source.jsx",
+          "source.python",
+          "source.sql",
+          "source.json",
+          "source.yaml",
+          "text.html.basic"
+        ]
+      }
+    ],
+    "snippets": [
+      {
+        "language": "codepurify",
+        "path": "./snippets/codepurify.json"
+      }
+    ],
+    "configuration": {
+      "title": "Codepurify",
+      "type": "object",
+      "properties": {
+        "codepurify.theme.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Codepurify theme customizations."
+        },
+        "codepurify.theme.entityColor": {
+          "type": "string",
+          "default": "#50fa7b",
+          "description": "Color for entity variables."
+        },
+        "codepurify.theme.fieldColor": {
+          "type": "string",
+          "default": "#8be9fd",
+          "description": "Color for field variables."
+        },
+        "codepurify.theme.relationColor": {
+          "type": "string",
+          "default": "#bd93f9",
+          "description": "Color for relation variables."
+        },
+        "codepurify.theme.globalColor": {
+          "type": "string",
+          "default": "#ffb86c",
+          "description": "Color for global variables."
+        },
+        "codepurify.theme.templateColor": {
+          "type": "string",
+          "default": "#ff5555",
+          "description": "Color for template variables."
+        },
+        "codepurify.theme.delimiterColor": {
+          "type": "string",
+          "default": "#ff79c6",
+          "description": "Color for `{! !}` template delimiters."
+        },
+        "codepurify.theme.casingColor": {
+          "type": "string",
+          "default": "#a6e22e",
+          "description": "Color for casing constants."
+        },
+        "codepurify.theme.backgroundColor": {
+          "type": "string",
+          "default": "rgba(255, 121, 198, 0.1)",
+          "description": "Background color for `{! ... !}` expressions."
+        },
+        "codepurify.theme.borderColor": {
+          "type": "string",
+          "default": "rgba(255, 121, 198, 0.3)",
+          "description": "Border color for `{! ... !}` expressions."
+        },
+        "codepurify.theme.errorColor": {
+          "type": "string",
+          "default": "rgba(255, 85, 85, 0.2)",
+          "description": "Background color for validation errors."
+        },
+        "codepurify.validation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time validation."
+        },
+        "codepurify.validation.strict": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode."
+        },
+        "codepurify.completion.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable intelligent autocomplete."
+        },
+        "codepurify.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hover documentation."
+        },
+        "codepurify.decorations.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable visual decorations and backgrounds."
+        },
+        "codepurify.decorations.opacity": {
+          "type": "number",
+          "default": 0.15,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity level for decorations."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "generate": "node scripts/generate-package.mjs",
+    "vscode:prepublish": "npm run generate && npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {}
+}

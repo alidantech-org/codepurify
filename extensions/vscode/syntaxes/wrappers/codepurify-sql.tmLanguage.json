@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify SQL",
+  "scopeName": "source.sql.codepurify",
+  "patterns": [
+    {
+      "include": "source.sql"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Java",
+  "scopeName": "source.java.codepurify",
+  "patterns": [
+    {
+      "include": "source.java"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

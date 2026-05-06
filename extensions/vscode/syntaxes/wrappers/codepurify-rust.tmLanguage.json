@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Rust",
+  "scopeName": "source.rust.codepurify",
+  "patterns": [
+    {
+      "include": "source.rust"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

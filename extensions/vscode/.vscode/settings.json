@@ -1,38 +1,4 @@
 {
-      "editor.tokenColorCustomizations": {
-            "textMateRules": [
-                  {
-                        "scope": "keyword.control.codepurify",
-                        "settings": {
-                              "foreground": "#C586C0"
-                        }
-                  },
-                  {
-                        "scope": "variable.other.codepurify",
-                        "settings": {
-                              "foreground": "#DCDCAA"
-                        }
-                  },
-                  {
-                        "scope": "punctuation.definition.template.begin.codepurify",
-                        "settings": {
-                              "foreground": "#808080"
-                        }
-                  },
-                  {
-                        "scope": "punctuation.definition.template.end.codepurify",
-                        "settings": {
-                              "foreground": "#808080"
-                        }
-                  },
-                  {
-                        "scope": "comment.block.codepurify",
-                        "settings": {
-                              "foreground": "#6A9955"
-                        }
-                  }
-            ]
-      },
       "material-icon-theme.folders.associations": {
             "codepurify": "tools",
             "templates": "template",
@@ -40,7 +6,7 @@
             "generators": "gear"
       },
       "material-icon-theme.files.associations": {
-            "*.code": "settings",
-            "*.codepurify": "settings"
+            "*.codepurify": "handlebars",
+            "*.code": "settings"
       }
 }

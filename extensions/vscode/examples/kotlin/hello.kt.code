@@ -1,0 +1,15 @@
+{!# Kotlin example #!}
+
+data class {!entity.name.pascal!}(
+  {!loop field in entity.fields!}
+  val {!field.name.camel!}: {!field.type!},
+  {!/loop!}
+) {
+  companion object {
+    fun create() = {!entity.name.pascal!}(
+      {!loop field in entity.fields!}
+      {!field.name.camel!} = TODO(),
+      {!/loop!}
+    )
+  }
+}

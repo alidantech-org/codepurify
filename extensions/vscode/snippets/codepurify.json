@@ -2,77 +2,77 @@
       "Name Original": {
             "prefix": "name.original",
             "body": [
-                  "{! ${1:entity}.names.original !}"
+                  "{! ${1:entity}.name.original !}"
             ],
             "description": "Original source name"
       },
       "Name Length": {
             "prefix": "name.length",
             "body": [
-                  "{! ${1:entity}.names.length !}"
+                  "{! ${1:entity}.name.length !}"
             ],
             "description": "Original name length"
       },
       "Name Casing": {
             "prefix": "name.casing",
             "body": [
-                  "{! ${1:entity}.names.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! ${1:entity}.name.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Any casing variant"
       },
       "Entity Casing": {
             "prefix": "entity.name",
             "body": [
-                  "{! entity.names.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! entity.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Entity casing variant"
       },
       "Field Casing": {
             "prefix": "field.name",
             "body": [
-                  "{! field.names.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! field.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Field casing variant"
       },
       "Relation Casing": {
             "prefix": "relation.name",
             "body": [
-                  "{! relation.names.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! relation.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Relation casing variant"
       },
       "Module Casing": {
             "prefix": "module.name",
             "body": [
-                  "{! ${1:relation}.module.names.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! module.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Module casing variant"
       },
       "Property Casing": {
             "prefix": "property.name",
             "body": [
-                  "{! ${1:relation}.property.names.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! ${1:relation}.property.name.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Property casing variant"
       },
       "Singular Casing": {
             "prefix": "name.singular",
             "body": [
-                  "{! ${1:entity}.names.singular.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! ${1:entity}.name.singular.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Singular name casing variant"
       },
       "Plural Casing": {
             "prefix": "name.plural",
             "body": [
-                  "{! ${1:entity}.names.plural.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
+                  "{! ${1:entity}.name.plural.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}"
             ],
             "description": "Plural name casing variant"
       },
       "loop Name Parts": {
             "prefix": "loop.name.parts",
             "body": [
-                  "{! loop ${1:entity}.names.arrays.parts.items as part !}",
+                  "{! loop ${1:entity}.name.array.parts.items as part !}",
                   "  {! part.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}",
                   "{! /loop !}"
             ],
@@ -81,7 +81,7 @@
       "loop Name Words": {
             "prefix": "loop.name.words",
             "body": [
-                  "{! loop ${1:entity}.names.arrays.words.items as word !}",
+                  "{! loop ${1:entity}.name.array.words.items as word !}",
                   "  {! word.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}",
                   "{! /loop !}"
             ],
@@ -90,7 +90,7 @@
       "loop Name Characters": {
             "prefix": "loop.name.characters",
             "body": [
-                  "{! loop ${1:entity}.names.arrays.characters.items as character !}",
+                  "{! loop ${1:entity}.name.array.characters.items as character !}",
                   "  {! character.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} !}",
                   "{! /loop !}"
             ],
@@ -99,14 +99,14 @@
       "Array Length": {
             "prefix": "array.length",
             "body": [
-                  "{! ${1:entity.fields.arrays.all}.length !}"
+                  "{! ${1:entity.fields.array.all}.length !}"
             ],
             "description": "Array child length"
       },
       "Array Items Loop": {
             "prefix": "loop.array",
             "body": [
-                  "{! loop ${1:entity.fields.arrays.all.items} as ${2:item} !}",
+                  "{! loop ${1:entity.fields.array.all.items} as ${2:item} !}",
                   "  $0",
                   "{! /loop !}"
             ],
@@ -122,7 +122,7 @@
       "loop Fields": {
             "prefix": "loop.fields",
             "body": [
-                  "{! loop entity.fields.arrays.all.items as field !}",
+                  "{! loop entity.fields.array.all.items as field !}",
                   "  $0",
                   "{! /loop !}"
             ],
@@ -131,7 +131,7 @@
       "loop Relations": {
             "prefix": "loop.relations",
             "body": [
-                  "{! loop entity.relations.arrays.all.items as relation !}",
+                  "{! loop entity.relations.array.all.items as relation !}",
                   "  $0",
                   "{! /loop !}"
             ],

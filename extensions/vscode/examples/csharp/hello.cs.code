@@ -1,0 +1,15 @@
+{!# C# example #!}
+
+public class {!entity.name.pascal!}
+{
+  {!loop field in entity.fields!}
+  public {!field.type!} {!field.name.pascal!} { get; set; }
+  {!/loop!}
+
+  public {!entity.name.pascal!}()
+  {
+    {!loop field in entity.fields!}
+    {!field.name.pascal!} = default;
+    {!/loop!}
+  }
+}

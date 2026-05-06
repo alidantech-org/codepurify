@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Python",
+  "scopeName": "source.python.codepurify",
+  "patterns": [
+    {
+      "include": "source.python"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

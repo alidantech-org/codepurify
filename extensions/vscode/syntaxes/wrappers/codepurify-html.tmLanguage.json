@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify HTML",
+  "scopeName": "text.html.basic.codepurify",
+  "patterns": [
+    {
+      "include": "text.html.basic"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

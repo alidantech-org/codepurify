@@ -2,340 +2,120 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = void 0;
 const vscode = require("vscode");
-const path = require("path");
+const LANGUAGE_ID = "codepurify";
+const BLOCK_NAMES = ["if", "loop", "ignore", "unless", "with"];
+const ELSE_PARENT_BLOCKS = ["if", "unless"];
 function activate(context) {
-  console.log("Codepurify extension is now active!");
-  // Load variable definitions from CSV
-  const variables = loadVariablesFromCSV();
-  // Create diagnostic collection for syntax errors
-  const diagnosticCollection =
-    vscode.languages.createDiagnosticCollection("codepurify");
-  context.subscriptions.push(diagnosticCollection);
-  // Register completion provider for all Codepurify language IDs
-  const completionProvider = vscode.languages.registerCompletionItemProvider(
-    [
-      { language: "codepurify" },
-      { language: "codepurify-ts" },
-      { language: "codepurify-tsx" },
-      { language: "codepurify-md" },
-      { language: "codepurify-html" },
-    ],
-    new CodepurifyCompletionProvider(variables),
-  );
-  context.subscriptions.push(completionProvider);
-  // Register syntax error diagnostic provider for all Codepurify language IDs
-  const diagnosticProvider = new CodepurifyDiagnosticProvider(
-    diagnosticCollection,
-    variables,
-  );
-  const disposable = vscode.workspace.onDidChangeTextDocument((event) =>
-    diagnosticProvider.validateDocument(event.document),
-  );
-  context.subscriptions.push(disposable);
-  // Validate all open documents on activation
-  vscode.workspace.textDocuments.forEach((doc) =>
-    diagnosticProvider.validateDocument(doc),
-  );
+    console.log("Codepurify extension activated");
+    vscode.window.setStatusBarMessage("✨ Codepurify ready — template syntax active", 4000);
+    context.subscriptions.push(registerCompletionProvider(), registerDiagnosticsProvider(context));
 }
 exports.activate = activate;
-function loadVariablesFromCSV() {
-  const csvPath = path.join(
-    __dirname,
-    "..",
-    "data",
-    "tempurify_v1_template_context_variables.csv",
-  );
-  const fs = require("fs");
-  // Check if CSV file exists
-  if (!fs.existsSync(csvPath)) {
-    console.warn(
-      `CSV file not found at ${csvPath}. Variable completion will be disabled.`,
-    );
-    return [];
-  }
-  let content;
-  try {
-    content = fs.readFileSync(csvPath, "utf8");
-  } catch (error) {
-    console.error(`Failed to read CSV file at ${csvPath}:`, error);
-    return [];
-  }
-  const variables = [];
-  const lines = content.split("\n");
-  // Skip header and parse data
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    try {
-      // Simple CSV parsing (handles quoted values)
-      const parts = parseCSVLine(line);
-      if (parts.length >= 3) {
-        const variablePath = parts[0];
-        const name = parts[1];
-        const description = parts[2];
-        const type = parts[4] || "unknown";
-        variables.push({
-          path: variablePath,
-          name: name,
-          description: description,
-          type: type,
-        });
-      }
-    } catch (error) {
-      console.warn(`Failed to parse CSV line ${i + 1}: ${line}`, error);
-      // Continue with next line
-    }
-  }
-  return variables;
-}
-function parseCSVLine(line) {
-  const result = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === "," && !inQuotes) {
-      result.push(current.trim());
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-  result.push(current.trim());
-  return result;
-}
-class CodepurifyDiagnosticProvider {
-  constructor(diagnosticCollection, variables) {
-    this.codepurifyLanguages = [
-      "codepurify",
-      "codepurify-ts",
-      "codepurify-tsx",
-      "codepurify-md",
-      "codepurify-html",
-    ];
-    this.diagnosticCollection = diagnosticCollection;
-    this.variables = variables;
-    this.validPaths = new Set(variables.map((v) => v.path));
-  }
-  validateDocument(document) {
-    // Only validate Codepurify language files
-    if (!this.codepurifyLanguages.includes(document.languageId)) {
-      return;
-    }
-    const diagnostics = [];
-    const text = document.getText();
-    // Find all Codepurify expressions {! ... !}
-    const expressions = this.findCodepurifyExpressions(text);
-    for (const expr of expressions) {
-      const errors = this.validateExpression(expr.content, expr.range);
-      diagnostics.push(...errors);
-    }
-    // Check for unmatched delimiters
-    const delimiterErrors = this.validateDelimiters(text);
-    diagnostics.push(...delimiterErrors);
-    this.diagnosticCollection.set(document.uri, diagnostics);
-  }
-  findCodepurifyExpressions(text) {
-    const expressions = [];
-    const lines = text.split("\n");
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const line = lines[lineIndex];
-      let match;
-      // Find expressions in this line
-      const regex = /\{!([^~]*?)~\)/g;
-      while ((match = regex.exec(line)) !== null) {
-        const startPos = new vscode.Position(lineIndex, match.index);
-        const endPos = new vscode.Position(
-          lineIndex,
-          match.index + match[0].length,
-        );
-        const range = new vscode.Range(startPos, endPos);
-        expressions.push({
-          content: match[1].trim(),
-          range: range,
-        });
-      }
-    }
-    return expressions;
-  }
-  validateExpression(content, range) {
-    const diagnostics = [];
-    // Check for empty expressions
-    if (!content) {
-      const diagnostic = new vscode.Diagnostic(
-        range,
-        "Empty Codepurify expression",
-        vscode.DiagnosticSeverity.Warning,
-      );
-      diagnostic.code = "empty-expression";
-      diagnostics.push(diagnostic);
-      return diagnostics;
-    }
-    // Validate variable paths
-    this.validateVariablePaths(content, range, diagnostics);
-    return diagnostics;
-  }
-  validateVariablePaths(content, range, diagnostics) {
-    const keywords = new Set([
-      "if",
-      "else",
-      "loop",
-      "raw",
-      "unless",
-      "with",
-      "as",
-      "in",
-      "and",
-      "or",
-      "not",
-      "is",
-      "true",
-      "false",
-      "null",
-      "undefined",
-    ]);
-    const pathRegex =
-      /\b[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)+\b/g;
-    let match;
-    while ((match = pathRegex.exec(content)) !== null) {
-      const variablePath = match[0];
-      if (keywords.has(variablePath)) continue;
-      if (!this.validPaths.has(variablePath)) {
-        const diagnostic = new vscode.Diagnostic(
-          range,
-          `Unknown Codepurify variable: '${variablePath}'`,
-          vscode.DiagnosticSeverity.Error,
-        );
-        diagnostic.code = "unknown-variable";
-        diagnostics.push(diagnostic);
-      }
-    }
-  }
-  validateDelimiters(text) {
-    const diagnostics = [];
-    const lines = text.split("\n");
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const line = lines[lineIndex];
-      // Count opening and closing delimiters
-      const openCount = (line.match(/\{!/g) || []).length;
-      const closeCount = (line.match(/~\)/g) || []).length;
-      if (openCount !== closeCount) {
-        const range = new vscode.Range(lineIndex, 0, lineIndex, line.length);
-        const diagnostic = new vscode.Diagnostic(
-          range,
-          `Unmatched Codepurify delimiters. Found ${openCount} opening '{!' and ${closeCount} closing '!}'`,
-          vscode.DiagnosticSeverity.Error,
-        );
-        diagnostic.code = "unmatched-delimiters";
-        diagnostics.push(diagnostic);
-      }
-    }
-    return diagnostics;
-  }
-}
-class CodepurifyCompletionProvider {
-  constructor(variables) {
-    this.keywords = [
-      "if",
-      "else",
-      "loop",
-      "raw",
-      "unless",
-      "with",
-      "/if",
-      "/loop",
-      "/raw",
-      "/unless",
-      "/with",
-      "as",
-      "in",
-      "not",
-      "and",
-      "or",
-      "is",
-    ];
-    this.variables = variables;
-  }
-  provideCompletionItems(document, position) {
-    const linePrefix = this.getLinePrefix(document, position);
-    // Check if we're inside a Codepurify expression {! ... !}
-    if (!this.isInCodepurifyExpression(linePrefix)) {
-      return [];
-    }
-    const items = [];
-    // Provide variable completions
-    const variableCompletions = this.getVariableCompletions(linePrefix);
-    items.push(...variableCompletions);
-    // Provide keyword completions for control flow
-    const keywordCompletions = this.getKeywordCompletions(linePrefix);
-    items.push(...keywordCompletions);
-    return items;
-  }
-  getLinePrefix(document, position) {
-    const line = document.lineAt(position.line).text;
-    const beforeCursor = line.substring(0, position.character);
-    const openIndex = beforeCursor.lastIndexOf("{!");
-    const closeIndex = beforeCursor.lastIndexOf("!}");
-    if (openIndex === -1 || closeIndex > openIndex) return "";
-    return beforeCursor.substring(openIndex + 2);
-  }
-  isInCodepurifyExpression(linePrefix) {
-    return linePrefix.length > 0;
-  }
-  getVariableCompletions(linePrefix) {
-    const items = [];
-    const currentPath = this.extractCurrentPath(linePrefix);
-    // Filter variables based on current path
-    const matchingVariables = this.variables.filter(
-      (v) =>
-        v.path.startsWith(currentPath) ||
-        v.path.toLowerCase().includes(currentPath.toLowerCase()),
-    );
-    for (const variable of matchingVariables) {
-      const item = new vscode.CompletionItem(
-        variable.path,
-        vscode.CompletionItemKind.Variable,
-      );
-      item.detail = variable.name;
-      item.documentation = new vscode.MarkdownString(
-        `**${variable.name}**\n\n${variable.description}\n\n*Type: ${variable.type}*`,
-      );
-      // Determine if this is a nested property
-      const pathParts = variable.path.split(".");
-      if (pathParts.length > 1) {
-        item.insertText = variable.path.substring(currentPath.length);
-      }
-      items.push(item);
-    }
-    return items;
-  }
-  getKeywordCompletions(linePrefix) {
-    const items = [];
-    for (const keyword of this.keywords) {
-      if (keyword.toLowerCase().includes(linePrefix.toLowerCase())) {
-        const item = new vscode.CompletionItem(
-          keyword,
-          vscode.CompletionItemKind.Keyword,
-        );
-        item.detail = `Codepurify keyword: ${keyword}`;
-        item.insertText = keyword;
-        items.push(item);
-      }
-    }
-    return items;
-  }
-  extractCurrentPath(linePrefix) {
-    // Extract the current variable path being typed
-    // Remove trailing spaces and get the last word
-    const trimmed = linePrefix.trim();
-    const words = trimmed.split(/\s+/);
-    return words[words.length - 1] || "";
-  }
-}
-function deactivate() {
-  console.log("Codepurify extension is now deactivated");
-}
+function deactivate() { }
 exports.deactivate = deactivate;
+function isCodepurifyDocument(document) {
+    return document.languageId === LANGUAGE_ID;
+}
+function registerCompletionProvider() {
+    return vscode.languages.registerCompletionItemProvider(LANGUAGE_ID, {
+        provideCompletionItems(document) {
+            if (!isCodepurifyDocument(document))
+                return undefined;
+            return [
+                snippet("if", "{!if ${1:condition}!}\n\t$0\n{!/if!}", "If block"),
+                snippet("ifelse", "{!if ${1:condition}!}\n\t${2:then}\n{!else!}\n\t${3:else}\n{!/if!}", "If / else block"),
+                snippet("loop", "{!loop ${1:item} in ${2:collection}!}\n\t$0\n{!/loop!}", "Loop block"),
+                snippet("unless", "{!unless ${1:condition}!}\n\t$0\n{!/unless!}", "Unless block"),
+                snippet("unlesselse", "{!unless ${1:condition}!}\n\t${2:then}\n{!else!}\n\t${3:else}\n{!/unless!}", "Unless / else block"),
+                snippet("with", "{!with ${1:value}!}\n\t$0\n{!/with!}", "With block"),
+                snippet("ignore", "{!ignore!}\n\t$0\n{!/ignore!}", "Ignore block"),
+                snippet("else", "{!else!}", "Else branch"),
+                snippet("comment", "{!# ${1:comment} #!}", "Comment"),
+                snippet("doc", "{!* ${1:documentation} *!}", "Documentation comment"),
+            ];
+        },
+    }, "!", "{");
+}
+function snippet(label, body, detail) {
+    const item = new vscode.CompletionItem(label, vscode.CompletionItemKind.Snippet);
+    item.insertText = new vscode.SnippetString(body);
+    item.detail = detail;
+    return item;
+}
+function registerDiagnosticsProvider(context) {
+    const collection = vscode.languages.createDiagnosticCollection("codepurify");
+    const validate = (document) => {
+        if (!isCodepurifyDocument(document))
+            return;
+        const diagnostics = [];
+        const text = document.getText();
+        validateDelimiters(document, text, diagnostics);
+        validateBlocks(document, text, diagnostics);
+        collection.set(document.uri, diagnostics);
+    };
+    vscode.workspace.textDocuments.forEach(validate);
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(validate), vscode.workspace.onDidChangeTextDocument((event) => validate(event.document)), vscode.workspace.onDidCloseTextDocument((document) => collection.delete(document.uri)), collection);
+    return collection;
+}
+function validateDelimiters(document, text, diagnostics) {
+    const openCount = countMatches(text, /\{!/g);
+    const closeCount = countMatches(text, /!\}/g);
+    if (openCount !== closeCount) {
+        diagnostics.push(createDiagnostic(document, 0, 0, `Mismatched delimiters: found ${openCount} "{!" and ${closeCount} "!}".`, vscode.DiagnosticSeverity.Error));
+    }
+}
+function validateBlocks(document, text, diagnostics) {
+    const tagRegex = /\{!\s*(\/)?([a-zA-Z_][a-zA-Z0-9_]*)\b[^!]*!\}/g;
+    const stack = [];
+    let match;
+    while ((match = tagRegex.exec(text)) !== null) {
+        const isClosing = Boolean(match[1]);
+        const name = match[2];
+        if (name === "else") {
+            validateElse(document, match, stack, diagnostics);
+            continue;
+        }
+        if (!BLOCK_NAMES.includes(name))
+            continue;
+        if (!isClosing) {
+            stack.push({ name, index: match.index, hasElse: false });
+            continue;
+        }
+        const last = stack.pop();
+        if (!last) {
+            diagnostics.push(createDiagnostic(document, match.index, match[0].length, `Unexpected closing block "{!/${name}!}".`, vscode.DiagnosticSeverity.Error));
+            continue;
+        }
+        if (last.name !== name) {
+            diagnostics.push(createDiagnostic(document, match.index, match[0].length, `Mismatched closing block. Expected "{!/${last.name}!}" but found "{!/${name}!}".`, vscode.DiagnosticSeverity.Error));
+        }
+    }
+    for (const unclosed of stack) {
+        diagnostics.push(createDiagnostic(document, unclosed.index, 0, `Unclosed block "{!${unclosed.name}!}".`, vscode.DiagnosticSeverity.Error));
+    }
+}
+function validateElse(document, match, stack, diagnostics) {
+    const parent = stack[stack.length - 1];
+    if (!parent) {
+        diagnostics.push(createDiagnostic(document, match.index, match[0].length, `"else" must be inside an "if" or "unless" block.`, vscode.DiagnosticSeverity.Error));
+        return;
+    }
+    if (!ELSE_PARENT_BLOCKS.includes(parent.name)) {
+        diagnostics.push(createDiagnostic(document, match.index, match[0].length, `"else" is not allowed inside "${parent.name}".`, vscode.DiagnosticSeverity.Error));
+        return;
+    }
+    if (parent.hasElse) {
+        diagnostics.push(createDiagnostic(document, match.index, match[0].length, `Duplicate "else" inside "${parent.name}" block.`, vscode.DiagnosticSeverity.Error));
+        return;
+    }
+    parent.hasElse = true;
+}
+function createDiagnostic(document, index, length, message, severity) {
+    const start = document.positionAt(index);
+    const end = document.positionAt(index + length);
+    return new vscode.Diagnostic(new vscode.Range(start, end), message, severity);
+}
+function countMatches(text, regex) {
+    return [...text.matchAll(regex)].length;
+}
 //# sourceMappingURL=extension.js.map

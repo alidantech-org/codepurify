@@ -1,0 +1,5 @@
+export class {!entity.name.pascal!} {
+  {!loop field in entity.fields!}
+  {!field.name.camel!}: {!field.type!};
+  {!/loop!}
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify SCSS",
+  "scopeName": "source.css.scss.codepurify",
+  "patterns": [
+    {
+      "include": "source.css.scss"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

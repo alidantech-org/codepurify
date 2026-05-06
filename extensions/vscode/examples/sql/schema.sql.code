@@ -1,0 +1,5 @@
+CREATE TABLE {!entity.name.snake!} (
+  {!loop field in entity.fields!}
+  {!field.name.snake!} {!field.databaseType!}
+  {!/loop!}
+);

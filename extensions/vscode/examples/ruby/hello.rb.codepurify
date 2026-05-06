@@ -1,0 +1,11 @@
+{!# Ruby example #!}
+
+class {!entity.name.pascal!}
+  attr_accessor :{!loop field in entity.fields!}{!field.name.snake!}{!/loop!}
+
+  def initialize
+    {!loop field in entity.fields!}
+    @{!field.name.snake!} = nil
+    {!/loop!}
+  end
+end

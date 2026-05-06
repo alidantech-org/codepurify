@@ -1,0 +1,17 @@
+{!# Rust example #!}
+
+pub struct {!entity.name.pascal!} {
+  {!loop field in entity.fields!}
+  pub {!field.name.snake!}: {!field.type!},
+  {!/loop!}
+}
+
+impl {!entity.name.pascal!} {
+  pub fn new() -> Self {
+    {!entity.name.pascal!} {
+      {!loop field in entity.fields!}
+      {!field.name.snake!}: Default::default(),
+      {!/loop!}
+    }
+  }
+}

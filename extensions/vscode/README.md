@@ -71,16 +71,16 @@ If you prefer Material Icon Theme, you can map Codepurify files to existing icon
 
 ```typescript
 {
-  !entity.names.casing.pascal!;
+  !entity.name.casing.pascal!;
 }
 {
-  !field.names.casing.camel!;
+  !field.name.casing.camel!;
 }
 {
-  !relation.target_entity.names.kebab!;
+  !relation.target_entity.name.kebab!;
 }
 {
-  !entity.names.singular.casing.snake!;
+  !entity.name.singular.casing.snake!;
 }
 ```
 
@@ -91,8 +91,8 @@ If you prefer Material Icon Theme, you can map Codepurify files to existing icon
   @IsString()
 {! /if !}
 
-{! loop entity.fields.arrays.parts.items as field !}
-  {! field.names.casing.camel !}: string;
+{! loop entity.fields.array.parts.items as field !}
+  {! field.name.casing.camel !}: string;
 {! /loop !}
 
 {! raw !}
@@ -112,8 +112,8 @@ If you prefer Material Icon Theme, you can map Codepurify files to existing icon
 
 The extension provides real-time validation:
 
-✅ **Valid**: `{! entity.names.casing.camel !}`
-❌ **Error**: `{! entity.names.casings.camel !}` - Unknown variable `casings`
+✅ **Valid**: `{! entity.name.casing.camel !}`
+❌ **Error**: `{! entity.name.casings.camel !}` - Unknown variable `casings`
 
 ✅ **Valid**: `{! if condition !} ... {! /if !}`
 ❌ **Error**: `{! if condition !}` - Unclosed control flow
@@ -137,8 +137,8 @@ The extension reads variable definitions from a CSV file. Place your `tempurify_
 
 ```csv
 path,name,description,type
-entity.names.casing.camel,Camel Case,Camel case version of entity name,string
-entity.fields.arrays.all,All Fields,Array of all field objects,array
+entity.name.casing.camel,Camel Case,Camel case version of entity name,string
+entity.fields.array.all,All Fields,Array of all field objects,array
 ```
 
 ### Theme Customization
@@ -236,13 +236,13 @@ MIT License - see LICENSE file for details.
 
 ```typescript
 {
-  !entity.names.casing.pascal!;
+  !entity.name.casing.pascal!;
 }
 {
-  !field.names.casing.camel!;
+  !field.name.casing.camel!;
 }
 {
-  !relation.target_entity.names.kebab!;
+  !relation.target_entity.name.kebab!;
 }
 ```
 
@@ -253,8 +253,8 @@ MIT License - see LICENSE file for details.
   @IsString()
   {! /if !}
 
-{! loop entity.fields.arrays.parts.items as field !}
-  {! field.names.casing.camel !}: string;
+{! loop entity.fields.array.parts.items as field !}
+  {! field.name.casing.camel !}: string;
 {! /loop !}
 ```
 

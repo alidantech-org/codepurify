@@ -2,7 +2,7 @@
   "name": "codepurify-templates",
   "displayName": "Codepurify Templates",
   "version": "0.0.1",
-  "description": "Template language for deterministic code generation with syntax highlighting, autocomplete, and error validation",
+  "description": "Template language support for deterministic Codepurify code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
   "publisher": "alidantechorg",
   "engines": {
     "vscode": "^1.80.0"
@@ -10,12 +10,29 @@
   "categories": [
     "Programming Languages"
   ],
+  "keywords": [
+    "codepurify",
+    "code generation",
+    "templates",
+    "syntax highlighting",
+    "autocomplete"
+  ],
+  "author": "alidantech.org",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alidantech-org/codepurify.git"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [],
   "contributes": {
     "languages": [
       {
         "id": "codepurify",
         "aliases": [
-          "Codepurify"
+          "Codepurify",
+          "codepurify"
         ],
         "extensions": [
           ".codepurify",
@@ -24,34 +41,188 @@
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-ts",
+        "id": "codepurify-javascript",
+        "aliases": [
+          "Codepurify JavaScript"
+        ],
+        "extensions": [
+          ".js.codepurify",
+          ".js.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-jsx",
+        "aliases": [
+          "Codepurify JavaScript React"
+        ],
+        "extensions": [
+          ".jsx.codepurify",
+          ".jsx.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-typescript",
         "aliases": [
           "Codepurify TypeScript"
         ],
         "extensions": [
+          ".ts.codepurify",
           ".ts.code"
         ],
-        "configuration": "./config/language-configuration-ts.json"
+        "configuration": "./config/language-configuration.json"
       },
       {
         "id": "codepurify-tsx",
         "aliases": [
-          "Codepurify TSX"
+          "Codepurify TypeScript React"
         ],
         "extensions": [
+          ".tsx.codepurify",
           ".tsx.code"
         ],
-        "configuration": "./config/language-configuration-tsx.json"
+        "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-md",
+        "id": "codepurify-sql",
         "aliases": [
-          "Codepurify Markdown"
+          "Codepurify SQL"
         ],
         "extensions": [
-          ".md.code"
+          ".sql.codepurify",
+          ".sql.code"
         ],
-        "configuration": "./config/language-configuration-md.json"
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-java",
+        "aliases": [
+          "Codepurify Java"
+        ],
+        "extensions": [
+          ".java.codepurify",
+          ".java.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-go",
+        "aliases": [
+          "Codepurify Go"
+        ],
+        "extensions": [
+          ".go.codepurify",
+          ".go.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-rust",
+        "aliases": [
+          "Codepurify Rust"
+        ],
+        "extensions": [
+          ".rs.codepurify",
+          ".rs.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-python",
+        "aliases": [
+          "Codepurify Python"
+        ],
+        "extensions": [
+          ".py.codepurify",
+          ".py.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-csharp",
+        "aliases": [
+          "Codepurify C#"
+        ],
+        "extensions": [
+          ".cs.codepurify",
+          ".cs.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-cpp",
+        "aliases": [
+          "Codepurify C++"
+        ],
+        "extensions": [
+          ".cpp.codepurify",
+          ".cpp.code",
+          ".cc.codepurify",
+          ".cc.code",
+          ".cxx.codepurify",
+          ".cxx.code",
+          ".hpp.codepurify",
+          ".hpp.code",
+          ".h.codepurify",
+          ".h.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-c",
+        "aliases": [
+          "Codepurify C"
+        ],
+        "extensions": [
+          ".c.codepurify",
+          ".c.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-php",
+        "aliases": [
+          "Codepurify PHP"
+        ],
+        "extensions": [
+          ".php.codepurify",
+          ".php.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-ruby",
+        "aliases": [
+          "Codepurify Ruby"
+        ],
+        "extensions": [
+          ".rb.codepurify",
+          ".rb.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-kotlin",
+        "aliases": [
+          "Codepurify Kotlin"
+        ],
+        "extensions": [
+          ".kt.codepurify",
+          ".kt.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-swift",
+        "aliases": [
+          "Codepurify Swift"
+        ],
+        "extensions": [
+          ".swift.codepurify",
+          ".swift.code"
+        ],
+        "configuration": "./config/language-configuration.json"
       },
       {
         "id": "codepurify-html",
@@ -59,9 +230,93 @@
           "Codepurify HTML"
         ],
         "extensions": [
+          ".html.codepurify",
           ".html.code"
         ],
-        "configuration": "./config/language-configuration-html.json"
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-css",
+        "aliases": [
+          "Codepurify CSS"
+        ],
+        "extensions": [
+          ".css.codepurify",
+          ".css.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-scss",
+        "aliases": [
+          "Codepurify SCSS"
+        ],
+        "extensions": [
+          ".scss.codepurify",
+          ".scss.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-json",
+        "aliases": [
+          "Codepurify JSON"
+        ],
+        "extensions": [
+          ".json.codepurify",
+          ".json.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-yaml",
+        "aliases": [
+          "Codepurify YAML"
+        ],
+        "extensions": [
+          ".yaml.codepurify",
+          ".yaml.code",
+          ".yml.codepurify",
+          ".yml.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-markdown",
+        "aliases": [
+          "Codepurify Markdown"
+        ],
+        "extensions": [
+          ".md.codepurify",
+          ".md.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-dockerfile",
+        "aliases": [
+          "Codepurify Dockerfile"
+        ],
+        "extensions": [
+          ".dockerfile.codepurify",
+          ".dockerfile.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-shell",
+        "aliases": [
+          "Codepurify Shell"
+        ],
+        "extensions": [
+          ".sh.codepurify",
+          ".sh.code",
+          ".bash.codepurify",
+          ".bash.code",
+          ".zsh.codepurify",
+          ".zsh.code"
+        ],
+        "configuration": "./config/language-configuration.json"
       }
     ],
     "grammars": [
@@ -71,73 +326,236 @@
         "path": "./syntaxes/codepurify.tmLanguage.json"
       },
       {
-        "language": "codepurify-ts",
-        "scopeName": "source.codepurify.ts",
-        "path": "./syntaxes/codepurify-ts.tmLanguage.json"
+        "language": "codepurify-javascript",
+        "scopeName": "source.js.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-javascript.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-jsx",
+        "scopeName": "source.jsx.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-jsx.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-typescript",
+        "scopeName": "source.ts.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-typescript.tmLanguage.json"
       },
       {
         "language": "codepurify-tsx",
-        "scopeName": "source.codepurify.tsx",
-        "path": "./syntaxes/codepurify-tsx.tmLanguage.json"
+        "scopeName": "source.tsx.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-tsx.tmLanguage.json"
       },
       {
-        "language": "codepurify-md",
-        "scopeName": "text.codepurify.markdown",
-        "path": "./syntaxes/codepurify-md.tmLanguage.json"
+        "language": "codepurify-sql",
+        "scopeName": "source.sql.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-sql.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-java",
+        "scopeName": "source.java.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-java.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-go",
+        "scopeName": "source.go.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-go.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-rust",
+        "scopeName": "source.rust.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-rust.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-python",
+        "scopeName": "source.python.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-python.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-csharp",
+        "scopeName": "source.cs.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-csharp.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-cpp",
+        "scopeName": "source.cpp.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-cpp.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-c",
+        "scopeName": "source.c.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-c.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-php",
+        "scopeName": "source.php.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-php.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-ruby",
+        "scopeName": "source.ruby.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-ruby.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-kotlin",
+        "scopeName": "source.kotlin.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-kotlin.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-swift",
+        "scopeName": "source.swift.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-swift.tmLanguage.json"
       },
       {
         "language": "codepurify-html",
-        "scopeName": "text.codepurify.html",
-        "path": "./syntaxes/codepurify-html.tmLanguage.json"
+        "scopeName": "text.html.basic.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-html.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-css",
+        "scopeName": "source.css.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-css.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-scss",
+        "scopeName": "source.css.scss.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-scss.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-json",
+        "scopeName": "source.json.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-json.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-yaml",
+        "scopeName": "source.yaml.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-yaml.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-markdown",
+        "scopeName": "text.html.markdown.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-markdown.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-dockerfile",
+        "scopeName": "source.dockerfile.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-dockerfile.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-shell",
+        "scopeName": "source.shell.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-shell.tmLanguage.json"
       }
     ],
     "snippets": [
       {
         "language": "codepurify",
         "path": "./snippets/codepurify.json"
-      },
-      {
-        "language": "codepurify-ts",
-        "path": "./snippets/codepurify.json"
-      },
-      {
-        "language": "codepurify-tsx",
-        "path": "./snippets/codepurify.json"
-      },
-      {
-        "language": "codepurify-md",
-        "path": "./snippets/codepurify.json"
-      },
-      {
-        "language": "codepurify-html",
-        "path": "./snippets/codepurify.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Codepurify",
+      "type": "object",
+      "properties": {
+        "codepurify.theme.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Codepurify theme customizations."
+        },
+        "codepurify.theme.entityColor": {
+          "type": "string",
+          "default": "#50fa7b",
+          "description": "Color for entity variables."
+        },
+        "codepurify.theme.fieldColor": {
+          "type": "string",
+          "default": "#8be9fd",
+          "description": "Color for field variables."
+        },
+        "codepurify.theme.relationColor": {
+          "type": "string",
+          "default": "#bd93f9",
+          "description": "Color for relation variables."
+        },
+        "codepurify.theme.globalColor": {
+          "type": "string",
+          "default": "#ffb86c",
+          "description": "Color for global variables."
+        },
+        "codepurify.theme.templateColor": {
+          "type": "string",
+          "default": "#ff5555",
+          "description": "Color for template variables."
+        },
+        "codepurify.theme.delimiterColor": {
+          "type": "string",
+          "default": "#ff79c6",
+          "description": "Color for `{! !}` template delimiters."
+        },
+        "codepurify.theme.casingColor": {
+          "type": "string",
+          "default": "#a6e22e",
+          "description": "Color for casing constants."
+        },
+        "codepurify.theme.backgroundColor": {
+          "type": "string",
+          "default": "rgba(255, 121, 198, 0.1)",
+          "description": "Background color for `{! ... !}` expressions."
+        },
+        "codepurify.theme.borderColor": {
+          "type": "string",
+          "default": "rgba(255, 121, 198, 0.3)",
+          "description": "Border color for `{! ... !}` expressions."
+        },
+        "codepurify.theme.errorColor": {
+          "type": "string",
+          "default": "rgba(255, 85, 85, 0.2)",
+          "description": "Background color for validation errors."
+        },
+        "codepurify.validation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time validation."
+        },
+        "codepurify.validation.strict": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict validation mode."
+        },
+        "codepurify.completion.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable intelligent autocomplete."
+        },
+        "codepurify.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hover documentation."
+        },
+        "codepurify.decorations.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable visual decorations and backgrounds."
+        },
+        "codepurify.decorations.opacity": {
+          "type": "number",
+          "default": 0.15,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Opacity level for decorations."
+        }
+      }
+    }
   },
-  "main": "./out/extension.js",
-  "activationEvents": [],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/alidantech-org/codepurify"
+  "scripts": {
+    "generate": "node scripts/generate-package.mjs",
+    "vscode:prepublish": "npm run generate && npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
   },
-  "keywords": [
-    "code generation",
-    "templates",
-    "syntax highlighting",
-    "auto complete"
-  ],
-  "author": "alidantech.org",
-  "license": "MIT",
-  "icon": "icon.png",
   "devDependencies": {
     "@types/node": "16.x",
     "@types/vscode": "^1.80.0",
     "typescript": "^4.9.4"
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
   },
   "dependencies": {}
 }

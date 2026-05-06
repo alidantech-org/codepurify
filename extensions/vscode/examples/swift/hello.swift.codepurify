@@ -1,0 +1,13 @@
+{!# Swift example #!}
+
+struct {!entity.name.pascal!} {
+  {!loop field in entity.fields!}
+  var {!field.name.camel!}: {!field.type!}
+  {!/loop!}
+
+  init() {
+    {!loop field in entity.fields!}
+    self.{!field.name.camel!} = {!field.type!}()
+    {!/loop!}
+  }
+}

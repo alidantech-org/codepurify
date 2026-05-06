@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify YAML",
+  "scopeName": "source.yaml.codepurify",
+  "patterns": [
+    {
+      "include": "source.yaml"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

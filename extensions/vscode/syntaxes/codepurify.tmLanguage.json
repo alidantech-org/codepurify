@@ -18,12 +18,12 @@
         {
           "name": "comment.block.documentation.codepurify",
           "begin": "\\{!\\*",
-          "end": "\\*~\\)"
+          "end": "\\*!\\}"
         },
         {
           "name": "comment.block.codepurify",
           "begin": "\\{!#",
-          "end": "#~\\)"
+          "end": "#!\\}"
         }
       ]
     },
@@ -40,13 +40,16 @@
               "name": "keyword.control.codepurify"
             }
           },
-          "end": "~\\)",
+          "end": "!\\}",
           "endCaptures": {
             "0": {
               "name": "punctuation.definition.template.end.codepurify"
             }
           },
           "patterns": [
+            {
+              "include": "#keywords"
+            },
             {
               "include": "#operators"
             },
@@ -57,10 +60,10 @@
               "include": "#aliases"
             },
             {
-              "include": "#variables"
+              "include": "#properties"
             },
             {
-              "include": "#keywords"
+              "include": "#variables"
             }
           ]
         }
@@ -71,7 +74,7 @@
         {
           "name": "meta.expression.codepurify",
           "begin": "\\{!",
-          "end": "~\\)",
+          "end": "!\\}",
           "beginCaptures": {
             "0": {
               "name": "punctuation.definition.template.begin.codepurify"
@@ -96,10 +99,10 @@
               "include": "#aliases"
             },
             {
-              "include": "#variables"
+              "include": "#properties"
             },
             {
-              "include": "#properties"
+              "include": "#variables"
             }
           ]
         }
@@ -117,7 +120,7 @@
         },
         {
           "name": "keyword.control.end.codepurify",
-          "match": "\\b(/if|/loop|/for|/raw|/unless|/with)\\b"
+          "match": "\\/(if|loop|for|raw|unless|with)\\b"
         },
         {
           "name": "keyword.operator.word.codepurify",
@@ -170,12 +173,52 @@
     "variables": {
       "patterns": [
         {
-          "name": "variable.language.root.codepurify",
-          "match": "\\b(entity|global|resource|field|relation|template|item|index)\\b"
+          "name": "variable.other.path.entity.codepurify",
+          "match": "\\bentity\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
+        },
+        {
+          "name": "variable.other.path.field.codepurify",
+          "match": "\\bfield\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
+        },
+        {
+          "name": "variable.other.path.relation.codepurify",
+          "match": "\\brelation\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
+        },
+        {
+          "name": "variable.other.path.global.codepurify",
+          "match": "\\bglobal\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
         },
         {
           "name": "variable.other.path.codepurify",
           "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)+\\b"
+        },
+        {
+          "name": "variable.language.root.entity.codepurify",
+          "match": "\\bentity\\b"
+        },
+        {
+          "name": "variable.language.root.field.codepurify",
+          "match": "\\bfield\\b"
+        },
+        {
+          "name": "variable.language.root.relation.codepurify",
+          "match": "\\brelation\\b"
+        },
+        {
+          "name": "variable.language.root.global.codepurify",
+          "match": "\\bglobal\\b"
+        },
+        {
+          "name": "variable.language.root.resource.codepurify",
+          "match": "\\bresource\\b"
+        },
+        {
+          "name": "variable.language.root.template.codepurify",
+          "match": "\\btemplate\\b"
+        },
+        {
+          "name": "variable.language.root.item.codepurify",
+          "match": "\\b(item|index)\\b"
         },
         {
           "name": "variable.other.identifier.codepurify",
@@ -186,12 +229,104 @@
     "properties": {
       "patterns": [
         {
-          "name": "support.type.namespace.codepurify",
-          "match": "\\b(arrays|flags|counts|maps|names|casing|items|length)\\b"
+          "name": "support.type.namespace.name.codepurify",
+          "match": "\\bname\\b"
         },
         {
-          "name": "support.constant.casing.codepurify",
-          "match": "\\b(camel|pascal|snake|kebab|constant|dot|slash|path|lower|upper|title|train)\\b"
+          "name": "support.type.namespace.casing.codepurify",
+          "match": "\\bcasing\\b"
+        },
+        {
+          "name": "support.type.namespace.validation.codepurify",
+          "match": "\\bvalidation\\b"
+        },
+        {
+          "name": "support.type.namespace.array.codepurify",
+          "match": "\\barray\\b"
+        },
+        {
+          "name": "support.type.namespace.flags.codepurify",
+          "match": "\\bflags\\b"
+        },
+        {
+          "name": "support.type.namespace.counts.codepurify",
+          "match": "\\bcounts\\b"
+        },
+        {
+          "name": "support.type.namespace.maps.codepurify",
+          "match": "\\bmaps\\b"
+        },
+        {
+          "name": "support.type.namespace.items.codepurify",
+          "match": "\\bitems\\b"
+        },
+        {
+          "name": "support.property.length.codepurify",
+          "match": "\\blength\\b"
+        },
+        {
+          "name": "support.property.original.codepurify",
+          "match": "\\boriginal\\b"
+        },
+        {
+          "name": "support.constant.casing.camel.codepurify",
+          "match": "\\bcamel\\b"
+        },
+        {
+          "name": "support.constant.casing.pascal.codepurify",
+          "match": "\\bpascal\\b"
+        },
+        {
+          "name": "support.constant.casing.snake.codepurify",
+          "match": "\\bsnake\\b"
+        },
+        {
+          "name": "support.constant.casing.kebab.codepurify",
+          "match": "\\bkebab\\b"
+        },
+        {
+          "name": "support.constant.casing.constant.codepurify",
+          "match": "\\bconstant\\b"
+        },
+        {
+          "name": "support.constant.casing.dot.codepurify",
+          "match": "\\bdot\\b"
+        },
+        {
+          "name": "support.constant.casing.slash.codepurify",
+          "match": "\\bslash\\b"
+        },
+        {
+          "name": "support.constant.casing.path.codepurify",
+          "match": "\\bpath\\b"
+        },
+        {
+          "name": "support.constant.casing.lower.codepurify",
+          "match": "\\blower\\b"
+        },
+        {
+          "name": "support.constant.casing.upper.codepurify",
+          "match": "\\bupper\\b"
+        },
+        {
+          "name": "support.constant.casing.title.codepurify",
+          "match": "\\btitle\\b"
+        },
+        {
+          "name": "support.constant.casing.train.codepurify",
+          "match": "\\btrain\\b"
+        },
+        {
+          "name": "support.property.rules.codepurify",
+          "match": "\\brules\\b"
+        },
+        {
+          "name": "support.property.type.codepurify",
+          "match": "\\btype\\b"
+        },
+        {
+          "name": "support.property.required.codepurify",
+          "match": "\\brequired\\b"
         }
       ]
     }

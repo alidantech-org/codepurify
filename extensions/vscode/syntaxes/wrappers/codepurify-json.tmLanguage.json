@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify JSON",
+  "scopeName": "source.json.codepurify",
+  "patterns": [
+    {
+      "include": "source.json"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

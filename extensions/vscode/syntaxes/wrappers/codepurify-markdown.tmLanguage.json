@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Markdown",
+  "scopeName": "text.html.markdown.codepurify",
+  "patterns": [
+    {
+      "include": "text.html.markdown"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

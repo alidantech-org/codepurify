@@ -1,0 +1,3 @@
+{!# Simple template #!}
+
+Hello {!entity.name.pascal!}

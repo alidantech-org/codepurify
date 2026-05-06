@@ -1,0 +1,12 @@
+{
+  "name": "Codepurify Kotlin",
+  "scopeName": "source.kotlin.codepurify",
+  "patterns": [
+    {
+      "include": "source.kotlin"
+    },
+    {
+      "include": "source.codepurify"
+    }
+  ]
+}

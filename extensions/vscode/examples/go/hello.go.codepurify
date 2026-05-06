@@ -1,0 +1,13 @@
+{!# Go example #!}
+
+package main
+
+type {!entity.name.pascal!} struct {
+  {!loop field in entity.fields!}
+  {!field.name.pascal!} {!field.type!}
+  {!/loop!}
+}
+
+func New{!entity.name.pascal!}() *{!entity.name.pascal!} {
+  return &{!entity.name.pascal!}{}
+}
