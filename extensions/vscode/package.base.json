@@ -17,7 +17,10 @@
     "syntax highlighting",
     "autocomplete"
   ],
-  "author": "alidantech.org",
+  "author": {
+    "name": "alidantech.org",
+    "email": "peter@alidantech.org"
+  },
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
@@ -46,22 +49,6 @@
         "language": "codepurify",
         "scopeName": "source.codepurify",
         "path": "./syntaxes/codepurify.tmLanguage.json"
-      },
-      {
-        "scopeName": "template.codepurify.injection",
-        "path": "./syntaxes/codepurify.injection.tmLanguage.json",
-        "injectTo": [
-          "source.java",
-          "source.ts",
-          "source.tsx",
-          "source.js",
-          "source.jsx",
-          "source.python",
-          "source.sql",
-          "source.json",
-          "source.yaml",
-          "text.html.basic"
-        ]
       }
     ],
     "snippets": [

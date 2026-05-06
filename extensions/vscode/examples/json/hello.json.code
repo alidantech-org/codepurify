@@ -1,4 +1,3 @@
-{!# JSON example #!}
 {
   "{!entity.name.camel!}": {
     {!loop field in entity.fields!}

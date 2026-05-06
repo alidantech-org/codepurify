@@ -329,6 +329,28 @@
           "match": "\\brequired\\b"
         }
       ]
+    },
+    "template-content": {
+      "patterns": [
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#operators"
+        },
+        {
+          "include": "#literals"
+        },
+        {
+          "include": "#aliases"
+        },
+        {
+          "include": "#properties"
+        },
+        {
+          "include": "#variables"
+        }
+      ]
     }
   }
 }

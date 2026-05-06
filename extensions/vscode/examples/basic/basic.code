@@ -1,3 +1,21 @@
 {!# Simple template #!}
 
 Hello {!entity.name.pascal!}
+
+{!# JavaScript example #!}
+
+const {!entity.name.camel!} = {
+  {!loop field in entity.fields!}
+  {!field.name.camel!}: {!field.type!},
+  {!/loop!}
+};
+
+export default {!entity.name.camel!};
+
+{
+  "{!entity.name.camel!}": {
+    {!loop field in entity.fields!}
+    "{!field.name.camel!}": "{!field.type!}",
+    {!/loop!}
+  }
+}

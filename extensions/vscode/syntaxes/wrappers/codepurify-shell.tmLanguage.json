@@ -3,10 +3,116 @@
   "scopeName": "source.shell.codepurify",
   "patterns": [
     {
-      "include": "source.shell"
+      "include": "#codepurify-comments"
     },
     {
-      "include": "source.codepurify"
+      "include": "#codepurify-tags"
+    },
+    {
+      "include": "source.shell"
     }
-  ]
+  ],
+  "repository": {
+    "codepurify-comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.codepurify",
+          "begin": "\\{!\\*",
+          "end": "\\*!\\}",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.codepurify"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.codepurify"
+            }
+          }
+        },
+        {
+          "name": "comment.block.codepurify",
+          "begin": "\\{!#",
+          "end": "#!\\}",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.codepurify"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.codepurify"
+            }
+          }
+        }
+      ]
+    },
+    "codepurify-tags": {
+      "patterns": [
+        {
+          "name": "meta.embedded.codepurify",
+          "begin": "\\{!",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.template.codepurify"
+            }
+          },
+          "end": "!\\}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.template.codepurify"
+            }
+          },
+          "patterns": [
+            {
+              "name": "keyword.control.end.codepurify",
+              "match": "\\/(if|unless|loop|with|ignore)\\b"
+            },
+            {
+              "name": "keyword.control.conditional.codepurify",
+              "match": "\\b(if|unless|else)\\b"
+            },
+            {
+              "name": "keyword.control.repeat.codepurify",
+              "match": "\\b(loop)\\b"
+            },
+            {
+              "name": "keyword.control.context.codepurify",
+              "match": "\\b(with|ignore)\\b"
+            },
+            {
+              "name": "keyword.operator.word.codepurify",
+              "match": "\\b(in|as|and|or|not|is)\\b"
+            },
+            {
+              "name": "keyword.operator.comparison.codepurify",
+              "match": "==|!=|<=|>=|<|>|!"
+            },
+            {
+              "name": "constant.language.boolean.codepurify",
+              "match": "\\b(true|false|null|undefined)\\b"
+            },
+            {
+              "name": "constant.numeric.codepurify",
+              "match": "\\b\\d+(\\.\\d+)?\\b"
+            },
+            {
+              "name": "string.quoted.single.codepurify",
+              "begin": "'",
+              "end": "'"
+            },
+            {
+              "name": "string.quoted.double.codepurify",
+              "begin": "\"",
+              "end": "\""
+            },
+            {
+              "name": "variable.other.codepurify",
+              "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$.]*\\b"
+            }
+          ]
+        }
+      ]
+    }
+  }
 }

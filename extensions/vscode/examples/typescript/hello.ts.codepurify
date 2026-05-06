@@ -8,6 +8,6 @@ export class {!entity.name.pascal!} {
   constructor() {
     {!loop field in entity.fields!}
     this.{!field.name.camel!} = null;
-    {!/loop!}
+    {[/loop]}
   }
 }
