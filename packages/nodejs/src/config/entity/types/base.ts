@@ -76,10 +76,8 @@ export interface BaseFieldConfig {
   security?: SecurityConfig;
   /** Field identity metadata assigned by defineFields */
   key?: string;
-  /** Field name alias for template convenience */
-  name?: string;
   /** Field naming conventions */
-  names?: NameCases;
+  name?: NameCases;
   /** Type name alias (PascalCase) */
   type_name?: string;
   /** Constant name alias (UPPER_CASE) */

@@ -9,9 +9,9 @@ Generate a Create DTO with validation decorators.
 
 ## Template File
 
-`templates/create-user.dto.hbs`:
+`templates/create-user.dto.codepurify`:
 
-```hbs
+```codepurify
 import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from
 'class-validator'; export class Create{| entity.names.casing.pascal |}DTO {
 {|#each entity.fields.arrays.all.items as field|} {|#if field.flags.is_primary|}
@@ -31,7 +31,7 @@ null{|else|}number{|/if|}; {|else|} // Unknown field type:
 
 ### Imports
 
-```hbs
+```codepurify
 import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from
 'class-validator';
 ```
@@ -40,7 +40,7 @@ Imports required validation decorators.
 
 ### Class Declaration
 
-```hbs
+```codepurify
 export class Create{| entity.names.casing.pascal |}DTO {
 ```
 
@@ -48,7 +48,7 @@ Creates class with "Create" prefix and entity name.
 
 ### Field Iteration
 
-```hbs
+```codepurify
 {|#each entity.fields.arrays.all.items as field|}
 ```
 
@@ -56,7 +56,7 @@ Loops through all entity fields.
 
 ### Primary Key Handling
 
-```hbs
+```codepurify
 {|#if field.flags.is_primary|} // Primary key excluded from create DTO {|else|}
 ```
 
@@ -64,7 +64,7 @@ Skips primary keys in create operations.
 
 ### String Fields
 
-```hbs
+```codepurify
 {|#if field.flags.is_nullable|} @IsOptional() {|/if|} {|#if
 field.flags.is_email|} @IsEmail() {|else|} @IsString() {|/if|}
 {|field.names.casing.camel|}: {|#if field.flags.is_nullable|}string |

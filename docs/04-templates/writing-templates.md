@@ -13,16 +13,16 @@ Templates live in your project's `templates/` folder:
 
 ```
 templates/
-├── user.dto.hbs
-├── user.entity.hbs
-└── user.service.hbs
+├── user.dto.codepurify
+├── user.entity.codepurify
+└── user.service.codepurify
 ```
 
 ## Basic Template
 
-Create `templates/user.dto.hbs`:
+Create `templates/user.dto.codepurify`:
 
-```hbs
+```codepurify
 export class {| entity.names.casing.pascal |}DTO { {|#each
 entity.fields.arrays.all.items as field|} {|#if field.flags.is_string|}
 @IsString() {|field.names.casing.camel|}: string; {|/if|} {|#if
@@ -34,7 +34,7 @@ field.flags.is_number|} @IsNumber() {|field.names.casing.camel|}: number;
 
 Access context data using dot notation:
 
-```hbs
+```codepurify
 {| entity.names.casing.pascal |} // Class name {| field.names.casing.camel |} //
 Property name {| field.flags.is_required |} // Boolean condition
 ```
@@ -43,7 +43,7 @@ Property name {| field.flags.is_required |} // Boolean condition
 
 Iterate over collections:
 
-```hbs
+```codepurify
 {|#each entity.fields.arrays.all.items as field|} private
 {|field.names.casing.camel|}: {|#if field.flags.is_string}string{|/if|};
 {|/each|}
@@ -53,16 +53,16 @@ Iterate over collections:
 
 Add conditional logic:
 
-```hbs
+```codepurify
 {|#if field.flags.is_nullable|} {|field.names.casing.camel|}: string | null;
 {|else|} {|field.names.casing.camel|}: string; {|/if|}
 ```
 
 ## Complete Example
 
-Template: `templates/user.entity.hbs`
+Template: `templates/user.entity.codepurify`
 
-```hbs
+```codepurify
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'; @Entity('{|
 entity.names.casing.kebab |}') export class {| entity.names.casing.pascal |} {
 {|#each entity.fields.arrays.all.items as field|} {|#if field.flags.is_primary|}
@@ -76,11 +76,11 @@ field.flags.is_string}string{|/if|}{|#if field.flags.is_number}number{|/if|};
 
 Template + Context → Generated File
 
-- `user.dto.hbs` + `user.json` → `user.dto.ts`
-- `user.entity.hbs` + `user.json` → `user.entity.ts`
+- `user.dto.codepurify` + `user.json` → `user.dto.ts`
+- `user.entity.codepurify` + `user.json` → `user.entity.ts`
 
 ## Naming Conventions
 
-- Use kebab-case for template files: `user.dto.hbs`
-- Use descriptive names: `create-user.dto.hbs`, `update-user.dto.hbs`
+- Use kebab-case for template files: `user.dto.codepurify`
+- Use descriptive names: `create-user.dto.codepurify`, `update-user.dto.codepurify`
 - Group related templates: `user/`, `product/`, `order/`

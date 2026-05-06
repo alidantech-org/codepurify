@@ -11,7 +11,7 @@ The extension provides syntax highlighting for Codepurify template syntax.
 
 `{| ... |}` delimiters are highlighted with distinct colors:
 
-```hbs
+```codepurify
 export class {| entity.names.casing.pascal |} { {|#each
 entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
 {|/each|} }
@@ -33,7 +33,7 @@ entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
 
 ### Comments
 
-```hbs
+```codepurify
 {|# This is a comment |}
 ```
 
@@ -41,7 +41,7 @@ entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
 
 ### Before Extension
 
-```hbs
+```codepurify
 export class { entity.names.casing.pascal } { {#each
 entity.fields.arrays.all.items as field} {field.names.casing.camel}: string;
 {/each} }

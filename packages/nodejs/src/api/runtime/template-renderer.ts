@@ -1,7 +1,7 @@
 /**
  * Template Renderer Service
  *
- * Handles rendering of templates using Handlebars or other template engines.
+ * Handles rendering of templates using Codepurify or other template engines.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -34,14 +34,14 @@ export interface RenderedTemplate {
 
 export interface TemplateRendererOptions {
   /** Template engine to use */
-  engine?: 'eta' | 'handlebars';
+  engine?: 'eta' | 'codepurify';
   /** Cache compiled templates */
   cache?: boolean;
 }
 
 export class TemplateRenderer {
   private readonly templateCache = new Map<string, Function>();
-  private readonly engine: 'eta' | 'handlebars';
+  private readonly engine: 'eta' | 'codepurify';
 
   constructor(
     private readonly runtime: CodepurifyRuntime,

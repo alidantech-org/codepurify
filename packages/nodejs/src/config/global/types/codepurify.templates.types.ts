@@ -35,7 +35,7 @@ export interface CodepurifyTemplateRegistration {
    * Example:
    * [
    *   paths.entity.groupKey,
-   *   paths.entity.names.kebab,
+   *   paths.entity.name.kebab,
    *   'dto',
    * ]
    */
@@ -45,7 +45,7 @@ export interface CodepurifyTemplateRegistration {
    * File name definition.
    *
    * Example:
-   * file(paths.entity.names.kebab)
+   * file(paths.entity.name.kebab)
    *   .prefix('create-')
    *   .suffix('.dto')
    *   .ext('ts')

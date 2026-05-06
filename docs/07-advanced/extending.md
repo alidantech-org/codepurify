@@ -40,7 +40,7 @@ registry.register("toEnum", CustomHelpers.toEnum);
 
 ## Template Usage
 
-```hbs
+```codepurify
 {| formatDate(entity.created_at) |} {| pluralize(field.count, 'item') |} export
 enum {| entity.names.casing.pascal |}Enum { {|
 toEnum(entity.fields.arrays.all.items.map(item => item.names.original)) |} }

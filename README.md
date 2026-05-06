@@ -35,7 +35,7 @@ Inference engine derives semantics
         ↓
 Normalized context is generated
         ↓
-Handlebars templates render output
+Codepurify templates render output
 ```
 
 Codepurify does **not** hardcode:
@@ -57,7 +57,7 @@ All architecture styles are implemented through templates.
 
 - Strongly typed TypeScript configs
 - Semantic metadata inference
-- Handlebars-based generation
+- Codepurify-based generation
 - Framework agnostic
 - Runtime metadata compilation
 - Query/mutation capability inference
@@ -201,9 +201,9 @@ entity.fields.mutation.immutable_after_create
 
 ---
 
-# Handlebars Templates
+# Codepurify Templates
 
-Codepurify uses Handlebars for rendering generated artifacts.
+Codepurify uses Codepurify for rendering generated artifacts.
 
 Templates receive a normalized semantic context.
 
@@ -211,9 +211,9 @@ Templates receive a normalized semantic context.
 
 # Example Template
 
-## `dto.create.hbs`
+## `dto.create.codepurify`
 
-```hbs
+```codepurify
 export class Create{{entity.pascal_case_key}}Dto {
 {{#each entity.fields.mutation.api_create}}
   {{snake_case_key}}!:
@@ -391,7 +391,7 @@ Semantic Inference Engine
         ↓
 Normalized Manifest
         ↓
-Handlebars Template Compilation
+Codepurify Template Compilation
         ↓
 Generated Source Code
 ```

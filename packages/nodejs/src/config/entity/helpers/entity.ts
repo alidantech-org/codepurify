@@ -12,10 +12,10 @@ export function defineFields<T extends Record<string, FieldConfig>>(fields: T): 
       configurable: true,
     });
 
-    field.name = key;
-    field.names = toNameCases(key);
-    field.type_name = field.names.pascal;
-    field.constant_name = field.names.constant;
+    field.name!.original = key;
+    field.name = toNameCases(key);
+    field.type_name = field.name.pascal;
+    field.constant_name = field.name.constant;
   }
 
   return fields;

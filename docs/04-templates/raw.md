@@ -9,7 +9,7 @@ Escape template delimiters when they conflict with target syntax.
 
 ## Raw Block Syntax
 
-```hbs
+```codepurify
 {|{raw}|} Content that should not be parsed {|{/raw}|}
 ```
 
@@ -19,7 +19,7 @@ Escape template delimiters when they conflict with target syntax.
 
 Vue uses `{| ... |}` syntax for interpolation:
 
-```hbs
+```codepurify
 {|{raw}|}
 <template>
   <div>{{message}}</div>
@@ -27,13 +27,13 @@ Vue uses `{| ... |}` syntax for interpolation:
 {|{/raw}|}
 ```
 
-### Handlebars Inside Templates
+### Codepurify Inside Templates
 
-When generating Handlebars templates:
+When generating Codepurify templates:
 
-```hbs
+```codepurify
 {|{raw}|}
-<script type="text/x-handlebars-template">
+<script type="text/x-codepurify-template">
   <div>{{name}}</div>
 </script>
 {|{/raw}|}
@@ -43,7 +43,7 @@ When generating Handlebars templates:
 
 When generating templates that use similar delimiters:
 
-```hbs
+```codepurify
 {|{raw}|}
 <!-- This should not be parsed by Codepurify -->
 <div class="{{active ? 'active' : ''}}">
@@ -56,7 +56,7 @@ When generating templates that use similar delimiters:
 
 ❌ Incorrect - Codepurify tries to parse `{| active |}`:
 
-```hbs
+```codepurify
 <div class="{| active ? 'active' : '' |}">
   {| content |}
 </div>
@@ -66,7 +66,7 @@ When generating templates that use similar delimiters:
 
 ✅ Correct - Content preserved as-is:
 
-```hbs
+```codepurify
 {|{raw}|}
 <div class="{{active ? 'active' : ''}}">
   {{content}}
@@ -76,9 +76,9 @@ When generating templates that use similar delimiters:
 
 ## Real Example: Generating Vue Component
 
-Template: `templates/user.component.vue.hbs`
+Template: `templates/user.component.vue.codepurify`
 
-```hbs
+```codepurify
 <template>
   {|{raw}|}
   <div class="user-card">

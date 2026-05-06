@@ -9,14 +9,14 @@ Field context provides data about individual entity fields.
 
 ## Field Structure
 
-```hbs
+```codepurify
 {| field.names.* |} // Name transformations {| field.flags.* |} // Boolean flags
 {| field.typescript.* |} // TypeScript type info
 ```
 
 ## Names
 
-```hbs
+```codepurify
 {| field.names.original |} // "firstName" {| field.names.casing.camel |} //
 "firstName" {| field.names.casing.pascal |} // "FirstName" {|
 field.names.casing.snake |} // "first_name" {| field.names.casing.kebab |} //
@@ -27,7 +27,7 @@ field.names.casing.snake |} // "first_name" {| field.names.casing.kebab |} //
 
 Common boolean flags:
 
-```hbs
+```codepurify
 {| field.flags.is_string |} // true for string fields {| field.flags.is_number
 |} // true for numeric fields {| field.flags.is_boolean |} // true for boolean
 fields {| field.flags.is_date |} // true for date fields {|
@@ -39,14 +39,14 @@ fields
 
 ## TypeScript Types
 
-```hbs
+```codepurify
 {| field.typescript.type |} // "string | null" {| field.typescript.base_type |}
 // "string"
 ```
 
 ## Field Loop Example
 
-```hbs
+```codepurify
 {|#each entity.fields.arrays.all.items as field|} {|#if field.flags.is_primary|}
 @PrimaryGeneratedColumn() {|field.names.casing.camel|}: number; {|else if
 field.flags.is_string|} {|#if field.flags.is_nullable|} @IsOptional() {|/if|}
@@ -57,7 +57,7 @@ field.flags.is_string|} {|#if field.flags.is_nullable|} @IsOptional() {|/if|}
 
 ## Conditional Usage with Flags
 
-```hbs
+```codepurify
 {|#if field.flags.is_string|} // String field logic @IsString() {|/if|} {|#if
 field.flags.is_nullable|} @IsOptional() // Make type nullable
 {|field.names.casing.camel|}: string | null; {|else|}

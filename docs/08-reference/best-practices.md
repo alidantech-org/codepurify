@@ -9,27 +9,27 @@ description: Guidelines for writing clean and maintainable templates
 
 ### Use Flags Instead of Raw Conditions
 
-```hbs
+```codepurify
 {|#if field.flags.is_string|} @IsString() {|/if|}
 ```
 
 ### Use Casing Helpers
 
-```hbs
+```codepurify
 export class {| entity.names.casing.pascal |} { {|field.names.casing.camel|}:
 string; }
 ```
 
 ### Keep Templates Simple
 
-```hbs
+```codepurify
 {|#each entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}:
 {|#if field.flags.is_string}string{|/if|}; {|/each|}
 ```
 
 ### Use Descriptive Aliases
 
-```hbs
+```codepurify
 {|#each entity.relations.arrays.one_to_many.items as relation|}
 {|relation.names.casing.pascal|} {|/each|}
 ```
@@ -40,14 +40,14 @@ string; }
 
 ❌ Bad:
 
-```hbs
+```codepurify
 {|#if (field.flags.is_string and field.flags.is_required) or
 field.flags.is_primary|}
 ```
 
 ✅ Good:
 
-```hbs
+```codepurify
 {|#if field.flags.is_required|} @IsNotEmpty() {|/if|}
 ```
 
@@ -55,14 +55,14 @@ field.flags.is_primary|}
 
 ❌ Bad:
 
-```hbs
+```codepurify
 {|#if field.flags.is_string|} {|#if field.flags.is_nullable|} {|#if
 field.flags.is_unique|} @IsUnique() {|/if|} {|/if|} {|/if|}
 ```
 
 ✅ Good:
 
-```hbs
+```codepurify
 {|#if field.flags.is_string|} {|#if field.flags.is_nullable|} @IsOptional()
 {|/if|} @IsString() {|#if field.flags.is_unique|} @IsUnique() {|/if|} {|/if|}
 ```
@@ -71,13 +71,13 @@ field.flags.is_unique|} @IsUnique() {|/if|} {|/if|} {|/if|}
 
 ❌ Bad:
 
-```hbs
+```codepurify
 export class User {
 ```
 
 ✅ Good:
 
-```hbs
+```codepurify
 export class {| entity.names.casing.pascal |} {
 ```
 
@@ -85,14 +85,14 @@ export class {| entity.names.casing.pascal |} {
 
 ❌ Bad:
 
-```hbs
+```codepurify
 {|#if field.flags.is_string|} import { IsString } from 'class-validator';
 {|/each|}
 ```
 
 ✅ Good:
 
-```hbs
+```codepurify
 import { IsString } from 'class-validator'; {|#each
 entity.fields.arrays.all.items as field|} {|#if field.flags.is_string|}
 @IsString() {|/if|} {|/each|}

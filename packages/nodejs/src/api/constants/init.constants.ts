@@ -40,7 +40,7 @@ export const INIT_CONFIG_DIRS = {
 export const INIT_GITIGNORE_ENTRIES = ['.codepurify/'] as const;
 
 export const INIT_FILE_EXTENSIONS = {
-  handlebars: '.hbs',
+  codepurify: '.codepurify',
   typescript: '.ts',
 } as const;
 

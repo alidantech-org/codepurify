@@ -8,18 +8,18 @@
  * Codepurify template path token helpers.
  *
  * These are strongly typed placeholder tokens that can be used to build
- * output paths without manually writing Handlebars path strings everywhere.
+ * output paths without manually writing Codepurify path strings everywhere.
  */
 export const paths = {
   entity: {
     key: '{{entity.key}}',
     groupKey: '{{entity.group_key}}',
 
-    names: {
-      pascal: '{{entity.names.pascal}}',
-      camel: '{{entity.names.camel}}',
-      kebab: '{{entity.names.kebab}}',
-      snake: '{{entity.names.snake}}',
+    name: {
+      pascal: '{{entity.name.pascal}}',
+      camel: '{{entity.name.camel}}',
+      kebab: '{{entity.name.kebab}}',
+      snake: '{{entity.name.snake}}',
     },
   },
 
@@ -31,10 +31,10 @@ export const paths = {
 export type CodepurifyPathToken =
   | typeof paths.entity.key
   | typeof paths.entity.groupKey
-  | typeof paths.entity.names.pascal
-  | typeof paths.entity.names.camel
-  | typeof paths.entity.names.kebab
-  | typeof paths.entity.names.snake
+  | typeof paths.entity.name.pascal
+  | typeof paths.entity.name.camel
+  | typeof paths.entity.name.kebab
+  | typeof paths.entity.name.snake
   | typeof paths.template.name;
 
 export type CodepurifyOutputFolderPart = string | CodepurifyPathToken;

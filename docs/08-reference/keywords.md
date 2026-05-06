@@ -29,30 +29,30 @@ description: Complete list of supported template keywords
 
 ### If/Else
 
-```hbs
+```codepurify
 {|#if condition|} content {|else|} alternative {|/if|}
 ```
 
 ### Each Loop
 
-```hbs
+```codepurify
 {|#each collection as item|} {|item.property|} {|/each|}
 ```
 
 ### Raw Block
 
-```hbs
+```codepurify
 {|{raw}|} {| this is not parsed |} {|{/raw}|}
 ```
 
 ### Unless
 
-```hbs
+```codepurify
 {|#unless condition|} content when condition is false {|/unless|}
 ```
 
 ### With
 
-```hbs
+```codepurify
 {|#with object.nested|} {|property|} {|/with|}
 ```

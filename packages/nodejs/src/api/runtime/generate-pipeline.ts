@@ -69,7 +69,7 @@ export interface GeneratePipelineOptions {
   };
   /** Template rendering options */
   rendering?: {
-    engine?: 'eta' | 'handlebars';
+    engine?: 'eta' | 'codepurify';
     cache?: boolean;
   };
   /** File writing options */

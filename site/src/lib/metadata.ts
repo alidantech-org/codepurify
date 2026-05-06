@@ -47,7 +47,7 @@ export function generateMetadata(): Metadata {
       "metadata-driven",
       "code generation",
       "template engine",
-      "Handlebars",
+      "Codepurify",
       "GraphQL",
       "OpenAPI",
       "Zod",
@@ -151,7 +151,7 @@ export function generateStructuredData() {
     featureList: [
       "Strongly typed TypeScript configs",
       "Semantic metadata inference",
-      "Handlebars-based generation",
+      "Codepurify-based generation",
       "Framework agnostic",
       "Runtime metadata compilation",
       "Query/mutation capability inference",
@@ -208,7 +208,7 @@ export function generateFAQStructuredData() {
         name: "What programming languages does Codepurify support?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Codepurify is built with TypeScript and can generate code for any language through Handlebars templates. It supports JavaScript, TypeScript, Python, Java, C#, and more.",
+          text: "Codepurify is built with TypeScript and can generate code for any language through Codepurify templates. It supports JavaScript, TypeScript, Python, Java, C#, and more.",
         },
       },
       {

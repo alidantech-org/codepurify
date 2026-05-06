@@ -12,6 +12,7 @@ export type PathContext = {
     characters: ArrayChildContext<NameUnitContext>;
   };
 };
+
 export type PathPartContext = {
   original: string;
 

@@ -8,7 +8,7 @@ Codepurify is a powerful tool that allows you to:
 
 - Define semantic metadata in strongly-typed TypeScript configs
 - Infer query capabilities, mutation semantics, and relation groups
-- Generate architecture artifacts through Handlebars templates
+- Generate architecture artifacts through Codepurify templates
 - Create framework-agnostic code generation systems
 
 ## Getting Started
