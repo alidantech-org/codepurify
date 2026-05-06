@@ -14,13 +14,13 @@ The extension provides real-time error detection for Codepurify template syntax 
 ❌ Invalid:
 
 ```txt
-{! entity.names.casings.camel !}
+{[ entity.names.casings.camel ]}
 ```
 
 ✅ Valid:
 
 ```txt
-{! entity.names.casing.camel !}
+{[ entity.names.casing.camel ]}
 ```
 
 ### Unknown Variables
@@ -28,13 +28,13 @@ The extension provides real-time error detection for Codepurify template syntax 
 ❌ Invalid:
 
 ```txt
-{! entity.unknown_property !}
+{[ entity.unknown_property ]}
 ```
 
 ✅ Valid:
 
 ```txt
-{! entity.names.original !}
+{[ entity.names.original ]}
 ```
 
 ### Syntax Errors
@@ -42,17 +42,17 @@ The extension provides real-time error detection for Codepurify template syntax 
 ❌ Invalid:
 
 ```txt
-{!#if condition!}
+{[#if condition]}
 content
-{!#if!}
+{[#if]}
 ```
 
 ✅ Valid:
 
 ```txt
-{!#if condition!}
+{[#if condition]}
 content
-{!/if!}
+{[/if]}
 ```
 
 ## Error Display
@@ -68,9 +68,9 @@ Errors appear as:
 Errors are detected as you type:
 
 ```txt
-{! entity. !}
-{! entity.names. !}
-{! entity.names.casings.camel !}
+{[ entity. ]}
+{[ entity.names. ]}
+{[ entity.names.casings.camel ]}
 ```
 
 The first two examples are incomplete but not necessarily invalid while typing. The final example is invalid because `casings` is not a valid property.
@@ -82,14 +82,14 @@ The first two examples are incomplete but not necessarily invalid while typing. 
 Use `casing`, not `casings` or `case`.
 
 ```txt
-{! entity.names.casing.camel !}
+{[ entity.names.casing.camel ]}
 ```
 
 Invalid examples:
 
 ```txt
-{! entity.names.casings.camel !}
-{! entity.names.case.camel !}
+{[ entity.names.casings.camel ]}
+{[ entity.names.case.camel ]}
 ```
 
 ### Array Access
@@ -97,13 +97,13 @@ Invalid examples:
 Use the normalized array structure.
 
 ```txt
-{! entity.fields.arrays.all.items !}
+{[ entity.fields.arrays.all.items ]}
 ```
 
 Invalid example:
 
 ```txt
-{! entity.fields.items !}
+{[ entity.fields.items ]}
 ```
 
 ### Control Flow Tags
@@ -111,17 +111,17 @@ Invalid example:
 Control flow blocks must have matching opening and closing tags.
 
 ```txt
-{!#if condition!}
+{[#if condition]}
 content
-{!/if!}
+{[/if]}
 ```
 
 Invalid example:
 
 ```txt
-{!#if condition!}
+{[#if condition]}
 content
-{!#if!}
+{[#if]}
 ```
 
 ## Error Messages

@@ -1,15 +1,15 @@
-{!# HTML example #!}
+{[# HTML example #]}
 <!DOCTYPE html>
 <html>
 <head>
-  <title>{!entity.name.kebab!}</title>
+  <title>{[entity.name.kebab]}</title>
 </head>
 <body>
-  <h1>{!entity.name.pascal!}</h1>
+  <h1>{[entity.name.pascal]}</h1>
   <ul>
-    {!loop field in entity.fields!}
-    <li>{!field.name.camel!}: {!field.type!}</li>
-    {!/loop!}
+    {[loop field in entity.fields]}
+    <li>{[field.name.camel]}: {[field.type]}</li>
+    {[/loop]}
   </ul>
 </body>
 </html>

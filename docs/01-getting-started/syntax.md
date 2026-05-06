@@ -5,14 +5,14 @@ description: Codepurify template syntax reference
 
 # Codepurify Template Syntax
 
-Codepurify uses `{! ... !}` tags to generate deterministic code from structured data.
+Codepurify uses `{[ ... ]}` tags to generate deterministic code from structured data.
 
 ## Delimiters
 
 All syntax is defined inside:
 
 ```codepurify
-{! ... !}
+{[ ... ]}
 ```
 
 These delimiters define expressions, blocks, and comments.
@@ -22,7 +22,7 @@ These delimiters define expressions, blocks, and comments.
 Expressions output values directly into the generated code.
 
 ```codepurify
-{!entity.name.pascal!}
+{[entity.name.pascal]}
 ```
 
 **Rules:**
@@ -38,13 +38,13 @@ Comments are ignored and not included in output.
 ### Regular comment
 
 ```codepurify
-{!# comment #!}
+{[# comment #]}
 ```
 
 ### Documentation comment
 
 ```codepurify
-{!* documentation *!}
+{[* documentation *]}
 ```
 
 ## Blocks
@@ -52,9 +52,9 @@ Comments are ignored and not included in output.
 Blocks control rendering behavior. Each block has an opening and closing tag.
 
 ```codepurify
-{!if condition!}
+{[if condition]}
 ...
-{!/if!}
+{[/if]}
 ```
 
 ## `if`
@@ -62,41 +62,41 @@ Blocks control rendering behavior. Each block has an opening and closing tag.
 Renders content when a condition is true.
 
 ```codepurify
-{!if condition!}
+{[if condition]}
 ...
-{!/if!}
+{[/if]}
 ```
 
 Supports an optional `else` branch.
 
 **Rules:**
 
-- Must close with `{!/if!}`
-- May contain one `{!else!}`
+- Must close with `{[/if]}`
+- May contain one `{[else]}`
 
 ## `unless`
 
 Renders content when a condition is false.
 
 ```codepurify
-{!unless condition!}
+{[unless condition]}
 ...
-{!/unless!}
+{[/unless]}
 ```
 
 Equivalent to a negated `if`.
 
 **Rules:**
 
-- Must close with `{!/unless!}`
-- May contain one `{!else!}`
+- Must close with `{[/unless]}`
+- May contain one `{[else]}`
 
 ## `else`
 
 Defines a fallback branch.
 
 ```codepurify
-{!else!}
+{[else]}
 ```
 
 **Rules:**
@@ -111,14 +111,14 @@ Defines a fallback branch.
 Repeats content for each item in a collection.
 
 ```codepurify
-{!loop item in collection!}
+{[loop item in collection]}
 ...
-{!/loop!}
+{[/loop]}
 ```
 
 **Rules:**
 
-- Must close with `{!/loop!}`
+- Must close with `{[/loop]}`
 - No automatic separators or formatting
 - Output is a direct concatenation of each iteration
 
@@ -127,14 +127,14 @@ Repeats content for each item in a collection.
 Changes the current context inside a block.
 
 ```codepurify
-{!with value!}
+{[with value]}
 ...
-{!/with!}
+{[/with]}
 ```
 
 **Rules:**
 
-- Must close with `{!/with!}`
+- Must close with `{[/with]}`
 - Only affects name resolution
 - Does not modify data
 
@@ -143,14 +143,14 @@ Changes the current context inside a block.
 Disables all template processing inside the block.
 
 ```codepurify
-{!ignore!}
+{[ignore]}
 ...
-{!/ignore!}
+{[/ignore]}
 ```
 
 **Rules:**
 
-- Must close with `{!/ignore!}`
+- Must close with `{[/ignore]}`
 - Everything inside is treated as plain text
 - No expressions or blocks are evaluated
 
@@ -170,15 +170,15 @@ Templates control:
 
 ## Syntax Summary
 
-- `{!value!}` → expression
-- `{!# ... #!}` → comment
-- `{!* ... *!}` → documentation comment
-- `{!if ...!}` / `{!/if!}` → conditional
-- `{!unless ...!}` / `{!/unless!}` → inverse conditional
-- `{!else!}` → branch
-- `{!loop ...!}` / `{!/loop!}` → iteration
-- `{!with ...!}` / `{!/with!}` → context scope
-- `{!ignore!}` / `{!/ignore!}` → literal block
+- `{[value]}` → expression
+- `{[# ... #]}` → comment
+- `{[* ... *]}` → documentation comment
+- `{[if ...]}` / `{[/if]}` → conditional
+- `{[unless ...]}` / `{[/unless]}` → inverse conditional
+- `{[else]}` → branch
+- `{[loop ...]}` / `{[/loop]}` → iteration
+- `{[with ...]}` / `{[/with]}` → context scope
+- `{[ignore]}` / `{[/ignore]}` → literal block
 
 ## Design Principles
 

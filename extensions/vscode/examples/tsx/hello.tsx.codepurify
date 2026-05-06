@@ -1,18 +1,18 @@
-{!# TSX example #!}
+{[# TSX example #]}
 
-interface {!entity.name.pascal!}Props {
-  {!loop field in entity.fields!}
-  {!field.name.camel!}: {!field.type!};
-  {!/loop!}
+interface {[entity.name.pascal]}Props {
+  {[loop field in entity.fields]}
+  {[field.name.camel]}: {[field.type]};
+  {[/loop]}
 }
 
-export function {!entity.name.pascal!}(props: {!entity.name.pascal!}Props) {
+export function {[entity.name.pascal]}(props: {[entity.name.pascal]}Props) {
   return (
     <div>
-      <h1>{!entity.name.pascal!}</h1>
-      {!loop field in entity.fields!}
-      <span>{props.{!field.name.camel!}}</span>
-      {!/loop!}
+      <h1>{[entity.name.pascal]}</h1>
+      {[loop field in entity.fields]}
+      <span>{props.{[field.name.camel]}}</span>
+      {[/loop]}
     </div>
   );
 }

@@ -138,8 +138,8 @@ for (const lang of HOST_LANGUAGES) {
         patterns: [
           {
             name: "comment.block.documentation.codepurify",
-            begin: "\\{!\\*",
-            end: "\\*!\\}",
+            begin: "\\{\\[\\*",
+            end: "\\*\\]\\}",
             beginCaptures: {
               0: {
                 name: "punctuation.definition.comment.begin.codepurify",
@@ -153,8 +153,8 @@ for (const lang of HOST_LANGUAGES) {
           },
           {
             name: "comment.block.codepurify",
-            begin: "\\{!#",
-            end: "#!\\}",
+            begin: "\\{\\[#",
+            end: "#\\]\\}",
             beginCaptures: {
               0: {
                 name: "punctuation.definition.comment.begin.codepurify",
@@ -172,13 +172,13 @@ for (const lang of HOST_LANGUAGES) {
         patterns: [
           {
             name: "meta.embedded.codepurify",
-            begin: "\\{!",
+            begin: "\\{\\[",
             beginCaptures: {
               0: {
                 name: "punctuation.definition.template.codepurify",
               },
             },
-            end: "!\\}",
+            end: "\\]\\}",
             endCaptures: {
               0: {
                 name: "punctuation.definition.template.codepurify",

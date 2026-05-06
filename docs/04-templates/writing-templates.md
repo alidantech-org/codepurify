@@ -23,19 +23,11 @@ templates/
 Create `templates/user.dto.hbs`:
 
 ```hbs
-export class {! entity.names.casing.pascal !}DTO {
-{!#each entity.fields.arrays.all.items as field!}
-  {!#if field.flags.is_string!}
-  @IsString()
-  {!field.names.casing.camel!}: string;
-  {!/if!}
-  
-  {!#if field.flags.is_number!}
-  @IsNumber()
-  {!field.names.casing.camel!}: number;
-  {!/if!}
-{!/each!}
-}
+export class {[ entity.names.casing.pascal ]}DTO { {[#each
+entity.fields.arrays.all.items as field]} {[#if field.flags.is_string]}
+@IsString() {[field.names.casing.camel]}: string; {[/if]} {[#if
+field.flags.is_number]} @IsNumber() {[field.names.casing.camel]}: number;
+{[/if]} {[/each]} }
 ```
 
 ## Variable Usage
@@ -43,9 +35,8 @@ export class {! entity.names.casing.pascal !}DTO {
 Access context data using dot notation:
 
 ```hbs
-{! entity.names.casing.pascal !}     // Class name
-{! field.names.casing.camel !}       // Property name
-{! field.flags.is_required !}        // Boolean condition
+{[ entity.names.casing.pascal ]} // Class name {[ field.names.casing.camel ]} //
+Property name {[ field.flags.is_required ]} // Boolean condition
 ```
 
 ## Loops
@@ -53,9 +44,9 @@ Access context data using dot notation:
 Iterate over collections:
 
 ```hbs
-{!#each entity.fields.arrays.all.items as field!}
-  private {!field.names.casing.camel!}: {!#if field.flags.is_string}string{!/if!};
-{!/each!}
+{[#each entity.fields.arrays.all.items as field]} private
+{[field.names.casing.camel]}: {[#if field.flags.is_string}string{[/if]};
+{[/each]}
 ```
 
 ## Conditions
@@ -63,11 +54,8 @@ Iterate over collections:
 Add conditional logic:
 
 ```hbs
-{!#if field.flags.is_nullable!}
-  {!field.names.casing.camel!}: string | null;
-{!else!}
-  {!field.names.casing.camel!}: string;
-{!/if!}
+{[#if field.flags.is_nullable]} {[field.names.casing.camel]}: string | null;
+{[else]} {[field.names.casing.camel]}: string; {[/if]}
 ```
 
 ## Complete Example
@@ -75,20 +63,13 @@ Add conditional logic:
 Template: `templates/user.entity.hbs`
 
 ```hbs
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-
-@Entity('{! entity.names.casing.kebab !}')
-export class {! entity.names.casing.pascal !} {
-{!#each entity.fields.arrays.all.items as field!}
-  {!#if field.flags.is_primary!}
-  @PrimaryGeneratedColumn()
-  {!field.names.casing.camel!}: number;
-  {!else!}
-  @Column()
-  {!field.names.casing.camel!}: {!#if field.flags.is_string}string{!/if!}{!#if field.flags.is_number}number{!/if!};
-  {!/if!}
-{!/each!}
-}
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'; @Entity('{[
+entity.names.casing.kebab ]}') export class {[ entity.names.casing.pascal ]} {
+{[#each entity.fields.arrays.all.items as field]} {[#if field.flags.is_primary]}
+@PrimaryGeneratedColumn() {[field.names.casing.camel]}: number; {[else]}
+@Column() {[field.names.casing.camel]}: {[#if
+field.flags.is_string}string{[/if]}{[#if field.flags.is_number}number{[/if]};
+{[/if]} {[/each]} }
 ```
 
 ## Template to Output Mapping

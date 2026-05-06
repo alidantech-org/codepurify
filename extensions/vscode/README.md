@@ -5,12 +5,12 @@ VS Code extension for Codepurify template language with syntax highlighting, int
 ## Features
 
 - **Multi-Language Support**: Works with TypeScript, TSX, Markdown, and HTML files
-- **Syntax Highlighting**: Full highlighting for `{! ... !}` template expressions
+- **Syntax Highlighting**: Full highlighting for `{[ ... ]}` template expressions
 - **Intelligent Autocomplete**: Context-aware variable completion from CSV definitions
 - **Real-time Validation**: Instant error highlighting for unknown variables and syntax errors
 - **Control Flow Support**: Proper highlighting for `if`, `loop`, `raw` blocks
-- **Comment Support**: `{!# comment #!}` syntax highlighting
-- **Smart Delimiters**: Auto-closing `{!` and `!}` pairs
+- **Comment Support**: `{[# comment #]}` syntax highlighting
+- **Smart Delimiters**: Auto-closing `{[` and `]}` pairs
 
 ## Supported File Extensions
 
@@ -87,36 +87,36 @@ If you prefer Material Icon Theme, you can map Codepurify files to existing icon
 ### Control Flow
 
 ```typescript
-{! if field.flags.is_string !}
+{[ if field.flags.is_string ]}
   @IsString()
-{! /if !}
+{[ /if ]}
 
-{! loop entity.fields.array.parts.items as field !}
-  {! field.name.casing.camel !}: string;
-{! /loop !}
+{[ loop entity.fields.array.parts.items as field ]}
+  {[ field.name.casing.camel ]}: string;
+{[ /loop ]}
 
-{! raw !}
+{[ raw ]}
 // This code will be output exactly as written
-{! /raw !}
+{[ /raw ]}
 ```
 
 ### Comments
 
 ```typescript
-{!# This is a comment #!}
-{!# Multi-line comment
-   spanning multiple lines #!}
+{[# This is a comment #]}
+{[# Multi-line comment
+   spanning multiple lines #]}
 ```
 
 ### Error Validation
 
 The extension provides real-time validation:
 
-✅ **Valid**: `{! entity.name.casing.camel !}`
-❌ **Error**: `{! entity.name.casings.camel !}` - Unknown variable `casings`
+✅ **Valid**: `{[ entity.name.casing.camel ]}`
+❌ **Error**: `{[ entity.name.casings.camel ]}` - Unknown variable `casings`
 
-✅ **Valid**: `{! if condition !} ... {! /if !}`
-❌ **Error**: `{! if condition !}` - Unclosed control flow
+✅ **Valid**: `{[ if condition ]} ... {[ /if ]}`
+❌ **Error**: `{[ if condition ]}` - Unclosed control flow
 
 ## Autocomplete
 
@@ -127,7 +127,7 @@ The extension provides intelligent autocomplete for:
 - **Keywords**: `if`, `loop`, `raw`, `else`, etc.
 - **Snippets**: Common template patterns
 
-Type `{!` inside any supported file to see available completions.
+Type `{[` inside any supported file to see available completions.
 
 ## Configuration
 
@@ -249,21 +249,21 @@ MIT License - see LICENSE file for details.
 ### Control Flow
 
 ```typescript
-{! if field.flags.is_string !}
+{[ if field.flags.is_string ]}
   @IsString()
-  {! /if !}
+  {[ /if ]}
 
-{! loop entity.fields.array.parts.items as field !}
-  {! field.name.casing.camel !}: string;
-{! /loop !}
+{[ loop entity.fields.array.parts.items as field ]}
+  {[ field.name.casing.camel ]}: string;
+{[ /loop ]}
 ```
 
 ### Comments
 
 ```typescript
-{!# This is a comment #!}
-{!# Multi-line comment
-   spanning multiple lines #!}
+{[# This is a comment #]}
+{[# Multi-line comment
+   spanning multiple lines #]}
 ```
 
 ## File Association

@@ -12,22 +12,14 @@ The extension provides intelligent autocomplete inside template expressions.
 Type `entity.` to see available properties:
 
 ```hbs
-{! entity. !}
-// ↓ Shows:
-// - names
-// - fields  
-// - relations
+{[ entity. ]} // ↓ Shows: // - names // - fields // - relations
 ```
 
 Continue typing for nested suggestions:
 
 ```hbs
-{! entity.names. !}
-// ↓ Shows:
-// - original
-// - casing
-// - singular
-// - plural
+{[ entity.names. ]} // ↓ Shows: // - original // - casing // - singular // -
+plural
 ```
 
 ## Keyword Suggestions
@@ -35,11 +27,7 @@ Continue typing for nested suggestions:
 Control flow keywords appear automatically:
 
 ```hbs
-{!# !}
-// ↓ Shows:
-// - if
-// - each
-// - raw
+{[# ]} // ↓ Shows: // - if // - each // - raw
 ```
 
 ## Field Loop Autocomplete
@@ -47,13 +35,8 @@ Control flow keywords appear automatically:
 Inside field loops, get field-specific suggestions:
 
 ```hbs
-{!#each entity.fields.arrays.all.items as field!}
-  {! field. !}
-  // ↓ Shows:
-  // - names
-  // - flags
-  // - typescript
-{!/each!}
+{[#each entity.fields.arrays.all.items as field]} {[ field. ]} // ↓ Shows: // -
+names // - flags // - typescript {[/each]}
 ```
 
 ## Snippets
@@ -61,24 +44,22 @@ Inside field loops, get field-specific suggestions:
 Common patterns expand with snippets:
 
 ### DTO Class
+
 Type `dto` + Tab:
 
 ```hbs
-export class {! entity.names.casing.pascal !}DTO {
-{!#each entity.fields.arrays.all.items as field!}
-  {!field.names.casing.camel!}: {!#if field.flags.is_string}string{!/if!};
-{!/each!}
-}
+export class {[ entity.names.casing.pascal ]}DTO { {[#each
+entity.fields.arrays.all.items as field]} {[field.names.casing.camel]}: {[#if
+field.flags.is_string}string{[/if]}; {[/each]} }
 ```
 
 ### Validation Decorator
+
 Type `val` + Tab:
 
 ```hbs
-{!#if field.flags.is_string!}
-@IsString()
-{!/if!}
-{!field.names.casing.camel!}: string;
+{[#if field.flags.is_string]} @IsString() {[/if]} {[field.names.casing.camel]}:
+string;
 ```
 
 ## Context-Aware Suggestions
@@ -86,7 +67,7 @@ Type `val` + Tab:
 Autocomplete adapts to current context:
 
 - **Entity level** - `entity.*` properties
-- **Field level** - `field.*` properties  
+- **Field level** - `field.*` properties
 - **Relation level** - `relation.*` properties
 - **Global level** - `global.*` properties
 

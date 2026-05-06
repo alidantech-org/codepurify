@@ -37,7 +37,7 @@
     "codepurify.theme.delimiterColor": {
       "type": "string",
       "default": "#ff79c6",
-      "description": "Color for template delimiters `{! !}` (hex)."
+      "description": "Color for template delimiters `{[ ]}` (hex)."
     },
     "codepurify.theme.casingColor": {
       "type": "string",
@@ -47,12 +47,12 @@
     "codepurify.theme.backgroundColor": {
       "type": "string",
       "default": "rgba(255, 121, 198, 0.1)",
-      "description": "Background color for `{! ... !}` expressions (rgba)."
+      "description": "Background color for `{[ ... ]}` expressions (rgba)."
     },
     "codepurify.theme.borderColor": {
       "type": "string",
       "default": "rgba(255, 121, 198, 0.3)",
-      "description": "Border color for `{! ... !}` expressions (rgba)."
+      "description": "Border color for `{[ ... ]}` expressions (rgba)."
     },
     "codepurify.theme.errorColor": {
       "type": "string",

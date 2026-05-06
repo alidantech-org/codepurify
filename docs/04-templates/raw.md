@@ -10,54 +10,55 @@ Escape template delimiters when they conflict with target syntax.
 ## Raw Block Syntax
 
 ```hbs
-{!{raw}!}
-  Content that should not be parsed
-{!{/raw}!}
+{[{raw}]} Content that should not be parsed {[{/raw}]}
 ```
 
 ## Why Raw Blocks Are Needed
 
 ### Vue Templates
-Vue uses `{! ... !}` syntax for interpolation:
+
+Vue uses `{[ ... ]}` syntax for interpolation:
 
 ```hbs
-{!{raw}!}
+{[{raw}]}
 <template>
-  <div>{{ message }}</div>
+  <div>{{message}}</div>
 </template>
-{!{/raw}!}
+{[{/raw}]}
 ```
 
 ### Handlebars Inside Templates
+
 When generating Handlebars templates:
 
 ```hbs
-{!{raw}!}
+{[{raw}]}
 <script type="text/x-handlebars-template">
   <div>{{name}}</div>
 </script>
-{!{/raw}!}
+{[{/raw}]}
 ```
 
 ### HTML Interpolation Conflicts
+
 When generating templates that use similar delimiters:
 
 ```hbs
-{!{raw}!}
+{[{raw}]}
 <!-- This should not be parsed by Codepurify -->
-<div class="{{ active ? 'active' : '' }}">
+<div class="{{active ? 'active' : ''}}">
   Content here
 </div>
-{!{/raw}!}
+{[{/raw}]}
 ```
 
 ## Before Raw Block
 
-❌ Incorrect - Codepurify tries to parse `{! active !}`:
+❌ Incorrect - Codepurify tries to parse `{[ active ]}`:
 
 ```hbs
-<div class="{! active ? 'active' : '' !}">
-  {! content !}
+<div class="{[ active ? 'active' : '' ]}">
+  {[ content ]}
 </div>
 ```
 
@@ -66,11 +67,11 @@ When generating templates that use similar delimiters:
 ✅ Correct - Content preserved as-is:
 
 ```hbs
-{!{raw}!}
-<div class="{{ active ? 'active' : '' }}">
-  {{ content }}
+{[{raw}]}
+<div class="{{active ? 'active' : ''}}">
+  {{content}}
 </div>
-{!{/raw}!}
+{[{/raw}]}
 ```
 
 ## Real Example: Generating Vue Component
@@ -79,43 +80,33 @@ Template: `templates/user.component.vue.hbs`
 
 ```hbs
 <template>
-{!{raw}!}
+  {[{raw}]}
   <div class="user-card">
-    <h2>{{ user.name }}</h2>
-    <p>{{ user.email }}</p>
+    <h2>{{user.name}}</h2>
+    <p>{{user.email}}</p>
     <button @click="editUser">Edit</button>
   </div>
-{!{/raw}!}
+  {[{/raw}]}
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
-interface {! entity.names.casing.pascal !} {
-{!#each entity.fields.arrays.all.items as field!}
-  {!field.names.casing.camel!}: {!#if field.flags.is_string}string{!/if!};
-{!/each!}
-}
-
-const {! entity.names.casing.camel !} = ref<{! entity.names.casing.pascal !}>({
-{!#each entity.fields.arrays.all.items as field!}
-  {!field.names.casing.camel!}: ''{!#unless @last!},{!/unless!}
-{!/each!}
-});
-
-function editUser() {
-  // Edit logic here
-}
+  import { ref } from 'vue'; interface {[ entity.names.casing.pascal ]} {
+  {[#each entity.fields.arrays.all.items as field]}
+  {[field.names.casing.camel]}: {[#if field.flags.is_string}string{[/if]};
+  {[/each]} } const {[ entity.names.casing.camel ]} = ref<{[
+  entity.names.casing.pascal ]}>({ {[#each entity.fields.arrays.all.items as
+  field]} {[field.names.casing.camel]}: ''{[#unless @last]},{[/unless]}
+  {[/each]} }); function editUser() { // Edit logic here }
 </script>
 
 <style scoped>
-{!{raw}!}
-.user-card {
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-{!{/raw}!}
+  {[{raw}]}
+  .user-card {
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  {[{/raw}]}
 </style>
 ```
 
@@ -133,7 +124,7 @@ function editUser() {
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from "vue";
 
 interface User {
   id: number;
@@ -143,8 +134,8 @@ interface User {
 
 const user = ref<User>({
   id: 0,
-  name: '',
-  email: '',
+  name: "",
+  email: "",
 });
 
 function editUser() {

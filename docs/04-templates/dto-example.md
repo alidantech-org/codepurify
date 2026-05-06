@@ -12,83 +12,65 @@ Generate a Create DTO with validation decorators.
 `templates/create-user.dto.hbs`:
 
 ```hbs
-import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from 'class-validator';
-
-export class Create{! entity.names.casing.pascal !}DTO {
-{!#each entity.fields.arrays.all.items as field!}
-  {!#if field.flags.is_primary!}
-  // Primary key excluded from create DTO
-  {!else if field.flags.is_string!}
-    {!#if field.flags.is_nullable!}
-  @IsOptional()
-    {!/if!}
-    {!#if field.flags.is_email!}
-  @IsEmail()
-    {!else!}
-  @IsString()
-    {!/if!}
-  {!field.names.casing.camel!}: {!#if field.flags.is_nullable!}string | null{!else!}string{!/if!};
-    
-  {!else if field.flags.is_number!}
-    {!#if field.flags.is_nullable!}
-  @IsOptional()
-    {!/if!}
-  @IsNumber()
-    {!#if field.constraints.min!}
-  @Min({!field.constraints.min!})
-    {!/if!}
-    {!#if field.constraints.max!}
-  @Max({!field.constraints.max!})
-    {!/if!}
-  {!field.names.casing.camel!}: {!#if field.flags.is_nullable!}number | null{!else!}number{!/if!};
-    
-  {!else!}
-  // Unknown field type: {!field.names.casing.camel!}
-  {!/if!}
-{!/each!}
-}
+import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from
+'class-validator'; export class Create{[ entity.names.casing.pascal ]}DTO {
+{[#each entity.fields.arrays.all.items as field]} {[#if field.flags.is_primary]}
+// Primary key excluded from create DTO {[else if field.flags.is_string]} {[#if
+field.flags.is_nullable]} @IsOptional() {[/if]} {[#if field.flags.is_email]}
+@IsEmail() {[else]} @IsString() {[/if]} {[field.names.casing.camel]}: {[#if
+field.flags.is_nullable]}string | null{[else]}string{[/if]}; {[else if
+field.flags.is_number]} {[#if field.flags.is_nullable]} @IsOptional() {[/if]}
+@IsNumber() {[#if field.constraints.min]} @Min({[field.constraints.min]})
+{[/if]} {[#if field.constraints.max]} @Max({[field.constraints.max]}) {[/if]}
+{[field.names.casing.camel]}: {[#if field.flags.is_nullable]}number |
+null{[else]}number{[/if]}; {[else]} // Unknown field type:
+{[field.names.casing.camel]} {[/if]} {[/each]} }
 ```
 
 ## Template Sections Explained
 
 ### Imports
+
 ```hbs
-import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from
+'class-validator';
 ```
+
 Imports required validation decorators.
 
 ### Class Declaration
+
 ```hbs
-export class Create{! entity.names.casing.pascal !}DTO {
+export class Create{[ entity.names.casing.pascal ]}DTO {
 ```
+
 Creates class with "Create" prefix and entity name.
 
 ### Field Iteration
+
 ```hbs
-{!#each entity.fields.arrays.all.items as field!}
+{[#each entity.fields.arrays.all.items as field]}
 ```
+
 Loops through all entity fields.
 
 ### Primary Key Handling
+
 ```hbs
-{!#if field.flags.is_primary!}
-  // Primary key excluded from create DTO
-{!else!}
+{[#if field.flags.is_primary]} // Primary key excluded from create DTO {[else]}
 ```
+
 Skips primary keys in create operations.
 
 ### String Fields
+
 ```hbs
-{!#if field.flags.is_nullable!}
-@IsOptional()
-{!/if!}
-{!#if field.flags.is_email!}
-@IsEmail()
-{!else!}
-@IsString()
-{!/if!}
-{!field.names.casing.camel!}: {!#if field.flags.is_nullable!}string | null{!else!}string{!/if!};
+{[#if field.flags.is_nullable]} @IsOptional() {[/if]} {[#if
+field.flags.is_email]} @IsEmail() {[else]} @IsString() {[/if]}
+{[field.names.casing.camel]}: {[#if field.flags.is_nullable]}string |
+null{[else]}string{[/if]};
 ```
+
 Adds appropriate validation for string fields.
 
 ## Input Context
@@ -165,14 +147,21 @@ Simplified `types/user.json`:
 `output/create-user.dto.ts`:
 
 ```ts
-import { IsString, IsEmail, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+} from "class-validator";
 
 export class CreateUserDTO {
   // Primary key excluded from create DTO
-  
+
   @IsEmail()
   email: string;
-    
+
   @IsOptional()
   @IsNumber()
   @Min(0)

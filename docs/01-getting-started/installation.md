@@ -34,6 +34,7 @@ Install the Codepurify extension for syntax highlighting and autocomplete:
 3. Click Install
 
 The extension provides:
-- Syntax highlighting for `{! ... !}` templates
+
+- Syntax highlighting for `{[ ... ]}` templates
 - Autocomplete for context variables
 - Template validation

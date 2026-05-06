@@ -1,13 +1,13 @@
-{!# C example #!}
+{[# C example #]}
 
-struct {!entity.name.pascal!} {
-  {!loop field in entity.fields!}
-  {!field.type!} {!field.name.snake!};
-  {!/loop!}
+struct {[entity.name.pascal]} {
+  {[loop field in entity.fields]}
+  {[field.type]} {[field.name.snake]};
+  {[/loop]}
 };
 
-void init_{!entity.name.snake!}(struct {!entity.name.pascal!} *obj) {
-  {!loop field in entity.fields!}
-  obj->{!field.name.snake!} = 0;
-  {!/loop!}
+void init_{[entity.name.snake]}(struct {[entity.name.pascal]} *obj) {
+  {[loop field in entity.fields]}
+  obj->{[field.name.snake]} = 0;
+  {[/loop]}
 }

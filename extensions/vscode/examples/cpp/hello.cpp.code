@@ -1,14 +1,14 @@
-{!# C++ example #!}
+{[# C++ example #]}
 
-class {!entity.name.pascal!} {
+class {[entity.name.pascal]} {
 public:
-  {!loop field in entity.fields!}
-  {!field.type!} {!field.name.camel!};
-  {!/loop!}
+  {[loop field in entity.fields]}
+  {[field.type]} {[field.name.camel]};
+  {[/loop]}
 
-  {!entity.name.pascal!}() {
-    {!loop field in entity.fields!}
-    {!field.name.camel!} = {};
-    {!/loop!}
+  {[entity.name.pascal]}() {
+    {[loop field in entity.fields]}
+    {[field.name.camel]} = {};
+    {[/loop]}
   }
 };

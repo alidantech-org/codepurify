@@ -10,19 +10,21 @@ Add custom syntax, helpers, and functions to Codepurify templates.
 ## Custom Helpers
 
 ```typescript
-import { HelperRegistry } from '@codepurify/core';
+import { HelperRegistry } from "@codepurify/core";
 
 class CustomHelpers {
   static formatDate(date: string): string {
-    return new Date(date).toISOString().split('T')[0];
+    return new Date(date).toISOString().split("T")[0];
   }
-  
+
   static pluralize(count: number, word: string): string {
     return count === 1 ? word : `${word}s`;
   }
-  
+
   static toEnum(items: string[]): string {
-    return items.map(item => `  ${item.toUpperCase()} = '${item}'`).join(',\n');
+    return items
+      .map((item) => `  ${item.toUpperCase()} = '${item}'`)
+      .join(",\n");
   }
 }
 ```
@@ -31,20 +33,17 @@ class CustomHelpers {
 
 ```typescript
 const registry = new HelperRegistry();
-registry.register('formatDate', CustomHelpers.formatDate);
-registry.register('pluralize', CustomHelpers.pluralize);
-registry.register('toEnum', CustomHelpers.toEnum);
+registry.register("formatDate", CustomHelpers.formatDate);
+registry.register("pluralize", CustomHelpers.pluralize);
+registry.register("toEnum", CustomHelpers.toEnum);
 ```
 
 ## Template Usage
 
 ```hbs
-{! formatDate(entity.created_at) !}
-{! pluralize(field.count, 'item') !}
-
-export enum {! entity.names.casing.pascal !}Enum {
-{! toEnum(entity.fields.arrays.all.items.map(item => item.names.original)) !}
-}
+{[ formatDate(entity.created_at) ]} {[ pluralize(field.count, 'item') ]} export
+enum {[ entity.names.casing.pascal ]}Enum { {[
+toEnum(entity.fields.arrays.all.items.map(item => item.names.original)) ]} }
 ```
 
 ## Custom Block Helpers
@@ -54,11 +53,11 @@ class BlockHelpers {
   static conditionalRender(context: any, options: any): string {
     const condition = options.hash.condition;
     const content = options.fn(context);
-    
+
     if (this.evaluateCondition(condition)) {
       return content;
     }
-    return '';
+    return "";
   }
 }
 ```
@@ -68,14 +67,14 @@ class BlockHelpers {
 ```typescript
 class CustomParser {
   parseCustomSyntax(template: string): ParsedTemplate {
-    // Parse custom {!custom ...!} syntax
-    const customRegex = /\{!custom\s+(.+?)\s*!\}/g;
-    
+    // Parse custom {[custom ...]} syntax
+    const customRegex = /\{[custom\s+(.+?)\s*!\}/g;
+
     return template.replace(customRegex, (match, expression) => {
       return this.evaluateCustomExpression(expression);
     });
   }
-  
+
   private evaluateCustomExpression(expr: string): string {
     // Custom expression evaluation logic
     return `/* Custom: ${expr} */`;
@@ -95,16 +94,16 @@ interface CodepurifyPlugin {
 }
 
 class EnumPlugin implements CodepurifyPlugin {
-  name = 'enum-generator';
-  version = '1.0.0';
-  
+  name = "enum-generator";
+  version = "1.0.0";
+
   helpers = {
     toEnum: CustomHelpers.toEnum,
-    enumValue: this.generateEnumValue
+    enumValue: this.generateEnumValue,
   };
-  
+
   private generateEnumValue(name: string): string {
-    return name.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+    return name.toUpperCase().replace(/[^A-Z0-9]/g, "_");
   }
 }
 ```
@@ -112,7 +111,7 @@ class EnumPlugin implements CodepurifyPlugin {
 ## Plugin Registration
 
 ```typescript
-import { Codepurify } from '@codepurify/core';
+import { Codepurify } from "@codepurify/core";
 
 const app = new Codepurify();
 app.use(new EnumPlugin());
