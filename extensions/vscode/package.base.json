@@ -1,7 +1,7 @@
 {
   "name": "codepurify-templates",
   "displayName": "Codepurify Templates",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Template language support for deterministic Codepurify code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
   "publisher": "alidantechorg",
   "engines": {
