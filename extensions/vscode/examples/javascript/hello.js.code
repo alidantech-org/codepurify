@@ -1,9 +1,9 @@
-{[# JavaScript example #]}
+{|# JavaScript example #|}
 
-const {[entity.name.camel]} = {
-  {[loop field in entity.fields]}
-  {[field.name.camel]}: {[field.type]},
-  {[/loop]}
+const {|entity.name.camel|} = {
+  {|loop field in entity.fields|}
+  {|field.name.camel|}: {|field.type|},
+  {|/loop|}
 };
 
-export default {[entity.name.camel]};
+export default {|entity.name.camel|};

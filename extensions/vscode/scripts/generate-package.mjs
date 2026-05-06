@@ -73,6 +73,42 @@ const HOST_LANGUAGES = [
     extensions: ["sh", "bash", "zsh"],
     scope: "source.shell",
   },
+  {
+    id: "dart",
+    label: "Dart",
+    extensions: ["dart"],
+    scope: "source.dart",
+  },
+  {
+    id: "vue",
+    label: "Vue",
+    extensions: ["vue"],
+    scope: "source.vue",
+  },
+  {
+    id: "svelte",
+    label: "Svelte",
+    extensions: ["svelte"],
+    scope: "source.svelte",
+  },
+  {
+    id: "xml",
+    label: "XML",
+    extensions: ["xml"],
+    scope: "text.xml",
+  },
+  {
+    id: "toml",
+    label: "TOML",
+    extensions: ["toml"],
+    scope: "source.toml",
+  },
+  {
+    id: "graphql",
+    label: "GraphQL",
+    extensions: ["graphql", "gql"],
+    scope: "source.graphql",
+  },
 ];
 
 const basePackagePath = path.join(ROOT, "package.base.json");
@@ -138,8 +174,8 @@ for (const lang of HOST_LANGUAGES) {
         patterns: [
           {
             name: "comment.block.documentation.codepurify",
-            begin: "\\{\\[\\*",
-            end: "\\*\\]\\}",
+            begin: "\\{\\|\\*",
+            end: "\\*\\|\\}",
             beginCaptures: {
               0: {
                 name: "punctuation.definition.comment.begin.codepurify",
@@ -153,8 +189,8 @@ for (const lang of HOST_LANGUAGES) {
           },
           {
             name: "comment.block.codepurify",
-            begin: "\\{\\[#",
-            end: "#\\]\\}",
+            begin: "\\{\\|#",
+            end: "#\\|\\}",
             beginCaptures: {
               0: {
                 name: "punctuation.definition.comment.begin.codepurify",
@@ -172,13 +208,13 @@ for (const lang of HOST_LANGUAGES) {
         patterns: [
           {
             name: "meta.embedded.codepurify",
-            begin: "\\{\\[",
+            begin: "\\{\\|",
             beginCaptures: {
               0: {
                 name: "punctuation.definition.template.codepurify",
               },
             },
-            end: "\\]\\}",
+            end: "\\|\\}",
             endCaptures: {
               0: {
                 name: "punctuation.definition.template.codepurify",

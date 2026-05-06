@@ -1,10 +1,10 @@
-{[# Dockerfile example #]}
+{|# Dockerfile example #|}
 FROM node:18
 
 WORKDIR /app
 
-COPY {[entity.name.kebab]} .
+COPY {|entity.name.kebab|} .
 
 RUN npm install
 
-CMD ["node", "{[entity.name.kebab]}.js"]
+CMD ["node", "{|entity.name.kebab|}.js"]

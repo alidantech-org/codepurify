@@ -1,8 +1,8 @@
-{[# JSON example #]}
+{|# JSON example #|}
 {
-  "{[entity.name.camel]}": {
-    {[loop field in entity.fields]}
-    "{[field.name.camel]}": "{[field.type]}",
-    {[/loop]}
+  "{|entity.name.camel|}": {
+    {|loop field in entity.fields|}
+    "{|field.name.camel|}": "{|field.type|}",
+    {|/loop|}
   }
 }

@@ -41,9 +41,9 @@ registry.register("toEnum", CustomHelpers.toEnum);
 ## Template Usage
 
 ```hbs
-{[ formatDate(entity.created_at) ]} {[ pluralize(field.count, 'item') ]} export
-enum {[ entity.names.casing.pascal ]}Enum { {[
-toEnum(entity.fields.arrays.all.items.map(item => item.names.original)) ]} }
+{| formatDate(entity.created_at) |} {| pluralize(field.count, 'item') |} export
+enum {| entity.names.casing.pascal |}Enum { {|
+toEnum(entity.fields.arrays.all.items.map(item => item.names.original)) |} }
 ```
 
 ## Custom Block Helpers
@@ -67,8 +67,8 @@ class BlockHelpers {
 ```typescript
 class CustomParser {
   parseCustomSyntax(template: string): ParsedTemplate {
-    // Parse custom {[custom ...]} syntax
-    const customRegex = /\{[custom\s+(.+?)\s*!\}/g;
+    // Parse custom {|custom ...|} syntax
+    const customRegex = /\{|custom\s+(.+?)\s*!\}/g;
 
     return template.replace(customRegex, (match, expression) => {
       return this.evaluateCustomExpression(expression);

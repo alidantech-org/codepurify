@@ -9,12 +9,12 @@ The extension provides syntax highlighting for Codepurify template syntax.
 
 ## Template Delimiters
 
-`{[ ... ]}` delimiters are highlighted with distinct colors:
+`{| ... |}` delimiters are highlighted with distinct colors:
 
 ```hbs
-export class {[ entity.names.casing.pascal ]} { {[#each
-entity.fields.arrays.all.items as field]} {[field.names.casing.camel]}: string;
-{[/each]} }
+export class {| entity.names.casing.pascal |} { {|#each
+entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
+{|/each|} }
 ```
 
 ## Highlighted Elements
@@ -34,7 +34,7 @@ entity.fields.arrays.all.items as field]} {[field.names.casing.camel]}: string;
 ### Comments
 
 ```hbs
-{[# This is a comment ]}
+{|# This is a comment |}
 ```
 
 ## Before/After Example
@@ -60,20 +60,20 @@ entity.fields.arrays.all.items as field} {field.names.casing.camel}: string;
 
 ```typescript
 // TypeScript syntax preserved
-export class {[ entity.names.casing.pascal ]} {
-  {[field.names.casing.camel]}: string;
+export class {| entity.names.casing.pascal |} {
+  {|field.names.casing.camel|}: string;
 }
 ```
 
 ### Markdown Templates (`.md.cpt`)
 
 ```markdown
-# {[ entity.names.casing.title ]}
+# {| entity.names.casing.title |}
 
-{[#each entity.fields.arrays.all.items as field]}
+{|#each entity.fields.arrays.all.items as field|}
 
-- {[field.names.casing.camel]}
-  {[/each]}
+- {|field.names.casing.camel|}
+  {|/each|}
 ```
 
 ## Host Language Preservation

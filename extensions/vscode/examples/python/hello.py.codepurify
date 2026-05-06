@@ -1,14 +1,14 @@
-{[# Python example #]}
+{|# Python example #|}
 
-class {[entity.name.pascal]}:
+class {|entity.name.pascal|}:
     def __init__(self):
-        {[loop field in entity.fields]}
-        self.{[field.name.snake]} = None
-        {[/loop]}
+        {|loop field in entity.fields|}
+        self.{|field.name.snake|} = None
+        {|/loop|}
 
     def to_dict(self):
         return {
-            {[loop field in entity.fields]}
-            "{[field.name.snake]}": self.{[field.name.snake]},
-            {[/loop]}
+            {|loop field in entity.fields|}
+            "{|field.name.snake|}": self.{|field.name.snake|},
+            {|/loop|}
         }

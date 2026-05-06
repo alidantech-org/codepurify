@@ -1,12 +1,12 @@
-{[# CSS example #]}
-.{[entity.name.kebab]} {
-  {[loop field in entity.fields]}
-  --{[field.name.kebab]}: {[field.type]};
-  {[/loop]}
+{|# CSS example #|}
+.{|entity.name.kebab|} {
+  {|loop field in entity.fields|}
+  --{|field.name.kebab|}: {|field.type|};
+  {|/loop|}
 }
 
-.{[entity.name.kebab]}__item {
-  {[loop field in entity.fields]}
-  {[--field.name.kebab--]}: var(--{[field.name.kebab]});
-  {[/loop]}
+.{|entity.name.kebab|}__item {
+  {|loop field in entity.fields|}
+  {|--field.name.kebab--|}: var(--{|field.name.kebab|});
+  {|/loop|}
 }

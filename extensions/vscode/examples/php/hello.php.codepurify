@@ -1,17 +1,17 @@
-{[# PHP example #]}
+{|# PHP example #|}
 
 <?php
 
-class {[entity.name.pascal]}
+class {|entity.name.pascal|}
 {
-  {[loop field in entity.fields]}
-  public ${[field.name.camel]};
-  {[/loop]}
+  {|loop field in entity.fields|}
+  public ${|field.name.camel|};
+  {|/loop|}
 
   public function __construct()
   {
-    {[loop field in entity.fields]}
-    $this->{[field.name.camel]} = null;
-    {[/loop]}
+    {|loop field in entity.fields|}
+    $this->{|field.name.camel|} = null;
+    {|/loop|}
   }
 }

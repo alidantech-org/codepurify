@@ -115,3 +115,29 @@ Shell:
 - .bash.code
 - .zsh.codepurify
 - .zsh.code
+
+Dart:
+- .dart.codepurify
+- .dart.code
+
+Vue:
+- .vue.codepurify
+- .vue.code
+
+Svelte:
+- .svelte.codepurify
+- .svelte.code
+
+XML:
+- .xml.codepurify
+- .xml.code
+
+TOML:
+- .toml.codepurify
+- .toml.code
+
+GraphQL:
+- .graphql.codepurify
+- .graphql.code
+- .gql.codepurify
+- .gql.code

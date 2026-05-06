@@ -1,6 +1,6 @@
 {
-  "name": "Codepurify Ruby",
-  "scopeName": "source.ruby.codepurify",
+  "name": "Codepurify Dart",
+  "scopeName": "source.dart.codepurify",
   "patterns": [
     {
       "include": "#codepurify-comments"
@@ -9,7 +9,7 @@
       "include": "#codepurify-tags"
     },
     {
-      "include": "source.ruby"
+      "include": "source.dart"
     }
   ],
   "repository": {

@@ -1,21 +1,21 @@
-{[# Simple template #]}
+{|# Simple template #|}
 
-Hello {[entity.name.pascal]}
+Hello {|entity.name.pascal|}
 
-{[# JavaScript example #]}
+{|# JavaScript example #|}
 
-const {[entity.name.camel]} = {
-  {[loop field in entity.fields]}
-  {[field.name.camel]}: {[field.type]},
-  {[/loop]}
+const {|entity.name.camel|} = {
+  {|loop field in entity.fields|}
+  {|field.name.camel|}: {|field.type|},
+  {|/loop|}
 };
 
-export default {[entity.name.camel]};
+export default {|entity.name.camel|};
 
 {
-  "{[entity.name.camel]}": {
-    {[loop field in entity.fields]}
-    "{[field.name.camel]}": "{[field.type]}",
-    {[/loop]}
+  "{|entity.name.camel|}": {
+    {|loop field in entity.fields|}
+    "{|field.name.camel|}": "{|field.type|}",
+    {|/loop|}
   }
 }

@@ -94,7 +94,7 @@
         "codepurify.theme.delimiterColor": {
           "type": "string",
           "default": "#ff79c6",
-          "description": "Color for `{[ ]}` template delimiters."
+          "description": "Color for `{| |}` template delimiters."
         },
         "codepurify.theme.casingColor": {
           "type": "string",
@@ -104,12 +104,12 @@
         "codepurify.theme.backgroundColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.1)",
-          "description": "Background color for `{[ ... ]}` expressions."
+          "description": "Background color for `{| ... |}` expressions."
         },
         "codepurify.theme.borderColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.3)",
-          "description": "Border color for `{[ ... ]}` expressions."
+          "description": "Border color for `{| ... |}` expressions."
         },
         "codepurify.theme.errorColor": {
           "type": "string",

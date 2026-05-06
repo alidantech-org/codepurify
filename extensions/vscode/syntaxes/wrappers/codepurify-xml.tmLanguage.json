@@ -1,6 +1,6 @@
 {
-  "name": "Codepurify Ruby",
-  "scopeName": "source.ruby.codepurify",
+  "name": "Codepurify XML",
+  "scopeName": "text.xml.codepurify",
   "patterns": [
     {
       "include": "#codepurify-comments"
@@ -9,7 +9,7 @@
       "include": "#codepurify-tags"
     },
     {
-      "include": "source.ruby"
+      "include": "text.xml"
     }
   ],
   "repository": {

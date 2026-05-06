@@ -31,7 +31,7 @@ export const TEMPLATE_CODE: CodeExample = {
 
 class {{entity.name.casing.pascal}}Repo{
 
-  async create(dto: I{[...pascal]}) {
+  async create(dto: I{|...pascal|}) {
     return this.create(dto);
   }
   ...more methods

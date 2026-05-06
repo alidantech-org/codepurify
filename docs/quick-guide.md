@@ -19,7 +19,7 @@ Welcome to Codepurify. This guide will help you quickly understand the core conc
 
 ## 02. 🧠 Core Concepts
 
-- [Template Syntax `{[ entity.name ]}`](/docs/02.-core/syntax)
+- [Template Syntax `{| entity.name |}`](/docs/02.-core/syntax)
 - [Variables & Context](/docs/02.-core/variables)
 - [Names & Casing System](/docs/02.-core/names-casing)
 - [Arrays & Iteration](/docs/02.-core/arrays)

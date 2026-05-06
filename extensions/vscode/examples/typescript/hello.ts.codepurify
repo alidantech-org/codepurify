@@ -1,13 +1,13 @@
-{[# TypeScript example #]}
+{|# TypeScript example #|}
 
-export class {[entity.name.pascal]} {
-  {[loop field in entity.fields]}
-  {[field.name.camel]}: {[field.type]};
-  {[/loop]}
+export class {|entity.name.pascal|} {
+  {|loop field in entity.fields|}
+  {|field.name.camel|}: {|field.type|};
+  {|/loop|}
 
   constructor() {
-    {[loop field in entity.fields]}
-    this.{[field.name.camel]} = null;
-    {[/loop]}
+    {|loop field in entity.fields|}
+    this.{|field.name.camel|} = null;
+    {|/loop|}
   }
 }

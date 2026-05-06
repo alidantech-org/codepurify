@@ -1,12 +1,12 @@
-{[# SCSS example #]}
-.{[entity.name.kebab]} {
-  {[loop field in entity.fields]}
-  --{[field.name.kebab]}: {[field.type]};
-  {[/loop]}
+{|# SCSS example #|}
+.{|entity.name.kebab|} {
+  {|loop field in entity.fields|}
+  --{|field.name.kebab|}: {|field.type|};
+  {|/loop|}
 
   &__item {
-    {[loop field in entity.fields]}
-    {[--field.name.kebab--}: var(--{[field.name.kebab]});
-    {[/loop]}
+    {|loop field in entity.fields|}
+    {|--field.name.kebab--|}: var(--{|field.name.kebab|});
+    {|/loop|}
   }
 }

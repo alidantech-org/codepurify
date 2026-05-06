@@ -1,14 +1,14 @@
-{[# JSX example #]}
+{|# JSX example #|}
 
-function {[entity.name.pascal]}() {
+function {|entity.name.pascal|}() {
   return (
     <div>
-      <h1>{[entity.name.pascal]}</h1>
-      {[loop field in entity.fields]}
-      <p>{[field.name.camel]}: {[field.type]}</p>
-      {[/loop]}
+      <h1>{|entity.name.pascal|}</h1>
+      {|loop field in entity.fields|}
+      <p>{|field.name.camel|}: {|field.type|}</p>
+      {|/loop|}
     </div>
   );
 }
 
-export default {[entity.name.pascal]};
+export default {|entity.name.pascal|};

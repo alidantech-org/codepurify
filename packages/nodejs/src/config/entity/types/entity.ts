@@ -54,13 +54,13 @@ export interface IEntityConfig {
 
   /**
    * Database index definitions for performance optimization
-   * @type {readonly IndexConfig[]}
+   * @type {readonly IndexConfig[|}
    */
   indexes: readonly IndexConfig[];
 
   /**
    * Data validation and constraint rules
-   * @type {readonly CheckConfig[]}
+   * @type {readonly CheckConfig[|}
    */
   checks: readonly CheckConfig[];
 
@@ -72,19 +72,19 @@ export interface IEntityConfig {
 
   /**
    * Code generation templates to be applied
-   * @type {readonly string[]}
+   * @type {readonly string[|}
    */
   templates: readonly CodepurifyTemplatesFile[];
 
   /**
    * State transition definitions for entity lifecycle
-   * @type {readonly TransitionConfig[]}
+   * @type {readonly TransitionConfig[|}
    */
   transitions: readonly TransitionConfig[];
 
   /**
    * Workflow definitions for complex business processes
-   * @type {readonly WorkflowConfig[]}
+   * @type {readonly WorkflowConfig[|}
    */
   workflows: readonly WorkflowConfig[];
 }

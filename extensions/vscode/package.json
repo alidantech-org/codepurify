@@ -320,6 +320,74 @@
           ".zsh.code"
         ],
         "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-dart",
+        "aliases": [
+          "Codepurify Dart"
+        ],
+        "extensions": [
+          ".dart.codepurify",
+          ".dart.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-vue",
+        "aliases": [
+          "Codepurify Vue"
+        ],
+        "extensions": [
+          ".vue.codepurify",
+          ".vue.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-svelte",
+        "aliases": [
+          "Codepurify Svelte"
+        ],
+        "extensions": [
+          ".svelte.codepurify",
+          ".svelte.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-xml",
+        "aliases": [
+          "Codepurify XML"
+        ],
+        "extensions": [
+          ".xml.codepurify",
+          ".xml.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-toml",
+        "aliases": [
+          "Codepurify TOML"
+        ],
+        "extensions": [
+          ".toml.codepurify",
+          ".toml.code"
+        ],
+        "configuration": "./config/language-configuration.json"
+      },
+      {
+        "id": "codepurify-graphql",
+        "aliases": [
+          "Codepurify GraphQL"
+        ],
+        "extensions": [
+          ".graphql.codepurify",
+          ".graphql.code",
+          ".gql.codepurify",
+          ".gql.code"
+        ],
+        "configuration": "./config/language-configuration.json"
       }
     ],
     "grammars": [
@@ -447,6 +515,36 @@
         "language": "codepurify-shell",
         "scopeName": "source.shell.codepurify",
         "path": "./syntaxes/wrappers/codepurify-shell.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-dart",
+        "scopeName": "source.dart.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-dart.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-vue",
+        "scopeName": "source.vue.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-vue.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-svelte",
+        "scopeName": "source.svelte.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-svelte.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-xml",
+        "scopeName": "text.xml.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-xml.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-toml",
+        "scopeName": "source.toml.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-toml.tmLanguage.json"
+      },
+      {
+        "language": "codepurify-graphql",
+        "scopeName": "source.graphql.codepurify",
+        "path": "./syntaxes/wrappers/codepurify-graphql.tmLanguage.json"
       }
     ],
     "snippets": [
@@ -492,7 +590,7 @@
         "codepurify.theme.delimiterColor": {
           "type": "string",
           "default": "#ff79c6",
-          "description": "Color for `{[ ]}` template delimiters."
+          "description": "Color for `{| |}` template delimiters."
         },
         "codepurify.theme.casingColor": {
           "type": "string",
@@ -502,12 +600,12 @@
         "codepurify.theme.backgroundColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.1)",
-          "description": "Background color for `{[ ... ]}` expressions."
+          "description": "Background color for `{| ... |}` expressions."
         },
         "codepurify.theme.borderColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.3)",
-          "description": "Border color for `{[ ... ]}` expressions."
+          "description": "Border color for `{| ... |}` expressions."
         },
         "codepurify.theme.errorColor": {
           "type": "string",

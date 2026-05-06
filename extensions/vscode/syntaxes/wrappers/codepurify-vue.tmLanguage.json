@@ -1,6 +1,6 @@
 {
-  "name": "Codepurify Ruby",
-  "scopeName": "source.ruby.codepurify",
+  "name": "Codepurify Vue",
+  "scopeName": "source.vue.codepurify",
   "patterns": [
     {
       "include": "#codepurify-comments"
@@ -9,7 +9,7 @@
       "include": "#codepurify-tags"
     },
     {
-      "include": "source.ruby"
+      "include": "source.vue"
     }
   ],
   "repository": {

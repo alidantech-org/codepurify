@@ -36,6 +36,7 @@ export interface DocItem {
   title: string;
   description?: string;
   group?: string;
+  children?: DocItem[];
 }
 
 export interface DocNavigation {

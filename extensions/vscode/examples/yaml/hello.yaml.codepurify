@@ -1,5 +1,5 @@
-{[# YAML example #]}
-{[entity.name.kebab]}:
-  {[loop field in entity.fields]}
-  {[field.name.kebab]}: {[field.type]}
-  {[/loop]}
+{|# YAML example #|}
+{|entity.name.kebab|}:
+  {|loop field in entity.fields|}
+  {|field.name.kebab|}: {|field.type|}
+  {|/loop|}
