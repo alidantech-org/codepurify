@@ -8,7 +8,7 @@ export function Dot({ color }: DotProps) {
   };
   return (
     <span
-      className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${map[color|}`}
+      className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${map[color]}`}
     />
   );
 }
