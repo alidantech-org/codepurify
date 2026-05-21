@@ -1,0 +1,35 @@
+{%- for import in plan.imports %}
+import '{{ import }}';
+{%- endfor %}
+
+class {{ plan.class_name }} {
+  {{ plan.class_name }}(this.ref);
+
+  final Ref ref;
+
+{%- for method in plan.methods %}
+  {{ method.signature }} {
+    return ref.read(apiProvider.notifier).send(
+          {{ method.request_class }}<{{ method.response_class }}>(
+            endpoint: {{ method.endpoint_expr }},
+            version: ApiVersion.v1,
+            options: options,
+{%- if method.body_expr %}
+            body: {{ method.body_expr }},
+{%- endif %}
+{%- if method.query_expr %}
+            query: {{ method.query_expr }},
+{%- endif %}
+            fromJson: (json) => {{ method.response_class }}.fromJson(
+              Map<String, dynamic>.from((json as Map?) ?? {}),
+            ),
+          ),
+        );
+  }
+
+{%- endfor %}
+}
+
+final {{ plan.provider_name }} = Provider<{{ plan.class_name }}>((ref) {
+  return {{ plan.class_name }}(ref);
+});

@@ -1,0 +1,19 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND.
+//
+// Generator: dart-py
+// Generated on: {{ generated_at }}
+// Source: {{ source_file }}
+// Output: {{ output_path }}
+
+/// Field constants for {{ plan.class_name }}
+abstract final class {{ plan.fields_class_name }} {
+{%- for field in plan.fields %}
+  static const {{ field.dart_name }} = '{{ field.json_name }}';
+{%- endfor %}
+
+  static const values = <String>[
+{%- for field in plan.fields %}
+    {{ field.dart_name }},
+{%- endfor %}
+  ];
+}

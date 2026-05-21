@@ -1,0 +1,11 @@
+class {{ plan.class_name }} {
+  const {{ plan.class_name }}();
+
+{%- for operation in plan.operations %}
+{%- if operation.is_getter %}
+  String get {{ operation.method_name }} => {{ operation.endpoint_expression }};
+{%- else %}
+  String {{ operation.method_name }}({{ operation.params_signature }}) => {{ operation.endpoint_expression }};
+{%- endif %}
+{%- endfor %}
+}

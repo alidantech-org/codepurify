@@ -1,0 +1,61 @@
+# {{ tag }} API
+
+{% for op in operations %}
+## {{ op.operation_id or (op.method ~ " " ~ op.path) }}
+
+`{{ op.method }}` `{{ op.path }}` 
+
+{% if op.summary %}
+{{ op.summary }}
+{% endif %}
+
+{% if op.description %}
+{{ op.description }}
+{% endif %}
+
+### Parameters
+
+{% if op.parameters %}
+| Name | In | Required | Description |
+|---|---|---:|---|
+{% for param in op.parameters %}
+{% if param["$ref"] is defined %}
+| `{{ param["$ref"].split("/")[-1] }}` | ref | - | Reference parameter |
+{% else %}
+| `{{ param.name }}` | `{{ param["in"] }}` | {{ param.required | default(false) }} | {{ param.description | default("") }} |
+{% endif %}
+{% endfor %}
+{% else %}
+No parameters.
+{% endif %}
+
+### Request Body
+
+{% if op.request_body %}
+{% if op.request_body["$ref"] is defined %}
+`{{ op.request_body["$ref"].split("/")[-1] }}` 
+{% else %}
+Request body is defined inline.
+{% endif %}
+{% else %}
+No request body.
+{% endif %}
+
+### Responses
+
+{% if op.responses %}
+| Status | Description |
+|---|---|
+{% for status, response in op.responses.items() %}
+{% if response["$ref"] is defined %}
+| `{{ status }}` | `{{ response["$ref"].split("/")[-1] }}` |
+{% else %}
+| `{{ status }}` | {{ response.description | default("") }} |
+{% endif %}
+{% endfor %}
+{% else %}
+No documented responses.
+{% endif %}
+
+---
+{% endfor %}

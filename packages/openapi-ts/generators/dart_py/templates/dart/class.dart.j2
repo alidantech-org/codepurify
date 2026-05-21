@@ -1,0 +1,152 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND.
+//
+// Generator: dart-py
+// Generated on: {{ generated_at }}
+// Source: {{ source_file }}
+// Output: {{ output_path }}
+{{ "\n" }}
+
+{%- if plan.imports %}
+{%- for import in plan.imports %}
+import '{{ import.uri }}';
+{%- endfor %}
+{%- endif %}
+
+class {{ plan.class_name }} {
+{%- for field in plan.fields %}
+  final {{ field.dart_type }} {{ field.dart_name }};
+{%- endfor %}
+
+{%- if plan.fields %}
+
+  const {{ plan.class_name }}({
+{%- for field in plan.fields %}
+{%- if field.required %}
+    required this.{{ field.dart_name }}{%- if not loop.last %},{%- endif %}
+{%- else %}
+    this.{{ field.dart_name }}{%- if not loop.last %},{%- endif %}
+{%- endif %}
+{%- endfor %}
+  });
+{%- else %}
+
+  const {{ plan.class_name }}();
+{%- endif %}
+
+{%- if plan.fields %}
+
+  {{ plan.class_name }} copyWith({
+{%- for field in plan.fields %}
+    {{ field.copy_with_type }} {{ field.dart_name }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+  }) {
+    return {{ plan.class_name }}(
+{%- for field in plan.fields %}
+      {{ field.dart_name }}: {{ field.dart_name }} ?? this.{{ field.dart_name }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+    );
+  }
+{%- endif %}
+
+  factory {{ plan.class_name }}.fromJson(dynamic json) {
+    final map = Map<String, dynamic>.from((json as Map?) ?? {});
+
+{%- if plan.fields %}
+    return {{ plan.class_name }}(
+{%- for field in plan.fields %}
+      {{ field.dart_name }}: {{ field.from_json_expr }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+    );
+{%- else %}
+    return {{ plan.class_name }}();
+{%- endif %}
+  }
+
+  Map<String, dynamic> toJson() {
+{%- if plan.fields %}
+    return {
+{%- for field in plan.fields %}
+{%- if field.required %}
+      {{ plan.fields_class_name }}.{{ field.dart_name }}: {{ field.to_json_expr }}{%- if not loop.last %},{%- endif %}
+{%- else %}
+      if ({{ field.dart_name }} != null)
+        {{ plan.fields_class_name }}.{{ field.dart_name }}: {{ field.to_json_expr }}{%- if not loop.last %},{%- endif %}
+{%- endif %}
+{%- endfor %}
+    };
+{%- else %}
+    return {};
+{%- endif %}
+  }
+
+  @override
+  String toString() {
+{%- if plan.fields %}
+    final parts = <String>[];
+{%- for field in plan.fields %}
+{%- if field.is_sensitive %}
+    parts.add('{{ field.dart_name }}: ***');
+{%- else %}
+    parts.add('{{ field.dart_name }}: ${{ field.dart_name }}');
+{%- endif %}
+{%- endfor %}
+    return '{{ plan.class_name }}(${parts.join(", ")})';
+{%- else %}
+    return '{{ plan.class_name }}()';
+{%- endif %}
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+{%- if plan.fields %}
+{%- if plan.has_collection_fields %}
+    const equality = DeepCollectionEquality();
+
+    return other is {{ plan.class_name }} &&
+{%- for field in plan.fields %}
+{%- if field.is_list %}
+        equality.equals(other.{{ field.dart_name }}, {{ field.dart_name }}){%- if not loop.last %} &&{%- else %};{%- endif %}
+{%- else %}
+        other.{{ field.dart_name }} == {{ field.dart_name }}{%- if not loop.last %} &&{%- else %};{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- else %}
+    return other is {{ plan.class_name }} &&
+{%- for field in plan.fields %}
+        other.{{ field.dart_name }} == {{ field.dart_name }}{%- if not loop.last %} &&{%- else %};{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- else %}
+    return other is {{ plan.class_name }};
+{%- endif %}
+  }
+
+  @override
+  int get hashCode {
+{%- if plan.fields %}
+{%- if plan.has_collection_fields %}
+    const equality = DeepCollectionEquality();
+
+    return Object.hashAll([
+{%- for field in plan.fields %}
+{%- if field.is_list %}
+      equality.hash({{ field.dart_name }}){%- if not loop.last %},{%- endif %}
+{%- else %}
+      {{ field.dart_name }}{%- if not loop.last %},{%- endif %}
+{%- endif %}
+{%- endfor %}
+    ]);
+{%- else %}
+    return Object.hashAll([
+{%- for field in plan.fields %}
+      {{ field.dart_name }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+    ]);
+{%- endif %}
+{%- else %}
+    return super.hashCode;
+{%- endif %}
+  }
+}

@@ -1,0 +1,15 @@
+"""Constants for Dart request class mapping."""
+
+DART_GET_REQUEST = "GetRequest"
+DART_POST_REQUEST = "PostRequest"
+DART_PUT_REQUEST = "PutRequest"
+DART_PATCH_REQUEST = "PatchRequest"
+DART_DELETE_REQUEST = "DeleteRequest"
+
+HTTP_METHOD_TO_REQUEST_CLASS = {
+    "GET": DART_GET_REQUEST,
+    "POST": DART_POST_REQUEST,
+    "PUT": DART_PUT_REQUEST,
+    "PATCH": DART_PATCH_REQUEST,
+    "DELETE": DART_DELETE_REQUEST,
+}
