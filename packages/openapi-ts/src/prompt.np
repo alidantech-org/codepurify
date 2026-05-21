@@ -1,0 +1,51 @@
+1. version-contract 
+      - ...previous common open api fields
+      - contracts: list of resource contracts @type_is_discused_below
+      - properties: list of properties registry  (mostly shared) @type_is_discused_below
+      - components: list of components registry (mostly shared) @type_is_discused_below
+
+2. resource-contracts
+      - remains unchanged at most from previos but type rules will change
+      - properties: list of properties registry  (mostly .entity() and .forRef()) @type_is_discused_below
+      - components: list of components registry (mostly what to be used in its routes) @type_is_discused_below
+
+3. properties
+      - system: defines a schema using defineSchema<T, takes in t so user can validate fields againts their ts types eg TEntity but this is optional> 
+      with methods [.shared(shared primitives), .entity(entity primitives),
+                   .forRef(custom primitives to ref eg in a contract)]
+      - rules: each method takes two aguments (name:string, { fields: type_of_field(can either be a ref or a
+             primitive type, or a composite type: whose keys can be type_of_field)}) @refer_to_old_model_as_we_plan
+      - system: exposes a helper schema for calling schema.primitive(zod, query, access) schema.composite({ [keys]: type_of_field })
+        for refs there will be a common type which anything whose return type is a ref will return so ts can capture errros @refer_to_old_model_as_we_plan
+      - usage: each defined fields can be access via .ref.* in it return type, 
+        also exposes internal .query .publicModel .partialModel etc, only via ref @refer_to_old_model_as_we_plan
+      - funPart: when user registeres properties the model in all exposed refs will be auto registered in open api, no need for the old
+        defineSchemas method where user says User: UserEntity.publicModel
+
+4. components:
+     - common: includes all open api components keys, and the keys defined will have only common stuff and the { property refs whose keys must resolve to a ref that
+       that system will globally define, } 
+     - rules: each item in the keys of each components must have property refs and only that can be used to define the schema and keys of each property ref
+       must resolve to a ref the type defined globally in the system 
+     - how-it-works: definined components also exposes access to all items defined via when defining components we have  helper define components:
+       whick expose .ref.* where each defined items can be accessed and used for ref, in routed definations on in other define components methods
+     - TBD: I want shared components to be able to be rusable by being registered specially, and since thier ref exposes. the .ref whose keys expose type of {[keys]: ref}
+     - idea: all components keys: can be an object of tyep keys:ref or can taking sth that returns propertyRef via a .ref eg an entity.publicModel returns propertyRefs
+
+Questions before file creation
+1.Should properties.shared(), .entity(), and .forRef() all return the same kind of registry object, or should .entity() expose extra generated refs like publicModel, partialModel, createBody, etc.?
+2.For .entity<T>(), do you want TypeScript to enforce that field keys must exist in T, or only warn/assist through generic typing?
+3.Should components be allowed to create new composite shapes from property refs only, or can they also use primitives directly?
+4.Should version-contract.properties and resource-contract.properties both use the same defineProperties() helper?
+5.Should refs carry OpenAPI names internally, for example #/components/schemas/UserPublic, or should that only be resolved later during compile?
+
+Answers:
+1. yes ... only .entity will expose extra methods which will be schema of type object in final openapi, but the rest might not resolve to objects unless they internal composites, else only the keys gets registered:
+but the schemas will have x-sdk metadata in openapi
+2. yes enfore the keys to exist
+3. components propertyRefs can allow keys with nested objects as long as these objects resolve to propertyRefs
+4. yes defineProperties good for both, for easy ts validation, so array must validate items resolve to type of property
+5. should only be resolved later during compile
+@point-to-note: zod can only be added in .primitive no where else, also for reusable or stuff that are inheritable, we need a way to have stuff the returns type of propertyRefs
+  but allows extentions via .extras({ keys must resove to refs or propertyRefs}) this will cause inherintance behaviour in final open api and refs will know it is inherited, make sure to help
+  me do this right and plan well, eg can we just allow anything to be inheritable as long as the return type is propertyRefs that will be easier
