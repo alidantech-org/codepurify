@@ -1,10 +1,10 @@
 import type { OpenApiOperation } from "../../openapi/openapi.types.js";
 import type { RouteDefinition } from "../../routes/route.types.js";
-import { applySdkExtensions } from "../../sdk/apply-sdk-extensions";
-import { ContentType } from "../../output/output.constants";
+import { applySdkExtensions } from "../../sdk/apply-sdk-extensions.js";
+import { ContentType } from "../../output/output.constants.js";
 import type { RefResolver } from "../refs/ref-resolver.types.js";
-import { compileRouteParameters } from "./compile-route-parameters";
-import { compileRouteSchema } from "./compile-route-schema";
+import { compileRouteParameters } from "./compile-route-parameters.js";
+import { compileRouteSchema } from "./compile-route-schema.js";
 
 export function compileRouteOperation(
   route: RouteDefinition,

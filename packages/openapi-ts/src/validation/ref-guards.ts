@@ -1,4 +1,4 @@
-import { RefKind } from "../refs/ref-kind";
+import { RefKind } from "../refs/ref-kind.js";
 import type {
   ComponentRef,
   EngineRef,

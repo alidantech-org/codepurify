@@ -1,4 +1,4 @@
-import type { OpenApiVersion } from './openapi-version';
+import type { OpenApiVersion } from './openapi-version.js';
 
 export interface OpenApiDocument {
   openapi: OpenApiVersion;

@@ -1,6 +1,6 @@
 import type { ComponentRef, ModelRef } from "../refs/ref.types.js";
 import type { ComponentFieldMap } from "../components/component.types.js";
-import type { HttpMethod } from "./http-method";
+import type { HttpMethod } from "./http-method.js";
 import type { SdkExtensionMeta } from "../sdk/sdk-extension.types.js";
 
 export type RouteSchemaRef = ComponentRef | ModelRef | ComponentFieldMap;

@@ -1,8 +1,8 @@
-import { defineComponents } from "../components/define-components";
+import { defineComponents } from "../components/define-components.js";
 import type { ComponentRegistry } from "../components/component.types.js";
-import { defineProperties } from "../properties/define-properties";
+import { defineProperties } from "../properties/define-properties.js";
 import type { PropertyRegistry } from "../properties/property.types.js";
-import { defineRoutes } from "../routes/define-routes";
+import { defineRoutes } from "../routes/define-routes.js";
 import type { RouteRegistry } from "../routes/route.types.js";
 import type { ResourceContext } from "./resource-context.types.js";
 

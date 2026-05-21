@@ -1,6 +1,6 @@
 import type { ComponentRegistry } from "../components/component.types.js";
 import type { PropertyRegistry } from "../properties/property.types.js";
-import type { ResourceBuilder } from "../resource/define-resource";
+import type { ResourceBuilder } from "../resource/define-resource.js";
 
 export interface VersionInfo {
   title: string;

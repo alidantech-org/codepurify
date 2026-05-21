@@ -1,4 +1,4 @@
-import { OpenApiRefPattern } from "../../openapi/ref-patterns";
+import { OpenApiRefPattern } from "../../openapi/ref-patterns.js";
 import type { EngineRef } from "../../refs/ref.types.js";
 import type { OpenApiRef, RefResolver } from "./ref-resolver.types.js";
 

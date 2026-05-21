@@ -1,8 +1,8 @@
 import type { PackageConfig } from "../config/package-config.types.js";
-import { resolvePackageConfig } from "../config/resolve-package-config";
-import { compileOpenApi } from "../compiler/compile-openapi";
-import { validateOpenApiDocument } from "../validator/validate-openapi-document";
-import { writeOpenApiFiles } from "../writer/write-openapi-files";
+import { resolvePackageConfig } from "../config/resolve-package-config.js";
+import { compileOpenApi } from "../compiler/compile-openapi.js";
+import { validateOpenApiDocument } from "../validator/validate-openapi-document.js";
+import { writeOpenApiFiles } from "../writer/write-openapi-files.js";
 
 export interface GenerateOpenApiResult {
   readonly success: boolean;

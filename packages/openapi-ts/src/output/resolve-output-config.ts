@@ -1,5 +1,5 @@
 import type { PackageOutputConfig } from "../config/package-config.types.js";
-import { DefaultOutputConfig } from "./output.constants";
+import { DefaultOutputConfig } from "./output.constants.js";
 import type { ResolvedOutputConfig } from "./output.types.js";
 
 export function resolveOutputConfig(

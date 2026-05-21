@@ -1,9 +1,9 @@
 import type { VersionContract } from "../version/version-contract.types.js";
-import { OpenApiVersion } from "../openapi/openapi-version";
+import { OpenApiVersion } from "../openapi/openapi-version.js";
 import type { OpenApiDocument } from "../openapi/openapi.types.js";
-import { validateContract } from "../validation/validate-contract";
-import { compileComponents } from "./compile-components";
-import { compilePaths } from "./paths/compile-paths";
+import { validateContract } from "../validation/validate-contract.js";
+import { compileComponents } from "./compile-components.js";
+import { compilePaths } from "./paths/compile-paths.js";
 import type { CompileOptions } from "./compile-options.types.js";
 import type { CompileResult } from "./compile-result.types.js";
 

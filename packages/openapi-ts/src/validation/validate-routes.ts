@@ -1,5 +1,5 @@
 import type { RouteRegistry } from "../routes/route.types.js";
-import { validateRouteSchema } from "./validate-route-schema";
+import { validateRouteSchema } from "./validate-route-schema.js";
 import type { ValidationIssue } from "./validation-result.types.js";
 
 export function validateRoutes(registry: RouteRegistry): ValidationIssue[] {

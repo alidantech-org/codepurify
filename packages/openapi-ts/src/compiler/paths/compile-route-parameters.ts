@@ -1,7 +1,7 @@
 import type { ComponentFieldMap } from "../../components/component.types.js";
 import type { RouteSchemaRef } from "../../routes/route.types.js";
 import type { RefResolver } from "../refs/ref-resolver.types.js";
-import { compileRouteSchema } from "./compile-route-schema";
+import { compileRouteSchema } from "./compile-route-schema.js";
 
 export function compileRouteParameters(
   schema: RouteSchemaRef | undefined,

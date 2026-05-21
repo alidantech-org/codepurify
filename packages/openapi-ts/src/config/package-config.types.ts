@@ -1,5 +1,5 @@
 import type { CompileOptions } from "../compiler/compile-options.types.js";
-import type { VersionBuilder } from "../version/define-version-contract";
+import type { VersionBuilder } from "../version/define-version-contract.js";
 
 export const PackageOutputFormat = {
   json: "json",

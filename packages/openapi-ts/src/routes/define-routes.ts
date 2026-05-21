@@ -1,4 +1,4 @@
-import { EngineIdPart, createEngineId } from "../ids/engine-id";
+import { EngineIdPart, createEngineId } from "../ids/engine-id.js";
 import type { OptionalResourceContext } from "../resource/resource-context.types.js";
 import { SdkKind, SdkPlacement } from "../sdk/sdk-extension.types.js";
 import type { RouteDefinition, RouteRegistry } from "./route.types.js";

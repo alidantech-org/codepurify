@@ -1,4 +1,4 @@
-import { SchemaKind } from "../../schema/schema-kind";
+import { SchemaKind } from "../../schema/schema-kind.js";
 import type {
   CompositeSchemaField,
   PrimitiveSchemaField,
@@ -8,7 +8,7 @@ import type { PropertyRef } from "../../refs/ref.types.js";
 import {
   zodToOpenApiSchema,
   type ZodSchemaMode,
-} from "./zod-to-openapi-schema";
+} from "./zod-to-openapi-schema.js";
 
 export function compilePropertySchema(
   field: SchemaField,

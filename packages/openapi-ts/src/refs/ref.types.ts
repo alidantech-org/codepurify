@@ -1,4 +1,4 @@
-import type { RefKind } from "./ref-kind";
+import type { RefKind } from "./ref-kind.js";
 import type { SdkExtensionMeta } from "../sdk/sdk-extension.types.js";
 
 export interface EngineRefBase {

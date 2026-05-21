@@ -1,5 +1,5 @@
 import type { ComponentFieldMap } from "../components/component.types.js";
-import { isComponentRef, isPropertyRef } from "./ref-guards";
+import { isComponentRef, isPropertyRef } from "./ref-guards.js";
 import type { ValidationIssue } from "./validation-result.types.js";
 
 export function validateComponentFields(

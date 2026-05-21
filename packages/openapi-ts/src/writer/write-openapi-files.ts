@@ -4,10 +4,10 @@ import type { OpenApiDocument } from "../openapi/openapi.types.js";
 import {
   createDebugFileName,
   createOpenApiFileName,
-} from "../output/openapi-file-name";
+} from "../output/openapi-file-name.js";
 import type { ResolvedOutputConfig } from "../output/output.types.js";
-import { writeJsonFile } from "./write-json-file";
-import { writeYamlFile } from "./write-yaml-file";
+import { writeJsonFile } from "./write-json-file.js";
+import { writeYamlFile } from "./write-yaml-file.js";
 
 export interface WriteOpenApiFilesInput {
   readonly document: OpenApiDocument;

@@ -1,8 +1,8 @@
-import { defineResource } from "../resource/define-resource";
+import { defineResource } from "../resource/define-resource.js";
 import type {
   DefineResourceOptions,
   ResourceBuilder,
-} from "../resource/define-resource";
+} from "../resource/define-resource.js";
 import type { ComponentRegistry } from "../components/component.types.js";
 import type { PropertyRegistry } from "../properties/property.types.js";
 import type { VersionContract, VersionInfo } from "./version-contract.types.js";

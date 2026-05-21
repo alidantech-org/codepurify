@@ -2,16 +2,16 @@ import type { ComponentRegistry } from "../../components/component.types.js";
 import {
   componentRefToSchemaName,
   modelRefToSchemaName,
-} from "../../naming/ref-schema-name";
+} from "../../naming/ref-schema-name.js";
 import type {
   EntityPropertyRefs,
   PropertyRegistry,
   PropertyRegistryRef,
 } from "../../properties/property.types.js";
-import type { ResourceBuilder } from "../../resource/define-resource";
+import type { ResourceBuilder } from "../../resource/define-resource.js";
 import type { RefResolver } from "../refs/ref-resolver.types.js";
-import { toSchemaName } from "../../naming/schema-name";
-import { PropertyRef } from "@/package/refs/ref.types.js";
+import { toSchemaName } from "../../naming/schema-name.js";
+import { PropertyRef } from "../../refs/ref.types.js";
 
 export function buildSchemaResolver(
   resources: readonly ResourceBuilder[],

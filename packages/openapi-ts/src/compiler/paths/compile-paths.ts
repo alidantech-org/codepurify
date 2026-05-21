@@ -1,8 +1,8 @@
 import type { OpenApiPaths } from "../../openapi/openapi.types.js";
 import type { VersionContract } from "../../version/version-contract.types.js";
 import type { RefResolver } from "../refs/ref-resolver.types.js";
-import { compileRouteOperation } from "./compile-route-operation";
-import { expressPathToOpenApi } from "./express-path-to-openapi";
+import { compileRouteOperation } from "./compile-route-operation.js";
+import { expressPathToOpenApi } from "./express-path-to-openapi.js";
 
 export function compilePaths(
   contract: VersionContract,

@@ -1,7 +1,7 @@
 import type { VersionContract } from "../version/version-contract.types.js";
-import { validateComponentFields } from "./validate-component-fields";
-import { validateDuplicates } from "./validate-duplicates";
-import { validateRoutes } from "./validate-routes";
+import { validateComponentFields } from "./validate-component-fields.js";
+import { validateDuplicates } from "./validate-duplicates.js";
+import { validateRoutes } from "./validate-routes.js";
 import type { ValidationIssue } from "./validation-result.types.js";
 
 export function validateVersionContract(

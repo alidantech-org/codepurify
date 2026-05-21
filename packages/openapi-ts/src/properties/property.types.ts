@@ -1,4 +1,4 @@
-import type { PropertyKind } from "./property-kind";
+import type { PropertyKind } from "./property-kind.js";
 import type { PropertyRef, ModelRef } from "../refs/ref.types.js";
 import type { SchemaFieldMap } from "../schema/schema.types.js";
 import type { SdkExtensionMeta } from "../sdk/sdk-extension.types.js";

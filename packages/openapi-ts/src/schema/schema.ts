@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { SchemaKind } from "./schema-kind";
+import { SchemaKind } from "./schema-kind.js";
 import type {
   CompositeSchemaField,
   PrimitiveSchemaField,

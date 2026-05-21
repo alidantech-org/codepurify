@@ -1,4 +1,4 @@
-import { SdkExtensionKey } from "./sdk-extension.keys";
+import { SdkExtensionKey } from "./sdk-extension.keys.js";
 import type { SdkExtensionMeta } from "./sdk-extension.types.js";
 
 export type SdkExtensionTarget = Record<string, unknown>;

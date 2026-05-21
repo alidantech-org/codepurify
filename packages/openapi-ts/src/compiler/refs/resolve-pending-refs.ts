@@ -1,4 +1,4 @@
-import { OpenApiRefPattern } from "../../openapi/ref-patterns";
+import { OpenApiRefPattern } from "../../openapi/ref-patterns.js";
 import type { RefResolver } from "./ref-resolver.types.js";
 
 const PendingPrefix = "#pending/";

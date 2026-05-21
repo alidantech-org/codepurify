@@ -1,7 +1,7 @@
 import type { ComponentFieldMap } from "../components/component.types.js";
 import type { RouteSchemaRef } from "../routes/route.types.js";
-import { isComponentRef, isEngineRef } from "./ref-guards";
-import { validateComponentFields } from "./validate-component-fields";
+import { isComponentRef, isEngineRef } from "./ref-guards.js";
+import { validateComponentFields } from "./validate-component-fields.js";
 import type { ValidationIssue } from "./validation-result.types.js";
 
 export function validateRouteSchema(

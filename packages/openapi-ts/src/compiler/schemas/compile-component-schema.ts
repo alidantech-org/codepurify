@@ -4,8 +4,8 @@ import type {
   ComponentFieldValue,
 } from "../../components/component.types.js";
 import type { ComponentRef, PropertyRef } from "../../refs/ref.types.js";
-import { RefKind } from "../../refs/ref-kind";
-import { applySdkExtensions } from "../../sdk/apply-sdk-extensions";
+import { RefKind } from "../../refs/ref-kind.js";
+import { applySdkExtensions } from "../../sdk/apply-sdk-extensions.js";
 
 export function compileComponentSchema(
   definition: ComponentDefinition,

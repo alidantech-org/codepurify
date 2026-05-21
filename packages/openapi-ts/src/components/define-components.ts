@@ -1,5 +1,5 @@
-import { EngineIdPart, createEngineId } from "../ids/engine-id";
-import { RefKind } from "../refs/ref-kind";
+import { EngineIdPart, createEngineId } from "../ids/engine-id.js";
+import { RefKind } from "../refs/ref-kind.js";
 import type { ComponentRef } from "../refs/ref.types.js";
 import type { OptionalResourceContext } from "../resource/resource-context.types.js";
 import { SdkKind, SdkPlacement } from "../sdk/sdk-extension.types.js";

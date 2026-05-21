@@ -1,5 +1,5 @@
 import type { ModelRef } from "../../refs/ref.types.js";
-import { applySdkExtensions } from "../../sdk/apply-sdk-extensions";
+import { applySdkExtensions } from "../../sdk/apply-sdk-extensions.js";
 
 export function compileModelSchema(ref: ModelRef): Record<string, unknown> {
   const schema: Record<string, unknown> = {

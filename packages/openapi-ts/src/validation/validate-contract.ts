@@ -1,5 +1,5 @@
 import type { VersionContract } from "../version/version-contract.types.js";
-import { validateVersionContract } from "./validate-version-contract";
+import { validateVersionContract } from "./validate-version-contract.js";
 import {
   invalidResult,
   type ValidationResult,

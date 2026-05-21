@@ -1,10 +1,10 @@
-import { EngineIdPart, createEngineId } from "../ids/engine-id";
-import { RefKind } from "../refs/ref-kind";
+import { EngineIdPart, createEngineId } from "../ids/engine-id.js";
+import { RefKind } from "../refs/ref-kind.js";
 import type { ModelRef, PropertyRef } from "../refs/ref.types.js";
 import type { OptionalResourceContext } from "../resource/resource-context.types.js";
 import type { SchemaFieldMap } from "../schema/schema.types.js";
 import { SdkKind, SdkPlacement } from "../sdk/sdk-extension.types.js";
-import { PropertyKind } from "./property-kind";
+import { PropertyKind } from "./property-kind.js";
 import type {
   EntityFields,
   EntityPropertyRefs,
