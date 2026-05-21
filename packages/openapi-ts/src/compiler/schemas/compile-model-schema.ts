@@ -8,7 +8,7 @@ export function compileModelSchema(ref: ModelRef): Record<string, unknown> {
     properties: Object.fromEntries(
       Object.entries(ref.fields).map(([key, fieldRef]) => [
         key,
-        applyNullable({ $ref: `#pending/${fieldRef.id}` }, getFieldNullable(ref.sourceFields?.[key])),
+        applyNullable({ $ref: `#pending/${fieldRef.targetRefId ?? fieldRef.id}` }, getFieldNullable(ref.sourceFields?.[key])),
       ]),
     ),
   };
@@ -21,6 +21,14 @@ export function compileModelSchema(ref: ModelRef): Record<string, unknown> {
 
   if (ref.meta) {
     applySdkExtensions(schema, ref.meta);
+  }
+
+  if (ref.inherits && ref.inherits.length > 0) {
+    schema['x-sdk-inherits'] = ref.inherits;
+  }
+
+  if (ref.abstract) {
+    schema['x-sdk-abstract'] = true;
   }
 
   return schema;

@@ -1,29 +1,48 @@
-import type { VersionContract } from "../version/version-contract.types.js";
-import type { ValidationIssue } from "./validation-result.types.js";
+import type { VersionContract } from '../version/version-contract.types.js';
+import type { ValidationIssue } from './validation-result.types.js';
 
-export function validateDuplicates(
-  contract: VersionContract,
-): ValidationIssue[] {
+export function validateDuplicates(contract: VersionContract): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   issues.push(
     ...findDuplicates(
       contract.resources.map((resource) => resource.context.key),
-      "resources",
+      'resources',
     ),
   );
 
   issues.push(
     ...findRegistryDuplicates(
       contract.properties.map((registry) => registry.name),
-      "properties",
+      'properties',
     ),
   );
 
   issues.push(
     ...findRegistryDuplicates(
-      contract.components.map((registry) => registry.name),
-      "components",
+      contract.schemaComponents.map((registry) => registry.name),
+      'schemaComponents',
+    ),
+  );
+
+  issues.push(
+    ...findRegistryDuplicates(
+      contract.parameterComponents.map((registry) => registry.name),
+      'parameterComponents',
+    ),
+  );
+
+  issues.push(
+    ...findRegistryDuplicates(
+      contract.requestBodyComponents.map((registry) => registry.name),
+      'requestBodyComponents',
+    ),
+  );
+
+  issues.push(
+    ...findRegistryDuplicates(
+      contract.responseComponents.map((registry) => registry.name),
+      'responseComponents',
     ),
   );
 
@@ -39,8 +58,29 @@ export function validateDuplicates(
 
     issues.push(
       ...findRegistryDuplicates(
-        resource.components.map((registry) => registry.name),
-        `${basePath}.components`,
+        resource.schemaComponents.map((registry) => registry.name),
+        `${basePath}.schemaComponents`,
+      ),
+    );
+
+    issues.push(
+      ...findRegistryDuplicates(
+        resource.parameterComponents.map((registry) => registry.name),
+        `${basePath}.parameterComponents`,
+      ),
+    );
+
+    issues.push(
+      ...findRegistryDuplicates(
+        resource.requestBodyComponents.map((registry) => registry.name),
+        `${basePath}.requestBodyComponents`,
+      ),
+    );
+
+    issues.push(
+      ...findRegistryDuplicates(
+        resource.responseComponents.map((registry) => registry.name),
+        `${basePath}.responseComponents`,
       ),
     );
 
@@ -55,10 +95,7 @@ export function validateDuplicates(
   return issues;
 }
 
-function findRegistryDuplicates(
-  names: string[],
-  path: string,
-): ValidationIssue[] {
+function findRegistryDuplicates(names: string[], path: string): ValidationIssue[] {
   return findDuplicates(names, path);
 }
 

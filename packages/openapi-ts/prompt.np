@@ -49,3 +49,9 @@ but the schemas will have x-sdk metadata in openapi
 @point-to-note: zod can only be added in .primitive no where else, also for reusable or stuff that are inheritable, we need a way to have stuff the returns type of propertyRefs
   but allows extentions via .extras({ keys must resove to refs or propertyRefs}) this will cause inherintance behaviour in final open api and refs will know it is inherited, make sure to help
   me do this right and plan well, eg can we just allow anything to be inheritable as long as the return type is propertyRefs that will be easier
+
+
+Refs should behave like pointers.
+If a field is defined using another field ref, we should not create a new primitive schema for the alias field.
+The alias field should resolve to the original/primary schema ref.
+If the alias usage changes required/nullable, only the usage wrapper changes, not the target schema.

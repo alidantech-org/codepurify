@@ -47,3 +47,31 @@ export { resolvePackageConfig } from './config/resolve-package-config.js';
 export { OpenApiTs } from './api/openapi-ts.js';
 
 export type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './api/openapi-ts.types.js';
+export { ComponentBucket } from './components/component-bucket.js';
+export { defineSchemas } from './components/schemas/define-schemas.js';
+
+export type { SchemaComponentDefinition, SchemaComponentRegistry } from './components/schemas/schema-component.types.js';
+export { ParameterLocation } from './components/parameters/parameter-location.js';
+export { defineParameters } from './components/parameters/define-parameters.js';
+
+export type {
+  ParameterComponentDefinition,
+  ParameterComponentRegistry,
+  ParameterSchemaRef,
+} from './components/parameters/parameter-component.types.js';
+
+export { defineRequestBodies } from './components/request-bodies/define-request-bodies.js';
+
+export type {
+  RequestBodyComponentDefinition,
+  RequestBodyComponentRegistry,
+  RequestBodySchemaRef,
+} from './components/request-bodies/request-body-component.types.js';
+
+export { defineResponses } from './components/responses/define-responses.js';
+
+export type {
+  ResponseComponentDefinition,
+  ResponseComponentRegistry,
+  ResponseSchemaRef,
+} from './components/responses/response-component.types.js';

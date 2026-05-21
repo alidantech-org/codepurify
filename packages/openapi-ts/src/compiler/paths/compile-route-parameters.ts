@@ -1,29 +1,49 @@
-import type { ComponentFieldMap } from "../../components/component.types.js";
-import type { RouteSchemaRef } from "../../routes/route.types.js";
-import type { RefResolver } from "../refs/ref-resolver.types.js";
-import { compileRouteSchema } from "./compile-route-schema.js";
+import type { ComponentFieldMap } from '../../components/component.types.js';
+import type { RouteParameterRef } from '../../routes/route.types.js';
+import { RefKind } from '../../refs/ref-kind.js';
+import type { ParameterRef } from '../../refs/ref.types.js';
+import type { RefResolver } from '../refs/ref-resolver.types.js';
+import { toParameterOpenApiRef } from '../refs/to-component-bucket-ref.js';
+import { compileRouteSchema } from './compile-route-schema.js';
 
 export function compileRouteParameters(
-  schema: RouteSchemaRef | undefined,
-  location: "path" | "query",
+  schema: RouteParameterRef | readonly ParameterRef[] | undefined,
+  location: 'path' | 'query',
   resolver: RefResolver,
 ): unknown[] {
   if (!schema) return [];
 
-  const compiled = compileRouteSchema(schema, resolver);
+  if (Array.isArray(schema)) {
+    return schema.map((ref) => toParameterOpenApiRef(ref, resolver));
+  }
 
-  if (!isOpenApiObjectSchema(compiled)) return [];
+  if (isParameterRef(schema)) {
+    return [toParameterOpenApiRef(schema, resolver)];
+  }
 
-  return Object.entries(compiled.properties ?? {}).map(([name, property]) => ({
+  const compiled = compileRouteSchema(schema as ComponentFieldMap, resolver);
+  const objectSchema = unwrapObjectSchema(compiled);
+
+  if (!objectSchema?.properties) return [];
+
+  return Object.entries(objectSchema.properties).map(([name, property]) => ({
     name,
     in: location,
-    required: location === "path",
+    required: location === 'path' ? true : isRequired(name, objectSchema.required),
     schema: property,
   }));
 }
 
-function isOpenApiObjectSchema(
-  value: unknown,
-): value is { properties?: ComponentFieldMap } {
-  return !!value && typeof value === "object" && !Array.isArray(value);
+function unwrapObjectSchema(value: unknown): { properties?: Record<string, unknown>; required?: string[] } | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  if ('properties' in value) return value as { properties?: Record<string, unknown>; required?: string[] };
+  return undefined;
+}
+
+function isRequired(name: string, required: string[] | undefined): boolean {
+  return required?.includes(name) ?? false;
+}
+
+function isParameterRef(value: unknown): value is ParameterRef {
+  return !!value && typeof value === 'object' && 'kind' in value && value.kind === RefKind.parameter;
 }
