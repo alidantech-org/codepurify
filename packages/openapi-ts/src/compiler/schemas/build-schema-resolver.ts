@@ -5,13 +5,13 @@ import {
 } from "../../naming/ref-schema-name.js";
 import type {
   EntityPropertyRefs,
+  PropertyRefGroup,
   PropertyRegistry,
   PropertyRegistryRef,
 } from "../../properties/property.types.js";
 import type { ResourceBuilder } from "../../resource/define-resource.js";
 import type { RefResolver } from "../refs/ref-resolver.types.js";
 import { toSchemaName } from "../../naming/schema-name.js";
-import { PropertyRef } from "../../refs/ref.types.js";
 
 export function buildSchemaResolver(
   resources: readonly ResourceBuilder[],
@@ -97,6 +97,6 @@ function isEntityRefs(value: PropertyRegistryRef): value is EntityPropertyRefs {
 
 function isPropertyRefGroup(
   value: PropertyRegistryRef,
-): value is Record<string, PropertyRef> {
-  return !!value && typeof value === "object";
+): value is PropertyRefGroup {
+  return !!value && typeof value === "object" && !isEntityRefs(value);
 }

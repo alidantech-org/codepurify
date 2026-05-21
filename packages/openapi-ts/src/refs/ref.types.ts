@@ -1,5 +1,7 @@
-import type { RefKind } from "./ref-kind.js";
+import { RefKind } from "./ref-kind.js";
 import type { SdkExtensionMeta } from "../sdk/sdk-extension.types.js";
+import type { RefWithUsageMethods } from "./ref-usage.types.js";
+import type { SchemaFieldMap } from "../schema/schema.types.js";
 
 export interface EngineRefBase {
   readonly id: string;
@@ -21,7 +23,8 @@ export interface ComponentRef extends EngineRefBase {
 export interface ModelRef extends EngineRefBase {
   readonly kind: typeof RefKind.model;
   readonly modelKey: string;
-  readonly fields: Record<string, PropertyRef>;
+  readonly fields: Record<string, RefWithUsageMethods<PropertyRef>>;
+  readonly sourceFields?: SchemaFieldMap;
 }
 
 export interface RouteRef extends EngineRefBase {

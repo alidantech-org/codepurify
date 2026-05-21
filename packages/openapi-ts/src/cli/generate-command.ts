@@ -10,7 +10,8 @@ export async function runGenerateCommand(): Promise<number> {
     const result = await api.generate({ config });
 
     if (!result.success) {
-      console.error(CliMessage.failed, result.error);
+      console.error(CliMessage.failed);
+      console.error(result.error);
       return 1;
     }
 

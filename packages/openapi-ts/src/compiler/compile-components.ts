@@ -3,6 +3,7 @@ import type { VersionContract } from "../version/version-contract.types.js";
 import { buildSchemaResolver } from "./schemas/build-schema-resolver.js";
 import { compileComponentSchema } from "./schemas/compile-component-schema.js";
 import { compileModelSchema } from "./schemas/compile-model-schema.js";
+import { compilePropertySchema } from "./schemas/compile-property-schema.js";
 import { resolvePendingRefs } from "./refs/resolve-pending-refs.js";
 
 export interface CompiledComponentsResult {
@@ -34,9 +35,22 @@ export function compileComponents(
       for (const value of Object.values(registry.ref)) {
         if (!isEntityRefs(value)) continue;
 
+        for (const [key, fieldRef] of Object.entries(value.fields)) {
+          const name = resolver.schemas.get(fieldRef.id);
+          const sourceField = value.model.sourceFields?.[key];
+
+          if (!name || !sourceField) continue;
+
+          schemas[name] = resolvePendingRefs(
+            compilePropertySchema(sourceField),
+            resolver,
+          );
+        }
+
         for (const modelRef of [
           value.model,
           value.publicModel,
+          value.selectedModel,
           value.partialModel,
         ]) {
           const name = resolver.schemas.get(modelRef.id);
@@ -76,6 +90,7 @@ export function compileComponents(
 function isEntityRefs(value: unknown): value is {
   model: Parameters<typeof compileModelSchema>[0];
   publicModel: Parameters<typeof compileModelSchema>[0];
+  selectedModel: Parameters<typeof compileModelSchema>[0];
   partialModel: Parameters<typeof compileModelSchema>[0];
 } {
   return (
@@ -83,6 +98,7 @@ function isEntityRefs(value: unknown): value is {
     typeof value === "object" &&
     "model" in value &&
     "publicModel" in value &&
+    "selectedModel" in value &&
     "partialModel" in value
   );
 }

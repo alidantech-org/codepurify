@@ -1,5 +1,6 @@
 import type { PropertyKind } from "./property-kind.js";
-import type { PropertyRef, ModelRef } from "../refs/ref.types.js";
+import type { ModelRef, PropertyRef } from "../refs/ref.types.js";
+import type { RefWithUsageMethods } from "../refs/ref-usage.types.js";
 import type { SchemaFieldMap } from "../schema/schema.types.js";
 import type { SdkExtensionMeta } from "../sdk/sdk-extension.types.js";
 
@@ -34,13 +35,25 @@ export type PropertyDefinition<TEntity = unknown> =
   | EntityPropertyDefinition<TEntity>
   | ForRefPropertyDefinition;
 
-export type PropertyRefGroup = Record<string, PropertyRef>;
+export type PropertyRefGroup = Record<string, RefWithUsageMethods<PropertyRef>>;
+
+export interface EntityQueryRefs {
+  readonly exact?: ModelRef;
+  readonly search?: ModelRef;
+  readonly exactSearch?: ModelRef;
+  readonly range?: ModelRef;
+  readonly in?: ModelRef;
+  readonly exists?: ModelRef;
+  readonly sort?: ModelRef;
+}
 
 export interface EntityPropertyRefs {
   readonly fields: PropertyRefGroup;
   readonly model: ModelRef;
   readonly publicModel: ModelRef;
+  readonly selectedModel: ModelRef;
   readonly partialModel: ModelRef;
+  readonly query: EntityQueryRefs;
 }
 
 export type PropertyRegistryRef =
@@ -53,3 +66,17 @@ export interface PropertyRegistry {
   readonly definitions: PropertyDefinition[];
   readonly ref: Record<string, PropertyRegistryRef>;
 }
+
+export type NamedEntityPropertyRegistry<TName extends string> = Omit<
+  PropertyRegistry,
+  "ref"
+> & {
+  readonly ref: Record<TName, EntityPropertyRefs>;
+};
+
+export type NamedPropertyRefRegistry<TName extends string> = Omit<
+  PropertyRegistry,
+  "ref"
+> & {
+  readonly ref: Record<TName, PropertyRefGroup>;
+};

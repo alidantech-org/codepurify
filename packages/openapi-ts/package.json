@@ -16,6 +16,7 @@
             "README.md"
       ],
       "scripts": {
+            "dev": "tsc -p tsconfig.json --watch",
             "build": "tsc -p tsconfig.json",
             "clean": "rm -rf dist",
             "typecheck": "tsc -p tsconfig.json --noEmit",

@@ -1,5 +1,6 @@
 import type { ComponentFieldMap } from "../components/component.types.js";
 import { isComponentRef, isPropertyRef } from "./ref-guards.js";
+import { isRefUsage } from "./ref-usage-guards.js";
 import type { ValidationIssue } from "./validation-result.types.js";
 
 export function validateComponentFields(
@@ -11,7 +12,9 @@ export function validateComponentFields(
   for (const [key, value] of Object.entries(fields)) {
     const currentPath = `${path}.${key}`;
 
-    if (isPropertyRef(value) || isComponentRef(value)) continue;
+    if (isPropertyRef(value) || isComponentRef(value) || isRefUsage(value)) {
+      continue;
+    }
 
     if (isPlainObject(value)) {
       issues.push(...validateComponentFields(value, currentPath));

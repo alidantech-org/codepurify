@@ -16,6 +16,15 @@ export async function generateOpenApi(
   const files: string[] = [];
   const resolvedConfig = resolvePackageConfig(config);
 
+  if (resolvedConfig.contracts.length === 0) {
+    return {
+      success: false,
+      files,
+      error:
+        "No contracts found. Add at least one version contract to package.config.ts.",
+    };
+  }
+
   for (const version of resolvedConfig.contracts) {
     const compiled = compileOpenApi(version.contract, resolvedConfig.compile);
 

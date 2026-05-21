@@ -1,9 +1,15 @@
-import type { ComponentRef, PropertyRef } from "../refs/ref.types.js";
+import type {
+  ComponentRef,
+  EngineRef,
+  PropertyRef,
+} from "../refs/ref.types.js";
+import type { RefUsage } from "../refs/ref-usage.types.js";
 import type { SdkExtensionMeta } from "../sdk/sdk-extension.types.js";
 
 export type ComponentFieldValue =
   | PropertyRef
   | ComponentRef
+  | RefUsage<EngineRef>
   | ComponentFieldMap;
 
 export type ComponentFieldMap = {
