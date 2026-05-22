@@ -1,5 +1,6 @@
 import type { OpenApiComponents } from '../openapi/openapi.types.js';
 import type { VersionContract } from '../version/version-contract.types.js';
+import type { CompilerContext } from './compiler-context.types.js';
 import type { PropertyRefGroup } from '../properties/property.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
 import { buildSchemaResolver } from './schemas/build-schema-resolver.js';
@@ -18,7 +19,20 @@ export interface CompiledComponentsResult {
   readonly resolver: ReturnType<typeof buildSchemaResolver>;
 }
 
-export function compileComponents(contract: VersionContract): CompiledComponentsResult {
+export function compileComponents(contract: VersionContract, context: CompilerContext): CompiledComponentsResult {
+  const logger = context.logger.child({ scope: 'components' });
+  const end = logger.time('compile components');
+
+  logger.step('Compiling schema components');
+
+  logger.verbose('Component registry summary', {
+    versionSchemaComponents: contract.schemaComponents.length,
+    versionParameterComponents: contract.parameterComponents.length,
+    versionRequestBodyComponents: contract.requestBodyComponents.length,
+    versionResponseComponents: contract.responseComponents.length,
+    resourceCount: contract.resources.length,
+  });
+
   const resolver = buildSchemaResolver(
     contract.resources,
     contract.properties,
@@ -26,6 +40,7 @@ export function compileComponents(contract: VersionContract): CompiledComponents
     contract.parameterComponents,
     contract.requestBodyComponents,
     contract.responseComponents,
+    context,
   );
 
   const schemas: Record<string, unknown> = {};
@@ -36,7 +51,11 @@ export function compileComponents(contract: VersionContract): CompiledComponents
   for (const registry of contract.schemaComponents) {
     for (const definition of registry.definitions) {
       const ref = registry.ref[definition.name];
-      schemas[resolver.schemas.get(ref.id) ?? definition.name] = resolvePendingRefs(compileComponentSchema(definition, ref), resolver);
+      schemas[resolver.schemas.get(ref.id) ?? definition.name] = resolvePendingRefs(
+        compileComponentSchema(definition, ref),
+        resolver,
+        context,
+      );
     }
   }
 
@@ -70,7 +89,7 @@ export function compileComponents(contract: VersionContract): CompiledComponents
           if (isPropertyRefGroup(groupRefs)) {
             const schemaName = toSchemaName(definition.name);
 
-            schemas[schemaName] = resolvePendingRefs(compilePropertyGroupSchema(definition, groupRefs, resolver), resolver);
+            schemas[schemaName] = resolvePendingRefs(compilePropertyGroupSchema(definition, groupRefs, resolver), resolver, context);
           }
         }
       }
@@ -86,7 +105,7 @@ export function compileComponents(contract: VersionContract): CompiledComponents
 
             if (!name || !sourceField) continue;
 
-            schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver);
+            schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver, context);
           }
 
           continue;
@@ -102,7 +121,7 @@ export function compileComponents(contract: VersionContract): CompiledComponents
 
           if (!name || !sourceField) continue;
 
-          schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver);
+          schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver, context);
         }
 
         const modelsToEmit = value.abstract ? [value.model] : [value.publicModel, value.selectedModel];
@@ -111,7 +130,7 @@ export function compileComponents(contract: VersionContract): CompiledComponents
           const name = resolver.schemas.get(modelRef.id);
           if (!name) continue;
 
-          schemas[name] = resolvePendingRefs(compileModelSchema(modelRef), resolver);
+          schemas[name] = resolvePendingRefs(compileModelSchema(modelRef), resolver, context);
         }
       }
     }
@@ -123,7 +142,7 @@ export function compileComponents(contract: VersionContract): CompiledComponents
 
         if (!name) continue;
 
-        schemas[name] = resolvePendingRefs(compileComponentSchema(definition, ref), resolver);
+        schemas[name] = resolvePendingRefs(compileComponentSchema(definition, ref), resolver, context);
       }
     }
 
@@ -148,6 +167,17 @@ export function compileComponents(contract: VersionContract): CompiledComponents
       }
     }
   }
+
+  logger.verbose('Compiled component counts', {
+    schemas: Object.keys(schemas).length,
+    parameters: Object.keys(parameters).length,
+    requestBodies: Object.keys(requestBodies).length,
+    responses: Object.keys(responses).length,
+  });
+
+  logger.debug('Compiled schema keys', Object.keys(schemas));
+
+  end();
 
   return {
     components: {

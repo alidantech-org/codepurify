@@ -1,28 +1,69 @@
-import { createRequire } from "module";
-import path from "path";
-import { pathToFileURL } from "url";
-import { DefaultConfigFileName } from "./cli.constants.js";
-import type { PackageConfig } from "../config/package-config.types.js";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
 
-const require = createRequire(import.meta.url);
-let tsxRegistered = false;
+const CONFIG_FILE_NAMES = ['package.config.ts', 'package.config.mts', 'package.config.js', 'package.config.mjs'];
 
-export async function loadPackageConfig(
-  cwd = process.cwd(),
-  fileName = DefaultConfigFileName,
-): Promise<PackageConfig> {
-  registerTsx();
+export async function loadPackageConfig(cwd = process.cwd()) {
+  const configPath = await findPackageConfig(cwd);
+  const bundledPath = await bundlePackageConfig(configPath, cwd);
 
-  const configPath = path.resolve(cwd, fileName);
-  const moduleUrl = pathToFileURL(configPath).href;
-  const loaded = await import(moduleUrl);
+  const module = await import(pathToFileURL(bundledPath).href);
+  const config = module.default ?? module.config;
 
-  return loaded.default as PackageConfig;
+  if (!config) {
+    throw new Error('Package config must export a default config or named `config` export.');
+  }
+
+  return config;
 }
 
-function registerTsx(): void {
-  if (tsxRegistered) return;
+async function findPackageConfig(cwd: string): Promise<string> {
+  for (const fileName of CONFIG_FILE_NAMES) {
+    const fullPath = path.resolve(cwd, fileName);
 
-  require("tsx/cjs");
-  tsxRegistered = true;
+    try {
+      await fs.access(fullPath);
+      return fullPath;
+    } catch {
+      // keep looking
+    }
+  }
+
+  throw new Error(`No package config found. Expected one of: ${CONFIG_FILE_NAMES.join(', ')}`);
+}
+
+async function bundlePackageConfig(configPath: string, cwd: string): Promise<string> {
+  const cacheDir = path.resolve(cwd, 'node_modules/.cache/openapi-ts');
+  const outfile = path.join(cacheDir, 'package.config.mjs');
+
+  await fs.mkdir(cacheDir, { recursive: true });
+
+  await build({
+    entryPoints: [configPath],
+    outfile,
+    bundle: true,
+    platform: 'node',
+    target: 'node20',
+    format: 'esm',
+    sourcemap: 'inline',
+    absWorkingDir: cwd,
+    tsconfig: await resolveTsConfig(cwd),
+    packages: 'external',
+    external: ['@codepurify/openapi-ts', 'zod'],
+  });
+
+  return outfile;
+}
+
+async function resolveTsConfig(cwd: string): Promise<string | undefined> {
+  const tsconfigPath = path.resolve(cwd, 'tsconfig.json');
+
+  try {
+    await fs.access(tsconfigPath);
+    return tsconfigPath;
+  } catch {
+    return undefined;
+  }
 }

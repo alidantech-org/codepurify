@@ -1,9 +1,15 @@
 import type { OpenApiOperation } from '../../openapi/openapi.types.js';
-import type { RouteDefinition, RouteResponseRef } from '../../routes/route.types.js';
+import type {
+  RouteDefinition,
+  RouteBodyInput,
+  RouteResponseInput,
+  RouteResponseObjectInput,
+  RouteBodyObjectInput,
+} from '../../routes/route.types.js';
 import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
-import type { ParameterRef, RequestBodyRef, ResponseRef } from '../../refs/ref.types.js';
+import type { RequestBodyRef, ResponseRef } from '../../refs/ref.types.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { toParameterOpenApiRef, toRequestBodyOpenApiRef, toResponseOpenApiRef } from '../refs/to-component-bucket-ref.js';
 import { compileRouteParameters } from './compile-route-parameters.js';
@@ -22,27 +28,14 @@ export function compileRouteOperation(
     responses: compileResponses(route, resolver, defaultResponses),
   };
 
-  const parameters = [
-    ...(route.parameters ?? []).map((ref) => toParameterOpenApiRef(ref, resolver)),
-    ...compileRouteParameters(route.params, 'path', resolver),
-    ...compileRouteParameters(route.query, 'query', resolver),
-  ];
+  const parameters = [...compileRouteParameters(route.params, 'path', resolver), ...compileRouteParameters(route.query, 'query', resolver)];
 
   if (parameters.length > 0) {
     operation.parameters = parameters;
   }
 
   if (route.body) {
-    operation.requestBody = isRequestBodyRef(route.body)
-      ? toRequestBodyOpenApiRef(route.body, resolver)
-      : {
-          required: true,
-          content: {
-            [ContentType.json]: {
-              schema: compileRouteSchema(route.body, resolver),
-            },
-          },
-        };
+    operation.requestBody = compileRequestBody(route.body, resolver);
   }
 
   if (route.meta) {
@@ -51,6 +44,40 @@ export function compileRouteOperation(
   }
 
   return operation;
+}
+
+function compileRequestBody(body: RouteBodyInput, resolver: RefResolver): unknown {
+  // Handle object-style input
+  if (isBodyObjectInput(body)) {
+    return {
+      required: body.required ?? true,
+      description: body.description,
+      content: {
+        [ContentType.json]: {
+          schema: compileRouteSchema(body.schema, resolver),
+        },
+      },
+    };
+  }
+
+  // Handle legacy RequestBodyRef
+  if (isRequestBodyRef(body)) {
+    return toRequestBodyOpenApiRef(body, resolver);
+  }
+
+  // Handle direct schema input
+  return {
+    required: true,
+    content: {
+      [ContentType.json]: {
+        schema: compileRouteSchema(body, resolver),
+      },
+    },
+  };
+}
+
+function isBodyObjectInput(body: RouteBodyInput): body is RouteBodyObjectInput {
+  return typeof body === 'object' && 'schema' in body;
 }
 
 function compileResponses(
@@ -79,9 +106,23 @@ function compileResponses(
   return responses;
 }
 
-function compileResponseValue(description: string, response: RouteResponseRef, resolver: RefResolver): unknown {
-  if (isResponseRef(response)) return toResponseOpenApiRef(response, resolver);
+function compileResponseValue(description: string, response: RouteResponseInput, resolver: RefResolver): unknown {
+  // Handle object-style input
+  if (isResponseObjectInput(response)) {
+    return jsonResponse(response.description ?? description, compileRouteSchema(response.schema, resolver));
+  }
+
+  // Handle legacy ResponseRef
+  if (isResponseRef(response)) {
+    return toResponseOpenApiRef(response, resolver);
+  }
+
+  // Handle direct schema input
   return jsonResponse(description, compileRouteSchema(response, resolver));
+}
+
+function isResponseObjectInput(response: RouteResponseInput): response is RouteResponseObjectInput {
+  return typeof response === 'object' && 'schema' in response;
 }
 
 function jsonResponse(description: string, schema: unknown): Record<string, unknown> {

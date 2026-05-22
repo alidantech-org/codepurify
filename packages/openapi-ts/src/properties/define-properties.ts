@@ -2,28 +2,28 @@ import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import { RefKind } from '../refs/ref-kind.js';
 import type { ModelRef, PropertyRef } from '../refs/ref.types.js';
 import { withRefMethods } from '../refs/ref-methods.js';
+import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
 import { isHiddenByDefault } from '../schema/schema-access.js';
 import { QueryBehavior } from '../schema/query-behavior.js';
-import type { SchemaFieldMap } from '../schema/schema.types.js';
+import type { PropertyDefinitionFieldMap, SchemaFieldMap } from '../schema/schema.types.js';
 import { SdkKind, SdkPlacement } from '../sdk/sdk-extension.types.js';
-import { OpenApiRefPattern } from '../openapi/ref-patterns.js';
 import { toSchemaName } from '../naming/schema-name.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
 import { PropertyKind } from './property-kind.js';
 import type {
-  EntityFields,
-  EntityInheritanceInput,
   EntityOptions,
   EntityPropertyRefs,
   NamedEntityPropertyRegistry,
-  NamedPropertyRefRegistry,
   PropertyDefinition,
   PropertyGroupOptions,
+  PropertyGroupRegistry,
   PropertyRegistry,
   PropertyRefGroup,
-  EntityFieldRefs,
-  MergedEntityFieldRefs,
+  PropertyFieldRefMap,
+  EntityExtensionMap,
+  MergePropertyRefGroups,
+  PropertyRefsFromFields,
 } from './property.types.js';
 
 export interface DefinePropertiesOptions extends OptionalResourceContext {
@@ -34,11 +34,11 @@ export function defineProperties(options: DefinePropertiesOptions) {
   const definitions: PropertyDefinition[] = [];
   const refs: PropertyRegistry['ref'] = {};
 
-  function shared<TName extends string>(
+  function shared<TName extends string, TFields extends PropertyDefinitionFieldMap>(
     name: TName,
-    fields: SchemaFieldMap,
+    fields: TFields,
     groupOptions: PropertyGroupOptions = {},
-  ): NamedPropertyRefRegistry<TName> {
+  ): PropertyGroupRegistry<PropertyFieldRefMap<TFields>> {
     definitions.push({
       kind: PropertyKind.shared,
       name,
@@ -46,15 +46,23 @@ export function defineProperties(options: DefinePropertiesOptions) {
       emitSchema: groupOptions.emitSchema,
       abstract: groupOptions.abstract,
     });
-    refs[name] = createPropertyRefs(options, name, fields, PropertyKind.shared);
-    return registry() as NamedPropertyRefRegistry<TName>;
+
+    const groupRefs = createPropertyRefs(options, name, fields, PropertyKind.shared) as PropertyFieldRefMap<TFields>;
+
+    refs[name] = groupRefs;
+
+    return {
+      name: options.name,
+      definitions,
+      ref: groupRefs,
+    } as PropertyGroupRegistry<PropertyFieldRefMap<TFields>>;
   }
 
-  function forRef<TName extends string>(
+  function forRef<TName extends string, TFields extends PropertyDefinitionFieldMap>(
     name: TName,
-    fields: SchemaFieldMap,
+    fields: TFields,
     groupOptions: PropertyGroupOptions = {},
-  ): NamedPropertyRefRegistry<TName> {
+  ): PropertyGroupRegistry<PropertyFieldRefMap<TFields>> {
     definitions.push({
       kind: PropertyKind.forRef,
       name,
@@ -62,23 +70,36 @@ export function defineProperties(options: DefinePropertiesOptions) {
       emitSchema: groupOptions.emitSchema,
       abstract: groupOptions.abstract,
     });
-    refs[name] = createPropertyRefs(options, name, fields, PropertyKind.forRef);
-    return registry() as NamedPropertyRefRegistry<TName>;
+
+    const groupRefs = createPropertyRefs(options, name, fields, PropertyKind.forRef) as PropertyFieldRefMap<TFields>;
+
+    refs[name] = groupRefs;
+
+    return {
+      name: options.name,
+      definitions,
+      ref: groupRefs,
+    } as PropertyGroupRegistry<PropertyFieldRefMap<TFields>>;
   }
 
   function entity<
-    TEntity,
-    TName extends string = string,
-    TFields extends EntityFields<TEntity> = EntityFields<TEntity>,
-    TExtends extends EntityInheritanceInput | readonly EntityInheritanceInput[] | undefined =
-      | EntityInheritanceInput
-      | readonly EntityInheritanceInput[]
-      | undefined,
+    TName extends string,
+    TInputFields extends PropertyDefinitionFieldMap,
+    TBaseEntity extends NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap> | undefined = undefined,
   >(
     name: TName,
-    fields: TFields,
-    entityOptions?: EntityOptions<TExtends>,
-  ): NamedEntityPropertyRegistry<TName, MergedEntityFieldRefs<TExtends, EntityFieldRefs<TEntity, TFields>>> {
+    fields: TInputFields,
+    entityOptions?: EntityOptions<TBaseEntity>,
+  ): NamedEntityPropertyRegistry<
+    TName,
+    MergePropertyRefGroups<
+      TBaseEntity extends NamedEntityPropertyRegistry<string, infer TBaseFields, EntityExtensionMap> ? TBaseFields : {},
+      PropertyRefsFromFields<TInputFields>
+    >,
+    TBaseEntity extends NamedEntityPropertyRegistry<infer TBaseName, infer TBaseFields, infer TBaseExtends>
+      ? TBaseExtends & Record<TBaseName, TBaseEntity>
+      : {}
+  > {
     const optionsArg = entityOptions ?? {};
     const inheritedSources = normalizeExtends(optionsArg.extends);
     const inheritedFields = mergeInheritedPropertyGroups(inheritedSources);
@@ -96,9 +117,48 @@ export function defineProperties(options: DefinePropertiesOptions) {
       abstract: optionsArg.abstract,
     });
 
-    refs[name] = createEntityRefs(options, name, mergedFields, fields as SchemaFieldMap, inheritedSources, optionsArg.abstract === true);
+    const entityRefs = createEntityRefs(
+      options,
+      name,
+      mergedFields,
+      fields as SchemaFieldMap,
+      inheritedSources,
+      optionsArg.abstract === true,
+    );
 
-    return registry() as NamedEntityPropertyRegistry<TName, MergedEntityFieldRefs<TExtends, EntityFieldRefs<TEntity, TFields>>>;
+    refs[name] = entityRefs;
+
+    const extendsMap: EntityExtensionMap = {};
+    if (optionsArg.extends) {
+      extendsMap[optionsArg.extends.name] = {
+        name: optionsArg.extends.name,
+        ref: optionsArg.extends.ref,
+      };
+      if (optionsArg.extends.extends) {
+        Object.assign(extendsMap, optionsArg.extends.extends);
+      }
+    }
+
+    return {
+      name: options.name,
+      definitions,
+      ref: entityRefs,
+      fields: fields as PropertyDefinitionFieldMap,
+      sourceFields: fields as PropertyDefinitionFieldMap,
+      inheritedFields: inheritedFields as PropertyDefinitionFieldMap,
+      allFields: mergedFields as PropertyDefinitionFieldMap,
+      extends: extendsMap,
+      abstract: optionsArg.abstract,
+    } as NamedEntityPropertyRegistry<
+      TName,
+      MergePropertyRefGroups<
+        TBaseEntity extends NamedEntityPropertyRegistry<string, infer TBaseFields, EntityExtensionMap> ? TBaseFields : {},
+        PropertyRefsFromFields<TInputFields>
+      >,
+      TBaseEntity extends NamedEntityPropertyRegistry<infer TBaseName, infer TBaseFields, infer TBaseExtends>
+        ? TBaseExtends & Record<TBaseName, TBaseEntity>
+        : {}
+    >;
   }
 
   function registry(): PropertyRegistry {
@@ -156,7 +216,7 @@ function createModelRef(
   modelKey: string,
   fields: PropertyRefGroup,
   sourceFields?: SchemaFieldMap,
-  inherited?: readonly EntityInheritanceInput[],
+  inherited?: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[],
   isAbstract = false,
 ): ModelRef {
   const refId = createScopedId(options, EngineIdPart.model, name, modelKey);
@@ -257,81 +317,88 @@ function createQueryModel(
   fields: SchemaFieldMap,
   refs: PropertyRefGroup,
   behavior: QueryBehavior,
-): ModelRef {
-  return createModelRef(
-    options,
-    name,
-    modelKey,
-    Object.fromEntries(
-      Object.entries(refs).filter(([key]) => {
-        const field = fields[key];
-        return hasBehaviorOptions(field) && 'query' in field && !!field.query && field.query.methods?.includes(behavior);
-      }),
+): RefWithUsageMethods<ModelRef> {
+  return withRefMethods(
+    createModelRef(
+      options,
+      name,
+      modelKey,
+      Object.fromEntries(
+        Object.entries(refs).filter(([key]) => {
+          const field = fields[key];
+          return hasBehaviorOptions(field) && 'query' in field && !!field.query && field.query.methods?.includes(behavior);
+        }),
+      ),
+      fields,
     ),
-    fields,
   );
 }
 
-function createSortModel(options: DefinePropertiesOptions, name: string, fields: SchemaFieldMap, refs: PropertyRefGroup): ModelRef {
-  return createModelRef(
-    options,
-    name,
-    'query-sort',
-    Object.fromEntries(
-      Object.entries(refs).filter(([key]) => {
-        const field = fields[key];
-        return hasBehaviorOptions(field) && 'query' in field && !!field.query && field.query.sort === true;
-      }),
+function createSortModel(
+  options: DefinePropertiesOptions,
+  name: string,
+  fields: SchemaFieldMap,
+  refs: PropertyRefGroup,
+): RefWithUsageMethods<ModelRef> {
+  return withRefMethods(
+    createModelRef(
+      options,
+      name,
+      'query-sort',
+      Object.fromEntries(
+        Object.entries(refs).filter(([key]) => {
+          const field = fields[key];
+          return hasBehaviorOptions(field) && 'query' in field && !!field.query && field.query.sort === true;
+        }),
+      ),
+      fields,
     ),
-    fields,
   );
 }
 
-function normalizeExtends(value: EntityOptions['extends']): EntityInheritanceInput[] {
+function isEntityRegistry(value: unknown): value is NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap> {
+  return typeof value === 'object' && value !== null && 'name' in value && 'ref' in value && 'allFields' in value;
+}
+
+function normalizeExtends(
+  value: NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap> | undefined,
+): NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[] {
   if (!value) return [];
 
-  const sources = Array.isArray(value) ? value : [value];
-
-  return sources.map((source) => {
-    if (isEntityPropertyRefs(source) || isPropertyRefGroup(source)) {
-      return source;
-    }
-
-    throw new Error(
-      'Invalid `extends` option. Use `extends: baseEntity.ref.BaseEntity` or `extends: baseFields.ref.BaseFields`, not the full registry returned by `.entity()` or `.shared()`.',
-    );
-  });
-}
-
-function getInheritanceFields(source: EntityInheritanceInput): PropertyRefGroup {
-  if (isEntityPropertyRefs(source)) {
-    return source.fields;
+  if (isEntityRegistry(value)) {
+    return [value];
   }
 
-  if (isPropertyRefGroup(source)) {
-    return source;
-  }
-
-  throw new Error(
-    'Invalid entity inheritance source. Use `extends: baseEntity.ref.BaseEntity` or `extends: baseFields.ref.BaseFields`. Do not pass the full registry object.',
-  );
+  throw new Error('Invalid entity inheritance source. Use the entity object returned by .entity(...), e.g. extends: baseEntity.');
 }
 
-function mergeInheritedPropertyGroups(sources: readonly EntityInheritanceInput[]): SchemaFieldMap {
+function getInheritanceFields(
+  source: NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>,
+): PropertyDefinitionFieldMap {
+  return source.allFields;
+}
+
+function mergeInheritedPropertyGroups(
+  sources: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[],
+): SchemaFieldMap {
   const merged: SchemaFieldMap = {};
 
   for (const source of sources) {
     const fields = getInheritanceFields(source);
 
-    for (const [key, ref] of Object.entries(fields)) {
-      merged[key] = ref;
+    for (const [key, field] of Object.entries(fields)) {
+      // Directly copy inherited fields without wrapping in schema.ref()
+      merged[key] = field as SchemaFieldMap[string];
     }
   }
 
   return merged;
 }
 
-function mergeInheritedFields(inherited: readonly EntityInheritanceInput[], ownFields: SchemaFieldMap): SchemaFieldMap {
+function mergeInheritedFields(
+  inherited: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[],
+  ownFields: SchemaFieldMap,
+): SchemaFieldMap {
   const inheritedFields = mergeInheritedPropertyGroups(inherited);
 
   return {
@@ -345,7 +412,7 @@ function createEntityRefs(
   name: string,
   mergedFields: SchemaFieldMap,
   ownFields: SchemaFieldMap,
-  inheritedSources: EntityInheritanceInput[],
+  inheritedSources: NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[],
   isAbstract = false,
 ): EntityPropertyRefs {
   const fieldRefs = createPropertyRefs(options, name, mergedFields, PropertyKind.entity);
@@ -355,39 +422,34 @@ function createEntityRefs(
     fields: fieldRefs,
     abstract: isAbstract,
     schemaRef: `#/components/schemas/${toSchemaName(name)}`,
-    model: createModelRef(options, name, isAbstract ? 'abstract-model' : 'model', fieldRefs, mergedFields, inheritedSources, isAbstract),
-    publicModel: createModelRef(options, name, 'public-model', filterPublicFields(mergedFields, fieldRefs), mergedFields, inheritedSources),
-    selectedModel: createModelRef(
-      options,
-      name,
-      'selected-model',
-      filterSelectedFields(mergedFields, fieldRefs),
-      mergedFields,
-      inheritedSources,
+    model: withRefMethods(
+      createModelRef(options, name, isAbstract ? 'abstract-model' : 'model', fieldRefs, mergedFields, inheritedSources, isAbstract),
     ),
-    partialModel: createModelRef(options, name, 'partial-model', fieldRefs, mergedFields, inheritedSources),
+    publicModel: withRefMethods(
+      createModelRef(options, name, 'public-model', filterPublicFields(mergedFields, fieldRefs), mergedFields, inheritedSources),
+    ),
+    selectedModel: withRefMethods(
+      createModelRef(options, name, 'selected-model', filterSelectedFields(mergedFields, fieldRefs), mergedFields, inheritedSources),
+    ),
+    partialModel: withRefMethods(createModelRef(options, name, 'partial-model', fieldRefs, mergedFields, inheritedSources)),
     query: createQueryRefs(options, name, mergedFields, fieldRefs),
   };
 }
 
-function createInheritanceMeta(inherited: readonly EntityInheritanceInput[] | undefined): ModelRef['inherits'] {
+function createInheritanceMeta(
+  inherited: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[] | undefined,
+): ModelRef['inherits'] {
   if (!inherited || inherited.length === 0) return undefined;
 
   return inherited.map((source) => {
-    if (isEntityPropertyRefs(source)) {
+    if (isEntityRegistry(source)) {
       return {
-        ref: source.schemaRef ?? `#/components/schemas/${toSchemaName(source.name)}`,
-        fields: Object.keys(source.fields),
+        ref: source.ref.schemaRef ?? `#/components/schemas/${toSchemaName(source.name)}`,
+        fields: Object.keys(source.allFields),
       };
     }
 
-    const firstRef = Object.values(source)[0];
-    const groupName = inferGroupNameFromRefId(firstRef?.id);
-
-    return {
-      ref: `${OpenApiRefPattern.schemas}${toSchemaName(groupName)}`,
-      fields: Object.keys(source),
-    };
+    throw new Error('Invalid entity inheritance source in createInheritanceMeta');
   });
 }
 

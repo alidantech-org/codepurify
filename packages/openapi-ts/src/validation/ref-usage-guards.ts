@@ -13,3 +13,11 @@ export function getRefRequired(value: unknown): boolean | undefined {
 export function getRefNullable(value: unknown): boolean | undefined {
   return isRefUsage(value) ? value.usage.nullable : undefined;
 }
+
+export function getRefArray(value: unknown): boolean | undefined {
+  return isRefUsage(value) ? value.usage.array : undefined;
+}
+
+export function getRefExtendWith(value: unknown): import('../refs/ref-usage.types.js').ExtendWithFieldMap | undefined {
+  return isRefUsage(value) ? value.usage.extendWith : undefined;
+}

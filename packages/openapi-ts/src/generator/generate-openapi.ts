@@ -1,8 +1,10 @@
-import type { PackageConfig } from "../config/package-config.types.js";
-import { resolvePackageConfig } from "../config/resolve-package-config.js";
-import { compileOpenApi } from "../compiler/compile-openapi.js";
-import { validateOpenApiDocument } from "../validator/validate-openapi-document.js";
-import { writeOpenApiFiles } from "../writer/write-openapi-files.js";
+import type { PackageConfig } from '../config/package-config.types.js';
+import type { CompilerContext } from '../compiler/compiler-context.types.js';
+import { CompilerLogger } from '../logger/compiler-logger.js';
+import { resolvePackageConfig } from '../config/resolve-package-config.js';
+import { compileOpenApi } from '../compiler/compile-openapi.js';
+import { validateOpenApiFile } from '../validator/validate-openapi-document.js';
+import { writeOpenApiFiles } from '../writer/write-openapi-files.js';
 
 export interface GenerateOpenApiResult {
   readonly success: boolean;
@@ -10,9 +12,12 @@ export interface GenerateOpenApiResult {
   readonly error?: unknown;
 }
 
-export async function generateOpenApi(
-  config: PackageConfig,
-): Promise<GenerateOpenApiResult> {
+export interface GenerateOpenApiOptions {
+  readonly logger?: CompilerLogger;
+}
+
+export async function generateOpenApi(config: PackageConfig, options: GenerateOpenApiOptions = {}): Promise<GenerateOpenApiResult> {
+  const logger = options.logger;
   const files: string[] = [];
   const resolvedConfig = resolvePackageConfig(config);
 
@@ -20,13 +25,21 @@ export async function generateOpenApi(
     return {
       success: false,
       files,
-      error:
-        "No contracts found. Add at least one version contract to package.config.ts.",
+      error: 'No contracts found. Add at least one version contract to package.config.ts.',
     };
   }
 
   for (const version of resolvedConfig.contracts) {
-    const compiled = compileOpenApi(version.contract, resolvedConfig.compile);
+    logger?.step(`Compiling ${version.contract.info.title} ${version.contract.info.version}`);
+
+    const contractLogger = logger?.child({
+      scope: 'contract',
+      version: version.contract.info.version,
+    });
+
+    const context: CompilerContext = { logger: contractLogger ?? new CompilerLogger() };
+
+    const compiled = compileOpenApi(version.contract, resolvedConfig.compile, context);
 
     if (!compiled.success) {
       return {
@@ -36,15 +49,7 @@ export async function generateOpenApi(
       };
     }
 
-    const validation = await validateOpenApiDocument(compiled.document);
-
-    if (!validation.valid) {
-      return {
-        success: false,
-        files,
-        error: validation.error,
-      };
-    }
+    logger?.step('Writing OpenAPI files');
 
     files.push(
       ...writeOpenApiFiles({
@@ -52,8 +57,28 @@ export async function generateOpenApi(
         contractVersion: version.contract.info.version,
         contractDebug: version.contract,
         output: resolvedConfig.output,
+        logger,
       }),
     );
+
+    // Only validate if enabled
+    if (resolvedConfig.validation.enabled !== false) {
+      logger?.step('Validating OpenAPI');
+
+      const jsonFileName = `${resolvedConfig.output.filePrefix}.${version.contract.info.version}.json`;
+      const jsonPath = `${resolvedConfig.output.folder}/${jsonFileName}`;
+      const validation = await validateOpenApiFile(jsonPath, resolvedConfig.validation);
+
+      if (!validation.valid) {
+        return {
+          success: false,
+          files,
+          error: validation.errors.join('\n'),
+        };
+      }
+
+      logger?.success(`Validated ${jsonPath}`);
+    }
   }
 
   return {

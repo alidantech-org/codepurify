@@ -1,8 +1,7 @@
-import type { ComponentFieldMap, ComponentFieldValue } from '../../components/component.types.js';
+import type { ComponentFieldMap, SchemaCompositionFieldValue } from '../../components/component.types.js';
 import type { SchemaComponentDefinition } from '../../components/schemas/schema-component.types.js';
-import type { ComponentRef, PropertyRef } from '../../refs/ref.types.js';
-import { isRefUsage, getRefRequired, getRefNullable } from '../../validation/ref-usage-guards.js';
-import { RefKind } from '../../refs/ref-kind.js';
+import type { ComponentRef } from '../../refs/ref.types.js';
+import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
 
 export function compileComponentSchema(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
@@ -25,59 +24,53 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
 }
 
 function compileComponentFields(fields: ComponentFieldMap): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, compileComponentFieldValue(value)]));
+  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, compileCompositionValue(value)]));
 }
 
-function compileComponentFieldValue(value: ComponentFieldValue): unknown {
-  if (isRefUsage(value)) {
-    const targetId = 'targetRefId' in value.ref ? ((value.ref as PropertyRef).targetRefId ?? value.ref.id) : value.ref.id;
-    return applyNullable({ $ref: `#pending/${targetId}` }, getRefNullable(value));
+function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
+  const ref = isRefUsage(value) ? value.ref : value;
+  const array = isRefUsage(value) ? value.usage.array : false;
+  const nullable = isRefUsage(value) ? value.usage.nullable : false;
+  const extendWith = isRefUsage(value) ? value.usage.extendWith : undefined;
+
+  let schema: unknown = { $ref: `#pending/${ref.id}` };
+
+  // Apply extendWith
+  if (extendWith) {
+    const extendedProperties = compileComponentFields(extendWith);
+    schema = {
+      allOf: [
+        schema,
+        {
+          type: 'object',
+          properties: extendedProperties,
+        },
+      ],
+    };
   }
 
-  if (isPropertyRef(value)) {
-    return { $ref: `#pending/${value.targetRefId ?? value.id}` };
+  // Apply array
+  if (array) {
+    schema = { type: 'array', items: schema };
   }
 
-  if (isComponentRef(value)) {
-    return { $ref: `#pending/${value.id}` };
+  // Apply nullable
+  if (nullable) {
+    schema = {
+      anyOf: [schema, { type: 'null' }],
+    };
   }
 
-  return {
-    type: 'object',
-    properties: compileComponentFields(value),
-    required: getRequiredKeys(value),
-  };
-}
-
-function isPropertyRef(value: unknown): value is PropertyRef {
-  return isRefKind(value, RefKind.property);
-}
-
-function isComponentRef(value: unknown): value is ComponentRef {
-  return isRefKind(value, RefKind.component);
-}
-
-function isRefKind(value: unknown, kind: string): boolean {
-  return !!value && typeof value === 'object' && 'id' in value && 'kind' in value && value.kind === kind;
+  return schema;
 }
 
 function getRequiredKeys(fields: ComponentFieldMap): string[] {
   return Object.entries(fields)
-    .filter(([, value]) => isRequired(value))
+    .filter(([, value]) => !isOptional(value))
     .map(([key]) => key);
 }
 
-function isRequired(value: ComponentFieldValue): boolean {
-  const required = getRefRequired(value);
-  if (required !== undefined) return required;
-
-  return true;
-}
-
-function applyNullable(schema: unknown, nullable: boolean | undefined): unknown {
-  if (!nullable) return schema;
-
-  return {
-    anyOf: [schema, { type: 'null' }],
-  };
+function isOptional(value: SchemaCompositionFieldValue): boolean {
+  if (!isRefUsage(value)) return false;
+  return value.usage.required === false;
 }

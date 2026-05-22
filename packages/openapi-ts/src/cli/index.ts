@@ -1,18 +1,24 @@
 #!/usr/bin/env node
 
-import { CliCommand } from "./cli.constants.js";
-import { runGenerateCommand } from "./generate-command.js";
-import { runInitCommand } from "./init-command.js";
+import { CliCommand } from './cli.constants.js';
+import { parseCliArgs } from './cli-args.js';
+import { runGenerateCommand } from './generate-command.js';
+import { runInitCommand } from './init-command.js';
+import { runValidateCommand } from './validate-command.js';
 
 async function main(): Promise<void> {
-  const command = process.argv[2] ?? CliCommand.help;
+  const args = parseCliArgs(process.argv.slice(2));
 
-  if (command === CliCommand.init) {
-    process.exit(await runInitCommand());
+  if (args.command === CliCommand.init) {
+    process.exit(await runInitCommand(args));
   }
 
-  if (command === CliCommand.generate) {
-    process.exit(await runGenerateCommand());
+  if (args.command === CliCommand.generate) {
+    process.exit(await runGenerateCommand(args));
+  }
+
+  if (args.command === CliCommand.validate) {
+    process.exit(await runValidateCommand(args));
   }
 
   printHelp();
@@ -22,13 +28,20 @@ async function main(): Promise<void> {
 function printHelp(): void {
   console.log(
     [
-      "openapi-ts",
-      "",
-      "Commands:",
-      "  init       Create package.config.ts",
-      "  generate   Generate OpenAPI files from package.config.ts",
-      "",
-    ].join("\n"),
+      'openapi-ts',
+      '',
+      'Commands:',
+      '  init       Create package.config.ts',
+      '  generate   Generate OpenAPI files from package.config.ts',
+      '  validate   Validate generated OpenAPI files',
+      '',
+      'Options:',
+      '  --silent             Disable normal logs',
+      '  --verbose            Show detailed compiler progress',
+      '  --debug              Show heavy compiler diagnostics',
+      '  --log-level <level>  silent | normal | verbose | debug',
+      '',
+    ].join('\n'),
   );
 }
 

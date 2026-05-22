@@ -3,6 +3,7 @@ import { RefKind } from '../../refs/ref-kind.js';
 import type { RequestBodyRef } from '../../refs/ref.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
 import { SdkKind, SdkPlacement } from '../../sdk/sdk-extension.types.js';
+import type { ComponentRefMap } from '../component.types.js';
 import type { RequestBodyComponentDefinition, RequestBodyComponentRegistry } from './request-body-component.types.js';
 
 export interface DefineRequestBodiesOptions extends OptionalResourceContext {
@@ -12,7 +13,7 @@ export interface DefineRequestBodiesOptions extends OptionalResourceContext {
 export function defineRequestBodies<TInput extends Record<string, Omit<RequestBodyComponentDefinition, 'name'>>>(
   options: DefineRequestBodiesOptions,
   input: TInput,
-): RequestBodyComponentRegistry<Record<keyof TInput & string, RequestBodyRef>> {
+): RequestBodyComponentRegistry<ComponentRefMap<TInput, RequestBodyRef>> {
   return {
     name: options.name,
     definitions: Object.entries(input).map(([name, value]) => ({ name, ...value })) as RequestBodyComponentDefinition[],
@@ -23,9 +24,9 @@ export function defineRequestBodies<TInput extends Record<string, Omit<RequestBo
 function createRefs<TInput extends Record<string, unknown>>(
   options: DefineRequestBodiesOptions,
   input: TInput,
-): Record<keyof TInput & string, RequestBodyRef> {
-  return Object.fromEntries(Object.keys(input).map((name) => [name, createRequestBodyRef(options, name)])) as Record<
-    keyof TInput & string,
+): ComponentRefMap<TInput, RequestBodyRef> {
+  return Object.fromEntries(Object.keys(input).map((name) => [name, createRequestBodyRef(options, name)])) as ComponentRefMap<
+    TInput,
     RequestBodyRef
   >;
 }

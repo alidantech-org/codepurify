@@ -1,25 +1,58 @@
+import type { SchemaCompositionFieldValue } from '../../schema/schema.types.js';
 import { SchemaKind } from '../../schema/schema-kind.js';
-import type { CompositeSchemaField, PrimitiveSchemaField, SchemaField } from '../../schema/schema.types.js';
-import type { PropertyRef } from '../../refs/ref.types.js';
-import { isRefUsage, getRefRequired, getRefNullable } from '../../validation/ref-usage-guards.js';
+import type {
+  AnyOfSchemaField,
+  CompositeSchemaField,
+  FileSchemaField,
+  LiteralSchemaField,
+  NoContentSchemaField,
+  OneOfSchemaField,
+  PrimitiveSchemaField,
+  RecordSchemaField,
+  RefSchemaField,
+  SchemaField,
+} from '../../schema/schema.types.js';
+import { isRefUsage, getRefRequired, getRefNullable, getRefArray, getRefExtendWith } from '../../validation/ref-usage-guards.js';
 import { zodToOpenApiSchema, type ZodSchemaMode } from './zod-to-openapi-schema.js';
 
 export function compilePropertySchema(field: SchemaField, mode: ZodSchemaMode = 'output'): unknown {
-  if (isRefUsage(field)) {
-    return applyNullable({ $ref: `#pending/${field.ref.id}` }, getRefNullable(field));
-  }
-
-  if (isPropertyRef(field)) {
-    return {
-      $ref: `#pending/${field.id}`,
-    };
-  }
-
   if (field.kind === SchemaKind.primitive) {
     return compilePrimitive(field, mode);
   }
 
-  return compileComposite(field, mode);
+  if (field.kind === SchemaKind.composite) {
+    return compileComposite(field, mode);
+  }
+
+  if (field.kind === SchemaKind.ref) {
+    return compileRef(field, mode);
+  }
+
+  if (field.kind === SchemaKind.record) {
+    return compileRecord(field, mode);
+  }
+
+  if (field.kind === SchemaKind.literal) {
+    return compileLiteral(field, mode);
+  }
+
+  if (field.kind === SchemaKind.oneOf) {
+    return compileOneOf(field, mode);
+  }
+
+  if (field.kind === SchemaKind.anyOf) {
+    return compileAnyOf(field, mode);
+  }
+
+  if (field.kind === SchemaKind.file) {
+    return compileFile(field, mode);
+  }
+
+  if (field.kind === SchemaKind.noContent) {
+    return compileNoContent(field, mode);
+  }
+
+  throw new Error(`Unknown schema kind: ${(field as { kind: string }).kind}`);
 }
 
 function compilePrimitive(field: PrimitiveSchemaField, mode: ZodSchemaMode): unknown {
@@ -48,6 +81,132 @@ function compileComposite(field: CompositeSchemaField, mode: ZodSchemaMode): unk
   return applyNullable(schema, field.nullable);
 }
 
+function compileRef(field: RefSchemaField, mode: ZodSchemaMode): unknown {
+  let schema: Record<string, unknown>;
+  const ref = isRefUsage(field.ref) ? field.ref.ref : field.ref;
+  const refUsage = isRefUsage(field.ref) ? field.ref : undefined;
+
+  // Step 1: Resolve base ref to OpenAPI $ref
+  schema = { $ref: `#pending/${ref.id}` };
+
+  // Step 2: Apply extendWith
+  const extendWith = refUsage ? getRefExtendWith(refUsage) : undefined;
+  if (extendWith && Object.keys(extendWith).length > 0) {
+    schema = {
+      allOf: [
+        schema,
+        {
+          type: 'object',
+          properties: Object.fromEntries(
+            Object.entries(extendWith).map(([key, value]) => [key, compilePropertySchema(wrapAsRefSchemaField(value), mode)]),
+          ),
+        },
+      ],
+    };
+  }
+
+  // Step 3: Apply array
+  const isArray = refUsage ? getRefArray(refUsage) : false;
+  if (isArray) {
+    schema = {
+      type: 'array',
+      items: schema,
+    };
+  }
+
+  // Step 4: Apply nullable from usage
+  if (refUsage && getRefNullable(refUsage)) {
+    schema = {
+      anyOf: [schema, { type: 'null' }],
+    };
+  }
+
+  // Step 5: Apply description from field options
+  if (field.description) {
+    schema.description = field.description;
+  }
+
+  // Step 6: Apply nullable from field options (outer wrapper)
+  return applyNullable(schema, field.nullable);
+}
+
+function wrapAsRefSchemaField(ref: SchemaCompositionFieldValue): RefSchemaField {
+  return {
+    kind: SchemaKind.ref,
+    ref: ref as RefSchemaField['ref'],
+  };
+}
+
+function compileRecord(field: RecordSchemaField, mode: ZodSchemaMode): unknown {
+  return applyNullable(
+    {
+      type: 'object',
+      additionalProperties: compilePropertySchema(field.value, mode),
+      description: field.description,
+    },
+    field.nullable,
+  );
+}
+
+function compileLiteral(field: LiteralSchemaField, mode: ZodSchemaMode): unknown {
+  const schema: Record<string, unknown> = {
+    const: field.value,
+    description: field.description,
+  };
+
+  if (field.value === null) {
+    schema.type = 'null';
+  } else if (typeof field.value === 'string') {
+    schema.type = 'string';
+  } else if (typeof field.value === 'number') {
+    schema.type = Number.isInteger(field.value) ? 'integer' : 'number';
+  } else if (typeof field.value === 'boolean') {
+    schema.type = 'boolean';
+  }
+
+  return applyNullable(schema, field.nullable);
+}
+
+function compileOneOf(field: OneOfSchemaField, mode: ZodSchemaMode): unknown {
+  return applyNullable(
+    {
+      oneOf: field.values.map((value) => compilePropertySchema(value, mode)),
+      description: field.description,
+    },
+    field.nullable,
+  );
+}
+
+function compileAnyOf(field: AnyOfSchemaField, mode: ZodSchemaMode): unknown {
+  return applyNullable(
+    {
+      anyOf: field.values.map((value) => compilePropertySchema(value, mode)),
+      description: field.description,
+    },
+    field.nullable,
+  );
+}
+
+function compileFile(field: FileSchemaField, mode: ZodSchemaMode): unknown {
+  return applyNullable(
+    {
+      type: 'string',
+      format: 'binary',
+      description: field.description,
+    },
+    field.nullable,
+  );
+}
+
+function compileNoContent(field: NoContentSchemaField, mode: ZodSchemaMode): unknown {
+  return applyNullable(
+    {
+      description: field.description,
+    },
+    field.nullable,
+  );
+}
+
 function getRequiredKeys(fields: CompositeSchemaField['fields']): string[] {
   return Object.entries(fields)
     .filter(([, value]) => isRequired(value))
@@ -71,10 +230,6 @@ function applyNullable(schema: unknown, nullable: boolean | undefined): unknown 
   return {
     anyOf: [schema, { type: 'null' }],
   };
-}
-
-function isPropertyRef(value: unknown): value is PropertyRef {
-  return !!value && typeof value === 'object' && 'propertyKey' in value && 'id' in value;
 }
 
 function asObject(value: unknown): Record<string, unknown> {

@@ -1,7 +1,8 @@
-import { OpenApiTs } from "../api/openapi-ts.js";
-import { CliMessage } from "./cli.constants.js";
+import type { ParsedCliArgs } from './cli-args.js';
+import { OpenApiTs } from '../api/openapi-ts.js';
+import { CliMessage } from './cli.constants.js';
 
-export async function runInitCommand(): Promise<number> {
+export async function runInitCommand(args: ParsedCliArgs): Promise<number> {
   const api = new OpenApiTs();
   const result = await api.initConfig();
 

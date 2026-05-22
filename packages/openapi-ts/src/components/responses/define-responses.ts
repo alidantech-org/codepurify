@@ -3,6 +3,7 @@ import { RefKind } from '../../refs/ref-kind.js';
 import type { ResponseRef } from '../../refs/ref.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
 import { SdkKind, SdkPlacement } from '../../sdk/sdk-extension.types.js';
+import type { ComponentRefMap } from '../component.types.js';
 import type { ResponseComponentDefinition, ResponseComponentRegistry } from './response-component.types.js';
 
 export interface DefineResponsesOptions extends OptionalResourceContext {
@@ -12,7 +13,7 @@ export interface DefineResponsesOptions extends OptionalResourceContext {
 export function defineResponses<TInput extends Record<string, Omit<ResponseComponentDefinition, 'name'>>>(
   options: DefineResponsesOptions,
   input: TInput,
-): ResponseComponentRegistry<Record<keyof TInput & string, ResponseRef>> {
+): ResponseComponentRegistry<ComponentRefMap<TInput, ResponseRef>> {
   return {
     name: options.name,
     definitions: Object.entries(input).map(([name, value]) => ({ name, ...value })) as ResponseComponentDefinition[],
@@ -23,9 +24,9 @@ export function defineResponses<TInput extends Record<string, Omit<ResponseCompo
 function createRefs<TInput extends Record<string, unknown>>(
   options: DefineResponsesOptions,
   input: TInput,
-): Record<keyof TInput & string, ResponseRef> {
-  return Object.fromEntries(Object.keys(input).map((name) => [name, createResponseRef(options, name)])) as Record<
-    keyof TInput & string,
+): ComponentRefMap<TInput, ResponseRef> {
+  return Object.fromEntries(Object.keys(input).map((name) => [name, createResponseRef(options, name)])) as ComponentRefMap<
+    TInput,
     ResponseRef
   >;
 }

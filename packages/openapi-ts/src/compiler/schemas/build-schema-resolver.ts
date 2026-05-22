@@ -2,6 +2,7 @@ import type { SchemaComponentRegistry } from '../../components/schemas/schema-co
 import type { ParameterComponentRegistry } from '../../components/parameters/parameter-component.types.js';
 import type { RequestBodyComponentRegistry } from '../../components/request-bodies/request-body-component.types.js';
 import type { ResponseComponentRegistry } from '../../components/responses/response-component.types.js';
+import type { CompilerContext } from '../compiler-context.types.js';
 import { componentRefToSchemaName, modelRefToSchemaName } from '../../naming/ref-schema-name.js';
 import type {
   EntityPropertyRefs,
@@ -22,7 +23,15 @@ export function buildSchemaResolver(
   parameterComponents: readonly ParameterComponentRegistry[],
   requestBodyComponents: readonly RequestBodyComponentRegistry[],
   responseComponents: readonly ResponseComponentRegistry[],
+  context?: CompilerContext,
 ): RefResolver {
+  const logger = context?.logger.child({ scope: 'resolver' });
+
+  logger?.verbose('Building schema resolver', {
+    resourceCount: resources.length,
+    versionSchemaComponents: schemaComponents.length,
+  });
+
   const schemas = new Map<string, string>();
   const parameters = new Map<string, string>();
   const requestBodies = new Map<string, string>();
@@ -69,6 +78,13 @@ export function buildSchemaResolver(
       registerRefRegistry(registry.ref, responses);
     }
   }
+
+  logger?.verbose('Schema resolver ready', {
+    schemaRefs: schemas.size,
+    parameterRefs: parameters.size,
+    requestBodyRefs: requestBodies.size,
+    responseRefs: responses.size,
+  });
 
   return { schemas, parameters, requestBodies, responses };
 }

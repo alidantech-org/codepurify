@@ -1,5 +1,13 @@
 export { defineVersionContract } from './version/define-version-contract.js';
 export { defineResource } from './resource/define-resource.js';
+export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
+export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
+
+export * from './logger/index.js';
+
+export type { ComponentFieldMap } from './components/component.types.js';
+export type { PropertyRefGroup, EntityPropertyRefs } from './properties/property.types.js';
+export type { ComponentRef, ParameterRef, RequestBodyRef, ResponseRef, PropertyRef, ModelRef } from './refs/ref.types.js';
 
 export { schema } from './schema/schema.js';
 export { SchemaAccess, isHiddenByDefault } from './schema/schema-access.js';
@@ -32,6 +40,8 @@ export { PackageOutputFormat } from './config/package-config.types.js';
 
 export type { PackageConfig, PackageOutputConfig, PackageServerConfig } from './config/package-config.types.js';
 export { ContentType, DefaultOutputConfig } from './output/output.constants.js';
+export { ContentType as OpenApiContentType } from './openapi/content-type.js';
+export type { ContentTypeInput } from './openapi/content-type.js';
 
 export type { OutputFileResult, ResolvedOutputConfig } from './output/output.types.js';
 export { OpenApiRefPattern } from './openapi/ref-patterns.js';

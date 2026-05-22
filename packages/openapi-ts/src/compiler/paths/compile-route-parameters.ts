@@ -1,26 +1,27 @@
 import type { ComponentFieldMap } from '../../components/component.types.js';
-import type { RouteParameterRef } from '../../routes/route.types.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import type { ParameterRef } from '../../refs/ref.types.js';
+import type { RouteParameterRef, RouteParameterMap, RouteParameterFieldValue } from '../../routes/route.types.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
-import { toParameterOpenApiRef } from '../refs/to-component-bucket-ref.js';
 import { compileRouteSchema } from './compile-route-schema.js';
+import { isRefUsage, getRefRequired } from '../../validation/ref-usage-guards.js';
 
 export function compileRouteParameters(
-  schema: RouteParameterRef | readonly ParameterRef[] | undefined,
+  schema: RouteParameterRef | RouteParameterMap | undefined,
   location: 'path' | 'query',
   resolver: RefResolver,
 ): unknown[] {
   if (!schema) return [];
 
-  if (Array.isArray(schema)) {
-    return schema.map((ref) => toParameterOpenApiRef(ref, resolver));
+  // Handle RouteParameterMap (new type)
+  if (isParameterMap(schema)) {
+    return Object.entries(schema).map(([name, param]) => ({
+      name,
+      in: location,
+      required: location === 'path' ? true : !isOptional(param),
+      schema: compileParameterField(param, resolver),
+    }));
   }
 
-  if (isParameterRef(schema)) {
-    return [toParameterOpenApiRef(schema, resolver)];
-  }
-
+  // Legacy ComponentFieldMap handling
   const compiled = compileRouteSchema(schema as ComponentFieldMap, resolver);
   const objectSchema = unwrapObjectSchema(compiled);
 
@@ -34,6 +35,30 @@ export function compileRouteParameters(
   }));
 }
 
+function compileParameterField(param: RouteParameterFieldValue, resolver: RefResolver): unknown {
+  const ref = isRefUsage(param) ? param.ref : param;
+  const nullable = isRefUsage(param) ? param.nullable : undefined;
+
+  const schema = { $ref: `#pending/${ref.id}` };
+
+  if (nullable) {
+    return {
+      anyOf: [schema, { type: 'null' }],
+    };
+  }
+
+  return schema;
+}
+
+function isOptional(param: RouteParameterFieldValue): boolean {
+  const required = isRefUsage(param) ? getRefRequired(param) : undefined;
+  return required === false;
+}
+
+function isParameterMap(value: unknown): value is RouteParameterMap {
+  return !!value && typeof value === 'object' && !Array.isArray(value) && !('schema' in value) && !('kind' in value);
+}
+
 function unwrapObjectSchema(value: unknown): { properties?: Record<string, unknown>; required?: string[] } | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   if ('properties' in value) return value as { properties?: Record<string, unknown>; required?: string[] };
@@ -42,8 +67,4 @@ function unwrapObjectSchema(value: unknown): { properties?: Record<string, unkno
 
 function isRequired(name: string, required: string[] | undefined): boolean {
   return required?.includes(name) ?? false;
-}
-
-function isParameterRef(value: unknown): value is ParameterRef {
-  return !!value && typeof value === 'object' && 'kind' in value && value.kind === RefKind.parameter;
 }

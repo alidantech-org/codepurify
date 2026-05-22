@@ -14,34 +14,34 @@ The package is currently in active local development.
 
 Working so far:
 
-* Standalone npm package structure
-* CLI with `init` and `generate`
-* `package.config.ts` loading through CLI
-* Version contracts
-* Resource contracts
-* Resource-level properties
-* Shared properties
-* Entity properties
-* `forRef` property groups
-* Schema components
-* Parameter components
-* Request body components
-* Response components
-* Default responses at version level
-* Route compilation
-* OpenAPI JSON/YAML writing
-* OpenAPI validation
-* SDK metadata emission
-* `optional()`, `required()`, `nullable()`, `nonNullable()` ref usage methods
-* Query behavior metadata
-* Access/select metadata
-* Response/request/parameter buckets
-* Route-level query and params support
-* `defineRoutes({ parameters, routes })` support for shared path-level parameters
-* Natural operation IDs
-* Enum detection plan
-* Ref-as-pointer plan
-* Entity inheritance plan
+- Standalone npm package structure
+- CLI with `init` and `generate`
+- `package.config.ts` loading through CLI
+- Version contracts
+- Resource contracts
+- Resource-level properties
+- Shared properties
+- Entity properties
+- `forRef` property groups
+- Schema components
+- Parameter components
+- Request body components
+- Response components
+- Default responses at version level
+- Route compilation
+- OpenAPI JSON/YAML writing
+- OpenAPI validation
+- SDK metadata emission
+- `optional()`, `required()`, `nullable()`, `nonNullable()` ref usage methods
+- Query behavior metadata
+- Access/select metadata
+- Response/request/parameter buckets
+- Route-level query and params support
+- `defineRoutes({ parameters, routes })` support for shared path-level parameters
+- Natural operation IDs
+- Enum detection plan
+- Ref-as-pointer plan
+- Entity inheritance plan
 
 ---
 
@@ -246,12 +246,12 @@ const v1 = defineVersionContract({
 
 Version contracts can define:
 
-* resources
-* shared schema components
-* shared parameter components
-* shared request body components
-* shared response components
-* default responses
+- resources
+- shared schema components
+- shared parameter components
+- shared request body components
+- shared response components
+- default responses
 
 ---
 
@@ -302,11 +302,11 @@ const sharedPrimitives = sharedProps.shared('SharedPrimitives', {
 
 Rules:
 
-* `.shared()` fields are shared SDK fields.
-* They should emit `x-sdk-shared: true`.
-* Primitive schemas should emit `x-sdk-kind: primitive`.
-* Primitive schemas should emit `x-sdk-skip: true`.
-* Zod enums should emit `x-sdk-kind: enum` and `x-sdk-skip: false`.
+- `.shared()` fields are shared SDK fields.
+- They should emit `x-sdk-shared: true`.
+- Primitive schemas should emit `x-sdk-kind: primitive`.
+- Primitive schemas should emit `x-sdk-skip: true`.
+- Zod enums should emit `x-sdk-kind: enum` and `x-sdk-skip: false`.
 
 ## forRef properties
 
@@ -314,7 +314,7 @@ Use `forRef()` for reusable parameter/path/query-specific refs.
 
 ```ts
 const userRefs = userProps.forRef('UserRefs', {
-  userId: sharedPrimitives.ref.SharedPrimitives.mongoId,
+  userId: sharedPrimitives.ref.mongoId,
   status: schema.primitive(z.enum(['active', 'suspended', 'deleted']), {
     required: false,
   }),
@@ -328,13 +328,13 @@ const userEntity = userProps.entity<User>(
   'User',
   {
     email: schema.primitive(z.string().email()),
-    name: sharedPrimitives.ref.SharedPrimitives.displayName,
+    name: sharedPrimitives.ref.displayName,
     passwordHash: schema.primitive(z.string(), {
       access: SchemaAccess.secret,
     }),
   },
   {
-    extends: baseEntityFields.ref.BaseEntityFields,
+    extends: baseEntityFields.ref,
   },
 );
 ```
@@ -342,18 +342,18 @@ const userEntity = userProps.entity<User>(
 Entity refs expose:
 
 ```ts
-userEntity.ref.User.fields.email
-userEntity.ref.User.model
-userEntity.ref.User.publicModel
-userEntity.ref.User.selectedModel
-userEntity.ref.User.partialModel
-userEntity.ref.User.query.exact
-userEntity.ref.User.query.search
-userEntity.ref.User.query.exactSearch
-userEntity.ref.User.query.range
-userEntity.ref.User.query.in
-userEntity.ref.User.query.exists
-userEntity.ref.User.query.sort
+userEntity.ref.fields.email;
+userEntity.ref.model;
+userEntity.ref.publicModel;
+userEntity.ref.selectedModel;
+userEntity.ref.partialModel;
+userEntity.ref.query.exact;
+userEntity.ref.query.search;
+userEntity.ref.query.exactSearch;
+userEntity.ref.query.range;
+userEntity.ref.query.in;
+userEntity.ref.query.exists;
+userEntity.ref.query.sort;
 ```
 
 Deep query field access is intentionally not supported.
@@ -361,13 +361,13 @@ Deep query field access is intentionally not supported.
 Do not use:
 
 ```ts
-userEntity.ref.User.sort.email
+userEntity.ref.sort.email;
 ```
 
 Use:
 
 ```ts
-userEntity.ref.User.query.sort
+userEntity.ref.query.sort;
 ```
 
 ---
@@ -429,7 +429,7 @@ ref.optional().nullable();
 Examples:
 
 ```ts
-phone: userEntity.ref.User.fields.phone.optional().nullable()
+phone: userEntity.ref.fields.phone.optional().nullable();
 ```
 
 Means:
@@ -446,12 +446,12 @@ phone can be null if present
 Access levels:
 
 ```ts
-SchemaAccess.public
-SchemaAccess.auth
-SchemaAccess.private
-SchemaAccess.secret
-SchemaAccess.internal
-SchemaAccess.system
+SchemaAccess.public;
+SchemaAccess.auth;
+SchemaAccess.private;
+SchemaAccess.secret;
+SchemaAccess.internal;
+SchemaAccess.system;
 ```
 
 Default select behavior:
@@ -468,8 +468,8 @@ system   -> not selected by default
 Users can override with:
 
 ```ts
-select: true
-select: false
+select: true;
+select: false;
 ```
 
 ---
@@ -479,12 +479,12 @@ select: false
 Supported query behaviors:
 
 ```ts
-QueryBehavior.exact
-QueryBehavior.search
-QueryBehavior.exactSearch
-QueryBehavior.range
-QueryBehavior.in
-QueryBehavior.exists
+QueryBehavior.exact;
+QueryBehavior.search;
+QueryBehavior.exactSearch;
+QueryBehavior.range;
+QueryBehavior.in;
+QueryBehavior.exists;
 ```
 
 Example:
@@ -501,8 +501,8 @@ email: schema.primitive(z.string().email(), {
 Entity exposes method-level query refs:
 
 ```ts
-userEntity.ref.User.query.exactSearch
-userEntity.ref.User.query.sort
+userEntity.ref.query.exactSearch;
+userEntity.ref.query.sort;
 ```
 
 ---
@@ -537,8 +537,8 @@ This keeps SDK generation clean.
 ```ts
 const sharedSchemas = v1.components.defineSchemas({
   ApiMessage: {
-    success: sharedPrimitives.ref.SharedPrimitives.success,
-    message: sharedPrimitives.ref.SharedPrimitives.message,
+    success: sharedPrimitives.ref.success,
+    message: sharedPrimitives.ref.message,
   },
 });
 ```
@@ -558,8 +558,8 @@ For resource-level schema components:
 ```ts
 const userSchemas = users.components.defineSchemas({
   CreateUserBody: {
-    email: userEntity.ref.User.fields.email,
-    name: userEntity.ref.User.fields.name,
+    email: userEntity.ref.fields.email,
+    name: userEntity.ref.fields.name,
   },
 });
 ```
@@ -573,7 +573,7 @@ const sharedParams = v1.components.defineParameters({
   PageQueryParam: {
     name: 'page',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.page,
+    schema: sharedPrimitives.ref.page,
   },
 });
 ```
@@ -628,7 +628,7 @@ x-sdk-skip: true
 const userResponses = users.components.defineResponses({
   UserOkResponse: {
     description: 'User response',
-    schema: userEntity.ref.User.publicModel,
+    schema: userEntity.ref.publicModel,
   },
 });
 ```
@@ -677,16 +677,16 @@ Route responses override defaults.
 
 Routes support:
 
-* method
-* path
-* summary
-* description
-* params
-* query
-* parameters
-* body
-* response
-* responses
+- method
+- path
+- summary
+- description
+- params
+- query
+- parameters
+- body
+- response
+- responses
 
 ## Simple routes
 
@@ -696,10 +696,7 @@ users.defineRoutes({
     method: HttpMethod.get,
     path: '/',
     summary: 'List users',
-    query: [
-      sharedParams.ref.PageQueryParam,
-      sharedParams.ref.LimitQueryParam,
-    ],
+    query: [sharedParams.ref.PageQueryParam, sharedParams.ref.LimitQueryParam],
     responses: {
       200: userResponses.ref.UsersListOkResponse,
     },
@@ -718,10 +715,7 @@ users.defineRoutes({
     getUserById: {
       method: HttpMethod.get,
       path: '/:userId',
-      query: [
-        sharedParams.ref.FieldsQueryParam,
-        sharedParams.ref.PopulateQueryParam,
-      ],
+      query: [sharedParams.ref.FieldsQueryParam, sharedParams.ref.PopulateQueryParam],
       responses: {
         200: userResponses.ref.UserOkResponse,
         404: sharedResponses.ref.NotFoundResponse,
@@ -779,9 +773,9 @@ Example:
 
 ```ts
 const baseEntityFields = sharedProps.shared('BaseEntityFields', {
-  id: sharedPrimitives.ref.SharedPrimitives.mongoId,
-  createdAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
-  updatedAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
+  id: sharedPrimitives.ref.mongoId,
+  createdAt: sharedPrimitives.ref.dateTime,
+  updatedAt: sharedPrimitives.ref.dateTime,
 });
 ```
 
@@ -807,7 +801,7 @@ updatedAt:
 If usage changes:
 
 ```ts
-id: sharedPrimitives.ref.SharedPrimitives.mongoId.optional().nullable()
+id: sharedPrimitives.ref.mongoId.optional().nullable();
 ```
 
 Then output should be:
@@ -831,19 +825,19 @@ Example:
 
 ```ts
 const baseEntityFields = sharedProps.shared('BaseEntityFields', {
-  id: sharedPrimitives.ref.SharedPrimitives.mongoId,
-  createdAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
-  updatedAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
+  id: sharedPrimitives.ref.mongoId,
+  createdAt: sharedPrimitives.ref.dateTime,
+  updatedAt: sharedPrimitives.ref.dateTime,
 });
 
 const userEntity = userProps.entity<User>(
   'User',
   {
     email: schema.primitive(z.string().email()),
-    name: sharedPrimitives.ref.SharedPrimitives.displayName,
+    name: sharedPrimitives.ref.displayName,
   },
   {
-    extends: baseEntityFields.ref.BaseEntityFields,
+    extends: baseEntityFields.ref,
   },
 );
 ```
@@ -902,7 +896,7 @@ x-sdk-skip: false
 Example:
 
 ```ts
-schema.primitive(z.enum(['active', 'suspended', 'deleted']))
+schema.primitive(z.enum(['active', 'suspended', 'deleted']));
 ```
 
 Expected:

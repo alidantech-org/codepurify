@@ -3,6 +3,7 @@ import { RefKind } from '../../refs/ref-kind.js';
 import type { ParameterRef } from '../../refs/ref.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
 import { SdkKind, SdkPlacement } from '../../sdk/sdk-extension.types.js';
+import type { ComponentRefMap } from '../component.types.js';
 import type { ParameterComponentDefinition, ParameterComponentRegistry } from './parameter-component.types.js';
 
 export interface DefineParametersOptions extends OptionalResourceContext {
@@ -12,7 +13,7 @@ export interface DefineParametersOptions extends OptionalResourceContext {
 export function defineParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(
   options: DefineParametersOptions,
   input: TInput,
-): ParameterComponentRegistry<Record<keyof TInput & string, ParameterRef>> {
+): ParameterComponentRegistry<ComponentRefMap<TInput, ParameterRef>> {
   return {
     name: options.name,
     definitions: Object.entries(input).map(([key, value]) => ({ key, ...value })) as ParameterComponentDefinition[],
@@ -23,9 +24,9 @@ export function defineParameters<TInput extends Record<string, Omit<ParameterCom
 function createRefs<TInput extends Record<string, unknown>>(
   options: DefineParametersOptions,
   input: TInput,
-): Record<keyof TInput & string, ParameterRef> {
-  return Object.fromEntries(Object.keys(input).map((name) => [name, createParameterRef(options, name)])) as Record<
-    keyof TInput & string,
+): ComponentRefMap<TInput, ParameterRef> {
+  return Object.fromEntries(Object.keys(input).map((name) => [name, createParameterRef(options, name)])) as ComponentRefMap<
+    TInput,
     ParameterRef
   >;
 }

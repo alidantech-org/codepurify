@@ -2,9 +2,10 @@ import type { SchemaComponentRegistry } from '../components/schemas/schema-compo
 import type { ParameterComponentRegistry } from '../components/parameters/parameter-component.types.js';
 import type { RequestBodyComponentRegistry } from '../components/request-bodies/request-body-component.types.js';
 import type { ResponseComponentRegistry } from '../components/responses/response-component.types.js';
-import type { ResponseRef } from '../refs/ref.types.js';
 import type { PropertyRegistry } from '../properties/property.types.js';
 import type { ResourceBuilder } from '../resource/define-resource.js';
+import type { RouteResponseInput } from '../routes/route.types.js';
+import type { ContentTypeInput } from '../openapi/content-type.js';
 
 export interface VersionLicense {
   readonly name: string;
@@ -19,13 +20,19 @@ export interface VersionInfo {
   license?: VersionLicense;
 }
 
+export interface VersionDefaults {
+  readonly requestContentType?: ContentTypeInput;
+  readonly responseContentType?: ContentTypeInput;
+}
+
 export interface VersionContract {
   readonly info: VersionInfo;
+  readonly defaults: VersionDefaults;
   readonly resources: ResourceBuilder[];
   readonly properties: PropertyRegistry[];
   readonly schemaComponents: SchemaComponentRegistry[];
   readonly parameterComponents: ParameterComponentRegistry[];
   readonly requestBodyComponents: RequestBodyComponentRegistry[];
   readonly responseComponents: ResponseComponentRegistry[];
-  readonly defaultResponses: Record<number, ResponseRef>;
+  readonly defaultResponses: Record<number, RouteResponseInput>;
 }

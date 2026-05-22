@@ -23,15 +23,18 @@
             "README.md"
       ],
       "scripts": {
-            "dev": "tsup --watch && npm link",
-            "build": "tsup && npm link",
+            "dev": "tsup --watch",
+            "build": "pnpm clean && tsup",
             "clean": "rm -rf dist",
             "typecheck": "tsc -p tsconfig.json --noEmit",
-            "dev:build": "npm run clean && npm run build"
+            "dev:build": "pnpm build"
       },
       "dependencies": {
             "@apidevtools/swagger-parser": "^10.1.1",
+            "@redocly/cli": "^2.31.3",
+            "esbuild": "^0.25.12",
             "js-yaml": "^4.1.0",
+            "picocolors": "^1.1.1",
             "tsx": "^4.22.3",
             "zod": "^4.0.0"
       },

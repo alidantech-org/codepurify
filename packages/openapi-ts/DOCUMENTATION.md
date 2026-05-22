@@ -333,9 +333,9 @@ const sharedPrimitives = sharedProps.shared('SharedPrimitives', {
 Access:
 
 ```ts
-sharedPrimitives.ref.SharedPrimitives.mongoId
-sharedPrimitives.ref.SharedPrimitives.dateTime
-sharedPrimitives.ref.SharedPrimitives.displayName
+sharedPrimitives.ref.mongoId;
+sharedPrimitives.ref.dateTime;
+sharedPrimitives.ref.displayName;
 ```
 
 Shared fields automatically get shared SDK metadata:
@@ -363,7 +363,7 @@ Example:
 
 ```ts
 const userRefs = userProps.forRef('UserRefs', {
-  userId: sharedPrimitives.ref.SharedPrimitives.mongoId,
+  userId: sharedPrimitives.ref.mongoId,
   status: schema.primitive(z.enum(['active', 'suspended', 'deleted']), {
     required: false,
   }),
@@ -373,8 +373,8 @@ const userRefs = userProps.forRef('UserRefs', {
 Access:
 
 ```ts
-userRefs.ref.UserRefs.userId
-userRefs.ref.UserRefs.status
+userRefs.ref.userId;
+userRefs.ref.status;
 ```
 
 Typical use cases:
@@ -393,34 +393,31 @@ small reusable refs
 Use `.entity()` for model-like objects.
 
 ```ts
-const userEntity = userProps.entity<User>(
-  'User',
-  {
-    email: schema.primitive(z.string().email()),
-    name: sharedPrimitives.ref.SharedPrimitives.displayName,
-    passwordHash: schema.primitive(z.string(), {
-      access: SchemaAccess.secret,
-    }),
-  },
-);
+const userEntity = userProps.entity<User>('User', {
+  email: schema.primitive(z.string().email()),
+  name: sharedPrimitives.ref.displayName,
+  passwordHash: schema.primitive(z.string(), {
+    access: SchemaAccess.secret,
+  }),
+});
 ```
 
 Entity refs expose:
 
 ```ts
-userEntity.ref.User.fields.email
-userEntity.ref.User.fields.name
-userEntity.ref.User.model
-userEntity.ref.User.publicModel
-userEntity.ref.User.selectedModel
-userEntity.ref.User.partialModel
-userEntity.ref.User.query.exact
-userEntity.ref.User.query.search
-userEntity.ref.User.query.exactSearch
-userEntity.ref.User.query.range
-userEntity.ref.User.query.in
-userEntity.ref.User.query.exists
-userEntity.ref.User.query.sort
+userEntity.ref.fields.email;
+userEntity.ref.fields.name;
+userEntity.ref.model;
+userEntity.ref.publicModel;
+userEntity.ref.selectedModel;
+userEntity.ref.partialModel;
+userEntity.ref.query.exact;
+userEntity.ref.query.search;
+userEntity.ref.query.exactSearch;
+userEntity.ref.query.range;
+userEntity.ref.query.in;
+userEntity.ref.query.exists;
+userEntity.ref.query.sort;
 ```
 
 Entity models:
@@ -458,9 +455,9 @@ type BaseEntity = {
 const baseEntity = sharedProps.entity<BaseEntity>(
   'BaseEntity',
   {
-    id: sharedPrimitives.ref.SharedPrimitives.mongoId,
-    createdAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
-    updatedAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
+    id: sharedPrimitives.ref.mongoId,
+    createdAt: sharedPrimitives.ref.dateTime,
+    updatedAt: sharedPrimitives.ref.dateTime,
   },
   {
     abstract: true,
@@ -473,7 +470,7 @@ const baseEntity = sharedProps.entity<BaseEntity>(
 The locked inheritance rule is:
 
 ```ts
-extends: baseEntity.ref.BaseEntity
+extends: baseEntity.ref
 ```
 
 Do not pass the full registry:
@@ -489,10 +486,10 @@ const userEntity = userProps.entity<User>(
   'User',
   {
     email: schema.primitive(z.string().email()),
-    name: sharedPrimitives.ref.SharedPrimitives.displayName,
+    name: sharedPrimitives.ref.displayName,
   },
   {
-    extends: baseEntity.ref.BaseEntity,
+    extends: baseEntity.ref,
   },
 );
 ```
@@ -500,10 +497,10 @@ const userEntity = userProps.entity<User>(
 The inheriting entity can access inherited fields:
 
 ```ts
-userEntity.ref.User.fields.id
-userEntity.ref.User.fields.createdAt
-userEntity.ref.User.fields.updatedAt
-userEntity.ref.User.fields.email
+userEntity.ref.fields.id;
+userEntity.ref.fields.createdAt;
+userEntity.ref.fields.updatedAt;
+userEntity.ref.fields.email;
 ```
 
 Expected OpenAPI metadata:
@@ -543,7 +540,7 @@ UserPublicModel:
 By default, fields are required.
 
 ```ts
-email: schema.primitive(z.string().email())
+email: schema.primitive(z.string().email());
 ```
 
 To make a field optional:
@@ -551,7 +548,7 @@ To make a field optional:
 ```ts
 phone: schema.primitive(z.string(), {
   required: false,
-})
+});
 ```
 
 ## Nullable
@@ -562,7 +559,7 @@ To allow `null`:
 phone: schema.primitive(z.string(), {
   required: false,
   nullable: true,
-})
+});
 ```
 
 Expected OpenAPI:
@@ -579,18 +576,18 @@ phone:
 ```ts
 passwordHash: schema.primitive(z.string(), {
   access: SchemaAccess.secret,
-})
+});
 ```
 
 Supported access levels:
 
 ```ts
-SchemaAccess.public
-SchemaAccess.auth
-SchemaAccess.private
-SchemaAccess.secret
-SchemaAccess.internal
-SchemaAccess.system
+SchemaAccess.public;
+SchemaAccess.auth;
+SchemaAccess.private;
+SchemaAccess.secret;
+SchemaAccess.internal;
+SchemaAccess.system;
 ```
 
 Recommended meaning:
@@ -612,7 +609,7 @@ Override default select behavior:
 id: schema.primitive(z.string(), {
   access: SchemaAccess.internal,
   select: true,
-})
+});
 ```
 
 or:
@@ -621,7 +618,7 @@ or:
 passwordHash: schema.primitive(z.string(), {
   access: SchemaAccess.secret,
   select: false,
-})
+});
 ```
 
 ---
@@ -636,30 +633,30 @@ email: schema.primitive(z.string().email(), {
     methods: [QueryBehavior.exactSearch, QueryBehavior.search],
     sort: true,
   },
-})
+});
 ```
 
 Supported query methods:
 
 ```ts
-QueryBehavior.exact
-QueryBehavior.search
-QueryBehavior.exactSearch
-QueryBehavior.range
-QueryBehavior.in
-QueryBehavior.exists
+QueryBehavior.exact;
+QueryBehavior.search;
+QueryBehavior.exactSearch;
+QueryBehavior.range;
+QueryBehavior.in;
+QueryBehavior.exists;
 ```
 
 Entity query refs:
 
 ```ts
-userEntity.ref.User.query.exact
-userEntity.ref.User.query.search
-userEntity.ref.User.query.exactSearch
-userEntity.ref.User.query.range
-userEntity.ref.User.query.in
-userEntity.ref.User.query.exists
-userEntity.ref.User.query.sort
+userEntity.ref.query.exact;
+userEntity.ref.query.search;
+userEntity.ref.query.exactSearch;
+userEntity.ref.query.range;
+userEntity.ref.query.in;
+userEntity.ref.query.exists;
+userEntity.ref.query.sort;
 ```
 
 Deep field query refs are intentionally not supported.
@@ -667,13 +664,13 @@ Deep field query refs are intentionally not supported.
 Do not use:
 
 ```ts
-userEntity.ref.User.sort.email
+userEntity.ref.sort.email;
 ```
 
 Use:
 
 ```ts
-userEntity.ref.User.query.sort
+userEntity.ref.query.sort;
 ```
 
 ---
@@ -714,12 +711,12 @@ Define reusable DTO schemas.
 ```ts
 const sharedSchemas = v1.components.defineSchemas({
   ApiMessage: {
-    success: sharedPrimitives.ref.SharedPrimitives.success,
-    message: sharedPrimitives.ref.SharedPrimitives.message,
+    success: sharedPrimitives.ref.success,
+    message: sharedPrimitives.ref.message,
   },
   ValidationError: {
-    success: sharedPrimitives.ref.SharedPrimitives.success,
-    message: sharedPrimitives.ref.SharedPrimitives.message,
+    success: sharedPrimitives.ref.success,
+    message: sharedPrimitives.ref.message,
   },
 });
 ```
@@ -729,12 +726,12 @@ Resource-level schema components:
 ```ts
 const userSchemas = users.components.defineSchemas({
   CreateUserBody: {
-    email: userEntity.ref.User.fields.email,
-    name: userEntity.ref.User.fields.name,
+    email: userEntity.ref.fields.email,
+    name: userEntity.ref.fields.name,
   },
   UpdateUserBody: {
-    email: userEntity.ref.User.fields.email.optional(),
-    name: userEntity.ref.User.fields.name.optional(),
+    email: userEntity.ref.fields.email.optional(),
+    name: userEntity.ref.fields.name.optional(),
   },
 });
 ```
@@ -764,12 +761,12 @@ const sharedParams = v1.components.defineParameters({
   PageQueryParam: {
     name: 'page',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.page,
+    schema: sharedPrimitives.ref.page,
   },
   LimitQueryParam: {
     name: 'limit',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.limit,
+    schema: sharedPrimitives.ref.limit,
   },
 });
 ```
@@ -777,10 +774,10 @@ const sharedParams = v1.components.defineParameters({
 Parameter locations:
 
 ```ts
-ParameterLocation.path
-ParameterLocation.query
-ParameterLocation.header
-ParameterLocation.cookie
+ParameterLocation.path;
+ParameterLocation.query;
+ParameterLocation.header;
+ParameterLocation.cookie;
 ```
 
 Parameter components emit:
@@ -841,11 +838,11 @@ Define reusable response wrappers.
 const userResponses = users.components.defineResponses({
   UserOkResponse: {
     description: 'User response',
-    schema: userEntity.ref.User.publicModel,
+    schema: userEntity.ref.publicModel,
   },
   UserCreatedResponse: {
     description: 'User created',
-    schema: userEntity.ref.User.publicModel,
+    schema: userEntity.ref.publicModel,
   },
 });
 ```
@@ -949,10 +946,7 @@ users.defineRoutes({
     getUserById: {
       method: HttpMethod.get,
       path: '/:userId',
-      query: [
-        sharedParams.ref.FieldsQueryParam,
-        sharedParams.ref.PopulateQueryParam,
-      ],
+      query: [sharedParams.ref.FieldsQueryParam, sharedParams.ref.PopulateQueryParam],
       responses: {
         200: userResponses.ref.UserOkResponse,
         404: sharedResponses.ref.NotFoundResponse,
@@ -1059,7 +1053,7 @@ Every ref supports usage modifiers:
 They can be chained:
 
 ```ts
-phone: userEntity.ref.User.fields.phone.optional().nullable()
+phone: userEntity.ref.fields.phone.optional().nullable();
 ```
 
 Meaning:
@@ -1074,7 +1068,7 @@ Usage modifiers affect the **usage site**, not the original schema.
 Example:
 
 ```ts
-avatarUrl: sharedPrimitives.ref.SharedPrimitives.url.optional().nullable()
+avatarUrl: sharedPrimitives.ref.url.optional().nullable();
 ```
 
 Expected output:
@@ -1099,7 +1093,7 @@ If a field uses another field ref, the compiler should not create a duplicate pr
 Example:
 
 ```ts
-id: sharedPrimitives.ref.SharedPrimitives.mongoId
+id: sharedPrimitives.ref.mongoId;
 ```
 
 The generated model property points directly to:
@@ -1121,7 +1115,7 @@ This avoids duplicate primitive schemas and unresolved refs.
 If usage changes:
 
 ```ts
-id: sharedPrimitives.ref.SharedPrimitives.mongoId.nullable()
+id: sharedPrimitives.ref.mongoId.nullable();
 ```
 
 Output:
@@ -1160,7 +1154,7 @@ x-sdk-skip: false
 Example:
 
 ```ts
-status: schema.primitive(z.enum(['active', 'suspended', 'deleted']))
+status: schema.primitive(z.enum(['active', 'suspended', 'deleted']));
 ```
 
 Expected:
@@ -1267,9 +1261,9 @@ type BaseEntity = {
 const baseEntity = sharedProps.entity<BaseEntity>(
   'BaseEntity',
   {
-    id: sharedPrimitives.ref.SharedPrimitives.mongoId,
-    createdAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
-    updatedAt: sharedPrimitives.ref.SharedPrimitives.dateTime,
+    id: sharedPrimitives.ref.mongoId,
+    createdAt: sharedPrimitives.ref.dateTime,
+    updatedAt: sharedPrimitives.ref.dateTime,
   },
   {
     abstract: true,
@@ -1278,16 +1272,16 @@ const baseEntity = sharedProps.entity<BaseEntity>(
 
 const sharedSchemas = v1.components.defineSchemas({
   ApiMessage: {
-    success: sharedPrimitives.ref.SharedPrimitives.success,
-    message: sharedPrimitives.ref.SharedPrimitives.message,
+    success: sharedPrimitives.ref.success,
+    message: sharedPrimitives.ref.message,
   },
   ValidationError: {
-    success: sharedPrimitives.ref.SharedPrimitives.success,
-    message: sharedPrimitives.ref.SharedPrimitives.message,
+    success: sharedPrimitives.ref.success,
+    message: sharedPrimitives.ref.message,
   },
   PaginatedMeta: {
-    page: sharedPrimitives.ref.SharedPrimitives.page,
-    limit: sharedPrimitives.ref.SharedPrimitives.limit,
+    page: sharedPrimitives.ref.page,
+    limit: sharedPrimitives.ref.limit,
   },
 });
 
@@ -1295,32 +1289,32 @@ const sharedParams = v1.components.defineParameters({
   PageQueryParam: {
     name: 'page',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.page,
+    schema: sharedPrimitives.ref.page,
   },
   LimitQueryParam: {
     name: 'limit',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.limit,
+    schema: sharedPrimitives.ref.limit,
   },
   SortQueryParam: {
     name: 'sort',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.sort,
+    schema: sharedPrimitives.ref.sort,
   },
   FieldsQueryParam: {
     name: 'fields',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.fields,
+    schema: sharedPrimitives.ref.fields,
   },
   PopulateQueryParam: {
     name: 'populate',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.populate,
+    schema: sharedPrimitives.ref.populate,
   },
   SearchQueryParam: {
     name: 'search',
     in: ParameterLocation.query,
-    schema: sharedPrimitives.ref.SharedPrimitives.search,
+    schema: sharedPrimitives.ref.search,
   },
 });
 
@@ -1372,7 +1366,7 @@ const users = v1.defineResource({
 const userProps = users.defineProperties();
 
 const userRefs = userProps.forRef('UserRefs', {
-  userId: sharedPrimitives.ref.SharedPrimitives.mongoId,
+  userId: sharedPrimitives.ref.mongoId,
   status: schema.primitive(z.enum(['active', 'suspended', 'deleted']), {
     required: false,
   }),
@@ -1402,7 +1396,7 @@ const userEntity = userProps.entity<User>(
     email: schema.primitive(z.string().email(), {
       query: { methods: [QueryBehavior.exactSearch, QueryBehavior.search], sort: true },
     }),
-    name: sharedPrimitives.ref.SharedPrimitives.displayName,
+    name: sharedPrimitives.ref.displayName,
     phone: schema.primitive(z.string(), { required: false, nullable: true }),
     avatarUrl: schema.primitive(z.string().url(), { required: false, nullable: true }),
     passwordHash: schema.primitive(z.string(), { access: SchemaAccess.secret }),
@@ -1420,26 +1414,26 @@ const userEntity = userProps.entity<User>(
     }),
   },
   {
-    extends: baseEntity.ref.BaseEntity,
+    extends: baseEntity.ref,
   },
 );
 
 const userSchemas = users.components.defineSchemas({
   UsersListOk: {
-    success: sharedPrimitives.ref.SharedPrimitives.success,
-    message: sharedPrimitives.ref.SharedPrimitives.message,
+    success: sharedPrimitives.ref.success,
+    message: sharedPrimitives.ref.message,
     meta: sharedSchemas.ref.PaginatedMeta,
   },
   CreateUserBody: {
-    email: userEntity.ref.User.fields.email,
-    name: userEntity.ref.User.fields.name,
-    phone: userEntity.ref.User.fields.phone.optional().nullable(),
+    email: userEntity.ref.fields.email,
+    name: userEntity.ref.fields.name,
+    phone: userEntity.ref.fields.phone.optional().nullable(),
   },
   UpdateUserBody: {
-    email: userEntity.ref.User.fields.email.optional(),
-    name: userEntity.ref.User.fields.name.optional(),
-    phone: userEntity.ref.User.fields.phone.optional().nullable(),
-    avatarUrl: userEntity.ref.User.fields.avatarUrl.optional().nullable(),
+    email: userEntity.ref.fields.email.optional(),
+    name: userEntity.ref.fields.name.optional(),
+    phone: userEntity.ref.fields.phone.optional().nullable(),
+    avatarUrl: userEntity.ref.fields.avatarUrl.optional().nullable(),
   },
 });
 
@@ -1447,27 +1441,27 @@ const userParams = users.components.defineParameters({
   UserIdPathParam: {
     name: 'userId',
     in: ParameterLocation.path,
-    schema: userRefs.ref.UserRefs.userId,
+    schema: userRefs.ref.userId,
   },
   UserStatusQueryParam: {
     name: 'status',
     in: ParameterLocation.query,
-    schema: userRefs.ref.UserRefs.status,
+    schema: userRefs.ref.status,
   },
   UserRoleQueryParam: {
     name: 'role',
     in: ParameterLocation.query,
-    schema: userRefs.ref.UserRefs.role,
+    schema: userRefs.ref.role,
   },
   EmailVerifiedQueryParam: {
     name: 'emailVerified',
     in: ParameterLocation.query,
-    schema: userRefs.ref.UserRefs.emailVerified,
+    schema: userRefs.ref.emailVerified,
   },
   IsOnlineQueryParam: {
     name: 'isOnline',
     in: ParameterLocation.query,
-    schema: userEntity.ref.User.fields.isOnline,
+    schema: userEntity.ref.fields.isOnline,
   },
 });
 
@@ -1489,11 +1483,11 @@ const userResponses = users.components.defineResponses({
   },
   UserOkResponse: {
     description: 'User response',
-    schema: userEntity.ref.User.publicModel,
+    schema: userEntity.ref.publicModel,
   },
   UserCreatedResponse: {
     description: 'User created',
-    schema: userEntity.ref.User.publicModel,
+    schema: userEntity.ref.publicModel,
   },
   DeleteUserOkResponse: {
     description: 'User deleted',
@@ -1541,10 +1535,7 @@ users.defineRoutes({
       method: HttpMethod.get,
       path: '/me',
       summary: 'Get current user',
-      query: [
-        sharedParams.ref.FieldsQueryParam,
-        sharedParams.ref.PopulateQueryParam,
-      ],
+      query: [sharedParams.ref.FieldsQueryParam, sharedParams.ref.PopulateQueryParam],
       responses: {
         200: userResponses.ref.UserOkResponse,
       },
@@ -1553,10 +1544,7 @@ users.defineRoutes({
       method: HttpMethod.get,
       path: '/:userId',
       summary: 'Get user by ID',
-      query: [
-        sharedParams.ref.FieldsQueryParam,
-        sharedParams.ref.PopulateQueryParam,
-      ],
+      query: [sharedParams.ref.FieldsQueryParam, sharedParams.ref.PopulateQueryParam],
       responses: {
         200: userResponses.ref.UserOkResponse,
         404: sharedResponses.ref.NotFoundResponse,
@@ -1655,9 +1643,9 @@ Some `no-unused-components` warnings may happen during SDK-first generation if a
 Good:
 
 ```ts
-id: sharedPrimitives.ref.SharedPrimitives.mongoId
-createdAt: sharedPrimitives.ref.SharedPrimitives.dateTime
-name: sharedPrimitives.ref.SharedPrimitives.displayName
+id: sharedPrimitives.ref.mongoId;
+createdAt: sharedPrimitives.ref.dateTime;
+name: sharedPrimitives.ref.displayName;
 ```
 
 Avoid redefining the same primitive in every resource.
@@ -1667,7 +1655,7 @@ Avoid redefining the same primitive in every resource.
 Good:
 
 ```ts
-extends: baseEntity.ref.BaseEntity
+extends: baseEntity.ref
 ```
 
 Avoid:
@@ -1683,7 +1671,7 @@ Good:
 ```ts
 users.components.defineSchemas({
   CreateUserBody: {
-    email: userEntity.ref.User.fields.email,
+    email: userEntity.ref.fields.email,
   },
 });
 ```
@@ -1696,7 +1684,7 @@ Good:
 users.components.defineResponses({
   UserOkResponse: {
     description: 'User response',
-    schema: userEntity.ref.User.publicModel,
+    schema: userEntity.ref.publicModel,
   },
 });
 ```
@@ -1772,7 +1760,7 @@ Inheritance merged a PropertyRef object itself instead of EntityPropertyRefs.fie
 Fix:
 
 ```txt
-Use extends: baseEntity.ref.BaseEntity.
+Use extends: baseEntity.ref.
 Do not use extends: baseEntity.
 ```
 
@@ -1789,7 +1777,7 @@ Fix package signature so `TExtends` is inferred from the third argument.
 Official usage remains:
 
 ```ts
-extends: baseEntity.ref.BaseEntity
+extends: baseEntity.ref
 ```
 
 ## Warning: component is never used
@@ -1807,8 +1795,8 @@ Example using `PaginatedMeta`:
 
 ```ts
 UsersListOk: {
-  success: sharedPrimitives.ref.SharedPrimitives.success,
-  message: sharedPrimitives.ref.SharedPrimitives.message,
+  success: sharedPrimitives.ref.success,
+  message: sharedPrimitives.ref.message,
   meta: sharedSchemas.ref.PaginatedMeta,
 }
 ```

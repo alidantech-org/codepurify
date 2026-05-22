@@ -1,11 +1,15 @@
 import { defineSchemas } from '../components/schemas/define-schemas.js';
 import type { SchemaComponentRegistry } from '../components/schemas/schema-component.types.js';
 import { defineParameters } from '../components/parameters/define-parameters.js';
-import type { ParameterComponentRegistry } from '../components/parameters/parameter-component.types.js';
+import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
 import { defineRequestBodies } from '../components/request-bodies/define-request-bodies.js';
-import type { RequestBodyComponentRegistry } from '../components/request-bodies/request-body-component.types.js';
+import type {
+  RequestBodyComponentRegistry,
+  RequestBodyComponentDefinition,
+} from '../components/request-bodies/request-body-component.types.js';
 import { defineResponses } from '../components/responses/define-responses.js';
-import type { ResponseComponentRegistry } from '../components/responses/response-component.types.js';
+import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
+import type { ComponentFieldMap } from '../components/component.types.js';
 import { defineProperties } from '../properties/define-properties.js';
 import type { PropertyRegistry } from '../properties/property.types.js';
 import { defineRoutes } from '../routes/define-routes.js';
@@ -30,14 +34,7 @@ export interface ResourceBuilder {
   readonly routes: RouteRegistry[];
 
   defineProperties(name?: string): ReturnType<typeof defineProperties>;
-
-  readonly components: {
-    defineSchemas(input: Parameters<typeof defineSchemas>[1], name?: string): ReturnType<typeof defineSchemas>;
-    defineParameters(input: Parameters<typeof defineParameters>[1], name?: string): ReturnType<typeof defineParameters>;
-    defineRequestBodies(input: Parameters<typeof defineRequestBodies>[1], name?: string): ReturnType<typeof defineRequestBodies>;
-    defineResponses(input: Parameters<typeof defineResponses>[1], name?: string): ReturnType<typeof defineResponses>;
-  };
-
+  defineSchemas<TInput extends Record<string, ComponentFieldMap>>(input: TInput, name?: string): ReturnType<typeof defineSchemas<TInput>>;
   defineRoutes(routes: Parameters<typeof defineRoutes>[1], name?: string): ReturnType<typeof defineRoutes>;
 }
 
@@ -67,7 +64,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceSchemas(input: Parameters<typeof defineSchemas>[1], name?: string) {
+  function defineResourceSchemas<TInput extends Record<string, ComponentFieldMap>>(input: TInput, name?: string) {
     const registry = defineSchemas(
       {
         name: name ?? context.key,
@@ -80,7 +77,10 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceParameters(input: Parameters<typeof defineParameters>[1], name?: string) {
+  function defineResourceParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(
+    input: TInput,
+    name?: string,
+  ) {
     const registry = defineParameters(
       {
         name: name ?? context.key,
@@ -93,7 +93,10 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceRequestBodies(input: Parameters<typeof defineRequestBodies>[1], name?: string) {
+  function defineResourceRequestBodies<TInput extends Record<string, Omit<RequestBodyComponentDefinition, 'name'>>>(
+    input: TInput,
+    name?: string,
+  ) {
     const registry = defineRequestBodies(
       {
         name: name ?? context.key,
@@ -106,7 +109,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceResponses(input: Parameters<typeof defineResponses>[1], name?: string) {
+  function defineResourceResponses<TInput extends Record<string, Omit<ResponseComponentDefinition, 'name'>>>(input: TInput, name?: string) {
     const registry = defineResponses(
       {
         name: name ?? context.key,
@@ -141,12 +144,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     responseComponents,
     routes,
     defineProperties: defineResourceProperties,
-    components: {
-      defineSchemas: defineResourceSchemas,
-      defineParameters: defineResourceParameters,
-      defineRequestBodies: defineResourceRequestBodies,
-      defineResponses: defineResourceResponses,
-    },
+    defineSchemas: defineResourceSchemas,
     defineRoutes: defineResourceRoutes,
   };
 }
