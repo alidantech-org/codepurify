@@ -15,10 +15,13 @@ export interface DefineSchemasOptions extends OptionalResourceContext {
 export function defineSchemas<TInput extends Record<string, ComponentFieldMap>>(
   options: DefineSchemasOptions,
   input: TInput,
-): SchemaComponentRegistry<ComponentRefMap<TInput, RefWithUsageMethods<ComponentRef>>> {
+): SchemaComponentRegistry<TInput> {
   return {
     name: options.name,
-    definitions: Object.entries(input).map(([name, fields]) => ({ name, fields })) as SchemaComponentDefinition[],
+    definitions: Object.entries(input).map(([name, fields]) => ({
+      name,
+      fields,
+    })),
     ref: createRefs(options, input),
   };
 }
@@ -26,11 +29,10 @@ export function defineSchemas<TInput extends Record<string, ComponentFieldMap>>(
 function createRefs<TInput extends Record<string, ComponentFieldMap>>(
   options: DefineSchemasOptions,
   input: TInput,
-): ComponentRefMap<TInput, RefWithUsageMethods<ComponentRef>> {
-  return Object.fromEntries(Object.keys(input).map((name) => [name, createSchemaRef(options, name)])) as ComponentRefMap<
-    TInput,
-    RefWithUsageMethods<ComponentRef>
-  >;
+): SchemaComponentRegistry<TInput>['ref'] {
+  return Object.fromEntries(
+    Object.keys(input).map((name) => [name, createSchemaRef(options, name)]),
+  ) as SchemaComponentRegistry<TInput>['ref'];
 }
 
 function createSchemaRef(options: DefineSchemasOptions, name: string): RefWithUsageMethods<ComponentRef> {

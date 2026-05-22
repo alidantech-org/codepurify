@@ -1,8 +1,28 @@
 import type { PropertyKind } from './property-kind.js';
 import type { ModelRef, PropertyRef, ComponentRef } from '../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
-import type { PropertyDefinitionFieldMap, SchemaFieldMap } from '../schema/schema.types.js';
+import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types.js';
 import type { SdkExtensionMeta } from '../sdk/sdk-extension.types.js';
+
+export type EntityFieldInput<TEntity> = Partial<Record<Extract<keyof TEntity, string>, SchemaField>>;
+
+export type EntityLocalFields = Record<string, SchemaField>;
+
+export type NoExtraEntityKeys<TEntity, TFields extends EntityLocalFields> = TEntity extends unknown
+  ? TFields
+  : Exclude<keyof TFields, Extract<keyof TEntity, string>> extends never
+    ? TFields
+    : never;
+
+export type UnionToIntersection<TUnion> = (TUnion extends unknown ? (value: TUnion) => void : never) extends (
+  value: infer TIntersection,
+) => void
+  ? TIntersection
+  : never;
+
+export type EntityFieldRefs<TFields extends Record<string, SchemaField>> = {
+  readonly [Key in keyof TFields & string]: PropertyRefGroup[string];
+};
 
 export type EntityFields<TEntity> = {
   [Key in keyof TEntity]?: PropertyDefinitionFieldMap[string];
@@ -69,6 +89,41 @@ export interface EntityPropertyRefs<TFields extends PropertyRefGroup = PropertyR
   readonly schemaRef?: string;
 }
 
+export interface EntityPropertyRefsV2<TFields extends Record<string, SchemaField> = Record<string, SchemaField>> {
+  readonly fields: EntityFieldRefs<TFields>;
+  readonly model: RefWithUsageMethods<ModelRef>;
+  readonly publicModel: RefWithUsageMethods<ModelRef>;
+  readonly selectedModel: RefWithUsageMethods<ModelRef>;
+  readonly partialModel: RefWithUsageMethods<ModelRef>;
+  readonly query: EntityQueryRefs;
+  readonly abstract?: boolean;
+  readonly schemaRef?: string;
+}
+
+export type AnyEntityRegistryResult = EntityRegistryResult<string, Record<string, SchemaField>, Record<string, SchemaField>>;
+
+export type EntityInheritanceInput = EntityPropertyRefsV2<Record<string, SchemaField>> | AnyEntityRegistryResult;
+
+export type ExtractEntityFields<TValue> =
+  TValue extends EntityRegistryResult<string, infer TFields, infer TInherited>
+    ? TFields & TInherited
+    : TValue extends EntityPropertyRefsV2<infer TFields>
+      ? TFields
+      : {};
+
+export type ExtractInheritedFields<TExtends> = TExtends extends readonly unknown[]
+  ? UnionToIntersection<ExtractEntityFields<TExtends[number]>>
+  : ExtractEntityFields<TExtends>;
+
+export interface EntityRegistryResult<
+  TName extends string,
+  TFields extends Record<string, SchemaField>,
+  TInheritedFields extends Record<string, SchemaField> = {},
+> extends Omit<PropertyRegistry, 'ref'> {
+  readonly ref: EntityPropertyRefsV2<TFields & TInheritedFields>;
+  readonly namedRef: Record<TName, EntityPropertyRefsV2<TFields & TInheritedFields>>;
+}
+
 export type PropertyRegistryRef = PropertyRef | PropertyRefGroup | EntityPropertyRefs;
 
 export interface PropertyRegistry {
@@ -106,30 +161,17 @@ export type NamedPropertyRefRegistry<TName extends string> = Omit<PropertyRegist
   readonly ref: Record<TName, PropertyRefGroup>;
 };
 
-export interface EntityOptions<
-  TBaseEntity extends NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap> | undefined = undefined,
-> {
-  readonly extends?: TBaseEntity;
+export interface EntityOptions<TExtends extends EntityInheritanceInput | readonly EntityInheritanceInput[] | undefined = undefined> {
+  readonly extends?: TExtends;
   readonly abstract?: boolean;
 }
 
 export type AnyNamedEntityRegistry = NamedEntityPropertyRegistry<string, PropertyRefGroup>;
 
-export type EntityInheritanceInput =
-  | ComponentRef
-  | RefWithUsageMethods<ComponentRef>
-  | ModelRef
-  | RefWithUsageMethods<ModelRef>
-  | readonly (ComponentRef | RefWithUsageMethods<ComponentRef> | ModelRef | RefWithUsageMethods<ModelRef>)[];
-
 export type NormalizeInheritanceInput<T> = T extends readonly unknown[] ? T[number] : T;
 
 export type InheritedFields<T> =
   NormalizeInheritanceInput<T> extends RefWithUsageMethods<ComponentRef> ? {} : NormalizeInheritanceInput<T> extends ComponentRef ? {} : {};
-
-export type EntityFieldRefs<TEntity, TFields extends EntityFields<TEntity>> = {
-  readonly [Key in keyof TFields & string]: RefWithUsageMethods<PropertyRef>;
-};
 
 export type MergedEntityFieldRefs<TInherited, TOwn extends PropertyRefGroup> = InheritedFields<TInherited> & TOwn;
 

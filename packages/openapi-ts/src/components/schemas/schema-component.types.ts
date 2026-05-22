@@ -1,5 +1,6 @@
 import type { ComponentFieldMap } from '../component.types.js';
 import type { ComponentRef } from '../../refs/ref.types.js';
+import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { SdkExtensionMeta } from '../../sdk/sdk-extension.types.js';
 
 export interface SchemaComponentDefinition {
@@ -8,8 +9,12 @@ export interface SchemaComponentDefinition {
   readonly meta?: SdkExtensionMeta;
 }
 
-export interface SchemaComponentRegistry<TRefs extends Record<string, ComponentRef> = Record<string, ComponentRef>> {
+export type SchemaComponentRefs<TInput extends Record<string, ComponentFieldMap>> = {
+  readonly [Key in keyof TInput & string]: RefWithUsageMethods<ComponentRef>;
+};
+
+export interface SchemaComponentRegistry<TInput extends Record<string, ComponentFieldMap> = Record<string, ComponentFieldMap>> {
   readonly name: string;
   readonly definitions: SchemaComponentDefinition[];
-  readonly ref: TRefs;
+  readonly ref: SchemaComponentRefs<TInput>;
 }
