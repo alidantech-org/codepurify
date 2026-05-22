@@ -19,12 +19,19 @@ export interface WriteOpenApiFilesInput {
 export function writeOpenApiFiles(input: WriteOpenApiFilesInput): string[] {
   const written: string[] = [];
 
+  input.logger?.detail('Write targets', {
+    debugPath: input.output.folder,
+    jsonPath: input.output.folder,
+    yamlPath: input.output.folder,
+    formats: input.output.formats,
+  });
+
   if (input.contractDebug) {
     const debugPath = path.join(input.output.folder, createDebugFileName(input.output.debugFilePrefix, input.contractVersion));
 
     writeJsonFile(debugPath, sanitizeDebugContract(input.contractDebug));
     written.push(debugPath);
-    input.logger?.success(`Generated ${debugPath}`);
+    input.logger?.detail(`Generated ${debugPath}`);
   }
 
   for (const format of input.output.formats) {
@@ -39,7 +46,7 @@ export function writeOpenApiFiles(input: WriteOpenApiFilesInput): string[] {
     }
 
     written.push(filePath);
-    input.logger?.success(`Generated ${filePath}`);
+    input.logger?.detail(`Generated ${filePath}`);
   }
 
   return written;

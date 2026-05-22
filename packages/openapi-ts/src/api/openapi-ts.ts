@@ -1,15 +1,9 @@
-import fs from "fs";
-import path from "path";
-import { generateOpenApi } from "../generator/generate-openapi.js";
-import type {
-  GenerateInput,
-  GenerateResult,
-  InitConfigInput,
-  InitConfigResult,
-  OpenApiTsApi,
-} from "./openapi-ts.types.js";
+import fs from 'fs';
+import path from 'path';
+import { generateOpenApi } from '../generator/generate-openapi.js';
+import type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './openapi-ts.types.js';
 
-const DefaultConfigFileName = "package.config.ts";
+const DefaultConfigFileName = 'package.config.ts';
 
 export class OpenApiTs implements OpenApiTsApi {
   async initConfig(input: InitConfigInput = {}): Promise<InitConfigResult> {
@@ -26,7 +20,7 @@ export class OpenApiTs implements OpenApiTsApi {
     }
 
     try {
-      fs.writeFileSync(filePath, createDefaultConfig(), "utf-8");
+      fs.writeFileSync(filePath, createDefaultConfig(), 'utf-8');
 
       return {
         success: true,
@@ -41,17 +35,17 @@ export class OpenApiTs implements OpenApiTsApi {
   }
 
   async generate(input: GenerateInput): Promise<GenerateResult> {
-    return generateOpenApi(input.config);
+    return generateOpenApi(input.config, input.logger);
   }
 }
 
 function createDefaultConfig(): string {
   return [
     "import { definePackageConfig } from '@codepurify/openapi-ts';",
-    "",
-    "export default definePackageConfig({",
-    "  contracts: [],",
-    "});",
-    "",
-  ].join("\n");
+    '',
+    'export default definePackageConfig({',
+    '  contracts: [],',
+    '});',
+    '',
+  ].join('\n');
 }

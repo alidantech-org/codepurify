@@ -1,6 +1,7 @@
 import type { OpenApiComponents } from '../openapi/openapi.types.js';
 import type { VersionContract } from '../version/version-contract.types.js';
-import type { CompilerContext } from './compiler-context.types.js';
+import type { CompilerContext, ResolvedCompilerContext } from './compiler-context.js';
+import { resolveCompilerContext } from './compiler-context.js';
 import type { PropertyRefGroup } from '../properties/property.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
 import { buildSchemaResolver } from './schemas/build-schema-resolver.js';
@@ -20,19 +21,6 @@ export interface CompiledComponentsResult {
 }
 
 export function compileComponents(contract: VersionContract, context: CompilerContext): CompiledComponentsResult {
-  const logger = context.logger.child({ scope: 'components' });
-  const end = logger.time('compile components');
-
-  logger.step('Compiling schema components');
-
-  logger.verbose('Component registry summary', {
-    versionSchemaComponents: contract.schemaComponents.length,
-    versionParameterComponents: contract.parameterComponents.length,
-    versionRequestBodyComponents: contract.requestBodyComponents.length,
-    versionResponseComponents: contract.responseComponents.length,
-    resourceCount: contract.resources.length,
-  });
-
   const resolver = buildSchemaResolver(
     contract.resources,
     contract.properties,
@@ -167,17 +155,6 @@ export function compileComponents(contract: VersionContract, context: CompilerCo
       }
     }
   }
-
-  logger.verbose('Compiled component counts', {
-    schemas: Object.keys(schemas).length,
-    parameters: Object.keys(parameters).length,
-    requestBodies: Object.keys(requestBodies).length,
-    responses: Object.keys(responses).length,
-  });
-
-  logger.debug('Compiled schema keys', Object.keys(schemas));
-
-  end();
 
   return {
     components: {

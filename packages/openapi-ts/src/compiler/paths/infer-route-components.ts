@@ -6,7 +6,7 @@ import type {
   RouteBodyInput,
   RouteParameterFieldValue,
 } from '../../routes/route.types.js';
-import type { CompilerContext } from '../compiler-context.types.js';
+import type { CompilerContext } from '../compiler-context.js';
 import type {
   InferredParameterComponent,
   InferredRequestBodyComponent,
@@ -26,8 +26,6 @@ export function inferRouteComponents(
   versionDefaults?: VersionDefaults,
   context?: CompilerContext,
 ): InferredRouteComponents {
-  const logger = context?.logger.child({ scope: 'inference' });
-
   const components: InferredRouteComponents = {
     parameters: new Map(),
     requestBodies: new Map(),
@@ -47,13 +45,6 @@ export function inferRouteComponents(
         resourceKey,
       };
       components.parameters.set(componentName, inferred);
-      logger?.debug('Inferred parameter component', {
-        name: componentName,
-        parameterName: name,
-        in: 'path',
-        required: true,
-        resourceKey,
-      });
     }
   }
 
@@ -71,14 +62,6 @@ export function inferRouteComponents(
         operationId: route.operationId,
       };
       components.parameters.set(componentName, inferred);
-      logger?.debug('Inferred parameter component', {
-        name: componentName,
-        parameterName: name,
-        in: 'path',
-        required: true,
-        resourceKey,
-        operationId: route.operationId,
-      });
     }
   }
 
@@ -95,14 +78,6 @@ export function inferRouteComponents(
         operationId: route.operationId,
       };
       components.parameters.set(componentName, inferred);
-      logger?.debug('Inferred parameter component', {
-        name: componentName,
-        parameterName: name,
-        in: 'query',
-        required: !isOptional(param),
-        resourceKey,
-        operationId: route.operationId,
-      });
     }
   }
 
@@ -120,12 +95,6 @@ export function inferRouteComponents(
       operationId: route.operationId || 'Unknown',
     };
     components.requestBodies.set(componentName, inferred);
-    logger?.debug('Inferred request body component', {
-      name: componentName,
-      operationId: route.operationId || 'Unknown',
-      required: required ?? true,
-      contentType,
-    });
   }
 
   // Infer responses
@@ -143,13 +112,6 @@ export function inferRouteComponents(
       noContent,
     };
     components.responses.set(componentName, inferred);
-    logger?.debug('Inferred response component', {
-      name: componentName,
-      operationId: route.operationId || 'Unknown',
-      status: 200,
-      noContent,
-      contentType,
-    });
   }
 
   if (route.responses) {
@@ -168,13 +130,6 @@ export function inferRouteComponents(
         noContent,
       };
       components.responses.set(componentName, inferred);
-      logger?.debug('Inferred response component', {
-        name: componentName,
-        operationId: route.operationId || 'Unknown',
-        status: statusCode,
-        noContent,
-        contentType,
-      });
     }
   }
 
@@ -199,12 +154,6 @@ export function inferRouteComponents(
       }
     }
   }
-
-  logger?.verbose('Inferred route component counts', {
-    parameters: components.parameters.size,
-    requestBodies: components.requestBodies.size,
-    responses: components.responses.size,
-  });
 
   return components;
 }

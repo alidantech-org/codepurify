@@ -1,9 +1,7 @@
 import type { PackageConfig } from '../config/package-config.types.js';
-import type { CompilerContext } from '../compiler/compiler-context.types.js';
-import { CompilerLogger } from '../logger/compiler-logger.js';
+import type { Logger } from '../logging/logger.types.js';
 import { resolvePackageConfig } from '../config/resolve-package-config.js';
 import { compileOpenApi } from '../compiler/compile-openapi.js';
-import { validateOpenApiFile } from '../validator/validate-openapi-document.js';
 import { writeOpenApiFiles } from '../writer/write-openapi-files.js';
 
 export interface GenerateOpenApiResult {
@@ -12,12 +10,7 @@ export interface GenerateOpenApiResult {
   readonly error?: unknown;
 }
 
-export interface GenerateOpenApiOptions {
-  readonly logger?: CompilerLogger;
-}
-
-export async function generateOpenApi(config: PackageConfig, options: GenerateOpenApiOptions = {}): Promise<GenerateOpenApiResult> {
-  const logger = options.logger;
+export async function generateOpenApi(config: PackageConfig, logger?: Logger): Promise<GenerateOpenApiResult> {
   const files: string[] = [];
   const resolvedConfig = resolvePackageConfig(config);
 
@@ -30,18 +23,14 @@ export async function generateOpenApi(config: PackageConfig, options: GenerateOp
   }
 
   for (const version of resolvedConfig.contracts) {
-    logger?.step(`Compiling ${version.contract.info.title} ${version.contract.info.version}`);
+    const contractTask = logger?.task(`Compiling OpenAPI ${version.contract.info.version}`);
+    logger?.info(`Contract: ${version.contract.info.title} ${version.contract.info.version}`);
+    logger?.info(`Output: ${resolvedConfig.output.folder}`);
 
-    const contractLogger = logger?.child({
-      scope: 'contract',
-      version: version.contract.info.version,
-    });
-
-    const context: CompilerContext = { logger: contractLogger ?? new CompilerLogger() };
-
-    const compiled = compileOpenApi(version.contract, resolvedConfig.compile, context);
+    const compiled = compileOpenApi(version.contract, resolvedConfig.compile);
 
     if (!compiled.success) {
+      contractTask?.fail('Compilation failed');
       return {
         success: false,
         files,
@@ -49,36 +38,20 @@ export async function generateOpenApi(config: PackageConfig, options: GenerateOp
       };
     }
 
-    logger?.step('Writing OpenAPI files');
-
-    files.push(
-      ...writeOpenApiFiles({
-        document: compiled.document,
-        contractVersion: version.contract.info.version,
-        contractDebug: version.contract,
-        output: resolvedConfig.output,
-        logger,
-      }),
+    contractTask?.succeed(
+      `Compiled OpenAPI ${version.contract.info.version} (${Object.keys(compiled.document?.paths ?? {}).length} paths)`,
     );
 
-    // Only validate if enabled
-    if (resolvedConfig.validation.enabled !== false) {
-      logger?.step('Validating OpenAPI');
-
-      const jsonFileName = `${resolvedConfig.output.filePrefix}.${version.contract.info.version}.json`;
-      const jsonPath = `${resolvedConfig.output.folder}/${jsonFileName}`;
-      const validation = await validateOpenApiFile(jsonPath, resolvedConfig.validation);
-
-      if (!validation.valid) {
-        return {
-          success: false,
-          files,
-          error: validation.errors.join('\n'),
-        };
-      }
-
-      logger?.success(`Validated ${jsonPath}`);
-    }
+    const writeTask = logger?.task('Writing OpenAPI files');
+    const writtenFiles = writeOpenApiFiles({
+      document: compiled.document,
+      contractVersion: version.contract.info.version,
+      contractDebug: version.contract,
+      output: resolvedConfig.output,
+      logger: undefined,
+    });
+    files.push(...writtenFiles);
+    writeTask?.succeed(`Generated ${writtenFiles.length} files`);
   }
 
   return {

@@ -1,6 +1,6 @@
 import type { OpenApiPaths, OpenApiOperation } from '../../openapi/openapi.types.js';
 import type { VersionContract } from '../../version/version-contract.types.js';
-import type { CompilerContext } from '../compiler-context.types.js';
+import type { CompilerContext } from '../compiler-context.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { expressPathToOpenApi } from './express-path-to-openapi.js';
 import type { RouteDefinition, RouteParameterMap, RoutePathParameterMap } from '../../routes/route.types.js';
@@ -15,15 +15,6 @@ export function compilePaths(
   paths: OpenApiPaths;
   inferredComponents: InferredRouteComponents;
 } {
-  const logger = context.logger.child({ scope: 'paths' });
-  const end = logger.time('compile paths');
-
-  logger.step('Compiling paths');
-
-  logger.verbose('Path compilation input', {
-    resourceCount: contract.resources.length,
-  });
-
   const paths: OpenApiPaths = {};
   const allInferredComponents: InferredRouteComponents = {
     parameters: new Map(),
@@ -62,15 +53,6 @@ export function compilePaths(
       }
     }
   }
-
-  logger.verbose('Compiled paths summary', {
-    pathCount: Object.keys(paths).length,
-    inferredParameters: allInferredComponents.parameters.size,
-    inferredRequestBodies: allInferredComponents.requestBodies.size,
-    inferredResponses: allInferredComponents.responses.size,
-  });
-
-  end();
 
   return { paths, inferredComponents: allInferredComponents };
 }

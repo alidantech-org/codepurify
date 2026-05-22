@@ -1,5 +1,5 @@
 import type { PackageConfig } from '../config/package-config.types.js';
-import type { CompilerLogger } from '../logger/compiler-logger.js';
+import type { Logger } from '../logging/logger.types.js';
 import type { GenerateOpenApiResult } from '../generator/generate-openapi.js';
 
 export interface InitConfigInput {
@@ -17,7 +17,7 @@ export interface InitConfigResult {
 
 export interface GenerateInput {
   readonly config: PackageConfig;
-  readonly logger?: CompilerLogger;
+  readonly logger?: Logger;
 }
 
 export type GenerateResult = GenerateOpenApiResult;

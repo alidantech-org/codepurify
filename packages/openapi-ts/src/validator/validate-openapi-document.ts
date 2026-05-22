@@ -87,6 +87,13 @@ export async function validateOpenApiFile(
   config: OpenApiValidationConfig = {},
   logger?: CompilerLogger,
 ): Promise<OpenApiValidationResult> {
+  const validationLogger = logger?.child({ scope: 'validation' });
+
+  validationLogger?.detail('Validation config', {
+    allowUnusedComponents: config.allowUnusedComponents,
+    failOnWarnings: config.failOnWarnings,
+  });
+
   const tempDir = await mkdtemp(join(tmpdir(), 'openapi-ts-'));
 
   try {
@@ -102,6 +109,8 @@ export async function validateOpenApiFile(
     const redoclyConfig = ['extends:', '  - recommended', 'rules:', `  no-unused-components: ${noUnusedComponentsRule}`, ''].join('\n');
 
     logger?.debug('Generated Redocly config', redoclyConfig);
+
+    logger?.trace('Redocly config', redoclyConfig);
 
     await writeFile(configPath, redoclyConfig, 'utf-8');
 

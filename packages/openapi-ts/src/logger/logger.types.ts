@@ -5,6 +5,15 @@ export interface LoggerConfig {
   readonly debug?: boolean;
   readonly verbose?: boolean;
   readonly silent?: boolean;
+  readonly interactive?: boolean;
+}
+
+export interface SpinnerHandle {
+  readonly text: (message: string) => void;
+  readonly succeed: (message?: string) => void;
+  readonly fail: (message?: string) => void;
+  readonly warn: (message?: string) => void;
+  readonly stop: () => void;
 }
 
 export interface LogContext {

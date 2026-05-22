@@ -1,5 +1,5 @@
 import type { RefResolver } from '../refs/ref-resolver.types.js';
-import type { CompilerContext } from '../compiler-context.types.js';
+import type { CompilerContext } from '../compiler-context.js';
 import { compilePropertySchema } from '../schemas/compile-property-schema.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
@@ -20,14 +20,6 @@ export function compileInferredComponents(
   requestBodies: Record<string, unknown>;
   responses: Record<string, unknown>;
 } {
-  const logger = context?.logger.child({ scope: 'inferred-compilation' });
-
-  logger?.verbose('Compiling inferred components', {
-    parameters: inferred.parameters.size,
-    requestBodies: inferred.requestBodies.size,
-    responses: inferred.responses.size,
-  });
-
   return {
     parameters: compileInferredParameters(inferred.parameters, resolver, context),
     requestBodies: compileInferredRequestBodies(inferred.requestBodies, resolver, context),
@@ -49,7 +41,6 @@ function compileInferredParameters(
       required: param.required,
       schema: compileParameterSchema(param.schema, resolver),
     };
-    context?.logger?.debug('Compiled inferred parameter', { name });
   }
 
   return result;
@@ -87,7 +78,6 @@ function compileInferredRequestBodies(
         },
       },
     };
-    context?.logger?.debug('Compiled inferred request body', { name, contentType: body.contentType });
   }
 
   return result;
@@ -119,7 +109,6 @@ function compileInferredResponses(
         description: response.description,
       };
     }
-    context?.logger?.debug('Compiled inferred response', { name, status: response.status, noContent: response.noContent });
   }
 
   return result;
