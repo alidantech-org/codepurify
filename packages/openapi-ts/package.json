@@ -3,12 +3,19 @@
       "version": "0.0.1",
       "description": "Typed OpenAPI contract engine for TypeScript projects.",
       "type": "module",
-      "main": "./dist/index.js",
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.js",
       "types": "./dist/index.d.ts",
       "exports": {
             ".": {
-                  "types": "./dist/index.d.ts",
-                  "import": "./dist/index.js"
+                  "import": {
+                        "types": "./dist/index.d.ts",
+                        "default": "./dist/index.js"
+                  },
+                  "require": {
+                        "types": "./dist/index.d.cts",
+                        "default": "./dist/index.cjs"
+                  }
             }
       },
       "files": [
@@ -16,8 +23,8 @@
             "README.md"
       ],
       "scripts": {
-            "dev": "tsc -p tsconfig.json --watch",
-            "build": "tsc -p tsconfig.json",
+            "dev": "tsup --watch && npm link",
+            "build": "tsup",
             "clean": "rm -rf dist",
             "typecheck": "tsc -p tsconfig.json --noEmit",
             "dev:build": "npm run clean && npm run build"
@@ -31,6 +38,7 @@
       "devDependencies": {
             "@types/js-yaml": "^4.0.9",
             "@types/node": "^22.0.0",
+            "tsup": "^8.0.0",
             "typescript": "^5.0.0"
       },
       "peerDependencies": {
