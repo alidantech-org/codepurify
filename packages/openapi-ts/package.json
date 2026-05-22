@@ -24,7 +24,7 @@
       ],
       "scripts": {
             "dev": "tsup --watch && npm link",
-            "build": "tsup",
+            "build": "tsup && npm link",
             "clean": "rm -rf dist",
             "typecheck": "tsc -p tsconfig.json --noEmit",
             "dev:build": "npm run clean && npm run build"
