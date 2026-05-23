@@ -112,7 +112,21 @@ export function compileComponents(contract: VersionContract, context: CompilerCo
           schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver, context);
         }
 
-        const modelsToEmit = value.abstract ? [value.model] : [value.publicModel, value.selectedModel];
+        const modelsToEmit = value.abstract
+          ? [value.model]
+          : [
+              value.model,
+              value.publicModel,
+              value.selectedModel,
+              value.partialModel,
+              value.query.exact,
+              value.query.search,
+              value.query.exactSearch,
+              value.query.range,
+              value.query.in,
+              value.query.exists,
+              value.query.sort,
+            ];
 
         for (const modelRef of modelsToEmit) {
           const name = resolver.schemas.get(modelRef.id);

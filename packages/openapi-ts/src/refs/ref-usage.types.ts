@@ -1,5 +1,8 @@
+import type { z } from 'zod';
 import type { ComponentRef, EngineRef, ModelRef, PropertyRef } from './ref.types.js';
 import type { SchemaCompositionFieldMap } from '../schema/schema.types.js';
+import type { ComponentFieldMap } from '../components/component.types.js';
+import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 
 export type ExtendWithFieldMap = SchemaCompositionFieldMap;
 
@@ -19,6 +22,7 @@ export interface RefUsage<TRef extends EngineRef = EngineRef> {
   nonNullable(): RefUsage<TRef>;
   array(): RefUsage<TRef>;
   extendWith(fields: ExtendWithFieldMap): RefUsage<TRef>;
+  zod(): z.ZodTypeAny;
 }
 
 export type RefWithUsageMethods<TRef extends EngineRef> = TRef & {
@@ -27,5 +31,6 @@ export type RefWithUsageMethods<TRef extends EngineRef> = TRef & {
   nullable(): RefUsage<TRef>;
   nonNullable(): RefUsage<TRef>;
   array(): RefUsage<TRef>;
-  extendWith(fields: ExtendWithFieldMap): RefUsage<TRef>;
+  extendWith(fields: ComponentFieldMap): RefUsage<TRef>;
+  zod(): z.ZodTypeAny;
 };

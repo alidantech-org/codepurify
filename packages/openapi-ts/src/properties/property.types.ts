@@ -49,6 +49,7 @@ export interface EntityPropertyDefinition<TEntity> extends Omit<PropertyDefiniti
   readonly kind: typeof PropertyKind.entity;
   readonly fields: EntityFields<TEntity>;
   readonly extends?: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[];
+  readonly refs?: EntityPropertyRefs | EntityPropertyRefsV2;
 }
 
 export interface ForRefPropertyDefinition extends PropertyDefinitionBase {

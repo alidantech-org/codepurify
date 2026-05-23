@@ -32,6 +32,8 @@ import type {
   MergePropertyRefGroups,
   PropertyRefsFromFields,
 } from './property.types.js';
+import { compileZodRef } from '../zod/compile-zod-ref.js';
+import type { z } from 'zod';
 
 export interface DefinePropertiesOptions extends OptionalResourceContext {
   name: string;
@@ -40,6 +42,11 @@ export interface DefinePropertiesOptions extends OptionalResourceContext {
 export function defineProperties(options: DefinePropertiesOptions) {
   const definitions: PropertyDefinition[] = [];
   const refs: PropertyRegistry['ref'] = {};
+
+  // Create toZod callback if zodRegistry is available
+  const toZod = options.zodRegistry
+    ? (ref: unknown): z.ZodTypeAny => compileZodRef(ref as PropertyRef | ModelRef, options.zodRegistry!)
+    : undefined;
 
   function shared<TName extends string, TFields extends PropertyDefinitionFieldMap>(
     name: TName,
@@ -54,7 +61,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
       abstract: groupOptions.abstract,
     });
 
-    const groupRefs = createPropertyRefs(options, name, fields, PropertyKind.shared) as PropertyFieldRefMap<TFields>;
+    const groupRefs = createPropertyRefs(options, name, fields, PropertyKind.shared, toZod) as PropertyFieldRefMap<TFields>;
 
     refs[name] = groupRefs;
 
@@ -78,7 +85,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
       abstract: groupOptions.abstract,
     });
 
-    const groupRefs = createPropertyRefs(options, name, fields, PropertyKind.forRef) as PropertyFieldRefMap<TFields>;
+    const groupRefs = createPropertyRefs(options, name, fields, PropertyKind.forRef, toZod) as PropertyFieldRefMap<TFields>;
 
     refs[name] = groupRefs;
 
@@ -127,7 +134,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
     const mergedFields = mergeInheritedFields(entityOptions.extends, fields as unknown as Record<string, SchemaField>) as TFields &
       ExtractInheritedFields<TExtends>;
 
-    const entityRefs = createEntityRefsV2(options, name, mergedFields, entityOptions.abstract === true);
+    const entityRefs = createEntityRefsV2(options, name, mergedFields, entityOptions.abstract === true, toZod);
 
     definitions.push({
       kind: PropertyKind.entity,
@@ -137,6 +144,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
         ? [entityOptions.extends as unknown as NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>]
         : undefined,
       abstract: entityOptions.abstract,
+      refs: entityRefs,
     });
 
     refs[name] = entityRefs as unknown as EntityPropertyRefs;
@@ -166,8 +174,11 @@ function createPropertyRefs(
   name: string,
   fields: SchemaFieldMap,
   sourceKind: PropertyKind,
+  toZod?: (ref: unknown) => z.ZodTypeAny,
 ): PropertyRefGroup {
-  return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, createPropertyRef(options, name, key, sourceKind, field)]));
+  return Object.fromEntries(
+    Object.entries(fields).map(([key, field]) => [key, createPropertyRef(options, name, key, sourceKind, field, toZod)]),
+  );
 }
 
 function createPropertyRef(
@@ -176,27 +187,36 @@ function createPropertyRef(
   key: string,
   sourceKind: PropertyKind,
   field: unknown,
+  toZod?: (ref: unknown) => z.ZodTypeAny,
 ): PropertyRefGroup[string] {
   const refId = createScopedId(options, EngineIdPart.property, name, key);
   const isShared = sourceKind === PropertyKind.shared;
 
-  return withRefMethods({
-    id: refId,
-    name: key,
-    kind: RefKind.property,
-    propertyKey: key,
-    targetRefId: getTargetRefId(field),
-    meta: {
-      kind: SdkKind.primitive,
-      placement: isShared ? SdkPlacement.globalShared : getPlacement(options),
-      group: isShared ? 'shared' : options.resource?.group,
-      resource: options.resource?.key,
-      property: key,
-      refId,
-      shared: isShared,
-      skip: true,
+  // Register source field in zodRegistry if available
+  if (options.zodRegistry && typeof field === 'object' && field !== null && 'kind' in field) {
+    options.zodRegistry.fields.set(refId, field as SchemaField);
+  }
+
+  return withRefMethods(
+    {
+      id: refId,
+      name: key,
+      kind: RefKind.property,
+      propertyKey: key,
+      targetRefId: getTargetRefId(field),
+      meta: {
+        kind: SdkKind.primitive,
+        placement: isShared ? SdkPlacement.globalShared : getPlacement(options),
+        group: isShared ? 'shared' : options.resource?.group,
+        resource: options.resource?.key,
+        property: key,
+        refId,
+        shared: isShared,
+        skip: true,
+      },
     },
-  });
+    { toZod },
+  );
 }
 
 function createModelRef(
@@ -210,7 +230,7 @@ function createModelRef(
 ): ModelRef {
   const refId = createScopedId(options, EngineIdPart.model, name, modelKey);
 
-  return {
+  const modelRef = {
     id: refId,
     name: `${name}.${modelKey}`,
     kind: RefKind.model,
@@ -228,14 +248,31 @@ function createModelRef(
       refId,
     },
   };
+
+  // Register model ref in zodRegistry if available
+  if (options.zodRegistry) {
+    options.zodRegistry.models.set(refId, modelRef);
+  }
+
+  return modelRef;
 }
 
 function getModelSchemaName(name: string, modelKey: string, isAbstract: boolean): string {
-  if (isAbstract) return toSchemaName(name);
+  if (isAbstract) return toSchemaName(`${name}AbstractModel`);
+  if (modelKey === 'model') return toSchemaName(`${name}Model`);
   if (modelKey === 'public-model') return toSchemaName(`${name}PublicModel`);
   if (modelKey === 'partial-model') return toSchemaName(`${name}PartialModel`);
   if (modelKey === 'selected-model') return toSchemaName(`${name}SelectedModel`);
-  return toSchemaName(`${name}Model`);
+
+  if (modelKey === 'query-exact') return toSchemaName(`${name}QueryExact`);
+  if (modelKey === 'query-search') return toSchemaName(`${name}QuerySearch`);
+  if (modelKey === 'query-exact-search') return toSchemaName(`${name}QueryExactSearch`);
+  if (modelKey === 'query-range') return toSchemaName(`${name}QueryRange`);
+  if (modelKey === 'query-in') return toSchemaName(`${name}QueryIn`);
+  if (modelKey === 'query-exists') return toSchemaName(`${name}QueryExists`);
+  if (modelKey === 'query-sort') return toSchemaName(`${name}QuerySort`);
+
+  return toSchemaName(`${name}${toSchemaName(modelKey)}Model`);
 }
 
 function createScopedId(options: DefinePropertiesOptions, ...parts: string[]): string {
@@ -391,8 +428,9 @@ function createEntityRefs(
   ownFields: SchemaFieldMap,
   inheritedSources: NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[],
   isAbstract = false,
+  toZod?: (ref: unknown) => z.ZodTypeAny,
 ): EntityPropertyRefs {
-  const fieldRefs = createPropertyRefs(options, name, mergedFields, PropertyKind.entity);
+  const fieldRefs = createPropertyRefs(options, name, mergedFields, PropertyKind.entity, toZod);
 
   return {
     name,
@@ -448,8 +486,9 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
   name: string,
   fields: TFields,
   isAbstract = false,
+  toZod?: (ref: unknown) => z.ZodTypeAny,
 ): EntityPropertyRefsV2<TFields> {
-  const fieldRefs = createPropertyRefs(options, name, fields as SchemaFieldMap, PropertyKind.entity);
+  const fieldRefs = createPropertyRefs(options, name, fields as SchemaFieldMap, PropertyKind.entity, toZod);
 
   return {
     fields: fieldRefs as unknown as EntityFieldRefs<TFields>,
@@ -457,6 +496,7 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
     schemaRef: `#/components/schemas/${toSchemaName(name)}`,
     model: withRefMethods(
       createModelRef(options, name, isAbstract ? 'abstract-model' : 'model', fieldRefs, fields as SchemaFieldMap, undefined, isAbstract),
+      { toZod },
     ),
     publicModel: withRefMethods(
       createModelRef(
@@ -467,6 +507,7 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
         fields as SchemaFieldMap,
         undefined,
       ),
+      { toZod },
     ),
     selectedModel: withRefMethods(
       createModelRef(
@@ -477,8 +518,9 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
         fields as SchemaFieldMap,
         undefined,
       ),
+      { toZod },
     ),
-    partialModel: withRefMethods(createModelRef(options, name, 'partial-model', fieldRefs, fields as SchemaFieldMap, undefined)),
+    partialModel: withRefMethods(createModelRef(options, name, 'partial-model', fieldRefs, fields as SchemaFieldMap, undefined), { toZod }),
     query: createQueryRefs(options, name, fields as SchemaFieldMap, fieldRefs),
   };
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ContentType, HttpMethod, QueryBehavior, SchemaAccess, defineVersionContract, schema } from '../index.js';
+import { createZodSourceRegistry } from '../zod/zod-source-registry.js';
 
 interface IUser {
   id: string;
@@ -240,3 +241,81 @@ export const smokeContract = {
 };
 
 export type SmokeContract = typeof smokeContract;
+
+// Smoke test assertions for entity model schema emission
+import { compileOpenApi } from '../compiler/compile-openapi.js';
+
+const compiled = compileOpenApi(v1.contract);
+
+if (!compiled.success || !compiled.document) {
+  throw new Error('Failed to compile OpenAPI document');
+}
+
+const schemas = compiled.document.components?.schemas as Record<string, unknown> | undefined;
+
+if (!schemas) {
+  throw new Error('No schemas found in compiled OpenAPI document');
+}
+
+// Assert all User entity model schemas are emitted
+const expectedUserSchemas = [
+  'UserModel',
+  'UserPublicModel',
+  'UserSelectedModel',
+  'UserPartialModel',
+  'UserQueryExact',
+  'UserQuerySearch',
+  'UserQueryExactSearch',
+  'UserQueryRange',
+  'UserQueryIn',
+  'UserQueryExists',
+  'UserQuerySort',
+];
+
+for (const schemaName of expectedUserSchemas) {
+  if (!(schemaName in schemas)) {
+    throw new Error(`Missing expected schema: ${schemaName}`);
+  }
+}
+
+// Assert query model has SDK metadata
+const userQuerySearch = schemas.UserQuerySearch as Record<string, unknown>;
+if (userQuerySearch['x-sdk-kind'] !== 'model') {
+  throw new Error('UserQuerySearch should have x-sdk-kind: model');
+}
+
+// Assert query model has expected fields when configured
+const userQuerySearchProps = (userQuerySearch.properties as Record<string, unknown>) || {};
+if (!('email' in userQuerySearchProps)) {
+  throw new Error('UserQuerySearch should have email property');
+}
+
+// Assert model properties use $ref instead of inline schemas
+const userPublicModel = schemas.UserPublicModel as Record<string, unknown>;
+const userPublicModelProps = (userPublicModel.properties as Record<string, unknown>) || {};
+
+const emailProp = userPublicModelProps.email as Record<string, unknown>;
+if (!emailProp || !('$ref' in emailProp)) {
+  throw new Error('UserPublicModel.email should use $ref, not inline type');
+}
+
+if (emailProp.$ref !== '#/components/schemas/UserEmail') {
+  throw new Error(`UserPublicModel.email should point to UserEmail, got ${emailProp.$ref}`);
+}
+
+// Assert query model properties also use $ref
+const userQuerySearchEmail = userQuerySearchProps.email as Record<string, unknown>;
+if (!userQuerySearchEmail || !('$ref' in userQuerySearchEmail)) {
+  throw new Error('UserQuerySearch.email should use $ref, not inline type');
+}
+
+if (userQuerySearchEmail.$ref !== '#/components/schemas/UserEmail') {
+  throw new Error(`UserQuerySearch.email should point to UserEmail, got ${userQuerySearchEmail.$ref}`);
+}
+
+// Assert UserPublicModel does not include password (filtered field)
+if ('passwordHash' in userPublicModelProps) {
+  throw new Error('UserPublicModel should not include passwordHash (should be filtered by publicModel)');
+}
+
+console.log('✅ All entity model schema smoke test assertions passed');

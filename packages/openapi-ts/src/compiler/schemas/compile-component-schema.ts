@@ -1,6 +1,7 @@
 import type { ComponentFieldMap, SchemaCompositionFieldValue } from '../../components/component.types.js';
 import type { SchemaComponentDefinition } from '../../components/schemas/schema-component.types.js';
-import type { ComponentRef } from '../../refs/ref.types.js';
+import type { ComponentRef, PropertyRef, ModelRef } from '../../refs/ref.types.js';
+import type { ArrayRef, ExtendedRef } from '../../refs/ref-wrapper.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
 
@@ -28,12 +29,26 @@ function compileComponentFields(fields: ComponentFieldMap): Record<string, unkno
 }
 
 function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
-  const ref = isRefUsage(value) ? value.ref : value;
-  const array = isRefUsage(value) ? value.usage.array : false;
+  let ref = isRefUsage(value) ? value.ref : value;
+  let array = isRefUsage(value) ? value.usage.array : false;
   const nullable = isRefUsage(value) ? value.usage.nullable : false;
-  const extendWith = isRefUsage(value) ? value.usage.extendWith : undefined;
+  let extendWith = isRefUsage(value) ? value.usage.extendWith : undefined;
 
-  let schema: unknown = { $ref: `#pending/${ref.id}` };
+  // Unwrap ArrayRef and ExtendedRef
+  if ('kind' in ref) {
+    if (ref.kind === 'array-ref') {
+      ref = (ref as ArrayRef).ref as unknown as ComponentRef | PropertyRef | ModelRef;
+      array = true;
+    } else if (ref.kind === 'extended-ref') {
+      const extendedRef = ref as ExtendedRef;
+      ref = extendedRef.ref as unknown as ComponentRef | PropertyRef | ModelRef;
+      extendWith = extendedRef.fields;
+    }
+  }
+
+  // Ensure ref is a base ref type (PropertyRef, ModelRef, ComponentRef)
+  const baseRef = ref as ComponentRef | PropertyRef | ModelRef;
+  let schema: unknown = { $ref: `#pending/${baseRef.id}` };
 
   // Apply extendWith
   if (extendWith) {

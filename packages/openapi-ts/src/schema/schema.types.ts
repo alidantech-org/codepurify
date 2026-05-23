@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import { SchemaKind } from './schema-kind.js';
 import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types.js';
 import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
+import type { ArrayRef, ExtendedRef } from '../refs/ref-wrapper.types.js';
 import type { SchemaAccess } from './schema-access.js';
 import type { PrimitiveQueryOptions } from './query-behavior.js';
 
@@ -92,6 +93,12 @@ export type SchemaCompositionFieldValue =
   | ComponentRef
   | RefUsage<PropertyRef>
   | RefUsage<ModelRef>
-  | RefUsage<ComponentRef>;
+  | RefUsage<ComponentRef>
+  | ArrayRef<PropertyRef>
+  | ArrayRef<ModelRef>
+  | ArrayRef<ComponentRef>
+  | ExtendedRef<PropertyRef>
+  | ExtendedRef<ModelRef>
+  | ExtendedRef<ComponentRef>;
 
 export type SchemaCompositionFieldMap = Record<string, SchemaCompositionFieldValue>;
