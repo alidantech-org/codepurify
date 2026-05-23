@@ -3,6 +3,7 @@ import type { EngineRef } from './ref.types.js';
 import type { ExtendWithInput, RefUsage, RefUsageOptions, RefWithUsageMethods } from './ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
+import { getSourceMetadataFromRef, getSourceMetadataFromExtendWithInput } from './ref-source-metadata.js';
 
 export interface RefMethodOptions {
   readonly toZod?: (value: unknown) => z.ZodTypeAny;
@@ -40,7 +41,11 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
     extendWith: {
       enumerable: false,
       configurable: true,
-      value: (fields: ExtendWithInput) => createUsage(ref, { extendWith: fields }, options),
+      value: (fields: ExtendWithInput) => {
+        const baseMetadata = getSourceMetadataFromRef(ref, 'base');
+        const extensionMetadata = getSourceMetadataFromExtendWithInput(fields);
+        return createUsage(ref, { extendWith: fields, composition: { base: baseMetadata, extensions: [extensionMetadata] } }, options);
+      },
     },
     zod: {
       enumerable: false,
@@ -87,7 +92,17 @@ function createUsage<TRef extends EngineRef>(ref: TRef, usage: RefUsageOptions, 
     extendWith: {
       enumerable: false,
       configurable: true,
-      value: (fields: ExtendWithInput) => createUsage(ref, { ...usage, extendWith: fields }, options),
+      value: (fields: ExtendWithInput) => {
+        const existingComposition = usage.composition;
+        const baseMetadata = existingComposition?.base ?? getSourceMetadataFromRef(ref, 'base');
+        const extensionMetadata = getSourceMetadataFromExtendWithInput(fields);
+        const existingExtensions = existingComposition?.extensions ?? [];
+        return createUsage(
+          ref,
+          { ...usage, extendWith: fields, composition: { base: baseMetadata, extensions: [...existingExtensions, extensionMetadata] } },
+          options,
+        );
+      },
     },
     zod: {
       enumerable: false,

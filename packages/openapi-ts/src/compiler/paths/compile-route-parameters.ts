@@ -3,6 +3,7 @@ import type { RouteParameterRef, RouteParameterMap, RouteParameterFieldValue, Ro
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import type { ComponentRef, ModelRef, PropertyRef } from '../../refs/ref.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
+import type { FieldSourceMetadata } from '../../refs/ref-usage.types.js';
 import type { SchemaComponentValue } from '../../components/schemas/schema-component.types.js';
 import type { SchemaComponentRegistry } from '../../components/schemas/schema-component.types.js';
 import type { VersionContract } from '../../version/version-contract.types.js';
@@ -11,28 +12,19 @@ import { RefKind } from '../../refs/ref-kind.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage, getRefRequired } from '../../validation/ref-usage-guards.js';
 import { isEngineRef, isPropertyRef, isComponentRef } from '../../validation/ref-guards.js';
-import { normalizeExtendWithInput, normalizeExtendWithForQueryCollection } from '../schemas/normalize-extend-with.js';
+import {
+  normalizeExtendWithInput,
+  normalizeExtendWithForQueryCollection,
+  normalizeExtendWithInputWithSource,
+} from '../schemas/normalize-extend-with.js';
+import { getSourceMetadataFromRef } from '../../refs/ref-source-metadata.js';
 
 export interface CollectedQueryField {
   readonly name: string;
   readonly field: RouteParameterFieldValue;
   readonly required: boolean;
 
-  readonly origin: 'base' | 'extension' | 'inline';
-  readonly shared?: boolean;
-
-  readonly sourceSchema?: string;
-  readonly sourceSchemaRef?: string;
-
-  readonly inheritedFrom?: string;
-  readonly inheritedFromRef?: string;
-
-  readonly fromModel?: string;
-  readonly fromModelRef?: string;
-
-  readonly resource?: string;
-  readonly entity?: string;
-  readonly property?: string;
+  readonly source: FieldSourceMetadata;
 }
 
 export function compileRouteParameters(
@@ -167,7 +159,7 @@ function compileComponentRefQueryParameters(
 function findSchemaComponentDefinition(
   refId: string,
   contract?: VersionContract,
-): { name: string; value: SchemaComponentValue } | undefined {
+): { name: string; value: SchemaComponentValue; isShared?: boolean } | undefined {
   if (!contract) return undefined;
 
   // Search shared schema components
@@ -175,7 +167,7 @@ function findSchemaComponentDefinition(
     for (const definition of registry.definitions) {
       const componentRef = registry.ref[definition.name];
       if (componentRef.id === refId) {
-        return definition;
+        return { ...definition, isShared: true };
       }
     }
   }
@@ -186,7 +178,7 @@ function findSchemaComponentDefinition(
       for (const definition of registry.definitions) {
         const componentRef = registry.ref[definition.name];
         if (componentRef.id === refId) {
-          return definition;
+          return { ...definition, isShared: false };
         }
       }
     }
@@ -199,6 +191,7 @@ export function collectQueryFieldsFromSchemaComponentValue(
   value: SchemaComponentValue,
   contract?: VersionContract,
   sourceSchema?: string,
+  baseSource?: FieldSourceMetadata,
 ): CollectedQueryField[] {
   // Handle plain field map
   if (isComponentFieldMap(value)) {
@@ -209,12 +202,29 @@ export function collectQueryFieldsFromSchemaComponentValue(
           `Query component field "${name}" must be a PropertyRef or RefUsage<PropertyRef>. Got: ${typeof field === 'object' && 'kind' in field ? (field as { kind: string }).kind : typeof field}`,
         );
       }
+      const fieldRef = isPropertyRef(field) ? field : (field as RefUsage<PropertyRef>).ref;
+
+      // For inline field maps, derive source from the actual PropertyRef
+      // This prevents inline resource fields from being treated as shared
+      let source: FieldSourceMetadata;
+      if (baseSource && baseSource.origin !== 'inline') {
+        // Use provided base source if it's not inline (e.g., from base component)
+        source = baseSource;
+      } else {
+        // Derive from the actual PropertyRef for inline maps
+        source = getSourceMetadataFromRef(fieldRef, 'inline');
+      }
+
       result.push({
         name,
         field: field as RouteParameterFieldValue,
         required: isRequiredForQuery(field as RouteParameterFieldValue),
-        sourceSchema,
-        origin: 'inline',
+        source: {
+          ...source,
+          propertyRefId: fieldRef.id,
+          fieldKey: fieldRef.propertyKey,
+          propertyResource: fieldRef.meta?.resource,
+        },
       });
     }
     return result;
@@ -225,7 +235,8 @@ export function collectQueryFieldsFromSchemaComponentValue(
     if (value.kind === 'component') {
       const definition = findSchemaComponentDefinition(value.id, contract);
       if (definition) {
-        return collectQueryFieldsFromSchemaComponentValue(definition.value, contract, definition.name);
+        const componentSource = getSourceMetadataFromRef(value, 'base');
+        return collectQueryFieldsFromSchemaComponentValue(definition.value, contract, definition.name, componentSource);
       }
     }
     throw new Error(`Cannot expand query component with ref kind: ${value.kind}`);
@@ -235,8 +246,9 @@ export function collectQueryFieldsFromSchemaComponentValue(
   if (isRefUsage(value) && isComponentRef(value.ref)) {
     const definition = findSchemaComponentDefinition(value.ref.id, contract);
     if (definition) {
-      const baseFields = collectQueryFieldsFromSchemaComponentValue(definition.value, contract, definition.name);
-      const extensionFields = normalizeExtendWithForQueryCollection(value.usage.extendWith);
+      const baseSource = value.usage.composition?.base ?? getSourceMetadataFromRef(value.ref, 'base');
+      const baseFields = collectQueryFieldsFromSchemaComponentValue(definition.value, contract, definition.name, baseSource);
+      const extensionFields = normalizeExtendWithInputWithSource(value.usage.extendWith);
       if (extensionFields) {
         // Filter and validate extension fields to only include PropertyRef
         for (const [name, field] of Object.entries(extensionFields.fields)) {
@@ -246,34 +258,31 @@ export function collectQueryFieldsFromSchemaComponentValue(
             );
           }
 
+          const fieldRef = isPropertyRef(field) ? field : (field as RefUsage<PropertyRef>).ref;
           baseFields.push({
             name,
             field: field as RouteParameterFieldValue,
             required: isRequiredForQuery(field as RouteParameterFieldValue),
-            sourceSchema: definition.name,
-            sourceSchemaRef: `#/components/schemas/${definition.name}`,
-            origin: 'extension',
-            fromModel: extensionFields.sourceModel?.name,
-            fromModelRef: extensionFields.sourceModel?.openapiRef,
+            source: {
+              ...extensionFields.source,
+              origin: extensionFields.source?.origin ?? 'extension',
+              propertyRefId: fieldRef.id,
+              fieldKey: fieldRef.propertyKey,
+              propertyResource: fieldRef.meta?.resource,
+            },
           });
         }
       }
-      // Mark base fields as inherited and shared
-      return baseFields.map((f) => ({
-        ...f,
-        inheritedFrom: definition.name,
-        inheritedFromRef: `#/components/schemas/${definition.name}`,
-        origin: 'base' as const,
-        shared: true,
-      }));
+      return baseFields;
     }
     throw new Error(`Cannot find component definition for ref: ${value.ref.id}`);
   }
 
   // Handle RefUsage<EngineRef> (extendWith on other refs)
   if (isRefUsage(value)) {
-    const baseFields = collectQueryFieldsFromSchemaComponentValue(value.ref, contract, sourceSchema);
-    const extensionFields = normalizeExtendWithForQueryCollection(value.usage.extendWith);
+    const baseSource = value.usage.composition?.base ?? getSourceMetadataFromRef(value.ref, 'base');
+    const baseFields = collectQueryFieldsFromSchemaComponentValue(value.ref, contract, sourceSchema, baseSource);
+    const extensionFields = normalizeExtendWithInputWithSource(value.usage.extendWith);
     if (extensionFields) {
       // Filter and validate extension fields to only include PropertyRef
       for (const [name, field] of Object.entries(extensionFields.fields)) {
@@ -283,15 +292,18 @@ export function collectQueryFieldsFromSchemaComponentValue(
           );
         }
 
+        const fieldRef = isPropertyRef(field) ? field : (field as RefUsage<PropertyRef>).ref;
         baseFields.push({
           name,
           field: field as RouteParameterFieldValue,
           required: isRequiredForQuery(field as RouteParameterFieldValue),
-          sourceSchema,
-          sourceSchemaRef: sourceSchema ? `#/components/schemas/${sourceSchema}` : undefined,
-          origin: 'extension',
-          fromModel: extensionFields.sourceModel?.name,
-          fromModelRef: extensionFields.sourceModel?.openapiRef,
+          source: {
+            ...extensionFields.source,
+            origin: extensionFields.source?.origin ?? 'extension',
+            propertyRefId: fieldRef.id,
+            fieldKey: fieldRef.propertyKey,
+            propertyResource: fieldRef.meta?.resource,
+          },
         });
       }
     }

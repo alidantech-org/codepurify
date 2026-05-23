@@ -6,7 +6,7 @@ import type { RefUsage } from '../../refs/ref-usage.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
 import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
-import { normalizeExtendWithInput } from './normalize-extend-with.js';
+import { normalizeExtendWithInput, normalizeExtendWithInputWithSource } from './normalize-extend-with.js';
 
 export function compileComponentSchema(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
   // Handle RefUsage with extendWith (allOf)
@@ -16,7 +16,7 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
 
   // Handle direct EngineRef (alias)
   if (isEngineRef(definition.value)) {
-    const schema = { $ref: `#/components/schemas/${definition.value.name}` };
+    const refSchema = { $ref: `#/components/schemas/${definition.value.name}` };
     if (ref?.meta) {
       const codegenMeta: CodegenMetadata = {
         kind: 'dto',
@@ -26,9 +26,11 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
         refId: ref.meta.refId,
         shared: ref.meta.shared ? true : undefined,
       };
+      // Wrap direct ref with allOf when metadata is present
+      const schema = { allOf: [refSchema] };
       return applyCodegenMetadata(schema, codegenMeta);
     }
-    return schema;
+    return refSchema;
   }
 
   // Handle ComponentFieldMap (normal object schema)

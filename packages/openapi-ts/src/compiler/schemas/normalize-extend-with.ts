@@ -1,12 +1,19 @@
 import type { ExtendWithInput } from '../../refs/ref-usage.types.js';
 import type { SchemaCompositionFieldMap } from '../../schema/schema.types.js';
 import type { ModelRef, ComponentRef, PropertyRef } from '../../refs/ref.types.js';
+import type { FieldSourceMetadata } from '../../refs/ref-usage.types.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
+import { getSourceMetadataFromRef } from '../../refs/ref-source-metadata.js';
 
 export interface NormalizedExtendWithForQuery {
   readonly fields: SchemaCompositionFieldMap;
   readonly sourceModel?: ModelRef;
+}
+
+export interface NormalizedExtendWithWithSource {
+  readonly fields: SchemaCompositionFieldMap;
+  readonly source?: FieldSourceMetadata;
 }
 
 export function normalizeExtendWithInput(input: ExtendWithInput | undefined): SchemaCompositionFieldMap | undefined {
@@ -65,6 +72,61 @@ export function normalizeExtendWithForQueryCollection(input: ExtendWithInput | u
 
   if (isSchemaCompositionFieldMap(input)) {
     return { fields: input };
+  }
+
+  // Reject ComponentRef, PropertyRef, ArrayRef, ExtendedRef
+  if (isComponentRef(input)) {
+    throw new Error('extendWith() does not support ComponentRef. Use a field map, ModelRef, or RefUsage<ModelRef>.');
+  }
+
+  if (isPropertyRef(input)) {
+    throw new Error('extendWith() does not support PropertyRef. Use a field map, ModelRef, or RefUsage<ModelRef>.');
+  }
+
+  if (isArrayRef(input)) {
+    throw new Error('extendWith() does not support ArrayRef. Use a field map, ModelRef, or RefUsage<ModelRef>.');
+  }
+
+  if (isExtendedRef(input)) {
+    throw new Error('extendWith() does not support ExtendedRef. Use a field map, ModelRef, or RefUsage<ModelRef>.');
+  }
+
+  throw new Error('extendWith() only supports a field map, ModelRef, or RefUsage<ModelRef>.');
+}
+
+export function normalizeExtendWithInputWithSource(input: ExtendWithInput | undefined): NormalizedExtendWithWithSource | undefined {
+  if (!input) return undefined;
+
+  if (isModelRef(input)) {
+    return {
+      fields: input.fields,
+      source: getSourceMetadataFromRef(input, 'extension'),
+    };
+  }
+
+  if (isRefUsage(input)) {
+    if (isModelRef(input.ref)) {
+      // Prefer stored composition metadata if available
+      if (input.usage.composition?.extensions && input.usage.composition.extensions.length > 0) {
+        return {
+          fields: input.ref.fields,
+          source: input.usage.composition.extensions[input.usage.composition.extensions.length - 1],
+        };
+      }
+      return {
+        fields: input.ref.fields,
+        source: getSourceMetadataFromRef(input.ref, 'extension'),
+      };
+    }
+
+    throw new Error('extendWith() RefUsage must target a ModelRef.');
+  }
+
+  if (isSchemaCompositionFieldMap(input)) {
+    return {
+      fields: input,
+      source: { origin: 'inline' },
+    };
   }
 
   // Reject ComponentRef, PropertyRef, ArrayRef, ExtendedRef

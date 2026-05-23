@@ -1,3 +1,5 @@
+import type { FieldSourceMetadata } from '../refs/ref-usage.types.js';
+
 const COMMON_QUERY_PARAMS = new Set(['page', 'limit', 'sort', 'fields', 'populate', 'search']);
 
 export function getParameterName(
@@ -5,7 +7,7 @@ export function getParameterName(
   location: 'path' | 'query',
   resourceKey?: string,
   operationId?: string,
-  shared?: boolean,
+  source?: FieldSourceMetadata,
 ): string {
   const suffix = location === 'path' ? 'PathParam' : 'QueryParam';
   const pascalName = toPascalCase(parameterName);
@@ -19,7 +21,7 @@ export function getParameterName(
   }
 
   // Shared/base query params use simple reusable names
-  if (location === 'query' && shared) {
+  if (location === 'query' && source?.shared) {
     return `${pascalName}${suffix}`;
   }
 

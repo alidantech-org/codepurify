@@ -1053,6 +1053,36 @@ if (parameters.ListUsersEmailQueryParam) {
   throw new Error('Operation-specific ListUsersEmailQueryParam should not be emitted');
 }
 
+// Assert resource-specific status params are resource-prefixed
+if (!parameters.UsersStatusQueryParam) {
+  throw new Error('UsersStatusQueryParam should exist');
+}
+
+if (!parameters.VehiclesStatusQueryParam) {
+  throw new Error('VehiclesStatusQueryParam should exist');
+}
+
+if (parameters.StatusQueryParam) {
+  throw new Error('Generic StatusQueryParam should not be emitted');
+}
+
+// Assert shared fields/populate dedupe
+if (!parameters.FieldsQueryParam) {
+  throw new Error('FieldsQueryParam should exist once');
+}
+
+if (!parameters.PopulateQueryParam) {
+  throw new Error('PopulateQueryParam should exist once');
+}
+
+if (parameters.UsersFieldsQueryParam || parameters.VehiclesFieldsQueryParam) {
+  throw new Error('Resource-specific FieldsQueryParam duplicates should not be emitted');
+}
+
+if (parameters.GetUserByIdFieldsQueryParam || parameters.GetVehicleByIdFieldsQueryParam) {
+  throw new Error('Operation-specific FieldsQueryParam duplicates should not be emitted');
+}
+
 const responses = components.responses as Record<string, unknown> | undefined;
 if (!responses) {
   throw new Error('components should have responses');
@@ -1077,9 +1107,9 @@ if (pageParam.required !== false) {
 }
 
 // Test parameter metadata for extension param (no x-codegen)
-const emailParam = parameters.ListUsersEmailQueryParam as Record<string, unknown> | undefined;
+const emailParam = parameters.UsersEmailQueryParam as Record<string, unknown> | undefined;
 if (!emailParam) {
-  throw new Error('ListUsersEmailQueryParam should exist');
+  throw new Error('UsersEmailQueryParam should exist');
 }
 
 if ('x-codegen' in emailParam) {
@@ -1087,7 +1117,7 @@ if ('x-codegen' in emailParam) {
 }
 
 if (emailParam.required !== false) {
-  throw new Error('ListUsersEmailQueryParam should default required false for query params');
+  throw new Error('UsersEmailQueryParam should default required false for query params');
 }
 
 console.log('✅ Route component refs test passed');
@@ -1147,6 +1177,65 @@ if (userIdParamCodegen) {
 }
 
 console.log('✅ Path parameter refs test passed');
+
+// Test required fields respect optional metadata
+const userPublicModelRequired = compiled.document.components?.schemas?.UserPublicModel as Record<string, unknown> | undefined;
+if (!userPublicModelRequired) {
+  throw new Error('UserPublicModel should exist');
+}
+
+const userPublicOwnRequired = Array.isArray(userPublicModelRequired.allOf) ? userPublicModelRequired.allOf[1] : userPublicModelRequired;
+const userPublicRequiredFields = userPublicOwnRequired.required as string[] | undefined;
+
+if (userPublicRequiredFields?.includes('phone')) {
+  throw new Error('UserPublicModel should not require optional phone');
+}
+
+if (userPublicRequiredFields?.includes('avatar')) {
+  throw new Error('UserPublicModel should not require optional avatar');
+}
+
+// Test direct ref + x-codegen sibling fixed with allOf
+const userDeleted = compiled.document.components?.schemas?.UserDeleted as Record<string, unknown> | undefined;
+if (!userDeleted) {
+  throw new Error('UserDeleted should exist');
+}
+
+if ('$ref' in userDeleted && 'x-codegen' in userDeleted) {
+  throw new Error('UserDeleted must not emit x-codegen next to a bare $ref');
+}
+
+if (!Array.isArray(userDeleted.allOf)) {
+  throw new Error('UserDeleted should wrap direct ref with allOf');
+}
+
+// Test operation refId removed
+const listUsersOp = compiled.document.paths?.['/users']?.get as Record<string, unknown> | undefined;
+if (!listUsersOp) {
+  throw new Error('listUsers operation should exist');
+}
+
+const listUsersCodegenMeta = listUsersOp['x-codegen'] as Record<string, unknown> | undefined;
+if (!listUsersCodegenMeta) {
+  throw new Error('listUsers should have x-codegen metadata');
+}
+
+if (listUsersCodegenMeta.refId) {
+  throw new Error('Operation x-codegen should not emit refId');
+}
+
+const querySchemaRefCheck = listUsersCodegenMeta.querySchema as Record<string, unknown> | undefined;
+if (querySchemaRefCheck?.$ref !== '#/components/schemas/UserListQuery') {
+  throw new Error('Operation querySchema ref should be preserved');
+}
+
+// Test UserRefsStatus preserves ref
+const userRefsStatus = compiled.document.components?.schemas?.UserRefsStatus as Record<string, unknown> | undefined;
+if (userRefsStatus) {
+  if (userRefsStatus.$ref !== '#/components/schemas/UserStatus') {
+    throw new Error('UserRefsStatus should preserve ref to UserStatus');
+  }
+}
 
 // Test response components have no x-codegen
 const listUsersResponse = responses.ListUsers200Response as Record<string, unknown> | undefined;

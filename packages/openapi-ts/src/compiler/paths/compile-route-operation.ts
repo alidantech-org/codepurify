@@ -50,7 +50,6 @@ export function compileRouteOperation(
     const codegenMeta: CodegenMetadata = {
       kind: 'operation',
       resource: route.meta.resource,
-      refId: route.meta.refId,
     };
 
     // Add querySchema if route.query is a ComponentRef or RefUsage<ComponentRef>

@@ -27,10 +27,10 @@ function getParameterIdentityKey(param: {
   readonly name: string;
   readonly in: 'path' | 'query';
   readonly resourceKey?: string;
-  readonly shared?: boolean;
+  readonly source?: { shared?: boolean };
 }): string {
   const parts: string[] = [param.in];
-  if (param.shared) {
+  if (param.source?.shared) {
     parts.push('shared');
   } else if (param.resourceKey) {
     parts.push('resource', param.resourceKey);
@@ -82,8 +82,7 @@ export function inferRouteComponents(
         schema: param,
         resourceKey,
         operationId: route.operationId,
-        origin: 'path',
-        property: name,
+        source: { origin: 'path' },
       };
 
       // Deduplicate by identity key
@@ -109,8 +108,7 @@ export function inferRouteComponents(
         schema: param,
         resourceKey,
         operationId: route.operationId,
-        origin: 'path',
-        property: name,
+        source: { origin: 'path' },
       };
 
       // Deduplicate by identity key
@@ -130,8 +128,8 @@ export function inferRouteComponents(
     if (isRefUsage(route.query) || isEngineRef(route.query)) {
       const expandedFields = collectQueryFieldsFromSchemaComponentValue(route.query, contract);
       for (const collectedField of expandedFields) {
-        const componentName = getParameterName(collectedField.name, 'query', resourceKey, route.operationId, collectedField.shared);
-        const identityKey = getParameterIdentityKey({ name: collectedField.name, in: 'query', resourceKey, shared: collectedField.shared });
+        const componentName = getParameterName(collectedField.name, 'query', resourceKey, route.operationId, collectedField.source);
+        const identityKey = getParameterIdentityKey({ name: collectedField.name, in: 'query', resourceKey, source: collectedField.source });
         const inferred: InferredParameterComponent = {
           name: componentName,
           parameterName: collectedField.name,
@@ -140,16 +138,7 @@ export function inferRouteComponents(
           schema: collectedField.field,
           resourceKey,
           operationId: route.operationId,
-          sourceSchema: collectedField.sourceSchema,
-          sourceSchemaRef: collectedField.sourceSchemaRef,
-          inheritedFrom: collectedField.inheritedFrom,
-          inheritedFromRef: collectedField.inheritedFromRef,
-          fromModel: collectedField.fromModel,
-          fromModelRef: collectedField.fromModelRef,
-          origin: collectedField.origin,
-          shared: collectedField.shared,
-          entity: collectedField.entity,
-          property: collectedField.property,
+          source: collectedField.source,
         };
 
         // Deduplicate: if component exists, verify it matches
@@ -173,8 +162,7 @@ export function inferRouteComponents(
           schema: param,
           resourceKey,
           operationId: route.operationId,
-          origin: 'inline',
-          property: name,
+          source: { origin: 'inline' },
         };
 
         // Deduplicate: if component exists, verify it matches

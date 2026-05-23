@@ -3,6 +3,24 @@ import type { ComponentRef, EngineRef, ModelRef, PropertyRef } from './ref.types
 import type { SchemaCompositionFieldMap } from '../schema/schema.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 
+export type FieldSourceOrigin = 'base' | 'extension' | 'inline' | 'inherited' | 'path';
+
+export interface FieldSourceMetadata {
+  readonly origin: FieldSourceOrigin;
+
+  readonly sourceRefId?: string;
+  readonly sourceSchemaName?: string;
+  readonly sourceResource?: string;
+  readonly sourceGroup?: string;
+
+  readonly fieldKey?: string;
+  readonly propertyRefId?: string;
+  readonly propertyResource?: string;
+  readonly propertyEntity?: string;
+
+  readonly shared?: boolean;
+}
+
 export type ExtendWithInput = SchemaCompositionFieldMap | ModelRef | RefUsage<ModelRef>;
 
 export interface RefUsageOptions {
@@ -10,6 +28,11 @@ export interface RefUsageOptions {
   readonly nullable?: boolean;
   readonly array?: boolean;
   readonly extendWith?: ExtendWithInput;
+
+  readonly composition?: {
+    readonly base?: FieldSourceMetadata;
+    readonly extensions?: readonly FieldSourceMetadata[];
+  };
 }
 
 export interface RefUsage<TRef extends EngineRef = EngineRef> {

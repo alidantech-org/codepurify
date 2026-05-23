@@ -94,6 +94,14 @@ function getRequiredFields(ref: ModelRef, ownFields: Record<string, unknown>): s
     'private-partial-model',
     'internal-partial-model',
     'system-partial-model',
+    'query-exact',
+    'query-search',
+    'query-exact-search',
+    'query-range',
+    'query-in',
+    'query-exists',
+    'query-sort',
+    'query-select',
   ];
 
   if (noRequiredModels.includes(ref.modelKey)) {
@@ -105,10 +113,18 @@ function getRequiredFields(ref: ModelRef, ownFields: Record<string, unknown>): s
       // Only mark required if the field exists in ownFields
       if (!(key in ownFields)) return false;
 
+      // Check if field is a RefUsage with optional/required metadata
+      if (field && typeof field === 'object' && 'usage' in field) {
+        const usage = (field as { usage?: { optional?: boolean; required?: boolean } }).usage;
+        if (usage?.optional === true) return false;
+        if (usage?.required === false) return false;
+      }
+
+      // Check field-level required property
       if (!field || !('required' in field)) return true;
       if (field.required === undefined) return true;
 
-      return field.required;
+      return field.required === true;
     })
     .map(([key]) => key);
 }
