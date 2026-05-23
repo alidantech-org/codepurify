@@ -72,7 +72,10 @@ function compileExtendedSchemaComponent(definition: SchemaComponentDefinition, r
   const extensionFields = normalizeExtendWithInput(extendWith);
 
   if (extensionFields) {
-    const required = getRequiredKeys(extensionFields);
+    // Query components should not emit required fields (they are always partial)
+    const isQueryComponent = definition.name.endsWith('Query');
+    const required = isQueryComponent ? [] : getRequiredKeys(extensionFields);
+
     const extensionSchema: Record<string, unknown> = {
       type: 'object',
       properties: compileComponentFields(extensionFields),

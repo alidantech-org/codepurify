@@ -7,28 +7,40 @@ import { toOpenApiSchemaRef } from '../refs/to-openapi-ref.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isPropertyRef } from '../../validation/ref-guards.js';
 import { SchemaKind } from '../../schema/schema-kind.js';
+import { compileQueryModelSchema, type CompileQueryModelContext } from './compile-query-model-schema.js';
 
-export function compileModelSchema(ref: ModelRef): Record<string, unknown> {
-  const parentRefs = ref.inherits ?? [];
-  const inheritedFieldNames = new Set(parentRefs.flatMap((inherit) => inherit.fields ?? []));
+function isQueryModel(ref: ModelRef): boolean {
+  return ref.modelKey.startsWith('query-');
+}
 
-  // Filter to only own fields (not inherited)
-  const ownFields = Object.fromEntries(Object.entries(ref.fields ?? {}).filter(([key]) => !inheritedFieldNames.has(key)));
+export function compileModelSchema(ref: ModelRef, context?: CompileQueryModelContext): Record<string, unknown> {
+  // Query models use dedicated compiler for their own schema
+  let ownSchema: Record<string, unknown>;
+  if (isQueryModel(ref)) {
+    ownSchema = compileQueryModelSchema(ref, context);
+  } else {
+    const parentRefs = ref.inherits ?? [];
+    const inheritedFieldNames = new Set(parentRefs.flatMap((inherit) => inherit.fields ?? []));
 
-  const ownSchema: Record<string, unknown> = {
-    type: 'object',
-    properties: Object.fromEntries(
-      Object.entries(ownFields).map(([key, fieldRef]) => [key, compileModelFieldRef(fieldRef, ref.sourceFields?.[key])]),
-    ),
-  };
+    // Filter to only own fields (not inherited)
+    const ownFields = Object.fromEntries(Object.entries(ref.fields ?? {}).filter(([key]) => !inheritedFieldNames.has(key)));
 
-  const required = getRequiredFields(ref, ownFields);
+    ownSchema = {
+      type: 'object',
+      properties: Object.fromEntries(
+        Object.entries(ownFields).map(([key, fieldRef]) => [key, compileModelFieldRef(fieldRef, ref.sourceFields?.[key])]),
+      ),
+    };
 
-  if (required.length > 0) {
-    ownSchema.required = required;
+    const required = getRequiredFields(ref, ownFields);
+
+    if (required.length > 0) {
+      ownSchema.required = required;
+    }
   }
 
-  // If there are parent refs, emit allOf
+  // Apply inheritance wrapping for all models (including query models)
+  const parentRefs = ref.inherits ?? [];
   if (parentRefs.length > 0) {
     const schema = {
       allOf: [...parentRefs.map((inherit) => ({ $ref: inherit.modelRef.openapiRef ?? `#pending/${inherit.modelRef.id}` })), ownSchema],
@@ -75,7 +87,18 @@ function compileModelFieldRef(fieldRef: unknown, sourceField?: SchemaField): unk
 }
 
 function getRequiredFields(ref: ModelRef, ownFields: Record<string, unknown>): string[] {
-  if (ref.modelKey === 'partial-model') return [];
+  // These variants never emit required fields
+  const noRequiredModels = [
+    'partial-model',
+    'public-partial-model',
+    'private-partial-model',
+    'internal-partial-model',
+    'system-partial-model',
+  ];
+
+  if (noRequiredModels.includes(ref.modelKey)) {
+    return [];
+  }
 
   return Object.entries(ref.sourceFields ?? {})
     .filter(([key, field]) => {
@@ -106,6 +129,8 @@ function queryBehaviorFromModelKey(modelKey: string): string | undefined {
       return 'exists';
     case 'query-sort':
       return 'sort';
+    case 'query-select':
+      return 'select';
     default:
       return undefined;
   }
@@ -144,6 +169,11 @@ function toCodegenMetadata(ref: ModelRef, modelKey?: string, parentRefs?: ModelR
 
   // Query models first
   if (queryBehavior) {
+    const inherits =
+      parentRefs && parentRefs.length > 0
+        ? parentRefs.map((p) => ({ $ref: p.modelRef.openapiRef ?? `#pending/${p.modelRef.id}` }))
+        : undefined;
+
     return {
       kind: 'query',
       resource: ref.meta?.resource,
@@ -151,12 +181,15 @@ function toCodegenMetadata(ref: ModelRef, modelKey?: string, parentRefs?: ModelR
       entity: inferEntityNameFromModelRef(ref),
       behavior: queryBehavior,
       refId: ref.id,
+      inherits,
     };
   }
 
   // Normal models fallback
   const inherits =
-    parentRefs && parentRefs.length > 0 ? parentRefs.map((p) => p.modelRef.openapiRef ?? `#pending/${p.modelRef.id}`) : undefined;
+    parentRefs && parentRefs.length > 0
+      ? parentRefs.map((p) => ({ $ref: p.modelRef.openapiRef ?? `#pending/${p.modelRef.id}` }))
+      : undefined;
 
   return {
     kind: 'model',

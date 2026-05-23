@@ -261,7 +261,6 @@ if (!schemas) {
 const expectedUserSchemas = [
   'UserModel',
   'UserPublicModel',
-  'UserSelectedModel',
   'UserPartialModel',
   'UserQueryExact',
   'UserQuerySearch',
@@ -270,7 +269,15 @@ const expectedUserSchemas = [
   'UserQueryIn',
   'UserQueryExists',
   'UserQuerySort',
+  'UserQuerySelect',
 ];
+
+const expectedBaseSchemas = ['BaseEntityAbstractModel', 'BaseEntityPartialModel', 'BaseEntityQuerySelect'];
+
+// BaseEntityQuerySort is only emitted if base has sortable fields
+if (schemas.BaseEntityQuerySort) {
+  expectedBaseSchemas.push('BaseEntityQuerySort');
+}
 
 for (const schemaName of expectedUserSchemas) {
   if (!(schemaName in schemas)) {
@@ -278,8 +285,19 @@ for (const schemaName of expectedUserSchemas) {
   }
 }
 
+for (const schemaName of expectedBaseSchemas) {
+  if (!(schemaName in schemas)) {
+    throw new Error(`Missing expected base schema: ${schemaName}`);
+  }
+}
+
 // Assert query model has codegen metadata
-const userQuerySearch = schemas.UserQuerySearch as Record<string, unknown>;
+const userQuerySearch = schemas.UserQuerySearch as Record<string, unknown> | undefined;
+
+if (!userQuerySearch) {
+  throw new Error('UserQuerySearch schema should exist');
+}
+
 const userQuerySearchCodegenEarly = userQuerySearch['x-codegen'] as Record<string, unknown> | undefined;
 if (!userQuerySearchCodegenEarly || userQuerySearchCodegenEarly.kind !== 'query') {
   throw new Error('UserQuerySearch should have x-codegen.kind: query');
@@ -292,7 +310,12 @@ if (!('email' in userQuerySearchProps)) {
 }
 
 // Assert model properties use $ref instead of inline schemas
-const userPublicModel = schemas.UserPublicModel as Record<string, unknown>;
+const userPublicModel = schemas.UserPublicModel as Record<string, unknown> | undefined;
+
+if (!userPublicModel) {
+  throw new Error('UserPublicModel schema should exist');
+}
+
 const userPublicModelAllOf = userPublicModel.allOf as unknown[] | undefined;
 if (!userPublicModelAllOf || userPublicModelAllOf.length === 0) {
   throw new Error('UserPublicModel should have allOf for inheritance');
@@ -319,7 +342,12 @@ if (emailProp.$ref !== '#/components/schemas/UserEmail') {
 }
 
 // Assert UserPartialModel also inherits correctly
-const userPartialModel = schemas.UserPartialModel as Record<string, unknown>;
+const userPartialModel = schemas.UserPartialModel as Record<string, unknown> | undefined;
+
+if (!userPartialModel) {
+  throw new Error('UserPartialModel schema should exist');
+}
+
 const userPartialModelAllOf = userPartialModel.allOf as unknown[] | undefined;
 if (!userPartialModelAllOf || userPartialModelAllOf.length === 0) {
   throw new Error('UserPartialModel should have allOf for inheritance');
@@ -341,6 +369,195 @@ if (!schemas.BaseEntityAbstractModel) {
 
 if (!schemas.BaseEntityPartialModel) {
   throw new Error('BaseEntityPartialModel should be emitted because child partial models inherit from it');
+}
+
+if (!schemas.BaseEntityQuerySelect) {
+  throw new Error('BaseEntityQuerySelect should be emitted because child query select models inherit from it');
+}
+
+// Assert BaseEntityQuerySelect has no required fields
+const baseQuerySelect = schemas.BaseEntityQuerySelect as Record<string, unknown> | undefined;
+
+if (!baseQuerySelect) {
+  throw new Error('BaseEntityQuerySelect should exist');
+}
+
+if (baseQuerySelect.required) {
+  throw new Error('BaseEntityQuerySelect must not emit required fields');
+}
+
+// Assert UserQuerySelect inherits correctly
+const userQuerySelectSchema = schemas.UserQuerySelect as Record<string, unknown> | undefined;
+
+if (!userQuerySelectSchema) {
+  throw new Error('UserQuerySelect schema should exist');
+}
+
+const userQuerySelectAllOf = userQuerySelectSchema.allOf as unknown[] | undefined;
+if (!userQuerySelectAllOf || userQuerySelectAllOf.length === 0) {
+  throw new Error('UserQuerySelect should have allOf for inheritance');
+}
+
+const querySelectParentRef = userQuerySelectAllOf[0] as Record<string, unknown>;
+if (!querySelectParentRef || !('$ref' in querySelectParentRef)) {
+  throw new Error('UserQuerySelect allOf[0] should be a $ref');
+}
+
+if (querySelectParentRef.$ref !== '#/components/schemas/BaseEntityQuerySelect') {
+  throw new Error(`UserQuerySelect should inherit BaseEntityQuerySelect, got ${querySelectParentRef.$ref}`);
+}
+
+// Assert UserQuerySelect own schema has no required
+const querySelectOwn = userQuerySelectAllOf[1] as Record<string, unknown>;
+if (querySelectOwn.required) {
+  throw new Error('UserQuerySelect own schema must not emit required fields');
+}
+
+// Assert UserQuerySelect has fields property
+const querySelectOwnProps = querySelectOwn.properties as Record<string, unknown> | undefined;
+if (!querySelectOwnProps?.fields) {
+  throw new Error('UserQuerySelect should have fields property');
+}
+
+// Assert fields is an array
+const fieldsProp = querySelectOwnProps.fields as Record<string, unknown>;
+if (fieldsProp.type !== 'array') {
+  throw new Error('UserQuerySelect.fields should be an array');
+}
+
+// Assert fields items are strings with enum
+const fieldsItems = fieldsProp.items as Record<string, unknown>;
+if (fieldsItems.type !== 'string') {
+  throw new Error('UserQuerySelect.fields items should be strings');
+}
+
+if (!fieldsItems.enum) {
+  throw new Error('UserQuerySelect.fields items should have enum');
+}
+
+const fieldEnum = fieldsItems.enum as string[];
+if (!fieldEnum.includes('email')) {
+  throw new Error('UserQuerySelect.fields enum should include email');
+}
+
+if (fieldEnum.includes('password')) {
+  throw new Error('UserQuerySelect.fields enum should not include password');
+}
+
+// Assert BaseEntityQuerySelect includes id
+const baseFields = baseQuerySelect.properties as Record<string, unknown> | undefined;
+const baseFieldsProp = baseFields?.fields as Record<string, unknown>;
+const baseFieldsItems = baseFieldsProp?.items as Record<string, unknown>;
+const baseFieldEnum = baseFieldsItems?.enum as string[] | undefined;
+
+if (!baseFieldEnum || !baseFieldEnum.includes('id')) {
+  throw new Error('BaseEntityQuerySelect should include id in fields enum');
+}
+
+// Assert UserQuerySelect inherits metadata uses {$ref}
+const userQuerySelectCodegen = userQuerySelectSchema['x-codegen'] as Record<string, unknown> | undefined;
+
+if (!userQuerySelectCodegen) {
+  throw new Error('UserQuerySelect should have x-codegen metadata');
+}
+
+if (userQuerySelectCodegen.kind !== 'query') {
+  throw new Error('UserQuerySelect x-codegen.kind should be query');
+}
+
+if (userQuerySelectCodegen.behavior !== 'select') {
+  throw new Error('UserQuerySelect x-codegen.behavior should be select');
+}
+
+if (!Array.isArray(userQuerySelectCodegen.inherits)) {
+  throw new Error('UserQuerySelect x-codegen.inherits should be an array');
+}
+
+if (userQuerySelectCodegen.inherits.length === 0) {
+  throw new Error('UserQuerySelect x-codegen.inherits should not be empty');
+}
+
+const querySelectInherit = userQuerySelectCodegen.inherits[0] as Record<string, unknown> | string;
+
+if (typeof querySelectInherit === 'string') {
+  throw new Error('UserQuerySelect x-codegen.inherits must use {$ref}, not raw string');
+}
+
+if (!querySelectInherit || typeof querySelectInherit !== 'object' || !('$ref' in querySelectInherit)) {
+  throw new Error('UserQuerySelect x-codegen.inherits entries must be {$ref} objects');
+}
+
+if (querySelectInherit.$ref !== '#/components/schemas/BaseEntityQuerySelect') {
+  throw new Error(`UserQuerySelect inherits metadata should reference BaseEntityQuerySelect, got ${querySelectInherit.$ref}`);
+}
+
+// Assert UserQuerySelect child enum does NOT include inherited fields
+if (fieldEnum.includes('id')) {
+  throw new Error('UserQuerySelect child enum should not duplicate inherited id');
+}
+
+if (fieldEnum.includes('createdAt')) {
+  throw new Error('UserQuerySelect child enum should not duplicate inherited createdAt');
+}
+
+if (fieldEnum.includes('updatedAt')) {
+  throw new Error('UserQuerySelect child enum should not duplicate inherited updatedAt');
+}
+
+// Assert UserSelectedModel and BaseEntitySelectedModel are NOT emitted
+if (schemas.UserSelectedModel) {
+  throw new Error('UserSelectedModel should not be emitted; use UserQuerySelect');
+}
+
+if (schemas.BaseEntitySelectedModel) {
+  throw new Error('BaseEntitySelectedModel should not be emitted; use BaseEntityQuerySelect');
+}
+
+// Assert x-codegen.inherits uses {$ref} objects, not raw strings
+const userPublicCodegenInherits = (schemas.UserPublicModel as Record<string, unknown>)['x-codegen'] as Record<string, unknown> | undefined;
+
+if (!userPublicCodegenInherits) {
+  throw new Error('UserPublicModel should have x-codegen metadata');
+}
+
+if (!Array.isArray(userPublicCodegenInherits.inherits)) {
+  throw new Error('UserPublicModel x-codegen.inherits should be an array');
+}
+
+if (userPublicCodegenInherits.inherits.length === 0) {
+  throw new Error('UserPublicModel x-codegen.inherits should not be empty');
+}
+
+const firstInherit = userPublicCodegenInherits.inherits[0] as Record<string, unknown> | string;
+
+if (typeof firstInherit === 'string') {
+  throw new Error('x-codegen.inherits must use {$ref} objects, not raw strings');
+}
+
+if (!firstInherit || typeof firstInherit !== 'object' || !('$ref' in firstInherit)) {
+  throw new Error('x-codegen.inherits entries must be {$ref} objects');
+}
+
+if (firstInherit.$ref !== '#/components/schemas/BaseEntityPublicModel') {
+  throw new Error(`UserPublicModel inherits should point to BaseEntityPublicModel, got ${firstInherit.$ref}`);
+}
+
+// Scan all schemas to ensure no raw string inherits
+for (const [name, schema] of Object.entries(schemas)) {
+  const codegen = (schema as { ['x-codegen']?: { inherits?: unknown[] } })['x-codegen'];
+  const inherits = codegen?.inherits;
+
+  if (!Array.isArray(inherits)) continue;
+
+  for (const item of inherits) {
+    if (typeof item === 'string') {
+      throw new Error(`${name} x-codegen.inherits must not contain raw string refs`);
+    }
+
+    if (!item || typeof item !== 'object' || !('$ref' in item)) {
+      throw new Error(`${name} x-codegen.inherits entries must be {$ref} objects`);
+    }
+  }
 }
 
 // Assert UserPartialModel inherits from BaseEntityPartialModel
@@ -406,7 +623,16 @@ for (const [schemaName, schema] of Object.entries(schemas)) {
 }
 
 // Assert x-codegen metadata shape for property
-const userEmail = schemas.UserEmail as Record<string, unknown>;
+const userEmail = schemas.UserEmail as Record<string, unknown> | undefined;
+
+if (!userEmail) {
+  throw new Error(
+    `UserEmail schema should exist. Available user schemas: ${Object.keys(schemas)
+      .filter((name) => name.startsWith('User'))
+      .join(', ')}`,
+  );
+}
+
 const userEmailCodegen = userEmail['x-codegen'] as Record<string, unknown> | undefined;
 
 if (!userEmailCodegen) {
@@ -434,38 +660,38 @@ if (userEmailCodegen.skip !== true) {
 }
 
 // Assert x-codegen metadata shape for model
-const userPublicCodegen = userPublicModel['x-codegen'] as Record<string, unknown> | undefined;
+const userPublicCodegenMeta = userPublicModel['x-codegen'] as Record<string, unknown> | undefined;
 
-if (!userPublicCodegen) {
+if (!userPublicCodegenMeta) {
   throw new Error('UserPublicModel should have x-codegen metadata');
 }
 
-if (userPublicCodegen.kind !== 'model') {
-  throw new Error(`UserPublicModel x-codegen.kind should be 'model', got ${userPublicCodegen.kind}`);
+if (userPublicCodegenMeta.kind !== 'model') {
+  throw new Error(`UserPublicModel x-codegen.kind should be 'model', got ${userPublicCodegenMeta.kind}`);
 }
 
-if (userPublicCodegen.resource !== 'users') {
-  throw new Error(`UserPublicModel x-codegen.resource should be 'users', got ${userPublicCodegen.resource}`);
+if (userPublicCodegenMeta.resource !== 'users') {
+  throw new Error(`UserPublicModel x-codegen.resource should be 'users', got ${userPublicCodegenMeta.resource}`);
 }
 
-if (userPublicCodegen.entity !== 'User') {
-  throw new Error(`UserPublicModel x-codegen.entity should be 'User', got ${userPublicCodegen.entity}`);
+if (userPublicCodegenMeta.entity !== 'User') {
+  throw new Error(`UserPublicModel x-codegen.entity should be 'User', got ${userPublicCodegenMeta.entity}`);
 }
 
-if (userPublicCodegen.model !== 'public') {
-  throw new Error(`UserPublicModel x-codegen.model should be 'public', got ${userPublicCodegen.model}`);
+if (userPublicCodegenMeta.model !== 'public') {
+  throw new Error(`UserPublicModel x-codegen.model should be 'public', got ${userPublicCodegenMeta.model}`);
 }
 
 // Assert poor fields are omitted (shared: false, query: {}, etc.)
-if ('shared' in userPublicCodegen && userPublicCodegen.shared === false) {
+if ('shared' in userPublicCodegenMeta && userPublicCodegenMeta.shared === false) {
   throw new Error('x-codegen.shared false should be omitted');
 }
 
-if ('query' in userPublicCodegen) {
+if ('query' in userPublicCodegenMeta) {
   throw new Error('x-codegen.query should be omitted when empty');
 }
 
-if ('abstract' in userPublicCodegen && userPublicCodegen.abstract === false) {
+if ('abstract' in userPublicCodegenMeta && userPublicCodegenMeta.abstract === false) {
   throw new Error('x-codegen.abstract false should be omitted');
 }
 
@@ -485,7 +711,11 @@ if (userQuerySearchCodegen.behavior !== 'search') {
 }
 
 // Assert x-codegen metadata shape for DTO/component
-const userOk = schemas.UserOk as Record<string, unknown>;
+const userOk = schemas.UserOk as Record<string, unknown> | undefined;
+
+if (!userOk) {
+  throw new Error('UserOk schema should exist');
+}
 const userOkCodegen = userOk['x-codegen'] as Record<string, unknown> | undefined;
 
 if (!userOkCodegen) {
@@ -505,7 +735,11 @@ if (userOkCodegen.component !== 'UserOk') {
 }
 
 // Assert shared DTO has shared: true
-const paginatedMeta = schemas.PaginatedMeta as Record<string, unknown>;
+const paginatedMeta = schemas.PaginatedMeta as Record<string, unknown> | undefined;
+
+if (!paginatedMeta) {
+  throw new Error('PaginatedMeta schema should exist');
+}
 const paginatedMetaCodegen = paginatedMeta['x-codegen'] as Record<string, unknown> | undefined;
 
 if (!paginatedMetaCodegen) {
@@ -521,7 +755,11 @@ if (paginatedMetaCodegen.shared !== true) {
 }
 
 // Test extendWith on property ref (allOf in nested property)
-const userWithExtra = schemas.UserWithExtra as Record<string, unknown>;
+const userWithExtra = schemas.UserWithExtra as Record<string, unknown> | undefined;
+
+if (!userWithExtra) {
+  throw new Error('UserWithExtra schema should exist');
+}
 const userWithExtraProps = userWithExtra.properties as Record<string, unknown> | undefined;
 const userWithExtraData = userWithExtraProps?.data as Record<string, unknown>;
 if (!userWithExtraData || !('allOf' in userWithExtraData)) {
@@ -653,6 +891,7 @@ console.log('✅ Schema component name uniqueness test passed');
 
 // Test entity inheritance with allOf
 const userPublicModelInheritance = schemas.UserPublicModel as Record<string, unknown> | undefined;
+
 if (!userPublicModelInheritance) {
   throw new Error('UserPublicModel should exist');
 }
@@ -760,9 +999,13 @@ if (paramRefs.includes('#/components/parameters/ListUsersLimitQueryParam')) {
   throw new Error('listUsers should not create operation-specific limit param');
 }
 
-// Extension params should still be operation-specific
-if (!paramRefs.includes('#/components/parameters/ListUsersEmailQueryParam')) {
-  // throw new Error('listUsers should include operation-specific email extension param');
+// Resource-specific params should be resource-prefixed, not operation-specific
+if (paramRefs.includes('#/components/parameters/ListUsersEmailQueryParam')) {
+  throw new Error('listUsers should not create operation-specific email param');
+}
+
+if (!paramRefs.includes('#/components/parameters/UsersEmailQueryParam')) {
+  throw new Error('listUsers should use resource-prefixed UsersEmailQueryParam');
 }
 
 // Test inferred components exist
@@ -776,31 +1019,39 @@ if (!parameters) {
   throw new Error('components should have parameters');
 }
 
-// // Assert shared component emitted once
-// if (!parameters.PageQueryParam) {
-//   throw new Error('PageQueryParam should exist once');
-// }
+// Assert shared component emitted once
+if (!parameters.PageQueryParam) {
+  throw new Error('PageQueryParam should exist once');
+}
 
-// if (parameters.ListUsersPageQueryParam) {
-//   throw new Error('ListUsersPageQueryParam should not be emitted');
-// }
+if (parameters.ListUsersPageQueryParam) {
+  throw new Error('ListUsersPageQueryParam should not be emitted');
+}
 
-// if (parameters.ListVehiclesPageQueryParam) {
-//   // throw new Error('ListVehiclesPageQueryParam should not be emitted');
-// }
+if (parameters.ListVehiclesPageQueryParam) {
+  throw new Error('ListVehiclesPageQueryParam should not be emitted');
+}
 
-// if (!parameters.LimitQueryParam) {
-//   throw new Error('LimitQueryParam should exist once');
-// }
+if (!parameters.LimitQueryParam) {
+  throw new Error('LimitQueryParam should exist once');
+}
 
-// if (parameters.ListUsersLimitQueryParam) {
-//   throw new Error('ListUsersLimitQueryParam should not be emitted');
-// }
+if (parameters.ListUsersLimitQueryParam) {
+  throw new Error('ListUsersLimitQueryParam should not be emitted');
+}
 
-// // Extension params should exist with operation-specific names
-// if (!parameters.ListUsersEmailQueryParam) {
-//   throw new Error('ListUsersEmailQueryParam should exist in components.parameters');
-// }
+// Assert resource-prefixed params exist
+if (!parameters.UsersEmailQueryParam) {
+  throw new Error('UsersEmailQueryParam should exist in components.parameters');
+}
+
+if (parameters.EmailQueryParam) {
+  throw new Error('Generic EmailQueryParam should not be emitted');
+}
+
+if (parameters.ListUsersEmailQueryParam) {
+  throw new Error('Operation-specific ListUsersEmailQueryParam should not be emitted');
+}
 
 const responses = components.responses as Record<string, unknown> | undefined;
 if (!responses) {
@@ -855,19 +1106,27 @@ if (!getUserByIdParams || getUserByIdParams.length === 0) {
 
 const userIdParamRef = getUserByIdParams.find((param) => {
   if (typeof param === 'object' && param !== null && '$ref' in param) {
-    return (param as { $ref: string }).$ref === '#/components/parameters/GetUserByIdUserIdPathParam';
+    return (param as { $ref: string }).$ref === '#/components/parameters/UsersUserIdPathParam';
   }
   return false;
 });
 
 if (!userIdParamRef) {
-  throw new Error('getUserById should include GetUserByIdUserIdPathParam ref');
+  throw new Error('getUserById should include UsersUserIdPathParam ref');
 }
 
 // Test path parameter component exists
-const userIdParam = parameters.GetUserByIdUserIdPathParam as Record<string, unknown> | undefined;
+const userIdParam = parameters.UsersUserIdPathParam as Record<string, unknown> | undefined;
 if (!userIdParam) {
-  throw new Error('GetUserByIdUserIdPathParam should exist in components.parameters');
+  throw new Error('UsersUserIdPathParam should exist in components.parameters');
+}
+
+if (parameters.GetUserByIdUserIdPathParam) {
+  throw new Error('Operation-specific GetUserByIdUserIdPathParam should not be emitted');
+}
+
+if (parameters.UpdateUserUserIdPathParam) {
+  throw new Error('Operation-specific UpdateUserUserIdPathParam should not be emitted');
 }
 
 if (userIdParam.name !== 'userId') {
@@ -908,3 +1167,204 @@ if (requestBodies) {
     }
   }
 }
+
+// Test query models are partial (no required fields)
+for (const name of [
+  'UserQueryExact',
+  'UserQuerySearch',
+  'UserQueryExactSearch',
+  'UserQueryRange',
+  'UserQueryIn',
+  'UserQueryExists',
+  'UserQuerySort',
+  'UserQuerySelect',
+]) {
+  const queryModel = schemas[name] as Record<string, unknown> | undefined;
+  if (queryModel?.required) {
+    throw new Error(`${name} should not emit required (query models are always partial)`);
+  }
+}
+
+// Test sort flat-prefixed-field behavior (default)
+const userQuerySort = schemas.UserQuerySort as Record<string, unknown> | undefined;
+
+if (!userQuerySort) {
+  throw new Error('UserQuerySort schema should exist');
+}
+
+const sortProps = userQuerySort.properties as Record<string, unknown> | undefined;
+if (!sortProps) {
+  throw new Error('UserQuerySort should have properties');
+}
+
+// In flat-prefixed-field mode, should have a single 'sort' property with enum
+if (!sortProps.sort) {
+  throw new Error('UserQuerySort should have sort property in flat-prefixed-field mode');
+}
+
+if (sortProps.email) {
+  throw new Error('UserQuerySort should not emit email as field schema in flat-prefixed-field mode');
+}
+
+const sortProp = sortProps.sort as Record<string, unknown>;
+if (sortProp.type !== 'string') {
+  throw new Error('UserQuerySort.sort should be string type');
+}
+
+const sortEnum = sortProp.enum as string[] | undefined;
+if (!sortEnum) {
+  throw new Error('UserQuerySort.sort should have enum values');
+}
+
+if (!sortEnum.includes('+email') && !sortEnum.includes('-email')) {
+  throw new Error('UserQuerySort.sort enum should include prefixed email values');
+}
+
+// Test in behavior with arrays
+const userQueryIn = schemas.UserQueryIn as Record<string, unknown> | undefined;
+
+if (!userQueryIn) {
+  throw new Error('UserQueryIn schema should exist');
+}
+
+const inProps = userQueryIn.properties as Record<string, unknown> | undefined;
+if (!inProps) {
+  throw new Error('UserQueryIn should have properties');
+}
+
+// Check that in fields are arrays
+for (const [key, prop] of Object.entries(inProps)) {
+  const propSchema = prop as Record<string, unknown>;
+  if (propSchema.type !== 'array') {
+    throw new Error(`UserQueryIn.${key} should be an array`);
+  }
+}
+
+// Test exists behavior with boolean (default)
+const userQueryExists = schemas.UserQueryExists as Record<string, unknown> | undefined;
+
+if (!userQueryExists) {
+  throw new Error('UserQueryExists schema should exist');
+}
+
+const existsProps = userQueryExists.properties as Record<string, unknown> | undefined;
+if (!existsProps) {
+  throw new Error('UserQueryExists should have properties');
+}
+
+// Check that exists fields are boolean
+for (const [key, prop] of Object.entries(existsProps)) {
+  const propSchema = prop as Record<string, unknown>;
+  if (propSchema.type !== 'boolean') {
+    throw new Error(`UserQueryExists.${key} should be boolean by default`);
+  }
+}
+
+// Test select behavior with field-name enum
+const userQuerySelectTest = schemas.UserQuerySelect as Record<string, unknown> | undefined;
+
+if (!userQuerySelectTest) {
+  throw new Error('UserQuerySelect schema should exist');
+}
+
+const selectProps = userQuerySelectTest.properties as Record<string, unknown> | undefined;
+if (!selectProps) {
+  throw new Error('UserQuerySelect should have properties');
+}
+
+if (!selectProps.select) {
+  throw new Error('UserQuerySelect should have select property');
+}
+
+const selectProp = selectProps.select as Record<string, unknown>;
+if (selectProp.type !== 'array') {
+  throw new Error('UserQuerySelect.select should be an array');
+}
+
+const selectItems = selectProp.items as Record<string, unknown>;
+if (selectItems.type !== 'string') {
+  throw new Error('UserQuerySelect.select items should be strings');
+}
+
+const selectEnum = selectItems.enum as string[] | undefined;
+if (!selectEnum) {
+  throw new Error('UserQuerySelect.select items should have enum values');
+}
+
+if (!selectEnum.includes('email')) {
+  throw new Error('UserQuerySelect should include email in select enum');
+}
+
+if (selectEnum.includes('password')) {
+  throw new Error('UserQuerySelect should not include secret password in select enum');
+}
+
+// Test query model inheritance when parent query variant has fields
+const baseQuerySort = schemas.BaseEntityQuerySort as Record<string, unknown> | undefined;
+
+if (baseQuerySort) {
+  const baseProps = baseQuerySort.properties as Record<string, unknown> | undefined;
+  const baseHasFields = baseProps && Object.keys(baseProps).length > 0;
+
+  if (baseHasFields) {
+    const userSortAllOf = userQuerySort.allOf as unknown[] | undefined;
+
+    if (!Array.isArray(userSortAllOf)) {
+      throw new Error('UserQuerySort should use allOf when base query sort has fields');
+    }
+
+    const sortParentRef = userSortAllOf[0] as Record<string, unknown>;
+    if (!sortParentRef || !('$ref' in sortParentRef)) {
+      throw new Error('UserQuerySort allOf[0] should be a $ref');
+    }
+
+    if (sortParentRef.$ref !== '#/components/schemas/BaseEntityQuerySort') {
+      throw new Error(`UserQuerySort should inherit BaseEntityQuerySort, got ${sortParentRef.$ref}`);
+    }
+
+    // Assert child sort enum does not duplicate inherited base sort keys
+    const ownSort = userSortAllOf[1] as Record<string, unknown>;
+    const ownSortProps = ownSort.properties as Record<string, unknown> | undefined;
+    const ownSortProp = ownSortProps?.sort as Record<string, unknown>;
+    const ownSortEnum = ownSortProp?.enum as string[] | undefined;
+
+    if (ownSortEnum?.includes('+id')) {
+      throw new Error('UserQuerySort child enum should not duplicate inherited +id');
+    }
+
+    if (ownSortEnum?.includes('-id')) {
+      throw new Error('UserQuerySort child enum should not duplicate inherited -id');
+    }
+
+    if (!ownSortEnum?.includes('+email')) {
+      throw new Error('UserQuerySort child enum should include +email');
+    }
+  }
+}
+
+// Test partial models have no required fields
+const partialModel = Object.keys(schemas).find((key) => key.includes('PartialModel'));
+if (partialModel) {
+  const partial = schemas[partialModel] as Record<string, unknown>;
+  // If it uses allOf, check the own schema
+  if (partial.allOf && Array.isArray(partial.allOf)) {
+    const own = partial.allOf[partial.allOf.length - 1] as Record<string, unknown>;
+    if (own.required) {
+      throw new Error(`${partialModel} should not emit required fields (partial models are always partial)`);
+    }
+  } else if (partial.required) {
+    throw new Error(`${partialModel} should not emit required fields (partial models are always partial)`);
+  }
+}
+
+// Test operation x-codegen.querySchema still exists
+if (!listUsersCodegen.querySchema) {
+  throw new Error('listUsers should have x-codegen.querySchema');
+}
+
+const querySchemaRef = (listUsersCodegen.querySchema as Record<string, unknown>).$ref as string | undefined;
+if (!querySchemaRef) {
+  throw new Error('x-codegen.querySchema should have $ref');
+}
+
+console.log('✅ Smoke tests passed');

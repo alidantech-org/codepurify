@@ -1,9 +1,9 @@
 import type { OpenApiComponents } from '../openapi/openapi.types.js';
 import type { VersionContract } from '../version/version-contract.types.js';
-import type { CompilerContext, ResolvedCompilerContext } from './compiler-context.js';
-import { resolveCompilerContext } from './compiler-context.js';
+import type { CompilerContext } from './compiler-context.js';
 import type { PropertyRefGroup } from '../properties/property.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
+import type { CompileQueryModelContext } from './schemas/compile-query-model-schema.js';
 import { buildSchemaResolver } from './schemas/build-schema-resolver.js';
 import { compileComponentSchema } from './schemas/compile-component-schema.js';
 import { compileModelSchema } from './schemas/compile-model-schema.js';
@@ -14,6 +14,7 @@ import { compileRequestBodyComponent } from './components/compile-request-body-c
 import { compileResponseComponent } from './components/compile-response-component.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
 import { toSchemaName } from '../naming/schema-name.js';
+import { QueryModelOptions } from '../config/query-model-defaults.js';
 
 export interface CompiledComponentsResult {
   readonly components: OpenApiComponents;
@@ -101,6 +102,7 @@ export function compileComponents(contract: VersionContract, context: CompilerCo
 
         if (!isEntityRefs(value)) continue;
 
+        // Emit individual property schemas for entity fields
         for (const [key, fieldRef] of Object.entries(value.fields)) {
           if (fieldRef.targetRefId) continue;
 
@@ -112,25 +114,112 @@ export function compileComponents(contract: VersionContract, context: CompilerCo
           schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver, context);
         }
 
-        const modelsToEmit = [
-          value.model,
-          value.publicModel,
-          value.selectedModel,
-          value.partialModel,
-          value.query.exact,
-          value.query.search,
-          value.query.exactSearch,
-          value.query.range,
-          value.query.in,
-          value.query.exists,
-          value.query.sort,
-        ];
+        // Check if this is V2 with full model emission support
+        const isV2 = 'modelEmission' in value && 'privateModel' in value;
 
-        for (const modelRef of modelsToEmit) {
-          const name = resolver.schemas.get(modelRef.id);
-          if (!name) continue;
+        if (isV2) {
+          const v2Value = value as unknown as {
+            model: Parameters<typeof compileModelSchema>[0];
+            publicModel: Parameters<typeof compileModelSchema>[0];
+            privateModel: Parameters<typeof compileModelSchema>[0];
+            internalModel: Parameters<typeof compileModelSchema>[0];
+            systemModel: Parameters<typeof compileModelSchema>[0];
+            partialModel: Parameters<typeof compileModelSchema>[0];
+            publicPartialModel: Parameters<typeof compileModelSchema>[0];
+            privatePartialModel: Parameters<typeof compileModelSchema>[0];
+            internalPartialModel: Parameters<typeof compileModelSchema>[0];
+            systemPartialModel: Parameters<typeof compileModelSchema>[0];
+            query: {
+              exact: Parameters<typeof compileModelSchema>[0];
+              search: Parameters<typeof compileModelSchema>[0];
+              exactSearch: Parameters<typeof compileModelSchema>[0];
+              range: Parameters<typeof compileModelSchema>[0];
+              in: Parameters<typeof compileModelSchema>[0];
+              exists: Parameters<typeof compileModelSchema>[0];
+              sort: Parameters<typeof compileModelSchema>[0];
+              select: Parameters<typeof compileModelSchema>[0];
+            };
+            modelEmission: {
+              model: boolean;
+              publicModel: boolean;
+              privateModel: boolean;
+              internalModel: boolean;
+              systemModel: boolean;
+              partialModel: boolean;
+              publicPartialModel: boolean;
+              privatePartialModel: boolean;
+              internalPartialModel: boolean;
+              systemPartialModel: boolean;
+              query: {
+                exact: boolean;
+                search: boolean;
+                exactSearch: boolean;
+                range: boolean;
+                in: boolean;
+                exists: boolean;
+                sort: boolean;
+                select: boolean;
+              };
+            };
+            queryModelOptions: QueryModelOptions;
+          };
 
-          schemas[name] = resolvePendingRefs(compileModelSchema(modelRef), resolver, context);
+          const emission = v2Value.modelEmission;
+          const queryModelContext: CompileQueryModelContext = {
+            queryModelOptions: v2Value.queryModelOptions,
+          };
+
+          const modelsToEmit: Array<{ ref: Parameters<typeof compileModelSchema>[0]; enabled: boolean }> = [
+            { ref: v2Value.model, enabled: emission.model },
+            { ref: v2Value.publicModel, enabled: emission.publicModel },
+            { ref: v2Value.privateModel, enabled: emission.privateModel },
+            { ref: v2Value.internalModel, enabled: emission.internalModel },
+            { ref: v2Value.systemModel, enabled: emission.systemModel },
+            { ref: v2Value.partialModel, enabled: emission.partialModel },
+            { ref: v2Value.publicPartialModel, enabled: emission.publicPartialModel },
+            { ref: v2Value.privatePartialModel, enabled: emission.privatePartialModel },
+            { ref: v2Value.internalPartialModel, enabled: emission.internalPartialModel },
+            { ref: v2Value.systemPartialModel, enabled: emission.systemPartialModel },
+            { ref: v2Value.query.exact, enabled: emission.query.exact },
+            { ref: v2Value.query.search, enabled: emission.query.search },
+            { ref: v2Value.query.exactSearch, enabled: emission.query.exactSearch },
+            { ref: v2Value.query.range, enabled: emission.query.range },
+            { ref: v2Value.query.in, enabled: emission.query.in },
+            { ref: v2Value.query.exists, enabled: emission.query.exists },
+            { ref: v2Value.query.sort, enabled: emission.query.sort },
+            { ref: v2Value.query.select, enabled: emission.query.select },
+          ];
+
+          for (const { ref, enabled } of modelsToEmit) {
+            if (!enabled) continue;
+
+            const name = resolver.schemas.get(ref.id);
+            if (!name) continue;
+
+            schemas[name] = resolvePendingRefs(compileModelSchema(ref, queryModelContext), resolver, context);
+          }
+        } else {
+          // Legacy behavior for V1 refs
+          const modelsToEmit = [
+            value.model,
+            value.publicModel,
+            value.partialModel,
+            value.query.exact,
+            value.query.search,
+            value.query.exactSearch,
+            value.query.range,
+            value.query.in,
+            value.query.exists,
+            value.query.sort,
+            value.query.select,
+          ];
+
+          for (const modelRef of modelsToEmit) {
+            const name = resolver.schemas.get(modelRef.id);
+            if (!name) continue;
+
+            schemas[name] = resolvePendingRefs(compileModelSchema(modelRef), resolver, context);
+          }
         }
       }
     }
@@ -186,15 +275,17 @@ function isPropertyRefGroup(value: unknown): value is PropertyRefGroup {
 function isEntityRefs(value: unknown): value is {
   model: Parameters<typeof compileModelSchema>[0];
   publicModel: Parameters<typeof compileModelSchema>[0];
-  selectedModel: Parameters<typeof compileModelSchema>[0];
   partialModel: Parameters<typeof compileModelSchema>[0];
+  query: {
+    exact: Parameters<typeof compileModelSchema>[0];
+    search: Parameters<typeof compileModelSchema>[0];
+    exactSearch: Parameters<typeof compileModelSchema>[0];
+    range: Parameters<typeof compileModelSchema>[0];
+    in: Parameters<typeof compileModelSchema>[0];
+    exists: Parameters<typeof compileModelSchema>[0];
+    sort: Parameters<typeof compileModelSchema>[0];
+    select: Parameters<typeof compileModelSchema>[0];
+  };
 } {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    'model' in value &&
-    'publicModel' in value &&
-    'selectedModel' in value &&
-    'partialModel' in value
-  );
+  return !!value && typeof value === 'object' && 'model' in value && 'publicModel' in value && 'partialModel' in value && 'query' in value;
 }

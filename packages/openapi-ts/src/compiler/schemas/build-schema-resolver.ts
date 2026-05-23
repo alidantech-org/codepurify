@@ -106,7 +106,6 @@ function registerPropertyRegistryRef(
 
     schemas.set(value.model.id, modelRefToSchemaName(value.model));
     schemas.set(value.publicModel.id, modelRefToSchemaName(value.publicModel));
-    schemas.set(value.selectedModel.id, modelRefToSchemaName(value.selectedModel));
     schemas.set(value.partialModel.id, modelRefToSchemaName(value.partialModel));
     schemas.set(value.query.exact.id, modelRefToSchemaName(value.query.exact));
     schemas.set(value.query.search.id, modelRefToSchemaName(value.query.search));
@@ -115,6 +114,7 @@ function registerPropertyRegistryRef(
     schemas.set(value.query.in.id, modelRefToSchemaName(value.query.in));
     schemas.set(value.query.exists.id, modelRefToSchemaName(value.query.exists));
     schemas.set(value.query.sort.id, modelRefToSchemaName(value.query.sort));
+    schemas.set(value.query.select.id, modelRefToSchemaName(value.query.select));
     return;
   }
 

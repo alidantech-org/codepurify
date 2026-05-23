@@ -26,7 +26,9 @@ export interface CodegenMetadata {
 
   behavior?: string;
 
-  inherits?: readonly string[];
+  inherits?: readonly {
+    readonly $ref: string;
+  }[];
 
   querySchema?: {
     readonly $ref: string;

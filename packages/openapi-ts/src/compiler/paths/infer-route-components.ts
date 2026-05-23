@@ -23,6 +23,22 @@ import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isPropertyRef } from '../../validation/ref-guards.js';
 import { collectQueryFieldsFromSchemaComponentValue, isRequiredForQuery } from './compile-route-parameters.js';
 
+function getParameterIdentityKey(param: {
+  readonly name: string;
+  readonly in: 'path' | 'query';
+  readonly resourceKey?: string;
+  readonly shared?: boolean;
+}): string {
+  const parts: string[] = [param.in];
+  if (param.shared) {
+    parts.push('shared');
+  } else if (param.resourceKey) {
+    parts.push('resource', param.resourceKey);
+  }
+  parts.push(param.name);
+  return parts.join(':');
+}
+
 function isParameterMap(value: unknown): value is RouteParameterMap {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   if (isEngineRef(value)) return false;
@@ -57,6 +73,7 @@ export function inferRouteComponents(
   if (pathParams) {
     for (const [name, param] of Object.entries(pathParams)) {
       const componentName = getParameterName(name, 'path', resourceKey, route.operationId);
+      const identityKey = getParameterIdentityKey({ name, in: 'path', resourceKey });
       const inferred: InferredParameterComponent = {
         name: componentName,
         parameterName: name,
@@ -68,7 +85,14 @@ export function inferRouteComponents(
         origin: 'path',
         property: name,
       };
-      components.parameters.set(componentName, inferred);
+
+      // Deduplicate by identity key
+      if (components.parameters.has(componentName)) {
+        const existing = components.parameters.get(componentName)!;
+        assertSameParameterDefinition(existing, inferred);
+      } else {
+        components.parameters.set(componentName, inferred);
+      }
     }
   }
 
@@ -76,6 +100,7 @@ export function inferRouteComponents(
   if (route.params) {
     for (const [name, param] of Object.entries(route.params)) {
       const componentName = getParameterName(name, 'path', resourceKey, route.operationId);
+      const identityKey = getParameterIdentityKey({ name, in: 'path', resourceKey });
       const inferred: InferredParameterComponent = {
         name: componentName,
         parameterName: name,
@@ -87,7 +112,14 @@ export function inferRouteComponents(
         origin: 'path',
         property: name,
       };
-      components.parameters.set(componentName, inferred);
+
+      // Deduplicate by identity key
+      if (components.parameters.has(componentName)) {
+        const existing = components.parameters.get(componentName)!;
+        assertSameParameterDefinition(existing, inferred);
+      } else {
+        components.parameters.set(componentName, inferred);
+      }
     }
   }
 
@@ -99,6 +131,7 @@ export function inferRouteComponents(
       const expandedFields = collectQueryFieldsFromSchemaComponentValue(route.query, contract);
       for (const collectedField of expandedFields) {
         const componentName = getParameterName(collectedField.name, 'query', resourceKey, route.operationId, collectedField.shared);
+        const identityKey = getParameterIdentityKey({ name: collectedField.name, in: 'query', resourceKey, shared: collectedField.shared });
         const inferred: InferredParameterComponent = {
           name: componentName,
           parameterName: collectedField.name,
@@ -122,11 +155,7 @@ export function inferRouteComponents(
         // Deduplicate: if component exists, verify it matches
         if (components.parameters.has(componentName)) {
           const existing = components.parameters.get(componentName)!;
-          if (existing.in !== inferred.in || existing.required !== inferred.required) {
-            throw new Error(
-              `Parameter component "${componentName}" already exists with different definition (in: ${existing.in}, required: ${existing.required}) vs (in: ${inferred.in}, required: ${inferred.required})`,
-            );
-          }
+          assertSameParameterDefinition(existing, inferred);
           // Reuse existing component
         } else {
           components.parameters.set(componentName, inferred);
@@ -135,6 +164,7 @@ export function inferRouteComponents(
     } else if (isParameterMap(route.query)) {
       for (const [name, param] of Object.entries(route.query)) {
         const componentName = getParameterName(name, 'query', resourceKey, route.operationId);
+        const identityKey = getParameterIdentityKey({ name, in: 'query', resourceKey });
         const inferred: InferredParameterComponent = {
           name: componentName,
           parameterName: name,
@@ -150,11 +180,7 @@ export function inferRouteComponents(
         // Deduplicate: if component exists, verify it matches
         if (components.parameters.has(componentName)) {
           const existing = components.parameters.get(componentName)!;
-          if (existing.in !== inferred.in || existing.required !== inferred.required) {
-            throw new Error(
-              `Parameter component "${componentName}" already exists with different definition (in: ${existing.in}, required: ${existing.required}) vs (in: ${inferred.in}, required: ${inferred.required})`,
-            );
-          }
+          assertSameParameterDefinition(existing, inferred);
           // Reuse existing component
         } else {
           components.parameters.set(componentName, inferred);
@@ -293,7 +319,21 @@ function extractResponseSchema(
   };
 }
 
-function isOptional(param: RouteParameterFieldValue): boolean {
-  const required = getRefRequired(param);
-  return required === false;
+function assertSameParameterDefinition(existing: InferredParameterComponent, inferred: InferredParameterComponent): void {
+  if (existing.in !== inferred.in) {
+    throw new Error(`Parameter component "${existing.name}" already exists with different location (in: ${existing.in} vs ${inferred.in})`);
+  }
+  if (existing.required !== inferred.required) {
+    throw new Error(
+      `Parameter component "${existing.name}" already exists with different required (${existing.required} vs ${inferred.required})`,
+    );
+  }
+  // Schema comparison - check if refs point to same target
+  const existingRefId = isPropertyRef(existing.schema) ? existing.schema.id : undefined;
+  const inferredRefId = isPropertyRef(inferred.schema) ? inferred.schema.id : undefined;
+  if (existingRefId !== inferredRefId) {
+    throw new Error(
+      `Parameter component "${existing.name}" already exists with different schema (existing ref: ${existingRefId}, new ref: ${inferredRefId})`,
+    );
+  }
 }

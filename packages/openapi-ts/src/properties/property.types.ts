@@ -3,6 +3,8 @@ import type { ModelRef, PropertyRef, ComponentRef } from '../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types.js';
 import type { SdkExtensionMeta } from '../sdk/sdk-extension.types.js';
+import type { DeepPartial, ModelEmissionInput, ModelEmissionOptions } from '../config/model-emission-defaults.js';
+import type { QueryModelOptions } from '../config/query-model-defaults.js';
 
 export type EntityFieldInput<TEntity> = Partial<Record<Extract<keyof TEntity, string>, SchemaField>>;
 
@@ -76,6 +78,7 @@ export interface EntityQueryRefs {
   readonly in: RefWithUsageMethods<ModelRef>;
   readonly exists: RefWithUsageMethods<ModelRef>;
   readonly sort: RefWithUsageMethods<ModelRef>;
+  readonly select: RefWithUsageMethods<ModelRef>;
 }
 
 export interface EntityPropertyRefs<TFields extends PropertyRefGroup = PropertyRefGroup> {
@@ -83,7 +86,6 @@ export interface EntityPropertyRefs<TFields extends PropertyRefGroup = PropertyR
   readonly fields: TFields;
   readonly model: RefWithUsageMethods<ModelRef>;
   readonly publicModel: RefWithUsageMethods<ModelRef>;
-  readonly selectedModel: RefWithUsageMethods<ModelRef>;
   readonly partialModel: RefWithUsageMethods<ModelRef>;
   readonly query: EntityQueryRefs;
   readonly abstract?: boolean;
@@ -94,11 +96,19 @@ export interface EntityPropertyRefsV2<TFields extends Record<string, SchemaField
   readonly fields: EntityFieldRefs<TFields>;
   readonly model: RefWithUsageMethods<ModelRef>;
   readonly publicModel: RefWithUsageMethods<ModelRef>;
-  readonly selectedModel: RefWithUsageMethods<ModelRef>;
+  readonly privateModel: RefWithUsageMethods<ModelRef>;
+  readonly internalModel: RefWithUsageMethods<ModelRef>;
+  readonly systemModel: RefWithUsageMethods<ModelRef>;
   readonly partialModel: RefWithUsageMethods<ModelRef>;
+  readonly publicPartialModel: RefWithUsageMethods<ModelRef>;
+  readonly privatePartialModel: RefWithUsageMethods<ModelRef>;
+  readonly internalPartialModel: RefWithUsageMethods<ModelRef>;
+  readonly systemPartialModel: RefWithUsageMethods<ModelRef>;
   readonly query: EntityQueryRefs;
   readonly abstract?: boolean;
   readonly schemaRef?: string;
+  readonly modelEmission: ModelEmissionOptions;
+  readonly queryModelOptions: QueryModelOptions;
 }
 
 export type AnyEntityRegistryResult = EntityRegistryResult<string, Record<string, SchemaField>, Record<string, SchemaField>>;
@@ -165,6 +175,8 @@ export type NamedPropertyRefRegistry<TName extends string> = Omit<PropertyRegist
 export interface EntityOptions<TExtends extends EntityInheritanceInput | readonly EntityInheritanceInput[] | undefined = undefined> {
   readonly extends?: TExtends;
   readonly abstract?: boolean;
+  readonly emitModels?: ModelEmissionInput;
+  readonly queryModels?: DeepPartial<QueryModelOptions>;
 }
 
 export type AnyNamedEntityRegistry = NamedEntityPropertyRegistry<string, PropertyRefGroup>;

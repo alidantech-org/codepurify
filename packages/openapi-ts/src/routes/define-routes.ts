@@ -1,7 +1,7 @@
 import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
 import { SdkKind, SdkPlacement } from '../sdk/sdk-extension.types.js';
-import type { DefineRoutesInput, RouteDefinition, RoutePathParameterMap, RouteRegistry } from './route.types.js';
+import type { DefineRoutesInput, RouteDefinition, RouteParameterRegistry, RouteRegistry } from './route.types.js';
 
 export interface DefineRoutesOptions extends OptionalResourceContext {
   name: string;
@@ -22,11 +22,24 @@ export function defineRoutes(options: DefineRoutesOptions, input: DefineRoutesIn
 }
 
 function normalizeRoutesInput(input: DefineRoutesInput): {
-  parameters?: RoutePathParameterMap;
+  parameters?: RouteParameterRegistry;
   routes: Record<string, RouteDefinition>;
 } {
   if ('routes' in input) {
-    return input as { parameters?: RoutePathParameterMap; routes: Record<string, RouteDefinition> };
+    const normalized = input as { parameters?: RouteParameterRegistry; routes: Record<string, RouteDefinition> };
+
+    // Validate that parameters use parameter names, not path patterns
+    if (normalized.parameters) {
+      for (const key of Object.keys(normalized.parameters)) {
+        if (key.startsWith('/') || key.includes(':')) {
+          throw new Error(
+            `defineRoutes.parameters must be keyed by parameter name, not path pattern. Use { ${key.replace(/^\/:?/, '')}: ref } instead of { ${key}: ref }.`,
+          );
+        }
+      }
+    }
+
+    return normalized;
   }
   return { routes: input };
 }

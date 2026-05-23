@@ -10,9 +10,12 @@ export function getParameterName(
   const suffix = location === 'path' ? 'PathParam' : 'QueryParam';
   const pascalName = toPascalCase(parameterName);
 
-  // Path params always use operation-specific names
-  if (location === 'path' && operationId) {
-    return `${toPascalCase(operationId)}${pascalName}${suffix}`;
+  // Path params: use resource-prefixed names (not operation-specific)
+  if (location === 'path') {
+    if (resourceKey) {
+      return `${toPascalCase(resourceKey)}${pascalName}${suffix}`;
+    }
+    return `${pascalName}${suffix}`;
   }
 
   // Shared/base query params use simple reusable names
@@ -20,16 +23,12 @@ export function getParameterName(
     return `${pascalName}${suffix}`;
   }
 
-  // Operation-specific names for extension query params
-  if (operationId) {
-    return `${toPascalCase(operationId)}${pascalName}${suffix}`;
-  }
-
   // Resource-specific params include resource key
   if (resourceKey) {
     return `${toPascalCase(resourceKey)}${pascalName}${suffix}`;
   }
 
+  // Fallback to simple name
   return `${pascalName}${suffix}`;
 }
 

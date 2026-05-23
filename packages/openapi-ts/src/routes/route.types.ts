@@ -19,8 +19,6 @@ export type RouteParameterInput = ParameterRef | readonly ParameterRef[] | Compo
 
 export type RouteParameterRegistry = Record<string, RouteParameterFieldValue>;
 
-export type RoutePathParameterMap = Record<string, RouteParameterMap>;
-
 // Route query field values must be property refs, not component/model refs
 // A route query can be a ComponentRef at the top level, but expanded fields must be PropertyRef
 export type RouteParameterFieldValue = PropertyRef | RefUsage<PropertyRef>;
