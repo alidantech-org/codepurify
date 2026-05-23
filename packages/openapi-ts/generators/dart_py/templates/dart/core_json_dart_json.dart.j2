@@ -1,0 +1,124 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND.
+//
+// Generator: dart-py
+// Generated on: {{ generated_at }}
+// Source: {{ source_file }}
+// Output: {{ output_path }}
+
+/// Safe JSON parsing helpers for generated models.
+///
+/// This class provides type-safe JSON parsing methods that handle
+/// null values, type coercion, and safe defaults.
+class DartJson {
+  const DartJson._();
+
+  /// Safely convert a value to a Map<String, dynamic>.
+  static Map<String, dynamic> asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
+  }
+
+  /// Safely convert a value to a String with optional fallback.
+  static String string(dynamic value, {String fallback = ''}) {
+    if (value == null) return fallback;
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  /// Safely convert a value to a nullable String.
+  static String? nullableString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  /// Safely convert a value to an int with optional fallback.
+  static int intValue(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  /// Safely convert a value to a nullable int.
+  static int? nullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
+  /// Safely convert a value to a double with optional fallback.
+  static double doubleValue(dynamic value, {double fallback = 0}) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  /// Safely convert a value to a nullable double.
+  static double? nullableDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  /// Safely convert a value to a bool with optional fallback.
+  static bool boolValue(dynamic value, {bool fallback = false}) {
+    if (value is bool) return value;
+
+    final text = value?.toString().toLowerCase();
+    if (text == 'true' || text == '1') return true;
+    if (text == 'false' || text == '0') return false;
+
+    return fallback;
+  }
+
+  /// Safely convert a value to a nullable bool.
+  static bool? nullableBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+
+    final text = value.toString().toLowerCase();
+    if (text == 'true' || text == '1') return true;
+    if (text == 'false' || text == '0') return false;
+
+    return null;
+  }
+
+  /// Safely convert a value to a DateTime with optional fallback.
+  static DateTime dateTime(dynamic value, {DateTime? fallback}) {
+    if (value is DateTime) return value;
+
+    return DateTime.tryParse(value?.toString() ?? '') ??
+        fallback ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  /// Safely convert a value to a nullable DateTime.
+  static DateTime? nullableDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString());
+  }
+
+  /// Safely convert a value to a List<T> with optional fallback.
+  static List<T> list<T>(
+    dynamic value,
+    T Function(dynamic item) mapper, {
+    List<T> fallback = const [],
+  }) {
+    if (value is! List) return fallback;
+    return value.map(mapper).toList();
+  }
+
+  /// Safely convert a value to a nullable List<T>.
+  static List<T>? nullableList<T>(
+    dynamic value,
+    T Function(dynamic item) mapper,
+  ) {
+    if (value == null) return null;
+    if (value is! List) return <T>[];
+    return value.map(mapper).toList();
+  }
+}

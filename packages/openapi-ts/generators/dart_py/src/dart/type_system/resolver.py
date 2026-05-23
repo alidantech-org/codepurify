@@ -20,6 +20,7 @@ This module must not:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from constants.dart_syntax import (
@@ -133,6 +134,7 @@ def resolve_type(
     required: bool = False,
     schemas: dict[str, Schema] | None = None,
     version_folder: str = "latest",
+    parent_artifact_folder: Path | None = None,
 ) -> DartResolvedType:
     """
     Resolve an OpenAPI schema into Dart type metadata.
@@ -142,6 +144,9 @@ def resolve_type(
 
     Optional fields are nullable in generated Dart because missing JSON values
     must be representable safely.
+
+    parent_artifact_folder: If provided, nested classes will use relative imports
+    instead of package imports.
     """
     normalized_schema, schema_nullable = normalize_nullable_schema(schema)
 
@@ -155,6 +160,7 @@ def resolve_type(
             schema_nullable=schema_nullable,
             schemas=schemas,
             version_folder=version_folder,
+            parent_artifact_folder=parent_artifact_folder,
         )
 
     schema_type = normalized_schema.get(OPENAPI_TYPE)
@@ -207,6 +213,7 @@ def resolve_ref_type(
     schema_nullable: bool = False,
     schemas: dict[str, Schema] | None = None,
     version_folder: str = "latest",
+    parent_artifact_folder: Path | None = None,
 ) -> DartResolvedType:
     """
     Resolve a $ref schema into Dart type metadata.
@@ -217,6 +224,12 @@ def resolve_ref_type(
     Property refs (x-codegen.kind: property) are only inlined if the referenced
     schema is scalar-like (primitive, enum, or array of primitives). Object-like
     property refs are treated as model refs to generate proper class plans.
+
+    Scalar refs (PRIMITIVE_ALIAS) are inlined as primitive types to prevent
+    them from leaking as Dart class types.
+
+    parent_artifact_folder: If provided, nested classes will use relative imports
+    instead of package imports.
     """
     symbol = symbol_registry.get(schema_name)
 
@@ -240,6 +253,33 @@ def resolve_ref_type(
                 schemas=schemas,
                 version_folder=version_folder,
             )
+
+    # If this is a PRIMITIVE_ALIAS ref, inline it as a primitive type
+    # This prevents scalar refs from leaking as Dart class types
+    if symbol.kind == SchemaKind.PRIMITIVE_ALIAS:
+        if schemas and schema_name in schemas:
+            ref_schema = schemas[schema_name]
+            # Recursively resolve the primitive schema's actual type
+            return resolve_type(
+                schema=ref_schema,
+                symbol_registry=symbol_registry,
+                package_name=package_name,
+                required=required,
+                schemas=schemas,
+                version_folder=version_folder,
+            )
+        # Fallback: use the dart_name from the symbol (should be primitive type)
+        return create_resolved_type(
+            name=symbol.dart_name,
+            base_name=symbol.dart_name,
+            required=required,
+            schema_nullable=schema_nullable,
+            is_list=False,
+            is_enum=False,
+            is_model=False,
+            is_primitive=True,
+            import_uri=None,
+        )
 
     # If this is a property ref (kind: property), check schema shape before inlining
     if schemas and schema_name in schemas:
@@ -275,11 +315,19 @@ def resolve_ref_type(
             import_path = symbol.path.parent / "index.dart"
         else:
             import_path = symbol.path.parent / "index.dart"
-        # Include version folder in import path
-        import_uri = format_package_import(
-            package_name,
-            f"{version_folder}/{import_path.as_posix()}",
-        )
+
+        # Check if this is a nested class - use relative import if parent folder is provided
+        if parent_artifact_folder and symbol.path.is_relative_to(parent_artifact_folder):
+            # Generate relative import for nested class
+            # e.g., from parent: import 'user_settings_channels/model.dart'
+            relative_path = symbol.path.relative_to(parent_artifact_folder.parent)
+            import_uri = relative_path.as_posix()
+        else:
+            # Include version folder in import path for package imports
+            import_uri = format_package_import(
+                package_name,
+                f"{version_folder}/{import_path.as_posix()}",
+            )
 
     return create_resolved_type(
         name=symbol.dart_name,

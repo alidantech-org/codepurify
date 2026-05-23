@@ -1,7 +1,7 @@
 """Central project path resolution.
 
 This module provides a single source of truth for resolving project-relative paths
-like the templates directory. This avoids fragile parent.parent.parent chains.
+like the templates directory. This avoids fragile parent chain traversal.
 """
 
 from pathlib import Path

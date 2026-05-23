@@ -27,8 +27,13 @@ def determine_usage_type(
     kind: SchemaKind,
 ) -> str:
     """Determine SDK usage type from schema usage and schema kind."""
+    # MODEL kind schemas should always be treated as MODEL usage
+    # regardless of operation usage, to ensure correct artifact placement
+    if kind == SchemaKind.MODEL:
+        return SDK_USAGE_MODEL
+
     if not schema_usage:
-        return SDK_USAGE_MODEL if kind == SchemaKind.MODEL else SDK_USAGE_DTO
+        return SDK_USAGE_DTO
 
     unique_operations = {usage.operation_id for usage in schema_usage}
 
@@ -60,4 +65,4 @@ def determine_usage_type(
     if location == DART_LOCATION_PARAMETER:
         return SDK_USAGE_PARAMS
 
-    return SDK_USAGE_MODEL if kind == SchemaKind.MODEL else SDK_USAGE_DTO
+    return SDK_USAGE_DTO

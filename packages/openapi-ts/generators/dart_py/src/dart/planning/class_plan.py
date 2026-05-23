@@ -22,6 +22,7 @@ from constants.dart_syntax import (
     FIELDS_FILE_NAME,
     INDEX_FILE_NAME,
     MODEL_FILE_NAME,
+    format_package_import,
 )
 from constants.openapi_keys import OPENAPI_PROPERTIES, OPENAPI_REQUIRED
 from constants.sdk_usage import (
@@ -85,6 +86,10 @@ class DartClassPlan:
     base_fields: list[DartFieldPlan] = field(default_factory=list)
     own_fields: list[DartFieldPlan] = field(default_factory=list)
     render_fields: list[DartFieldPlan] = field(default_factory=list)
+
+    # copyWith fields (inherited + own for valid override)
+    copy_with_fields: list[DartFieldPlan] = field(default_factory=list)
+    has_copy_with_override: bool = False
 
 
 def build_class_plan(
@@ -160,6 +165,7 @@ def build_class_plan(
             owner_name=class_name,
             schemas=schemas,
             version_folder=version_folder,
+            parent_artifact_folder=artifact_folder,
         )
 
     # Build own field plans
@@ -173,6 +179,20 @@ def build_class_plan(
         owner_name=class_name,
         schemas=schemas,
         version_folder=version_folder,
+        parent_artifact_folder=artifact_folder,
+    )
+
+    # Plan nested objects from own properties
+    from .nested_object_planner import plan_nested_objects_recursively
+
+    plan_nested_objects_recursively(
+        properties=effective_schema.own_properties,
+        parent_class_name=class_name,
+        parent_artifact_folder=artifact_folder,
+        symbol_registry=symbol_registry,
+        package_name=package_name,
+        schemas=schemas,
+        nesting_depth=0,
     )
 
     # Combined fields for compatibility
@@ -185,6 +205,16 @@ def build_class_plan(
     # Render fields: own fields only if base class exists, otherwise all fields
     render_fields = own_field_plans if base_class_name else field_plans
 
+    # Build copyWith fields: base fields + own fields for valid override
+    # For non-inherited classes, copyWith fields = own fields
+    # For inherited classes, copyWith fields = base fields + own fields
+    if base_class_name:
+        copy_with_field_plans = base_field_plans + own_field_plans
+        has_copy_with_override = True
+    else:
+        copy_with_field_plans = own_field_plans
+        has_copy_with_override = False
+
     imports, has_collection_fields = build_class_imports(
         field_plans=field_plans,
         package_name=package_name,
@@ -194,6 +224,9 @@ def build_class_plan(
         base_import_uri=base_import_uri,
         version_folder=version_folder,
     )
+
+    # Enable copyWith for all classes, inherited classes get override
+    generate_copy_with = True
 
     return DartClassPlan(
         class_name=class_name,
@@ -208,7 +241,7 @@ def build_class_plan(
         fields=field_plans,
         has_collection_fields=has_collection_fields,
         generate_constructor=True,
-        generate_copy_with=True,
+        generate_copy_with=generate_copy_with,
         generate_from_json=True,
         generate_to_json=True,
         generate_to_string=True,
@@ -226,6 +259,8 @@ def build_class_plan(
         base_fields=base_field_plans,
         own_fields=own_field_plans,
         render_fields=render_fields,
+        copy_with_fields=copy_with_field_plans,
+        has_copy_with_override=has_copy_with_override,
     )
 
 
@@ -304,6 +339,10 @@ def build_class_imports(
     """Collect, add required generated imports, and dedupe class imports."""
     imports: list[DartImport] = []
     has_collection_fields = False
+
+    # Add DartJson helper import
+    core_json_import = format_package_import(package_name, f"{version_folder}/core/json/index.dart")
+    imports.append(DartImport(uri=core_json_import))
 
     # Add base class import if present
     if base_class_name and base_import_uri:

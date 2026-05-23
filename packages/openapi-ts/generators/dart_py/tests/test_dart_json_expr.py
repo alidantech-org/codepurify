@@ -23,7 +23,7 @@ def test_from_json_string_cast():
     )
 
     expr = build_from_json_expr("name", "name", "UserFields", resolved)
-    assert expr == "map[UserFields.name] as String"
+    assert expr == "DartJson.string(map[UserFields.name])"
 
 
 def test_from_json_nullable_string_cast():
@@ -42,7 +42,7 @@ def test_from_json_nullable_string_cast():
     )
 
     expr = build_from_json_expr("name", "name", "UserFields", resolved)
-    assert expr == "map[UserFields.name] as String?"
+    assert expr == "DartJson.nullableString(map[UserFields.name])"
 
 
 def test_from_json_bool_cast():
@@ -61,7 +61,7 @@ def test_from_json_bool_cast():
     )
 
     expr = build_from_json_expr("success", "success", "ApiMessageFields", resolved)
-    assert expr == "map[ApiMessageFields.success] as bool"
+    assert expr == "DartJson.boolValue(map[ApiMessageFields.success])"
 
 
 def test_from_json_int_num_to_int_conversion():
@@ -80,7 +80,7 @@ def test_from_json_int_num_to_int_conversion():
     )
 
     expr = build_from_json_expr("page", "page", "QueryFields", resolved)
-    assert expr == "(map[QueryFields.page] as num).toInt()"
+    assert expr == "DartJson.intValue(map[QueryFields.page])"
 
 
 def test_from_json_nullable_int_conversion():
@@ -99,7 +99,7 @@ def test_from_json_nullable_int_conversion():
     )
 
     expr = build_from_json_expr("page", "page", "QueryFields", resolved)
-    assert expr == "(map[QueryFields.page] as num?)?.toInt()"
+    assert expr == "DartJson.nullableInt(map[QueryFields.page])"
 
 
 def test_from_json_double_conversion():
@@ -118,7 +118,7 @@ def test_from_json_double_conversion():
     )
 
     expr = build_from_json_expr("amount", "amount", "Fields", resolved)
-    assert expr == "(map[Fields.amount] as num).toDouble()"
+    assert expr == "DartJson.doubleValue(map[Fields.amount])"
 
 
 def test_from_json_enum_conversion():
@@ -176,7 +176,7 @@ def test_from_json_model_conversion():
 
     expr = build_from_json_expr("user", "user", "Fields", resolved)
     assert "UserPublic.fromJson" in expr
-    assert "Map<String, dynamic>" in expr
+    assert "DartJson.asMap" in expr
 
 
 def test_from_json_nullable_model_conversion():
@@ -195,7 +195,7 @@ def test_from_json_nullable_model_conversion():
     )
 
     expr = build_from_json_expr("user", "user", "Fields", resolved)
-    assert expr == "map[Fields.user] == null ? null : UserPublic.fromJson(Map<String, dynamic>.from((map[Fields.user] as Map?) ?? {}))"
+    assert expr == "map[Fields.user] == null ? null : UserPublic.fromJson(DartJson.asMap(map[Fields.user]))"
 
 
 def test_from_json_list_string():
@@ -228,10 +228,8 @@ def test_from_json_list_string():
     )
 
     expr = build_from_json_expr("roles", "roles", "Fields", resolved)
-    assert "as List?" in expr
-    assert "as String" in expr
-    assert ".map" in expr
-    assert ".toList()" in expr
+    assert "DartJson.list" in expr
+    assert "DartJson.string" in expr
 
 
 def test_from_json_nullable_list_string():
@@ -264,8 +262,8 @@ def test_from_json_nullable_list_string():
     )
 
     expr = build_from_json_expr("roles", "roles", "Fields", resolved)
-    assert "== null ? null" in expr
-    assert "as List" in expr
+    assert "DartJson.nullableList" in expr
+    assert "DartJson.string" in expr
 
 
 def test_from_json_list_model():
@@ -298,9 +296,9 @@ def test_from_json_list_model():
     )
 
     expr = build_from_json_expr("items", "items", "Fields", resolved)
+    assert "DartJson.list<UserPublic>" in expr
     assert "UserPublic.fromJson" in expr
-    assert ".map" in expr
-    assert ".toList()" in expr
+    assert "DartJson.asMap(item)" in expr
 
 
 def test_from_json_nullable_list_model():
@@ -333,8 +331,9 @@ def test_from_json_nullable_list_model():
     )
 
     expr = build_from_json_expr("items", "items", "Fields", resolved)
-    assert "== null ? null" in expr
+    assert "DartJson.nullableList" in expr
     assert "UserPublic.fromJson" in expr
+    assert "DartJson.asMap" in expr
 
 
 def test_to_json_enum_calls_to_json():

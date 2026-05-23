@@ -3,7 +3,6 @@ import type { SchemaField } from '../../schema/schema.types.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
 import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
-import { toOpenApiSchemaRef } from '../refs/to-openapi-ref.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isPropertyRef } from '../../validation/ref-guards.js';
 import { SchemaKind } from '../../schema/schema-kind.js';
@@ -16,23 +15,32 @@ export interface CompileQueryModelContext {
   queryModelOptions?: QueryModelOptions;
 }
 
-export function compileQueryModelSchema(ref: ModelRef, context: CompileQueryModelContext = {}): Record<string, unknown> {
-  const behavior = getQueryBehaviorFromModelKey(ref.modelKey);
-  if (!behavior) {
-    throw new Error(`Unknown query model behavior for modelKey: ${ref.modelKey}`);
-  }
+export interface EnumComponentExtraction {
+  componentName: string;
+  schema: Record<string, unknown>;
+}
 
+export function compileQueryModelSchema(
+  ref: ModelRef,
+  context: CompileQueryModelContext = {},
+): { schema: Record<string, unknown>; enumComponents?: EnumComponentExtraction[] } {
+  const behavior = getQueryBehaviorFromModelKey(ref.modelKey);
   const options = context.queryModelOptions ?? DEFAULT_QUERY_MODEL_OPTIONS;
 
-  // Filter to only own fields (not inherited) to avoid duplication in enums
   const parentRefs = ref.inherits ?? [];
   const inheritedFieldNames = new Set(parentRefs.flatMap((inherit) => inherit.fields ?? []));
+
   const ownFields = Object.fromEntries(Object.entries(ref.fields ?? {}).filter(([key]) => !inheritedFieldNames.has(key)));
 
-  const ownSchema = compileQueryBehaviorSchema(ownFields, behavior, options);
+  const result = compileQueryBehaviorSchema(ownFields, behavior, options, ref);
 
-  // Return only the own schema - compileModelSchema will handle allOf wrapping
-  return ownSchema;
+  const schemaWithInheritance = withQueryInheritance(result.schema, parentRefs);
+  const schemaWithCodegen = applyCodegenMetadata(schemaWithInheritance, toQueryCodegenMetadata(ref, behavior, parentRefs));
+
+  return {
+    schema: schemaWithCodegen,
+    enumComponents: result.enumComponents,
+  };
 }
 
 function getQueryBehaviorFromModelKey(modelKey: string): QueryModelBehavior {
@@ -62,24 +70,32 @@ function compileQueryBehaviorSchema(
   fields: Record<string, unknown>,
   behavior: QueryModelBehavior,
   options: QueryModelOptions,
-): Record<string, unknown> {
+  ref: ModelRef,
+): { schema: Record<string, unknown>; enumComponents?: EnumComponentExtraction[] } {
   switch (behavior) {
     case 'exact':
-      return compileValueBasedQuerySchema(fields, options.exact.valueMode);
+      return { schema: compileValueBasedQuerySchema(fields, options.exact.valueMode) };
+
     case 'search':
-      return compileValueBasedQuerySchema(fields, options.search.valueMode);
+      return { schema: compileValueBasedQuerySchema(fields, options.search.valueMode) };
+
     case 'exactSearch':
-      return compileValueBasedQuerySchema(fields, options.exactSearch.valueMode);
+      return { schema: compileValueBasedQuerySchema(fields, options.exactSearch.valueMode) };
+
     case 'range':
-      return compileRangeQuerySchema(fields, options.range.mode);
+      return { schema: compileRangeQuerySchema(fields, options.range.mode) };
+
     case 'in':
-      return compileInQuerySchema(fields);
+      return { schema: compileInQuerySchema(fields) };
+
     case 'exists':
-      return compileExistsQuerySchema(fields, options.exists.valueMode);
+      return { schema: compileExistsQuerySchema(fields, options.exists.valueMode) };
+
     case 'sort':
-      return compileSortQuerySchema(fields, options.sort);
+      return compileSortQuerySchema(fields, options.sort, ref);
+
     case 'select':
-      return compileSelectQuerySchema(fields);
+      return compileSelectQuerySchema(fields, ref);
   }
 }
 
@@ -87,28 +103,28 @@ function compileValueBasedQuerySchema(fields: Record<string, unknown>, valueMode
   const properties: Record<string, unknown> = {};
 
   for (const [key, fieldRef] of Object.entries(fields)) {
-    if (valueMode === 'string') {
-      properties[key] = { type: 'string' };
-    } else {
-      properties[key] = compileFieldSchemaRef(fieldRef);
-    }
+    properties[key] = valueMode === 'string' ? { type: 'string' } : compileFieldSchemaRef(fieldRef);
   }
 
-  return { type: 'object', properties };
+  return {
+    type: 'object',
+    properties,
+  };
 }
 
 function compileRangeQuerySchema(fields: Record<string, unknown>, mode: 'field-schema'): Record<string, unknown> {
   const properties: Record<string, unknown> = {};
 
   for (const [key, fieldRef] of Object.entries(fields)) {
-    switch (mode) {
-      case 'field-schema':
-        properties[key] = compileFieldSchemaRef(fieldRef);
-        break;
+    if (mode === 'field-schema') {
+      properties[key] = compileFieldSchemaRef(fieldRef);
     }
   }
 
-  return { type: 'object', properties };
+  return {
+    type: 'object',
+    properties,
+  };
 }
 
 function compileInQuerySchema(fields: Record<string, unknown>): Record<string, unknown> {
@@ -118,64 +134,77 @@ function compileInQuerySchema(fields: Record<string, unknown>): Record<string, u
     properties[key] = compileArrayOfFieldSchema(fieldRef);
   }
 
-  return { type: 'object', properties };
+  return {
+    type: 'object',
+    properties,
+  };
 }
 
 function compileExistsQuerySchema(fields: Record<string, unknown>, valueMode: 'field-schema' | 'boolean'): Record<string, unknown> {
   const properties: Record<string, unknown> = {};
 
   for (const [key, fieldRef] of Object.entries(fields)) {
-    if (valueMode === 'boolean') {
-      properties[key] = { type: 'boolean' };
-    } else {
-      properties[key] = compileFieldSchemaRef(fieldRef);
-    }
+    properties[key] = valueMode === 'boolean' ? { type: 'boolean' } : compileFieldSchemaRef(fieldRef);
   }
 
-  return { type: 'object', properties };
+  return {
+    type: 'object',
+    properties,
+  };
 }
 
-function compileSortQuerySchema(fields: Record<string, unknown>, options: QueryModelOptions['sort']): Record<string, unknown> {
+function compileSortQuerySchema(
+  fields: Record<string, unknown>,
+  options: QueryModelOptions['sort'],
+  ref: ModelRef,
+): { schema: Record<string, unknown>; enumComponents?: EnumComponentExtraction[] } {
   const fieldNames = Object.keys(fields);
 
   switch (options.mode) {
     case 'flat-prefixed-field':
-      return compileFlatPrefixedFieldSortSchema(fieldNames, options);
+      return compileFlatPrefixedFieldSortSchema(fieldNames, options, ref);
+
     case 'field-direction-object':
-      return compileFieldDirectionObjectSortSchema(fieldNames);
+      return compileFieldDirectionObjectSortSchema(fieldNames, ref);
+
     case 'flat-field-direction':
-      return compileFlatFieldDirectionSortSchema(fieldNames, options.separator);
+      return compileFlatFieldDirectionSortSchema(fieldNames, options.separator, ref);
   }
 }
 
-function compileFlatPrefixedFieldSortSchema(fieldNames: readonly string[], options: QueryModelOptions['sort']): Record<string, unknown> {
+function compileFlatPrefixedFieldSortSchema(
+  fieldNames: readonly string[],
+  options: QueryModelOptions['sort'],
+  ref: ModelRef,
+): { schema: Record<string, unknown>; enumComponents: EnumComponentExtraction[] } {
   const enumValues = buildSortEnumValues(fieldNames, options);
+  const enumComponent = createQueryValueEnumComponent({
+    ref,
+    behavior: 'sort-value',
+    fallbackComponentName: 'QuerySortValue',
+    enumValues,
+  });
 
-  return {
+  const schema = {
     type: 'object',
     properties: {
       sort: {
-        type: 'string',
-        enum: enumValues,
+        $ref: `#/components/schemas/${enumComponent.componentName}`,
       },
     },
   };
+
+  return {
+    schema,
+    enumComponents: [enumComponent],
+  };
 }
 
-function compileFieldDirectionObjectSortSchema(fieldNames: readonly string[]): Record<string, unknown> {
-  const properties: Record<string, unknown> = {};
-
-  for (const fieldName of fieldNames) {
-    properties[fieldName] = {
-      type: 'string',
-      enum: ['asc', 'desc'],
-    };
-  }
-
-  return { type: 'object', properties };
-}
-
-function compileFlatFieldDirectionSortSchema(fieldNames: readonly string[], separator: string): Record<string, unknown> {
+function compileFlatFieldDirectionSortSchema(
+  fieldNames: readonly string[],
+  separator: string,
+  ref: ModelRef,
+): { schema: Record<string, unknown>; enumComponents: EnumComponentExtraction[] } {
   const enumValues: string[] = [];
 
   for (const fieldName of fieldNames) {
@@ -183,31 +212,170 @@ function compileFlatFieldDirectionSortSchema(fieldNames: readonly string[], sepa
     enumValues.push(`${fieldName}${separator}desc`);
   }
 
-  return {
+  const enumComponent = createQueryValueEnumComponent({
+    ref,
+    behavior: 'sort-value',
+    fallbackComponentName: 'QuerySortValue',
+    enumValues,
+  });
+
+  const schema = {
     type: 'object',
     properties: {
       sort: {
-        type: 'string',
-        enum: enumValues,
+        $ref: `#/components/schemas/${enumComponent.componentName}`,
       },
     },
   };
-}
-
-function compileSelectQuerySchema(fields: Record<string, unknown>): Record<string, unknown> {
-  const fieldNames = Object.keys(fields);
 
   return {
+    schema,
+    enumComponents: [enumComponent],
+  };
+}
+
+function compileFieldDirectionObjectSortSchema(
+  fieldNames: readonly string[],
+  ref: ModelRef,
+): { schema: Record<string, unknown>; enumComponents: EnumComponentExtraction[] } {
+  const entityName = inferEntityNameFromModelRef(ref);
+  const directionEnumName = entityName ? `${entityName}QuerySortDirection` : 'QuerySortDirection';
+
+  const directionEnumSchema = applyCodegenMetadata(
+    {
+      type: 'string',
+      enum: ['asc', 'desc'],
+    },
+    {
+      kind: 'enum',
+      resource: ref.meta?.resource,
+      group: ref.meta?.group,
+      entity: entityName,
+      behavior: 'sort-direction',
+      refId: buildQueryValueRefId(ref, 'sort-direction'),
+    },
+  );
+
+  const properties: Record<string, unknown> = {};
+
+  for (const fieldName of fieldNames) {
+    properties[fieldName] = {
+      $ref: `#/components/schemas/${directionEnumName}`,
+    };
+  }
+
+  return {
+    schema: {
+      type: 'object',
+      properties,
+    },
+    enumComponents: [
+      {
+        componentName: directionEnumName,
+        schema: directionEnumSchema,
+      },
+    ],
+  };
+}
+
+function compileSelectQuerySchema(
+  fields: Record<string, unknown>,
+  ref: ModelRef,
+): { schema: Record<string, unknown>; enumComponents: EnumComponentExtraction[] } {
+  const fieldNames = Object.keys(fields);
+
+  const enumComponent = createQueryValueEnumComponent({
+    ref,
+    behavior: 'select-value',
+    fallbackComponentName: 'QuerySelectValue',
+    enumValues: fieldNames,
+  });
+
+  const schema = {
     type: 'object',
     properties: {
       select: {
         type: 'array',
         items: {
-          type: 'string',
-          enum: fieldNames,
+          $ref: `#/components/schemas/${enumComponent.componentName}`,
         },
       },
     },
+  };
+
+  return {
+    schema,
+    enumComponents: [enumComponent],
+  };
+}
+
+function createQueryValueEnumComponent(input: {
+  ref: ModelRef;
+  behavior: 'sort-value' | 'select-value';
+  fallbackComponentName: string;
+  enumValues: readonly string[];
+}): EnumComponentExtraction {
+  const { ref, behavior, fallbackComponentName, enumValues } = input;
+
+  const entityName = inferEntityNameFromModelRef(ref);
+  const componentName = entityName
+    ? `${entityName}${behavior === 'sort-value' ? 'QuerySortValue' : 'QuerySelectValue'}`
+    : fallbackComponentName;
+
+  const enumSchema = applyCodegenMetadata(
+    {
+      type: 'string',
+      enum: enumValues,
+    },
+    {
+      kind: 'enum',
+      resource: ref.meta?.resource,
+      group: ref.meta?.group,
+      entity: entityName,
+      behavior,
+      refId: buildQueryValueRefId(ref, behavior),
+    },
+  );
+
+  return {
+    componentName,
+    schema: enumSchema,
+  };
+}
+
+function withQueryInheritance(schema: Record<string, unknown>, parentRefs: ModelRef['inherits']): Record<string, unknown> {
+  if (!parentRefs || parentRefs.length === 0) {
+    return schema;
+  }
+
+  const allOf = [
+    ...parentRefs.map((parent) => ({
+      $ref: parent.modelRef.openapiRef ?? `#pending/${parent.modelRef.id}`,
+    })),
+    schema,
+  ];
+
+  return {
+    allOf,
+  };
+}
+
+function toQueryCodegenMetadata(ref: ModelRef, behavior: QueryModelBehavior, parentRefs: ModelRef['inherits']): CodegenMetadata {
+  const inherits =
+    parentRefs && parentRefs.length > 0
+      ? parentRefs.map((parent) => ({
+          $ref: parent.modelRef.openapiRef ?? `#pending/${parent.modelRef.id}`,
+        }))
+      : undefined;
+
+  return {
+    kind: 'query',
+    resource: ref.meta?.resource,
+    group: ref.meta?.group,
+    entity: inferEntityNameFromModelRef(ref),
+    behavior,
+    refId: ref.id,
+    inherits,
   };
 }
 
@@ -218,22 +386,23 @@ function compileFieldSchemaRef(fieldRef: unknown): unknown {
       ref: fieldRef as never,
       required: false,
     };
+
     return compilePropertySchema(refField);
   }
 
   if (isPropertyRef(fieldRef)) {
-    return { $ref: `#pending/${fieldRef.targetRefId ?? fieldRef.id}` };
+    return {
+      $ref: `#pending/${fieldRef.targetRefId ?? fieldRef.id}`,
+    };
   }
 
   throw new Error('Query model fields must be property refs or ref usages.');
 }
 
 function compileArrayOfFieldSchema(fieldRef: unknown): unknown {
-  const itemSchema = compileFieldSchemaRef(fieldRef);
-
   return {
     type: 'array',
-    items: itemSchema,
+    items: compileFieldSchemaRef(fieldRef),
   };
 }
 
@@ -248,49 +417,20 @@ function buildSortEnumValues(fieldNames: readonly string[], options: QueryModelO
   return values;
 }
 
+function buildQueryValueRefId(ref: ModelRef, behavior: 'sort-value' | 'select-value' | 'sort-direction'): string {
+  const suffix =
+    behavior === 'sort-value' ? 'query-sort-value' : behavior === 'select-value' ? 'query-select-value' : 'query-sort-direction';
+
+  const base = ref.id.replace(/:query-(sort|select)$/, '');
+
+  return `${base}:${suffix}`;
+}
+
 function inferEntityNameFromModelRef(ref: ModelRef): string | undefined {
   if (ref.name) {
-    const parts = ref.name.split('.');
-    if (parts.length > 0) {
-      return parts[0];
-    }
+    const [entityName] = ref.name.split('.');
+    return entityName || undefined;
   }
+
   return undefined;
-}
-
-function hasMeaningfulModelFields(ref: ModelRef): boolean {
-  // Check if the model has any fields defined
-  const fields = ref.fields ?? {};
-  if (Object.keys(fields).length > 0) {
-    return true;
-  }
-
-  // For query models, behavior-specific compilers may emit meaningful schemas
-  // even with no direct fields (e.g., sort/select with transformed output)
-  const behavior = getQueryBehaviorFromModelKey(ref.modelKey);
-  if (behavior) {
-    // Sort and select always emit meaningful schemas if they exist
-    if (behavior === 'sort' || behavior === 'select') {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function toQueryCodegenMetadata(ref: ModelRef, behavior: QueryModelBehavior, parentRefs?: ModelRef['inherits']): CodegenMetadata {
-  const inherits =
-    parentRefs && parentRefs.length > 0
-      ? parentRefs.map((p) => ({ $ref: p.modelRef.openapiRef ?? `#pending/${p.modelRef.id}` }))
-      : undefined;
-
-  return {
-    kind: 'query',
-    resource: ref.meta?.resource,
-    group: ref.meta?.group,
-    entity: inferEntityNameFromModelRef(ref),
-    behavior,
-    refId: ref.id,
-    inherits,
-  };
 }

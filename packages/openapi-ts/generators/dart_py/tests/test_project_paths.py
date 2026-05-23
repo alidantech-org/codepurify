@@ -30,7 +30,7 @@ def test_get_templates_dir_has_dart_templates():
 
 
 def test_no_parent_parent_template_lookup():
-    """Verify no test uses parent.parent.parent to locate templates."""
+    """Verify no source files use parent.parent to locate templates."""
     root = find_project_root()
     offenders = []
 
@@ -38,6 +38,9 @@ def test_no_parent_parent_template_lookup():
         if not path.exists():
             continue
         for file in path.rglob("*.py"):
+            # Skip this test file itself and the centralized resolver
+            if file.name in ("test_project_paths.py", "project_paths.py"):
+                continue
             text = file.read_text(encoding="utf-8")
             if "parent.parent" in text and "templates" in text:
                 offenders.append(str(file))

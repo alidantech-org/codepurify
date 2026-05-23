@@ -12,7 +12,6 @@ This module must not:
 """
 
 from constants.dart_syntax import (
-    DART_AS,
     DART_BOOL_TYPE,
     DART_DATETIME_TYPE,
     DART_DOUBLE_TYPE,
@@ -21,15 +20,12 @@ from constants.dart_syntax import (
     DART_EXPR_ITEM_METHOD_CALL,
     DART_EXPR_ITEM_PROPERTY,
     DART_EXPR_MAP_CALL,
-    DART_EXPR_NULLABLE_DATETIME_FROM_JSON,
     DART_EXPR_NULLABLE_MAP_CALL,
     DART_EXPR_NULLABLE_VALUE,
-    DART_EXPR_REQUIRED_DATETIME_FROM_JSON,
     DART_INT_TYPE,
     DART_JSON_MAP_VAR,
     DART_LAMBDA_ITEM_VAR,
     DART_NUM_TYPE,
-    DART_OPTIONAL_CHAIN,
     DART_STRING_TYPE,
     DART_TO_JSON_METHOD,
 )
@@ -160,40 +156,41 @@ def build_list_from_json_expr(
     if item_type is None:
         # Fallback for unknown item type
         if resolved_type.is_nullable:
-            return f"{value} == null ? null : ({value} as List?) ?? []"
-        return f"({value} as List?) ?? []"
+            return f"DartJson.nullableList({value}, (item) => item)"
+        return f"DartJson.list({value}, (item) => item)"
 
-    # Handle nullable list
-    if resolved_type.is_nullable:
-        list_value = f"{value} == null ? null : ({value} as List)"
-    else:
-        list_value = f"({value} as List?) ?? []"
-
+    # Build mapper function based on item type
     if item_type.is_enum:
         # Use fromJson for enums
         if item_type.is_nullable:
-            enum_expr = f"{DART_LAMBDA_ITEM_VAR} == null ? null : {item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR})"
+            mapper = f"(item) => item == null ? null : {item_type.base_name}.fromJson(item)"
         else:
-            enum_expr = f"{item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR})"
-
-        return f"{list_value}.map(({DART_LAMBDA_ITEM_VAR}) => {enum_expr}).toList()"
-
-    if item_type.is_model:
+            mapper = f"(item) => {item_type.base_name}.fromJson(item)"
+    elif item_type.is_model:
         if item_type.is_nullable:
-            model_expr = (
-                f"{DART_LAMBDA_ITEM_VAR} == null ? null : {item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR} as Map<String, dynamic>)"
-            )
+            mapper = f"(item) => item == null ? null : {item_type.base_name}.fromJson(DartJson.asMap(item))"
         else:
-            model_expr = f"{item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR} as Map<String, dynamic>)"
+            mapper = f"(item) => {item_type.base_name}.fromJson(DartJson.asMap(item))"
+    elif item_type.is_primitive:
+        if item_type.base_name == DART_STRING_TYPE:
+            mapper = f"(item) => DartJson.string(item)"
+        elif item_type.base_name == DART_INT_TYPE:
+            mapper = f"(item) => DartJson.intValue(item)"
+        elif item_type.base_name == DART_DOUBLE_TYPE or item_type.base_name == DART_NUM_TYPE:
+            mapper = f"(item) => DartJson.doubleValue(item)"
+        elif item_type.base_name == DART_BOOL_TYPE:
+            mapper = f"(item) => DartJson.boolValue(item)"
+        else:
+            mapper = f"(item) => item"
+    else:
+        mapper = f"(item) => item"
 
-        return f"{list_value}.map(({DART_LAMBDA_ITEM_VAR}) => {model_expr}).toList()"
-
-    # Primitive list items
-    if item_type.is_primitive:
-        primitive_cast = f"{DART_LAMBDA_ITEM_VAR} as {item_type.name}"
-        return f"{list_value}.map(({DART_LAMBDA_ITEM_VAR}) => {primitive_cast}).toList()"
-
-    return list_value
+    # Use DartJson.list or DartJson.nullableList with explicit generic type
+    generic_type = item_type.base_name
+    if resolved_type.is_nullable:
+        return f"DartJson.nullableList<{generic_type}>({value}, {mapper})"
+    else:
+        return f"DartJson.list<{generic_type}>({value}, {mapper})"
 
 
 def build_model_from_json_expr(
@@ -201,7 +198,7 @@ def build_model_from_json_expr(
     resolved_type: DartResolvedType,
 ) -> str:
     """Build Dart expression for reading a model object from JSON."""
-    model_expr = f"{resolved_type.base_name}.fromJson({build_safe_map_expr(value)})"
+    model_expr = f"{resolved_type.base_name}.fromJson(DartJson.asMap({value}))"
 
     if resolved_type.is_nullable:
         return f"{value} == null ? null : {model_expr}"
@@ -230,9 +227,9 @@ def build_datetime_from_json_expr(
 ) -> str:
     """Build Dart expression for reading a DateTime from JSON."""
     if resolved_type.is_nullable:
-        return DART_EXPR_NULLABLE_DATETIME_FROM_JSON.format(value)
+        return f"DartJson.nullableDateTime({value})"
 
-    return DART_EXPR_REQUIRED_DATETIME_FROM_JSON.format(value)
+    return f"DartJson.dateTime({value})"
 
 
 def build_primitive_from_json_expr(
@@ -242,33 +239,33 @@ def build_primitive_from_json_expr(
     """Build Dart expression for reading a primitive value from JSON."""
     if resolved_type.base_name == DART_STRING_TYPE:
         if resolved_type.is_nullable:
-            return f"{value} {DART_AS} {DART_STRING_TYPE}?"
+            return f"DartJson.nullableString({value})"
 
-        return f"{value} {DART_AS} {DART_STRING_TYPE}"
+        return f"DartJson.string({value})"
 
     if resolved_type.base_name == DART_BOOL_TYPE:
         if resolved_type.is_nullable:
-            return f"{value} {DART_AS} {DART_BOOL_TYPE}?"
+            return f"DartJson.nullableBool({value})"
 
-        return f"{value} {DART_AS} {DART_BOOL_TYPE}"
+        return f"DartJson.boolValue({value})"
 
     if resolved_type.base_name == DART_INT_TYPE:
         if resolved_type.is_nullable:
-            return f"({value} {DART_AS} {DART_NUM_TYPE}?){DART_OPTIONAL_CHAIN}toInt()"
+            return f"DartJson.nullableInt({value})"
 
-        return f"({value} {DART_AS} {DART_NUM_TYPE}).toInt()"
+        return f"DartJson.intValue({value})"
 
     if resolved_type.base_name == DART_DOUBLE_TYPE:
         if resolved_type.is_nullable:
-            return f"({value} {DART_AS} {DART_NUM_TYPE}?){DART_OPTIONAL_CHAIN}toDouble()"
+            return f"DartJson.nullableDouble({value})"
 
-        return f"({value} {DART_AS} {DART_NUM_TYPE}).toDouble()"
+        return f"DartJson.doubleValue({value})"
 
     if resolved_type.base_name == DART_NUM_TYPE:
         if resolved_type.is_nullable:
-            return f"{value} {DART_AS} {DART_NUM_TYPE}?"
+            return f"DartJson.nullableDouble({value})"
 
-        return f"{value} {DART_AS} {DART_NUM_TYPE}"
+        return f"DartJson.doubleValue({value})"
 
     return value
 

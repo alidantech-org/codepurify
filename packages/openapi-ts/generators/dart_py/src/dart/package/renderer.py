@@ -117,6 +117,9 @@ def render_version_entry_files(
             force_overwrite=True,
         )
 
+    # Render core JSON helper files
+    _render_core_json_helpers(metadata, paths, template_env)
+
 
 def _render_file(
     template_env: Any,
@@ -149,3 +152,48 @@ def _render_file(
 
     # Write file using centralized writer
     write_text_if_changed(output_path, content, dry_run=False)
+
+
+def _render_core_json_helpers(
+    metadata: DartPackageMetadata,
+    paths: DartPackagePaths,
+    template_env: Any,
+) -> None:
+    """
+    Render core JSON helper files (dart_json.dart and index.dart).
+
+    Args:
+        metadata: Package metadata from OpenAPI spec.
+        paths: Package path structure.
+        template_env: Jinja2 template environment.
+    """
+    from ..render.renderer import build_template_context, DART_DEFAULT_SOURCE_FILE
+
+    # Ensure core/json directory exists
+    paths.core_json_dir.mkdir(parents=True, exist_ok=True)
+
+    # Render dart_json.dart
+    _render_file(
+        template_env=template_env,
+        template_name="dart/core_json_dart_json.dart.j2",
+        output_path=paths.dart_json_file,
+        context=build_template_context(
+            plan=metadata,
+            source_file=DART_DEFAULT_SOURCE_FILE,
+            output_path=paths.dart_json_file.relative_to(paths.package_root),
+        ),
+        force_overwrite=True,
+    )
+
+    # Render core/json/index.dart
+    _render_file(
+        template_env=template_env,
+        template_name="dart/core_json_index.dart.j2",
+        output_path=paths.core_json_index_file,
+        context=build_template_context(
+            plan=metadata,
+            source_file=DART_DEFAULT_SOURCE_FILE,
+            output_path=paths.core_json_index_file.relative_to(paths.package_root),
+        ),
+        force_overwrite=True,
+    )

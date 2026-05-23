@@ -109,6 +109,21 @@ class DartPackagePaths:
         """Path to .vscode/settings.json."""
         return self.vscode_dir / "settings.json"
 
+    @property
+    def core_json_dir(self) -> Path:
+        """Path to versioned core/json directory."""
+        return self.version_lib / "core" / "json"
+
+    @property
+    def dart_json_file(self) -> Path:
+        """Path to dart_json.dart helper file."""
+        return self.core_json_dir / "dart_json.dart"
+
+    @property
+    def core_json_index_file(self) -> Path:
+        """Path to core/json/index.dart barrel file."""
+        return self.core_json_dir / "index.dart"
+
 
 def build_package_paths(
     package_root: Path,

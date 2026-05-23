@@ -7,17 +7,24 @@ import { toOpenApiSchemaRef } from '../refs/to-openapi-ref.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isPropertyRef } from '../../validation/ref-guards.js';
 import { SchemaKind } from '../../schema/schema-kind.js';
-import { compileQueryModelSchema, type CompileQueryModelContext } from './compile-query-model-schema.js';
+import { compileQueryModelSchema, type CompileQueryModelContext, type EnumComponentExtraction } from './compile-query-model-schema.js';
 
 function isQueryModel(ref: ModelRef): boolean {
   return ref.modelKey.startsWith('query-');
 }
 
-export function compileModelSchema(ref: ModelRef, context?: CompileQueryModelContext): Record<string, unknown> {
+export function compileModelSchema(
+  ref: ModelRef,
+  context?: CompileQueryModelContext,
+): { schema: Record<string, unknown>; enumComponents?: EnumComponentExtraction[] } {
   // Query models use dedicated compiler for their own schema
   let ownSchema: Record<string, unknown>;
+  let enumComponents: EnumComponentExtraction[] | undefined;
+
   if (isQueryModel(ref)) {
-    ownSchema = compileQueryModelSchema(ref, context);
+    const queryResult = compileQueryModelSchema(ref, context);
+    ownSchema = queryResult.schema;
+    enumComponents = queryResult.enumComponents;
   } else {
     const parentRefs = ref.inherits ?? [];
     const inheritedFieldNames = new Set(parentRefs.flatMap((inherit) => inherit.fields ?? []));
@@ -49,20 +56,20 @@ export function compileModelSchema(ref: ModelRef, context?: CompileQueryModelCon
     if (ref.meta) {
       const codegenMeta = toCodegenMetadata(ref, ref.modelKey, parentRefs);
       const result = applyCodegenMetadata(schema, codegenMeta);
-      return result;
+      return { schema: result, enumComponents };
     }
 
-    return schema;
+    return { schema, enumComponents };
   }
 
   // Otherwise, emit normal object
   if (ref.meta) {
     const codegenMeta = toCodegenMetadata(ref, ref.modelKey);
     const result = applyCodegenMetadata(ownSchema, codegenMeta);
-    return result;
+    return { schema: result, enumComponents };
   }
 
-  return ownSchema;
+  return { schema: ownSchema, enumComponents };
 }
 
 function compileModelFieldRef(fieldRef: unknown, sourceField?: SchemaField): unknown {

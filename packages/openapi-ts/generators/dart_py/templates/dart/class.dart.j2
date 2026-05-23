@@ -43,18 +43,16 @@ class {{ plan.class_name }} {
 
 {%- if plan.render_fields %}
 
+{%- if plan.has_copy_with_override %}
+  @override
+{%- endif %}
   {{ plan.class_name }} copyWith({
-{%- for field in plan.render_fields %}
+{%- for field in plan.copy_with_fields %}
     {{ field.copy_with_type }} {{ field.dart_name }},
 {%- endfor %}
   }) {
     return {{ plan.class_name }}(
-{%- if plan.base_class_name %}
-{%- for field in plan.base_fields %}
-      {{ field.dart_name }}: {{ field.dart_name }},
-{%- endfor %}
-{%- endif %}
-{%- for field in plan.render_fields %}
+{%- for field in plan.copy_with_fields %}
       {{ field.dart_name }}: {{ field.dart_name }} ?? this.{{ field.dart_name }},
 {%- endfor %}
     );
@@ -62,7 +60,7 @@ class {{ plan.class_name }} {
 {%- endif %}
 
   factory {{ plan.class_name }}.fromJson(dynamic json) {
-    final map = Map<String, dynamic>.from((json as Map?) ?? {});
+    final map = DartJson.asMap(json);
 
 {%- if plan.render_fields %}
 {%- if plan.base_class_name %}

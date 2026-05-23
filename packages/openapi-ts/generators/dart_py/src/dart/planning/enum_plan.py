@@ -54,9 +54,19 @@ def build_enum_plan(
     enum_values = schema.get(OPENAPI_ENUM, [])
 
     value_plans = []
+    dart_name_counts = {}
+
     for value in enum_values:
         wire_value = str(value)
         dart_name = to_enum_value_name(wire_value)
+
+        # Handle duplicates by appending a number
+        if dart_name in dart_name_counts:
+            dart_name_counts[dart_name] += 1
+            dart_name = f"{dart_name}{dart_name_counts[dart_name]}"
+        else:
+            dart_name_counts[dart_name] = 1
+
         value_plans.append(DartEnumValue(dart_name=dart_name, wire_value=wire_value))
 
     return DartEnumPlan(
@@ -68,8 +78,33 @@ def build_enum_plan(
 
 
 def to_enum_value_name(wire_value: str) -> str:
+    # Handle empty string
+    if not wire_value:
+        return "unknownValue"
+
+    # Handle leading symbols before camelCase conversion
+    # Replace leading symbols with word equivalents and capitalize next letter
+    if wire_value.startswith("+"):
+        if len(wire_value) > 1:
+            wire_value = "plus" + wire_value[1].upper() + wire_value[2:]
+        else:
+            wire_value = "plus"
+    elif wire_value.startswith("-"):
+        if len(wire_value) > 1:
+            wire_value = "minus" + wire_value[1].upper() + wire_value[2:]
+        else:
+            wire_value = "minus"
+
     # Convert to camelCase
     dart_name = camel_case(wire_value)
+
+    # Handle identifiers starting with digits (Dart identifiers cannot start with digits)
+    if dart_name and dart_name[0].isdigit():
+        dart_name = "value" + dart_name
+
+    # Handle empty identifiers after conversion
+    if not dart_name:
+        dart_name = "unknownValue"
 
     # Handle reserved words
     if dart_name in DART_RESERVED_WORDS:

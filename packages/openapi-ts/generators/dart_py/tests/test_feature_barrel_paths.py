@@ -77,19 +77,21 @@ def test_build_feature_barrels_with_subfolders():
 
 
 def test_build_feature_barrels_output_paths():
-    """Test that feature barrel output paths include version folder."""
+    """Test that feature barrel output paths are version-root-relative."""
     features = [
         MockFeaturePlan(folder=Path(DART_FEATURES_ROOT), file_name="user_feature.dart"),
     ]
 
     barrels = build_feature_barrels(features, version_folder="latest")
 
-    # All barrel output paths should include version folder
+    # All barrel output paths should be version-root-relative (not version-prefixed)
     for barrel in barrels:
         path_str = barrel.output_path.as_posix()
-        assert path_str.startswith("latest/")
-        # Should not have double version prefix
-        assert "latest/latest" not in path_str
+        assert path_str == "features/index.dart"
+        # Should not have version prefix (renderer adds it)
+        assert not path_str.startswith("latest/")
+        assert not path_str.startswith("v1/")
+        assert "lib/" not in path_str
 
 
 def test_no_relative_index_export_with_dot():

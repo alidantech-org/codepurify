@@ -11,6 +11,7 @@ This module must not:
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from constants.dart_syntax import (
@@ -32,7 +33,6 @@ from ..codegen.json_expr import build_from_json_expr, build_to_json_expr
 from ..fields import to_dart_name
 from ..registry import DartSymbol
 from ..type_system.resolver import resolve_type
-from utils.naming import pascal_case
 
 Schema = dict[str, Any]
 
@@ -71,6 +71,7 @@ def build_field_plans(
     owner_name: str | None = None,
     schemas: dict[str, Schema] | None = None,
     version_folder: str = "latest",
+    parent_artifact_folder: Path | None = None,
 ) -> list[DartFieldPlan]:
     """
     Build Dart field plans for a class/model/DTO.
@@ -86,19 +87,19 @@ def build_field_plans(
 
         # Detect inline object with properties - promote to nested class
         if is_inline_object_schema(schema):
-            nested_class_name = f"{owner_name or 'Nested'}{pascal_case(json_name)}"
-            # TODO: Create a proper nested class plan and register it
-            # For now, create a symbol for it to avoid crash
+            from .nested_object_planner import get_nested_class_name
+
+            nested_class_name = get_nested_class_name(schema, json_name, owner_name)
+            # Create a symbol for the nested class
             if nested_class_name not in symbol_registry:
                 from ..registry import DartSymbol
                 from ..domain.kinds import SchemaKind
-                from pathlib import Path
 
                 symbol_registry[nested_class_name] = DartSymbol(
                     schema_name=nested_class_name,
                     dart_name=nested_class_name,
                     kind=SchemaKind.MODEL,
-                    path=Path("models") / "nested" / nested_class_name.lower() / "model.dart",
+                    path=None,  # Path will be set by the nested object planner
                 )
             # Replace inline schema with a $ref to the nested class
             schema = {"$ref": f"#/components/schemas/{nested_class_name}"}
@@ -107,9 +108,25 @@ def build_field_plans(
         if schema.get(OPENAPI_TYPE) == OPENAPI_TYPE_ARRAY:
             items = schema.get(OPENAPI_ITEMS)
             if isinstance(items, dict) and is_inline_object_schema(items):
-                # TODO: Handle arrays of inline objects properly
-                # For now, log a warning and continue
-                print(f"TODO: Array of inline objects detected for field {json_name} in {owner_name}")
+                from .nested_object_planner import get_nested_class_name
+
+                nested_class_name = get_nested_class_name(items, json_name, owner_name)
+                # Create a symbol for the nested class
+                if nested_class_name not in symbol_registry:
+                    from ..registry import DartSymbol
+                    from ..domain.kinds import SchemaKind
+
+                    symbol_registry[nested_class_name] = DartSymbol(
+                        schema_name=nested_class_name,
+                        dart_name=nested_class_name,
+                        kind=SchemaKind.MODEL,
+                        path=None,  # Path will be set by the nested object planner
+                    )
+                # Replace items schema with a $ref to the nested class
+                schema = {
+                    OPENAPI_TYPE: OPENAPI_TYPE_ARRAY,
+                    OPENAPI_ITEMS: {"$ref": f"#/components/schemas/{nested_class_name}"},
+                }
 
         try:
             resolved_type = resolve_type(
@@ -119,6 +136,7 @@ def build_field_plans(
                 required=required,
                 schemas=schemas,
                 version_folder=version_folder,
+                parent_artifact_folder=parent_artifact_folder,
             )
         except Exception as error:
             raise ValueError(

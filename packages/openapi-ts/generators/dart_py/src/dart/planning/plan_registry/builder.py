@@ -9,9 +9,12 @@ from typing import Any
 
 from constants.openapi_keys import (
     OPENAPI_COMPONENTS,
+    OPENAPI_ENUM,
+    OPENAPI_ITEMS,
     OPENAPI_NAME,
     OPENAPI_OPERATION_ID,
     OPENAPI_PATHS,
+    OPENAPI_PROPERTIES,
     OPENAPI_REQUEST_BODY,
     OPENAPI_REQUIRED,
     OPENAPI_RESPONSES,
@@ -19,6 +22,7 @@ from constants.openapi_keys import (
     OPENAPI_SCHEMAS,
     OPENAPI_TAGS,
     OPENAPI_TYPE,
+    OPENAPI_TYPE_ARRAY,
     OPENAPI_TYPE_STRING,
     PARAM_LOCATION_PATH,
     PARAM_LOCATION_QUERY,
@@ -40,7 +44,7 @@ from dart.registry import DartSymbol, build_schema_registry
 from openapi.codegen_metadata import read_codegen_metadata
 from utils.naming import pascal_case
 from ...domain.kinds import SchemaKind
-from ...domain.models import infer_operation_name, infer_tag_domain
+from ...domain.models import infer_model_domain, infer_operation_name, infer_tag_domain
 from ...render.paths import (
     dto_body_output_path,
     dto_params_output_path,
@@ -50,6 +54,10 @@ from ...render.paths import (
 )
 from ..class_plan import build_class_plan
 from ..enum_plan import build_enum_plan
+from ..inline_enum_extractor import (
+    extract_inline_enums_from_schema,
+    replace_inline_enum_with_ref,
+)
 from ..operation_usage import (
     collect_schema_usage,
     extract_schema_from_request_body,
@@ -150,8 +158,8 @@ def build_component_plans(
             continue
 
         if symbol.kind in {SchemaKind.MODEL, SchemaKind.DTO, SchemaKind.QUERY}:
-            # For DTOs, check if they should be skipped because operation plans will handle them
-            # QUERY and MODEL schemas are always built as reusable components
+            # MODEL and QUERY schemas are always built as reusable components under models/
+            # Only DTOs may be skipped if they have operation usage and are not marked as shared
             if symbol.kind == SchemaKind.DTO:
                 schema_meta = read_codegen_metadata(schema)
                 has_operation_usage = len(usage_operations) > 0
@@ -160,6 +168,48 @@ def build_component_plans(
                 # Operation plans will generate it in the operation-specific folder
                 if has_operation_usage and not (schema_meta and schema_meta.shared):
                     continue
+
+            # Extract inline enums from the schema before building class plan
+            # This will generate enum plans and replace inline enums with $refs
+            inline_enums = extract_inline_enums_from_schema(
+                schema_name=schema_name,
+                schema=schema,
+                owner_class_name=symbol.dart_name,
+                resource_domain=infer_model_domain(schema_name),
+                package_name=package_name,
+            )
+
+            # Add inline enum plans to the registry
+            for extraction in inline_enums:
+                enum_plans[extraction.schema_name] = extraction.enum_plan
+                # Add the inline enum symbol to the symbol registry for reference resolution
+                symbol_registry[extraction.schema_name] = extraction.symbol
+
+            # Replace inline enums in the schema with $refs
+            # This is done by modifying the schema in place for field planning
+            properties = schema.get(OPENAPI_PROPERTIES, {})
+            if isinstance(properties, dict):
+                for prop_name, prop_schema in properties.items():
+                    if not isinstance(prop_schema, dict):
+                        continue
+
+                    # Check for inline enum in property
+                    if OPENAPI_ENUM in prop_schema:
+                        # Find the corresponding extraction
+                        for extraction in inline_enums:
+                            if extraction.enum_name == f"{symbol.dart_name}{pascal_case(prop_name)}Value":
+                                properties[prop_name] = replace_inline_enum_with_ref(prop_schema, extraction.symbol)
+                                break
+                        continue
+
+                    # Check for inline enum in array items
+                    if prop_schema.get(OPENAPI_TYPE) == OPENAPI_TYPE_ARRAY:
+                        items_schema = prop_schema.get(OPENAPI_ITEMS)
+                        if isinstance(items_schema, dict) and OPENAPI_ENUM in items_schema:
+                            for extraction in inline_enums:
+                                if extraction.enum_name == f"{symbol.dart_name}{pascal_case(prop_name)}Value":
+                                    prop_schema[OPENAPI_ITEMS] = replace_inline_enum_with_ref(items_schema, extraction.symbol)
+                                    break
 
             class_plans[schema_name] = build_class_plan(
                 schema_name=schema_name,
