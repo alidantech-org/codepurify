@@ -17,10 +17,15 @@ export type RouteParameterRef = ParameterRef | ComponentFieldMap;
 
 export type RouteParameterInput = ParameterRef | readonly ParameterRef[] | ComponentFieldMap;
 
+export type RouteParameterRegistry = Record<string, RouteParameterFieldValue>;
+
 export type RoutePathParameterMap = Record<string, RouteParameterMap>;
 
-// New types for direct schema/ref usage
+// Route query field values must be property refs, not component/model refs
+// A route query can be a ComponentRef at the top level, but expanded fields must be PropertyRef
 export type RouteParameterFieldValue = PropertyRef | RefUsage<PropertyRef>;
+
+export type RouteQueryInput = RouteParameterMap | RefWithUsageMethods<ComponentRef> | RefUsage<ComponentRef>;
 
 export type RouteParameterMap = Record<string, RouteParameterFieldValue>;
 
@@ -57,7 +62,7 @@ export interface RouteDefinition {
   readonly description?: string;
 
   readonly params?: RouteParameterMap;
-  readonly query?: RouteParameterMap;
+  readonly query?: RouteQueryInput;
   readonly body?: RouteBodyInput;
 
   readonly response?: RouteResponseInput;
@@ -71,13 +76,17 @@ export interface RouteDefinition {
 export type DefineRoutesInput =
   | Record<string, RouteDefinition>
   | {
-      readonly parameters?: RoutePathParameterMap;
+      readonly parameters?: RouteParameterRegistry;
       readonly routes: Record<string, RouteDefinition>;
     };
 
 export interface RouteRegistry {
   readonly name: string;
   readonly routes: Record<string, RouteDefinition>;
-  readonly parameters?: RoutePathParameterMap; // Keep old type for backward compatibility
-  readonly parameterMaps?: Record<string, RouteParameterMap>; // New type for direct parameter maps
+  readonly parameters?: RouteParameterRegistry;
+}
+
+export function extractPathParamNames(path: string): readonly string[] {
+  const matches = path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*)/g);
+  return Array.from(matches, (match) => match[1]);
 }

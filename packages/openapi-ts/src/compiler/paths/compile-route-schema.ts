@@ -1,11 +1,9 @@
 import type { ComponentFieldMap } from '../../components/component.types.js';
-import { SchemaKind } from '../../schema/schema-kind.js';
 import { compileComponentSchema } from '../schemas/compile-component-schema.js';
 import { compilePropertySchema } from '../schemas/compile-property-schema.js';
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import type { RouteSchemaInput, RouteSchemaRef } from '../../routes/route.types.js';
-import { RefKind } from '../../refs/ref-kind.js';
 import { isEngineRef } from '../../validation/ref-guards.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import type { SchemaField } from '../../schema/schema.types.js';
@@ -30,7 +28,7 @@ export function compileRouteSchema(schema: RouteSchemaInput | RouteSchemaRef, re
   return resolvePendingRefs(
     compileComponentSchema({
       name: 'InlineRouteSchema',
-      fields: schema as ComponentFieldMap,
+      value: schema as ComponentFieldMap,
     }),
     resolver,
   );

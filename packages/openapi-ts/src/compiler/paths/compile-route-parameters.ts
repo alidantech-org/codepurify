@@ -1,15 +1,57 @@
 import type { ComponentFieldMap } from '../../components/component.types.js';
-import type { RouteParameterRef, RouteParameterMap, RouteParameterFieldValue } from '../../routes/route.types.js';
+import type { RouteParameterRef, RouteParameterMap, RouteParameterFieldValue, RouteQueryInput } from '../../routes/route.types.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
+import type { ComponentRef, ModelRef, PropertyRef } from '../../refs/ref.types.js';
+import type { RefUsage } from '../../refs/ref-usage.types.js';
+import type { SchemaComponentValue } from '../../components/schemas/schema-component.types.js';
+import type { SchemaComponentRegistry } from '../../components/schemas/schema-component.types.js';
+import type { VersionContract } from '../../version/version-contract.types.js';
+import type { CompilerContext } from '../compiler-context.js';
+import { RefKind } from '../../refs/ref-kind.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage, getRefRequired } from '../../validation/ref-usage-guards.js';
+import { isEngineRef, isPropertyRef, isComponentRef } from '../../validation/ref-guards.js';
+import { normalizeExtendWithInput, normalizeExtendWithForQueryCollection } from '../schemas/normalize-extend-with.js';
+
+export interface CollectedQueryField {
+  readonly name: string;
+  readonly field: RouteParameterFieldValue;
+  readonly required: boolean;
+
+  readonly origin: 'base' | 'extension' | 'inline';
+  readonly shared?: boolean;
+
+  readonly sourceSchema?: string;
+  readonly sourceSchemaRef?: string;
+
+  readonly inheritedFrom?: string;
+  readonly inheritedFromRef?: string;
+
+  readonly fromModel?: string;
+  readonly fromModelRef?: string;
+
+  readonly resource?: string;
+  readonly entity?: string;
+  readonly property?: string;
+}
 
 export function compileRouteParameters(
-  schema: RouteParameterRef | RouteParameterMap | undefined,
+  schema: RouteParameterRef | RouteParameterMap | RouteQueryInput | undefined,
   location: 'path' | 'query',
   resolver: RefResolver,
+  contract?: VersionContract,
+  useInlineExpansion = false,
 ): unknown[] {
   if (!schema) return [];
+
+  // Handle ComponentRef or RefUsage<ComponentRef> for query
+  if (location === 'query' && isComponentRefInput(schema)) {
+    if (useInlineExpansion) {
+      return compileComponentRefQueryParameters(schema, resolver, contract);
+    }
+    // When not using inline expansion, return empty - parameters will be inferred as components
+    return [];
+  }
 
   // Handle RouteParameterMap (new type)
   if (isParameterMap(schema)) {
@@ -21,23 +63,31 @@ export function compileRouteParameters(
     }));
   }
 
-  // Legacy ComponentFieldMap handling
-  const compiled = compileRouteSchema(schema as ComponentFieldMap, resolver);
-  const objectSchema = unwrapObjectSchema(compiled);
+  // Legacy ComponentFieldMap handling - only if it's actually a field map
+  if (isComponentFieldMap(schema)) {
+    const compiled = compileRouteSchema(schema, resolver);
+    const objectSchema = unwrapObjectSchema(compiled);
 
-  if (!objectSchema?.properties) return [];
+    if (!objectSchema?.properties) return [];
 
-  return Object.entries(objectSchema.properties).map(([name, property]) => ({
-    name,
-    in: location,
-    required: location === 'path' ? true : isRequired(name, objectSchema.required),
-    schema: property,
-  }));
+    return Object.entries(objectSchema.properties).map(([name, property]) => ({
+      name,
+      in: location,
+      required: location === 'path' ? true : isRequired(name, objectSchema.required),
+      schema: property,
+    }));
+  }
+
+  return [];
 }
 
 function compileParameterField(param: RouteParameterFieldValue, resolver: RefResolver): unknown {
   const ref = isRefUsage(param) ? param.ref : param;
   const nullable = isRefUsage(param) ? param.nullable : undefined;
+
+  if (!ref.id) {
+    throw new Error(`Cannot create query parameter schema: missing ref id.`);
+  }
 
   const schema = { $ref: `#pending/${ref.id}` };
 
@@ -67,4 +117,199 @@ function unwrapObjectSchema(value: unknown): { properties?: Record<string, unkno
 
 function isRequired(name: string, required: string[] | undefined): boolean {
   return required?.includes(name) ?? false;
+}
+
+function isComponentRefInput(value: unknown): value is ComponentRef | RefUsage<ComponentRef> {
+  if (!value || typeof value !== 'object') return false;
+  if ('kind' in value && value.kind === RefKind.component) return true;
+  if (isRefUsage(value) && 'ref' in value && value.ref.kind === RefKind.component) return true;
+  return false;
+}
+
+function compileComponentRefQueryParameters(
+  schema: ComponentRef | RefUsage<ComponentRef>,
+  resolver: RefResolver,
+  contract?: VersionContract,
+  context?: CompilerContext,
+): unknown[] {
+  const ref = isRefUsage(schema) ? schema.ref : schema;
+  const componentRef = ref as ComponentRef;
+
+  // Find the component definition from the contract
+  const definition = findSchemaComponentDefinition(componentRef.id, contract);
+  if (!definition) {
+    throw new Error(`Unable to expand query component ref ${componentRef.id}: component definition not found`);
+  }
+
+  // Collect query fields from the component value
+  const fieldMap = collectQueryFieldsFromSchemaComponentValue(definition.value, contract);
+
+  // Convert field map to query parameters
+  return Object.entries(fieldMap).map(([name, param]) => {
+    // Validate that each field is a PropertyRef or RefUsage<PropertyRef>
+    if (!isPropertyRef(param) && !(isRefUsage(param) && isPropertyRef(param.ref))) {
+      throw new Error(
+        `Query component field "${name}" must resolve to a PropertyRef or RefUsage<PropertyRef>. Got: ${typeof param === 'object' && 'kind' in param ? (param as { kind: string }).kind : typeof param}`,
+      );
+    }
+
+    const validatedParam = param as RouteParameterFieldValue;
+
+    return {
+      name,
+      in: 'query',
+      required: isRequiredForQuery(validatedParam),
+      schema: compileParameterField(validatedParam, resolver),
+    };
+  });
+}
+
+function findSchemaComponentDefinition(
+  refId: string,
+  contract?: VersionContract,
+): { name: string; value: SchemaComponentValue } | undefined {
+  if (!contract) return undefined;
+
+  // Search shared schema components
+  for (const registry of contract.schemaComponents) {
+    for (const definition of registry.definitions) {
+      const componentRef = registry.ref[definition.name];
+      if (componentRef.id === refId) {
+        return definition;
+      }
+    }
+  }
+
+  // Search resource schema components
+  for (const resource of contract.resources) {
+    for (const registry of resource.schemaComponents) {
+      for (const definition of registry.definitions) {
+        const componentRef = registry.ref[definition.name];
+        if (componentRef.id === refId) {
+          return definition;
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export function collectQueryFieldsFromSchemaComponentValue(
+  value: SchemaComponentValue,
+  contract?: VersionContract,
+  sourceSchema?: string,
+): CollectedQueryField[] {
+  // Handle plain field map
+  if (isComponentFieldMap(value)) {
+    const result: CollectedQueryField[] = [];
+    for (const [name, field] of Object.entries(value)) {
+      if (!isPropertyRef(field) && !(isRefUsage(field) && isPropertyRef(field.ref))) {
+        throw new Error(
+          `Query component field "${name}" must be a PropertyRef or RefUsage<PropertyRef>. Got: ${typeof field === 'object' && 'kind' in field ? (field as { kind: string }).kind : typeof field}`,
+        );
+      }
+      result.push({
+        name,
+        field: field as RouteParameterFieldValue,
+        required: isRequiredForQuery(field as RouteParameterFieldValue),
+        sourceSchema,
+        origin: 'inline',
+      });
+    }
+    return result;
+  }
+
+  // Handle EngineRef (direct ref alias)
+  if (isEngineRef(value)) {
+    if (value.kind === 'component') {
+      const definition = findSchemaComponentDefinition(value.id, contract);
+      if (definition) {
+        return collectQueryFieldsFromSchemaComponentValue(definition.value, contract, definition.name);
+      }
+    }
+    throw new Error(`Cannot expand query component with ref kind: ${value.kind}`);
+  }
+
+  // Handle RefUsage<ComponentRef> (extendWith on component ref)
+  if (isRefUsage(value) && isComponentRef(value.ref)) {
+    const definition = findSchemaComponentDefinition(value.ref.id, contract);
+    if (definition) {
+      const baseFields = collectQueryFieldsFromSchemaComponentValue(definition.value, contract, definition.name);
+      const extensionFields = normalizeExtendWithForQueryCollection(value.usage.extendWith);
+      if (extensionFields) {
+        // Filter and validate extension fields to only include PropertyRef
+        for (const [name, field] of Object.entries(extensionFields.fields)) {
+          if (!isPropertyRef(field) && !(isRefUsage(field) && isPropertyRef(field.ref))) {
+            throw new Error(
+              `Query component extension field "${name}" must be a PropertyRef or RefUsage<PropertyRef>. Got: ${typeof field === 'object' && 'kind' in field ? (field as { kind: string }).kind : typeof field}`,
+            );
+          }
+
+          baseFields.push({
+            name,
+            field: field as RouteParameterFieldValue,
+            required: isRequiredForQuery(field as RouteParameterFieldValue),
+            sourceSchema: definition.name,
+            sourceSchemaRef: `#/components/schemas/${definition.name}`,
+            origin: 'extension',
+            fromModel: extensionFields.sourceModel?.name,
+            fromModelRef: extensionFields.sourceModel?.openapiRef,
+          });
+        }
+      }
+      // Mark base fields as inherited and shared
+      return baseFields.map((f) => ({
+        ...f,
+        inheritedFrom: definition.name,
+        inheritedFromRef: `#/components/schemas/${definition.name}`,
+        origin: 'base' as const,
+        shared: true,
+      }));
+    }
+    throw new Error(`Cannot find component definition for ref: ${value.ref.id}`);
+  }
+
+  // Handle RefUsage<EngineRef> (extendWith on other refs)
+  if (isRefUsage(value)) {
+    const baseFields = collectQueryFieldsFromSchemaComponentValue(value.ref, contract, sourceSchema);
+    const extensionFields = normalizeExtendWithForQueryCollection(value.usage.extendWith);
+    if (extensionFields) {
+      // Filter and validate extension fields to only include PropertyRef
+      for (const [name, field] of Object.entries(extensionFields.fields)) {
+        if (!isPropertyRef(field) && !(isRefUsage(field) && isPropertyRef(field.ref))) {
+          throw new Error(
+            `Query component extension field "${name}" must be a PropertyRef or RefUsage<PropertyRef>. Got: ${typeof field === 'object' && 'kind' in field ? (field as { kind: string }).kind : typeof field}`,
+          );
+        }
+
+        baseFields.push({
+          name,
+          field: field as RouteParameterFieldValue,
+          required: isRequiredForQuery(field as RouteParameterFieldValue),
+          sourceSchema,
+          sourceSchemaRef: sourceSchema ? `#/components/schemas/${sourceSchema}` : undefined,
+          origin: 'extension',
+          fromModel: extensionFields.sourceModel?.name,
+          fromModelRef: extensionFields.sourceModel?.openapiRef,
+        });
+      }
+    }
+    return baseFields;
+  }
+
+  return [];
+}
+
+function isComponentFieldMap(value: unknown): value is ComponentFieldMap {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (isEngineRef(value)) return false;
+  if (isRefUsage(value)) return false;
+  return true;
+}
+
+export function isRequiredForQuery(param: RouteParameterFieldValue): boolean {
+  // Default to optional for query params
+  const required = isRefUsage(param) ? getRefRequired(param) : undefined;
+  return required === true;
 }

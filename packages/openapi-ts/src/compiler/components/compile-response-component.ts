@@ -4,7 +4,8 @@ import type { ComponentRef, ModelRef, ResponseRef } from '../../refs/ref.types.j
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
+import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import { compileComponentSchema } from '../schemas/compile-component-schema.js';
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
@@ -22,7 +23,14 @@ export function compileResponseComponent(definition: ResponseComponentDefinition
     };
   }
 
-  if (definition.meta) applySdkExtensions(response, definition.meta);
+  if (definition.meta) {
+    const codegenMeta: CodegenMetadata = {
+      kind: 'response',
+      resource: definition.meta.resource,
+      refId: definition.meta.refId,
+    };
+    return applyCodegenMetadata(response, codegenMeta);
+  }
 
   return response;
 }
@@ -34,7 +42,7 @@ function toSchema(schema: ResponseComponentDefinition['schema']): unknown {
 
   return compileComponentSchema({
     name: 'InlineResponseSchema',
-    fields: schema as ComponentFieldMap,
+    value: schema as ComponentFieldMap,
   });
 }
 

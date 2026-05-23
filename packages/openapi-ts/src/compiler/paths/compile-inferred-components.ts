@@ -3,6 +3,7 @@ import type { CompilerContext } from '../compiler-context.js';
 import { compilePropertySchema } from '../schemas/compile-property-schema.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
+import { isEngineRef } from '../../validation/ref-guards.js';
 import type {
   InferredParameterComponent,
   InferredRequestBodyComponent,
@@ -35,12 +36,14 @@ function compileInferredParameters(
   const result: Record<string, unknown> = {};
 
   for (const [name, param] of parameters.entries()) {
-    result[name] = {
+    const component: Record<string, unknown> = {
       name: param.parameterName,
       in: param.in,
       required: param.required,
       schema: compileParameterSchema(param.schema, resolver),
     };
+
+    result[name] = component;
   }
 
   return result;
@@ -49,6 +52,16 @@ function compileInferredParameters(
 function compileParameterSchema(param: RouteParameterFieldValue, resolver: RefResolver): unknown {
   const ref = isRefUsage(param) ? param.ref : param;
   const nullable = isRefUsage(param) ? param.nullable : undefined;
+
+  if (!isEngineRef(ref)) {
+    throw new Error(
+      `Inferred component schema must use an EngineRef or RefUsage<EngineRef>. Received: ${JSON.stringify(describeUnknownRef(ref))}`,
+    );
+  }
+
+  if (!ref.id) {
+    throw new Error('Cannot create pending ref for inferred component: missing ref id.');
+  }
 
   const schema = { $ref: `#pending/${ref.id}` };
 
@@ -59,6 +72,22 @@ function compileParameterSchema(param: RouteParameterFieldValue, resolver: RefRe
   }
 
   return schema;
+}
+
+function describeUnknownRef(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object') {
+    return { type: typeof value, value };
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return {
+    keys: Object.keys(record),
+    kind: record.kind,
+    name: record.name,
+    id: record.id,
+    refKind: typeof record.ref === 'object' && record.ref !== null ? (record.ref as Record<string, unknown>).kind : undefined,
+  };
 }
 
 function compileInferredRequestBodies(

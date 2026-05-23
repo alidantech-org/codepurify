@@ -10,7 +10,7 @@ import type {
 } from '../routes/route.types.js';
 import { RefKind } from '../refs/ref-kind.js';
 import type { CompositeSchemaField, RecordSchemaField, OneOfSchemaField, AnyOfSchemaField } from '../schema/schema.types.js';
-import { isEngineRef, isPropertyRef } from './ref-guards.js';
+import { isEngineRef, isPropertyRef, isComponentRef } from './ref-guards.js';
 import { isRefUsage } from './ref-usage-guards.js';
 import { validateComponentFields } from './validate-component-fields.js';
 import type { ValidationIssue } from './validation-result.types.js';
@@ -39,6 +39,16 @@ export function validateRouteSchema(schema: ValidatableRouteSchema | undefined, 
   // Handle parameter maps with route-specific validation
   if (path.includes('.params') || path.includes('.query')) {
     if (typeof schema === 'object' && !Array.isArray(schema) && !('schema' in schema)) {
+      // For query, allow ComponentRef or RefUsage<ComponentRef>
+      if (path.includes('.query')) {
+        if (isComponentRef(schema)) {
+          return [];
+        }
+        if (isRefUsage(schema) && isComponentRef(schema.ref)) {
+          return [];
+        }
+      }
+      // For params, only allow parameter maps (no component refs)
       return validateRouteParameterMap(schema as RouteParameterMap, path);
     }
   }
@@ -102,7 +112,7 @@ function validateRouteParameterMap(map: RouteParameterMap | undefined, path: str
       if (!isPropertyRef(value.ref)) {
         issues.push({
           path: currentPath,
-          message: 'Route parameters/query must use property refs or property ref usages.',
+          message: `Route query field "${name}" must be a property ref or property ref usage.`,
         });
       }
       continue;
@@ -111,7 +121,7 @@ function validateRouteParameterMap(map: RouteParameterMap | undefined, path: str
     // Reject anything else
     issues.push({
       path: currentPath,
-      message: 'Route parameters/query values must be property refs or property ref usages.',
+      message: `Route query field "${name}" must be a property ref or property ref usage.`,
     });
   }
 

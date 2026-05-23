@@ -134,7 +134,11 @@ export function defineProperties(options: DefinePropertiesOptions) {
     const mergedFields = mergeInheritedFields(entityOptions.extends, fields as unknown as Record<string, SchemaField>) as TFields &
       ExtractInheritedFields<TExtends>;
 
-    const entityRefs = createEntityRefsV2(options, name, mergedFields, entityOptions.abstract === true, toZod);
+    const inheritedSources = entityOptions.extends
+      ? normalizeExtends(entityOptions.extends as unknown as NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>)
+      : undefined;
+
+    const entityRefs = createEntityRefsV2(options, name, mergedFields, entityOptions.abstract === true, inheritedSources, toZod);
 
     definitions.push({
       kind: PropertyKind.entity,
@@ -238,7 +242,7 @@ function createModelRef(
     fields,
     sourceFields,
     openapiRef: `#/components/schemas/${getModelSchemaName(name, modelKey, isAbstract)}`,
-    inherits: createInheritanceMeta(inherited),
+    inherits: createInheritanceMeta(inherited, modelKey),
     abstract: isAbstract,
     meta: {
       kind: SdkKind.model,
@@ -383,7 +387,18 @@ function createSortModel(
 }
 
 function isEntityRegistry(value: unknown): value is NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap> {
-  return typeof value === 'object' && value !== null && 'name' in value && 'ref' in value && 'allFields' in value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+
+  const record = value as Record<string, unknown>;
+  const ref = record.ref;
+
+  if (!ref || typeof ref !== 'object' || Array.isArray(ref)) return false;
+
+  const refRecord = ref as Record<string, unknown>;
+
+  return (
+    typeof refRecord.fields === 'object' && refRecord.fields !== null && typeof refRecord.model === 'object' && refRecord.model !== null
+  );
 }
 
 function normalizeExtends(
@@ -401,7 +416,7 @@ function normalizeExtends(
 function getInheritanceFields(
   source: NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>,
 ): PropertyDefinitionFieldMap {
-  return source.allFields;
+  return source.ref.fields as unknown as PropertyDefinitionFieldMap;
 }
 
 function mergeInheritedPropertyGroups(
@@ -486,6 +501,7 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
   name: string,
   fields: TFields,
   isAbstract = false,
+  inheritedSources?: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[],
   toZod?: (ref: unknown) => z.ZodTypeAny,
 ): EntityPropertyRefsV2<TFields> {
   const fieldRefs = createPropertyRefs(options, name, fields as SchemaFieldMap, PropertyKind.entity, toZod);
@@ -495,7 +511,15 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
     abstract: isAbstract,
     schemaRef: `#/components/schemas/${toSchemaName(name)}`,
     model: withRefMethods(
-      createModelRef(options, name, isAbstract ? 'abstract-model' : 'model', fieldRefs, fields as SchemaFieldMap, undefined, isAbstract),
+      createModelRef(
+        options,
+        name,
+        isAbstract ? 'abstract-model' : 'model',
+        fieldRefs,
+        fields as SchemaFieldMap,
+        inheritedSources,
+        isAbstract,
+      ),
       { toZod },
     ),
     publicModel: withRefMethods(
@@ -505,7 +529,7 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
         'public-model',
         filterPublicFields(fields as SchemaFieldMap, fieldRefs),
         fields as SchemaFieldMap,
-        undefined,
+        inheritedSources,
       ),
       { toZod },
     ),
@@ -516,30 +540,67 @@ function createEntityRefsV2<TFields extends Record<string, SchemaField>>(
         'selected-model',
         filterSelectedFields(fields as SchemaFieldMap, fieldRefs),
         fields as SchemaFieldMap,
-        undefined,
+        inheritedSources,
       ),
       { toZod },
     ),
-    partialModel: withRefMethods(createModelRef(options, name, 'partial-model', fieldRefs, fields as SchemaFieldMap, undefined), { toZod }),
+    partialModel: withRefMethods(createModelRef(options, name, 'partial-model', fieldRefs, fields as SchemaFieldMap, inheritedSources), {
+      toZod,
+    }),
     query: createQueryRefs(options, name, fields as SchemaFieldMap, fieldRefs),
   };
 }
 
 function createInheritanceMeta(
   inherited: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[] | undefined,
+  childModelKey: string,
 ): ModelRef['inherits'] {
   if (!inherited || inherited.length === 0) return undefined;
 
   return inherited.map((source) => {
     if (isEntityRegistry(source)) {
+      const parentModelRef = selectInheritedModelRef(source, childModelKey);
       return {
-        ref: source.ref.schemaRef ?? `#/components/schemas/${toSchemaName(source.name)}`,
-        fields: Object.keys(source.allFields),
+        modelRef: parentModelRef,
+        fields: Object.keys(source.ref.fields),
       };
     }
 
     throw new Error('Invalid entity inheritance source in createInheritanceMeta');
   });
+}
+
+function selectInheritedModelRef(
+  parent: NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>,
+  childModelKey: string,
+): ModelRef {
+  // For abstract parents, use the abstract model for normal/public/selected variants
+  if (parent.ref.abstract) {
+    switch (childModelKey) {
+      case 'model':
+      case 'public-model':
+      case 'selected-model':
+        return parent.ref.model;
+      case 'partial-model':
+        return parent.ref.partialModel ?? parent.ref.model;
+      default:
+        return parent.ref.model;
+    }
+  }
+
+  // For non-abstract parents, match the variant
+  switch (childModelKey) {
+    case 'model':
+      return parent.ref.model;
+    case 'public-model':
+      return parent.ref.publicModel ?? parent.ref.model;
+    case 'selected-model':
+      return parent.ref.selectedModel ?? parent.ref.model;
+    case 'partial-model':
+      return parent.ref.partialModel ?? parent.ref.model;
+    default:
+      return parent.ref.model;
+  }
 }
 
 function inferGroupNameFromRefId(refId: string | undefined): string {

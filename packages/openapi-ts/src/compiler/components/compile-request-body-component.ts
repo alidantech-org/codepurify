@@ -4,7 +4,8 @@ import type { ComponentRef, ModelRef, RequestBodyRef } from '../../refs/ref.type
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
+import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import { compileComponentSchema } from '../schemas/compile-component-schema.js';
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
@@ -20,7 +21,14 @@ export function compileRequestBodyComponent(definition: RequestBodyComponentDefi
     },
   };
 
-  if (definition.meta) applySdkExtensions(body, definition.meta);
+  if (definition.meta) {
+    const codegenMeta: CodegenMetadata = {
+      kind: 'requestBody',
+      resource: definition.meta.resource,
+      refId: definition.meta.refId,
+    };
+    return applyCodegenMetadata(body, codegenMeta);
+  }
 
   return body;
 }
@@ -31,7 +39,7 @@ function toSchema(schema: RequestBodyComponentDefinition['schema']): unknown {
 
   return compileComponentSchema({
     name: 'InlineRequestBodySchema',
-    fields: schema as ComponentFieldMap,
+    value: schema as ComponentFieldMap,
   });
 }
 

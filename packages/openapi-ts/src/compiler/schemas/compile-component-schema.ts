@@ -1,16 +1,42 @@
 import type { ComponentFieldMap, SchemaCompositionFieldValue } from '../../components/component.types.js';
-import type { SchemaComponentDefinition } from '../../components/schemas/schema-component.types.js';
-import type { ComponentRef, PropertyRef, ModelRef } from '../../refs/ref.types.js';
+import type { SchemaComponentDefinition, SchemaComponentValue } from '../../components/schemas/schema-component.types.js';
+import type { ComponentRef, PropertyRef, ModelRef, EngineRef } from '../../refs/ref.types.js';
 import type { ArrayRef, ExtendedRef } from '../../refs/ref-wrapper.types.js';
+import type { RefUsage } from '../../refs/ref-usage.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
+import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { normalizeExtendWithInput } from './normalize-extend-with.js';
 
 export function compileComponentSchema(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
-  const required = getRequiredKeys(definition.fields);
+  // Handle RefUsage with extendWith (allOf)
+  if (isRefUsage(definition.value)) {
+    return compileExtendedSchemaComponent(definition, ref);
+  }
+
+  // Handle direct EngineRef (alias)
+  if (isEngineRef(definition.value)) {
+    const schema = { $ref: `#/components/schemas/${definition.value.name}` };
+    if (ref?.meta) {
+      const codegenMeta: CodegenMetadata = {
+        kind: 'dto',
+        resource: ref.meta.resource,
+        group: ref.meta.group,
+        component: definition.name,
+        refId: ref.meta.refId,
+        shared: ref.meta.shared ? true : undefined,
+      };
+      return applyCodegenMetadata(schema, codegenMeta);
+    }
+    return schema;
+  }
+
+  // Handle ComponentFieldMap (normal object schema)
+  const required = getRequiredKeys(definition.value);
 
   const schema: Record<string, unknown> = {
     type: 'object',
-    properties: compileComponentFields(definition.fields),
+    properties: compileComponentFields(definition.value),
   };
 
   if (required.length > 0) {
@@ -18,7 +44,15 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
   }
 
   if (ref?.meta) {
-    applySdkExtensions(schema, ref.meta);
+    const codegenMeta: CodegenMetadata = {
+      kind: 'dto',
+      resource: ref.meta.resource,
+      group: ref.meta.group,
+      component: definition.name,
+      refId: ref.meta.refId,
+      shared: ref.meta.shared ? true : undefined,
+    };
+    return applyCodegenMetadata(schema, codegenMeta);
   }
 
   return schema;
@@ -26,6 +60,50 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
 
 function compileComponentFields(fields: ComponentFieldMap): Record<string, unknown> {
   return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, compileCompositionValue(value)]));
+}
+
+function compileExtendedSchemaComponent(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
+  const usage = definition.value as RefUsage<EngineRef>;
+  const baseRef = usage.ref as ComponentRef;
+  const extendWith = usage.usage.extendWith;
+
+  const allOf: unknown[] = [{ $ref: `#/components/schemas/${baseRef.name}` }];
+
+  const extensionFields = normalizeExtendWithInput(extendWith);
+
+  if (extensionFields) {
+    const required = getRequiredKeys(extensionFields);
+    const extensionSchema: Record<string, unknown> = {
+      type: 'object',
+      properties: compileComponentFields(extensionFields),
+    };
+
+    if (required.length > 0) {
+      extensionSchema.required = required;
+    }
+
+    allOf.push(extensionSchema);
+  }
+
+  const schema: Record<string, unknown> = { allOf };
+
+  if (ref?.meta) {
+    const codegenMeta: CodegenMetadata = {
+      kind: 'dto',
+      resource: ref.meta.resource,
+      group: ref.meta.group,
+      component: definition.name,
+      refId: ref.meta.refId,
+      shared: ref.meta.shared ? true : undefined,
+    };
+    return applyCodegenMetadata(schema, codegenMeta);
+  }
+
+  return schema;
+}
+
+function isEngineRef(value: unknown): value is EngineRef {
+  return !!value && typeof value === 'object' && 'kind' in value && 'id' in value && 'name' in value;
 }
 
 function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
@@ -52,16 +130,19 @@ function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
 
   // Apply extendWith
   if (extendWith) {
-    const extendedProperties = compileComponentFields(extendWith);
-    schema = {
-      allOf: [
-        schema,
-        {
-          type: 'object',
-          properties: extendedProperties,
-        },
-      ],
-    };
+    const extensionFields = normalizeExtendWithInput(extendWith);
+    if (extensionFields) {
+      const extendedProperties = compileComponentFields(extensionFields);
+      schema = {
+        allOf: [
+          schema,
+          {
+            type: 'object',
+            properties: extendedProperties,
+          },
+        ],
+      };
+    }
   }
 
   // Apply array

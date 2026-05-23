@@ -14,9 +14,29 @@ import type {
   InferredRouteComponents,
 } from './inferred-route-components.types.js';
 import type { VersionDefaults } from '../../version/version-contract.types.js';
+import type { VersionContract } from '../../version/version-contract.types.js';
 import { ContentType, ContentTypeInput } from '../../openapi/content-type.js';
 import { getParameterName, getRequestBodyName, getResponseName, getDefaultResponseName } from '../../naming/component-name.js';
 import { getRefRequired } from '../../validation/ref-usage-guards.js';
+import { isEngineRef } from '../../validation/ref-guards.js';
+import { isRefUsage } from '../../validation/ref-usage-guards.js';
+import { isPropertyRef } from '../../validation/ref-guards.js';
+import { collectQueryFieldsFromSchemaComponentValue, isRequiredForQuery } from './compile-route-parameters.js';
+
+function isParameterMap(value: unknown): value is RouteParameterMap {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (isEngineRef(value)) return false;
+  if (isRefUsage(value)) return false;
+
+  const obj = value as Record<string, unknown>;
+  const values = Object.values(obj);
+
+  // Empty map is valid
+  if (values.length === 0) return true;
+
+  // All values must be PropertyRef or RefUsage<PropertyRef>
+  return values.every((field) => isPropertyRef(field) || (isRefUsage(field) && isPropertyRef(field.ref)));
+}
 
 export function inferRouteComponents(
   route: RouteDefinition,
@@ -25,6 +45,7 @@ export function inferRouteComponents(
   defaultResponses?: Record<number, RouteResponseInput>,
   versionDefaults?: VersionDefaults,
   context?: CompilerContext,
+  contract?: VersionContract,
 ): InferredRouteComponents {
   const components: InferredRouteComponents = {
     parameters: new Map(),
@@ -35,7 +56,7 @@ export function inferRouteComponents(
   // Infer path parameters from top-level route path params
   if (pathParams) {
     for (const [name, param] of Object.entries(pathParams)) {
-      const componentName = getParameterName(name, 'path', resourceKey);
+      const componentName = getParameterName(name, 'path', resourceKey, route.operationId);
       const inferred: InferredParameterComponent = {
         name: componentName,
         parameterName: name,
@@ -43,6 +64,9 @@ export function inferRouteComponents(
         required: true, // Path params are always required
         schema: param,
         resourceKey,
+        operationId: route.operationId,
+        origin: 'path',
+        property: name,
       };
       components.parameters.set(componentName, inferred);
     }
@@ -60,24 +84,82 @@ export function inferRouteComponents(
         schema: param,
         resourceKey,
         operationId: route.operationId,
+        origin: 'path',
+        property: name,
       };
       components.parameters.set(componentName, inferred);
     }
   }
 
   if (route.query) {
-    for (const [name, param] of Object.entries(route.query)) {
-      const componentName = getParameterName(name, 'query', resourceKey, route.operationId);
-      const inferred: InferredParameterComponent = {
-        name: componentName,
-        parameterName: name,
-        in: 'query',
-        required: !isOptional(param),
-        schema: param,
-        resourceKey,
-        operationId: route.operationId,
-      };
-      components.parameters.set(componentName, inferred);
+    // Query can be a ComponentRef/RefUsage<ComponentRef> (expanded to individual fields)
+    // or a RouteParameterMap (individual property refs)
+    // For ComponentRef queries, expand to individual fields and infer parameter components
+    if (isRefUsage(route.query) || isEngineRef(route.query)) {
+      const expandedFields = collectQueryFieldsFromSchemaComponentValue(route.query, contract);
+      for (const collectedField of expandedFields) {
+        const componentName = getParameterName(collectedField.name, 'query', resourceKey, route.operationId, collectedField.shared);
+        const inferred: InferredParameterComponent = {
+          name: componentName,
+          parameterName: collectedField.name,
+          in: 'query',
+          required: collectedField.required,
+          schema: collectedField.field,
+          resourceKey,
+          operationId: route.operationId,
+          sourceSchema: collectedField.sourceSchema,
+          sourceSchemaRef: collectedField.sourceSchemaRef,
+          inheritedFrom: collectedField.inheritedFrom,
+          inheritedFromRef: collectedField.inheritedFromRef,
+          fromModel: collectedField.fromModel,
+          fromModelRef: collectedField.fromModelRef,
+          origin: collectedField.origin,
+          shared: collectedField.shared,
+          entity: collectedField.entity,
+          property: collectedField.property,
+        };
+
+        // Deduplicate: if component exists, verify it matches
+        if (components.parameters.has(componentName)) {
+          const existing = components.parameters.get(componentName)!;
+          if (existing.in !== inferred.in || existing.required !== inferred.required) {
+            throw new Error(
+              `Parameter component "${componentName}" already exists with different definition (in: ${existing.in}, required: ${existing.required}) vs (in: ${inferred.in}, required: ${inferred.required})`,
+            );
+          }
+          // Reuse existing component
+        } else {
+          components.parameters.set(componentName, inferred);
+        }
+      }
+    } else if (isParameterMap(route.query)) {
+      for (const [name, param] of Object.entries(route.query)) {
+        const componentName = getParameterName(name, 'query', resourceKey, route.operationId);
+        const inferred: InferredParameterComponent = {
+          name: componentName,
+          parameterName: name,
+          in: 'query',
+          required: isRequiredForQuery(param),
+          schema: param,
+          resourceKey,
+          operationId: route.operationId,
+          origin: 'inline',
+          property: name,
+        };
+
+        // Deduplicate: if component exists, verify it matches
+        if (components.parameters.has(componentName)) {
+          const existing = components.parameters.get(componentName)!;
+          if (existing.in !== inferred.in || existing.required !== inferred.required) {
+            throw new Error(
+              `Parameter component "${componentName}" already exists with different definition (in: ${existing.in}, required: ${existing.required}) vs (in: ${inferred.in}, required: ${inferred.required})`,
+            );
+          }
+          // Reuse existing component
+        } else {
+          components.parameters.set(componentName, inferred);
+        }
+      }
     }
   }
 

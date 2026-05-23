@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { EngineRef } from './ref.types.js';
-import type { ExtendWithFieldMap, RefUsage, RefUsageOptions, RefWithUsageMethods } from './ref-usage.types.js';
+import type { ExtendWithInput, RefUsage, RefUsageOptions, RefWithUsageMethods } from './ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 
@@ -40,7 +40,7 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
     extendWith: {
       enumerable: false,
       configurable: true,
-      value: (fields: ComponentFieldMap) => createUsage(ref, { extendWith: fields as ExtendWithFieldMap }, options),
+      value: (fields: ExtendWithInput) => createUsage(ref, { extendWith: fields }, options),
     },
     zod: {
       enumerable: false,
@@ -87,7 +87,7 @@ function createUsage<TRef extends EngineRef>(ref: TRef, usage: RefUsageOptions, 
     extendWith: {
       enumerable: false,
       configurable: true,
-      value: (fields: ExtendWithFieldMap) => createUsage(ref, { ...usage, extendWith: fields }, options),
+      value: (fields: ExtendWithInput) => createUsage(ref, { ...usage, extendWith: fields }, options),
     },
     zod: {
       enumerable: false,

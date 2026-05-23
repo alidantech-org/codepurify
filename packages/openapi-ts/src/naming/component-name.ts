@@ -1,12 +1,28 @@
 const COMMON_QUERY_PARAMS = new Set(['page', 'limit', 'sort', 'fields', 'populate', 'search']);
 
-export function getParameterName(parameterName: string, location: 'path' | 'query', resourceKey?: string, operationId?: string): string {
+export function getParameterName(
+  parameterName: string,
+  location: 'path' | 'query',
+  resourceKey?: string,
+  operationId?: string,
+  shared?: boolean,
+): string {
   const suffix = location === 'path' ? 'PathParam' : 'QueryParam';
   const pascalName = toPascalCase(parameterName);
 
-  // Common query params use global names
-  if (location === 'query' && COMMON_QUERY_PARAMS.has(parameterName)) {
+  // Path params always use operation-specific names
+  if (location === 'path' && operationId) {
+    return `${toPascalCase(operationId)}${pascalName}${suffix}`;
+  }
+
+  // Shared/base query params use simple reusable names
+  if (location === 'query' && shared) {
     return `${pascalName}${suffix}`;
+  }
+
+  // Operation-specific names for extension query params
+  if (operationId) {
+    return `${toPascalCase(operationId)}${pascalName}${suffix}`;
   }
 
   // Resource-specific params include resource key

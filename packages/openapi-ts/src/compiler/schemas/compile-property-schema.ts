@@ -14,6 +14,7 @@ import type {
 } from '../../schema/schema.types.js';
 import { isRefUsage, getRefRequired, getRefNullable, getRefArray, getRefExtendWith } from '../../validation/ref-usage-guards.js';
 import { zodToOpenApiSchema, type ZodSchemaMode } from './zod-to-openapi-schema.js';
+import { normalizeExtendWithInput } from './normalize-extend-with.js';
 
 export function compilePropertySchema(field: SchemaField, mode: ZodSchemaMode = 'output'): unknown {
   if (field.kind === SchemaKind.primitive) {
@@ -91,15 +92,15 @@ function compileRef(field: RefSchemaField, mode: ZodSchemaMode): unknown {
 
   // Step 2: Apply extendWith
   const extendWith = refUsage ? getRefExtendWith(refUsage) : undefined;
-  if (extendWith && Object.keys(extendWith).length > 0) {
+  const normalizedExtendWith = normalizeExtendWithInput(extendWith);
+  if (normalizedExtendWith && Object.keys(normalizedExtendWith).length > 0) {
+    const entries = Object.entries(normalizedExtendWith) as Array<[string, SchemaCompositionFieldValue]>;
     schema = {
       allOf: [
         schema,
         {
           type: 'object',
-          properties: Object.fromEntries(
-            Object.entries(extendWith).map(([key, value]) => [key, compilePropertySchema(wrapAsRefSchemaField(value), mode)]),
-          ),
+          properties: Object.fromEntries(entries.map(([key, value]) => [key, compilePropertySchema(wrapAsRefSchemaField(value), mode)])),
         },
       ],
     };

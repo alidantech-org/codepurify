@@ -1,5 +1,5 @@
 import type { EngineRef } from '../refs/ref.types.js';
-import type { RefUsage } from '../refs/ref-usage.types.js';
+import type { RefUsage, ExtendWithInput } from '../refs/ref-usage.types.js';
 import { isEngineRef } from './ref-guards.js';
 
 export function isRefUsage(value: unknown): value is RefUsage<EngineRef> {
@@ -18,6 +18,6 @@ export function getRefArray(value: unknown): boolean | undefined {
   return isRefUsage(value) ? value.usage.array : undefined;
 }
 
-export function getRefExtendWith(value: unknown): import('../refs/ref-usage.types.js').ExtendWithFieldMap | undefined {
+export function getRefExtendWith(value: unknown): ExtendWithInput | undefined {
   return isRefUsage(value) ? value.usage.extendWith : undefined;
 }

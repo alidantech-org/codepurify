@@ -42,8 +42,8 @@ export interface ModelRef extends EngineRefBase {
   readonly fields: Record<string, RefWithUsageMethods<PropertyRef>>;
   readonly sourceFields?: SchemaFieldMap;
   readonly openapiRef?: string;
-  readonly inherits?: {
-    readonly ref: string;
+  readonly inherits?: readonly {
+    readonly modelRef: ModelRef;
     readonly fields: readonly string[];
   }[];
   readonly abstract?: boolean;

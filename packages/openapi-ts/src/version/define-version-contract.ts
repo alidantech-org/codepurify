@@ -1,7 +1,7 @@
 import { defineResource } from '../resource/define-resource.js';
 import type { DefineResourceOptions, ResourceBuilder } from '../resource/define-resource.js';
 import { defineSchemas } from '../components/schemas/define-schemas.js';
-import type { SchemaComponentRegistry } from '../components/schemas/schema-component.types.js';
+import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
 import { defineParameters } from '../components/parameters/define-parameters.js';
 import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
 import { defineRequestBodies } from '../components/request-bodies/define-request-bodies.js';
@@ -34,7 +34,10 @@ export interface VersionBuilder {
   defineResource(options: DefineResourceOptions): ResourceBuilder;
   addResource(resource: ResourceBuilder): VersionBuilder;
   addProperties(properties: PropertyRegistry): VersionBuilder;
-  defineSchemas<TInput extends Record<string, ComponentFieldMap>>(input: TInput, name?: string): ReturnType<typeof defineSchemas<TInput>>;
+  defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
+    input: TInput,
+    name?: string,
+  ): ReturnType<typeof defineSchemas<TInput>>;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
 
@@ -75,7 +78,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
   const requestBodyComponents = contract.requestBodyComponents;
   const responseComponents = contract.responseComponents;
 
-  function defineVersionSchemas<TInput extends Record<string, ComponentFieldMap>>(input: TInput, name?: string) {
+  function defineVersionSchemas<TInput extends Record<string, SchemaComponentValue>>(input: TInput, name?: string) {
     const registry = defineSchemas(
       {
         name: name ?? 'shared',

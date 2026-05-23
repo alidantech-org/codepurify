@@ -1,10 +1,13 @@
 import type { ComponentFieldMap } from '../components/component.types.js';
+import type { SchemaComponentValue } from '../components/schemas/schema-component.types.js';
+import type { EngineRef } from '../refs/ref.types.js';
 import { SchemaKind } from '../schema/schema-kind.js';
 import { RefKind } from '../refs/ref-kind.js';
 import { isComponentRef, isPropertyRef } from './ref-guards.js';
 import { isRefUsage } from './ref-usage-guards.js';
 import { isEngineRef } from './ref-guards.js';
 import type { ValidationIssue } from './validation-result.types.js';
+import { normalizeExtendWithInput } from '../compiler/schemas/normalize-extend-with.js';
 
 export function validateComponentFields(fields: ComponentFieldMap, path = 'component.fields'): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
@@ -53,6 +56,45 @@ export function validateComponentFields(fields: ComponentFieldMap, path = 'compo
       message: 'Component fields must be direct refs or ref usages (e.g., ref, ref.array(), ref.nullable(), ref.optional()).',
     });
   }
+
+  return issues;
+}
+
+export function validateSchemaComponentValue(value: SchemaComponentValue, path = 'component.value'): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  // Handle EngineRef (direct ref)
+  if (isEngineRef(value)) {
+    return issues;
+  }
+
+  // Handle RefUsage<EngineRef>
+  if (isRefUsage(value)) {
+    if (!isEngineRef(value.ref) && !('componentKey' in value.ref)) {
+      issues.push({
+        path,
+        message: 'RefUsage must reference an EngineRef or ComponentRef.',
+      });
+    }
+    // Validate extendWith if present
+    if (value.usage.extendWith) {
+      const extensionFields = normalizeExtendWithInput(value.usage.extendWith);
+      if (extensionFields) {
+        issues.push(...validateComponentFields(extensionFields, `${path}.extendWith`));
+      }
+    }
+    return issues;
+  }
+
+  // Handle ComponentFieldMap (normal object schema)
+  if (isPlainObject(value)) {
+    return validateComponentFields(value, path);
+  }
+
+  issues.push({
+    path,
+    message: 'Schema component value must be a field map, EngineRef, or RefUsage<EngineRef>.',
+  });
 
   return issues;
 }

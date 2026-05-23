@@ -10,29 +10,31 @@ export function resolvePendingRefs(
   context?: CompilerContext,
   options?: { logSummary?: boolean },
 ): unknown {
-  return resolvePendingRefsInternal(value, resolver, context);
+  return resolvePendingRefsInternal(value, resolver, '$', context);
 }
 
-function resolvePendingRefsInternal(value: unknown, resolver: RefResolver, context?: CompilerContext): unknown {
+function resolvePendingRefsInternal(value: unknown, resolver: RefResolver, path: string, context?: CompilerContext): unknown {
   if (Array.isArray(value)) {
-    return value.map((item) => resolvePendingRefsInternal(item, resolver, context));
+    return value.map((item, index) => resolvePendingRefsInternal(item, resolver, `${path}[${index}]`, context));
   }
 
   if (!isPlainObject(value)) return value;
 
   if (typeof value.$ref === 'string' && value.$ref.startsWith(PendingPrefix)) {
-    return resolvePendingRef(value.$ref, resolver, context);
+    return resolvePendingRef(value.$ref, resolver, path, context);
   }
 
-  return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, resolvePendingRefsInternal(child, resolver, context)]));
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [key, resolvePendingRefsInternal(child, resolver, `${path}.${key}`, context)]),
+  );
 }
 
-function resolvePendingRef(pendingRef: string, resolver: RefResolver, context?: CompilerContext): Record<string, string> {
+function resolvePendingRef(pendingRef: string, resolver: RefResolver, path: string, context?: CompilerContext): Record<string, string> {
   const refId = pendingRef.slice(PendingPrefix.length);
   const schemaName = resolver.schemas.get(refId);
 
   if (!schemaName) {
-    throw new Error(`Unable to resolve pending ref: ${refId}`);
+    throw new Error(`Unable to resolve pending ref at ${path}: ${refId}`);
   }
 
   const resolvedRef = {

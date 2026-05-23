@@ -56,12 +56,9 @@ export function validateDuplicates(contract: VersionContract): ValidationIssue[]
       ),
     );
 
-    issues.push(
-      ...findRegistryDuplicates(
-        resource.schemaComponents.map((registry) => registry.name),
-        `${basePath}.schemaComponents`,
-      ),
-    );
+    // For schema components, check individual definition names, not registry names
+    const schemaDefinitionNames = resource.schemaComponents.flatMap((registry) => registry.definitions.map((def) => def.name));
+    issues.push(...findRegistryDuplicates(schemaDefinitionNames, `${basePath}.schemaComponents`));
 
     issues.push(
       ...findRegistryDuplicates(

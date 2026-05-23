@@ -2,11 +2,14 @@ import { z } from 'zod';
 import type { PropertyRef, ModelRef, ComponentRef, EngineRef } from '../refs/ref.types.js';
 import type { ArrayRef, ExtendedRef } from '../refs/ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
+import type { SchemaComponentValue } from '../components/schemas/schema-component.types.js';
 import type { RefUsage } from '../refs/ref-usage.types.js';
 import type { ZodSourceRegistry } from './zod-source-registry.js';
 import { compileZodField } from './compile-zod-field.js';
 import { isArrayRef, isExtendedRef } from '../refs/ref-wrapper-guards.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
+import { isEngineRef } from '../validation/ref-guards.js';
+import { normalizeExtendWithInput } from '../compiler/schemas/normalize-extend-with.js';
 
 export function compileZodRef(
   ref: PropertyRef | ModelRef | ComponentRef | ArrayRef<EngineRef> | ExtendedRef<EngineRef> | RefUsage<EngineRef>,
@@ -68,8 +71,11 @@ function compileRefUsage(refUsage: RefUsage<EngineRef>, registry: ZodSourceRegis
     if (!('extend' in schema) || typeof schema.extend !== 'function') {
       throw new Error(`Cannot extend non-object Zod schema for ref: ${refUsage.ref.id}`);
     }
-    const extraShape = compileZodFieldMap(refUsage.usage.extendWith, registry);
-    schema = schema.extend(extraShape);
+    const extensionFields = normalizeExtendWithInput(refUsage.usage.extendWith);
+    if (extensionFields) {
+      const extraShape = compileZodFieldMap(extensionFields, registry);
+      schema = schema.extend(extraShape);
+    }
   }
 
   // Apply array
@@ -139,8 +145,23 @@ function compileComponentRef(componentRef: ComponentRef, registry: ZodSourceRegi
     throw new Error(`Cannot find schema component definition for ref: ${componentRef.id}`);
   }
 
+  // Handle EngineRef (direct ref alias)
+  if (isEngineRef(definition.value)) {
+    // Only handle ComponentRef, ModelRef, or PropertyRef (schema refs)
+    if (definition.value.kind === 'component' || definition.value.kind === 'model' || definition.value.kind === 'property') {
+      return compileZodRef(definition.value, registry);
+    }
+    throw new Error(`Cannot compile schema component with ref kind: ${definition.value.kind}`);
+  }
+
+  // Handle RefUsage<EngineRef> (extendWith)
+  if (isRefUsage(definition.value)) {
+    return compileRefUsage(definition.value, registry);
+  }
+
+  // Handle ComponentFieldMap (normal object schema)
   const compiledFields = Object.fromEntries(
-    Object.entries(definition.fields).map(([key, value]) => {
+    Object.entries(definition.value as ComponentFieldMap).map(([key, value]) => {
       if (typeof value === 'object' && value !== null) {
         if ('id' in value && 'name' in value) {
           // It's a ref

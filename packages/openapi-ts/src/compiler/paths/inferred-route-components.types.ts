@@ -9,6 +9,16 @@ export interface InferredParameterComponent {
   readonly schema: RouteParameterFieldValue;
   readonly resourceKey?: string;
   readonly operationId?: string;
+  readonly sourceSchema?: string;
+  readonly sourceSchemaRef?: string;
+  readonly inheritedFrom?: string;
+  readonly inheritedFromRef?: string;
+  readonly fromModel?: string;
+  readonly fromModelRef?: string;
+  readonly origin?: 'base' | 'extension' | 'inline' | 'path';
+  readonly shared?: boolean;
+  readonly entity?: string;
+  readonly property?: string;
 }
 
 export interface InferredRequestBodyComponent {

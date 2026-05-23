@@ -6,7 +6,7 @@ import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
 import { SdkKind, SdkPlacement } from '../../sdk/sdk-extension.types.js';
 import type { ComponentFieldMap, ComponentRefMap } from '../component.types.js';
-import type { SchemaComponentDefinition, SchemaComponentRegistry } from './schema-component.types.js';
+import type { SchemaComponentDefinition, SchemaComponentRegistry, SchemaComponentValue } from './schema-component.types.js';
 import { compileZodRef } from '../../zod/compile-zod-ref.js';
 import type { z } from 'zod';
 
@@ -14,7 +14,7 @@ export interface DefineSchemasOptions extends OptionalResourceContext {
   readonly name: string;
 }
 
-export function defineSchemas<TInput extends Record<string, ComponentFieldMap>>(
+export function defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
   options: DefineSchemasOptions,
   input: TInput,
 ): SchemaComponentRegistry<TInput> {
@@ -23,34 +23,35 @@ export function defineSchemas<TInput extends Record<string, ComponentFieldMap>>(
 
   return {
     name: options.name,
-    definitions: Object.entries(input).map(([name, fields]) => ({
+    definitions: Object.entries(input).map(([name, value]) => ({
       name,
-      fields,
+      value,
     })),
     ref: createRefs(options, input, toZod),
   };
 }
 
-function createRefs<TInput extends Record<string, ComponentFieldMap>>(
+function createRefs<TInput extends Record<string, SchemaComponentValue>>(
   options: DefineSchemasOptions,
   input: TInput,
   toZod?: (ref: unknown) => z.ZodTypeAny,
 ): SchemaComponentRegistry<TInput>['ref'] {
-  return Object.fromEntries(
-    Object.keys(input).map((name) => [name, createSchemaRef(options, name, input[name], toZod)]),
-  ) as SchemaComponentRegistry<TInput>['ref'];
+  const entries = Object.keys(input).map((name) => {
+    return [name, createSchemaRef(options, name, input[name], toZod)] as const;
+  });
+  return Object.fromEntries(entries) as SchemaComponentRegistry<TInput>['ref'];
 }
 
 function createSchemaRef(
   options: DefineSchemasOptions,
   name: string,
-  fields: ComponentFieldMap,
+  value: SchemaComponentValue,
   toZod?: (ref: unknown) => z.ZodTypeAny,
 ): RefWithUsageMethods<ComponentRef> {
   const refId = createScopedId(options, EngineIdPart.component, 'schema', name);
   const isShared = !options.resource;
 
-  const definition = { name, fields };
+  const definition = { name, value };
 
   // Register schema definition in zodRegistry if available
   if (options.zodRegistry) {

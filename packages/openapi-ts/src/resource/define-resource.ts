@@ -1,5 +1,5 @@
 import { defineSchemas } from '../components/schemas/define-schemas.js';
-import type { SchemaComponentRegistry } from '../components/schemas/schema-component.types.js';
+import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
 import { defineParameters } from '../components/parameters/define-parameters.js';
 import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
 import { defineRequestBodies } from '../components/request-bodies/define-request-bodies.js';
@@ -9,7 +9,6 @@ import type {
 } from '../components/request-bodies/request-body-component.types.js';
 import { defineResponses } from '../components/responses/define-responses.js';
 import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
-import type { ComponentFieldMap } from '../components/component.types.js';
 import { defineProperties } from '../properties/define-properties.js';
 import type { PropertyRegistry } from '../properties/property.types.js';
 import { defineRoutes } from '../routes/define-routes.js';
@@ -34,7 +33,10 @@ export interface ResourceBuilder {
   readonly routes: RouteRegistry[];
 
   defineProperties(name?: string): ReturnType<typeof defineProperties>;
-  defineSchemas<TInput extends Record<string, ComponentFieldMap>>(input: TInput, name?: string): ReturnType<typeof defineSchemas<TInput>>;
+  defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
+    input: TInput,
+    name?: string,
+  ): ReturnType<typeof defineSchemas<TInput>>;
   defineRoutes(routes: Parameters<typeof defineRoutes>[1], name?: string): ReturnType<typeof defineRoutes>;
 }
 
@@ -64,7 +66,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceSchemas<TInput extends Record<string, ComponentFieldMap>>(input: TInput, name?: string) {
+  function defineResourceSchemas<TInput extends Record<string, SchemaComponentValue>>(input: TInput, name?: string) {
     const registry = defineSchemas(
       {
         name: name ?? context.key,

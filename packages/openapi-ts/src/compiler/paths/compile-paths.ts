@@ -3,9 +3,16 @@ import type { VersionContract } from '../../version/version-contract.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { expressPathToOpenApi } from './express-path-to-openapi.js';
-import type { RouteDefinition, RouteParameterMap, RoutePathParameterMap } from '../../routes/route.types.js';
+import type { RouteDefinition, RouteParameterMap, RouteParameterRegistry } from '../../routes/route.types.js';
 import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types.js';
 import { inferRouteComponents } from './infer-route-components.js';
+import { compileRouteOperation } from './compile-route-operation.js';
+import { extractPathParamNames } from '../../routes/route.types.js';
+import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import type { ComponentRef } from '../../refs/ref.types.js';
+import { isRefUsage } from '../../validation/ref-usage-guards.js';
+import { isComponentRef } from '../../validation/ref-guards.js';
 
 export function compilePaths(
   contract: VersionContract,
@@ -26,7 +33,7 @@ export function compilePaths(
     for (const registry of resource.routes) {
       for (const route of Object.values(registry.routes)) {
         const fullPath = expressPathToOpenApi(`${resource.context.basePath}${route.path}`);
-        const pathParams = findPathParameters(registry.parameters, route.path);
+        const pathParams = resolvePathParameters(registry.parameters, route.path, route.operationId);
 
         // Infer components for this route
         const inferred = inferRouteComponents(
@@ -36,18 +43,13 @@ export function compilePaths(
           contract.defaultResponses,
           contract.defaults,
           context,
+          contract,
         );
 
         // Merge inferred components
         mergeInferredComponents(allInferredComponents, inferred);
 
         paths[fullPath] ??= {};
-
-        // Use component refs instead of inline parameters
-        const parameterRefs = getParameterRefs(inferred.parameters);
-        if (parameterRefs.length > 0) {
-          paths[fullPath].parameters = parameterRefs;
-        }
 
         paths[fullPath][route.method] = compileRouteOperationWithRefs(route, resolver, inferred, context);
       }
@@ -57,18 +59,29 @@ export function compilePaths(
   return { paths, inferredComponents: allInferredComponents };
 }
 
-function findPathParameters(parameters: RoutePathParameterMap | undefined, routePath: string): RouteParameterMap | undefined {
+function resolvePathParameters(
+  parameters: RouteParameterRegistry | undefined,
+  routePath: string,
+  operationId?: string,
+): RouteParameterMap | undefined {
   if (!parameters) return undefined;
 
-  const openApiRoutePath = expressPathToOpenApi(routePath);
+  const paramNames = extractPathParamNames(routePath);
+  if (paramNames.length === 0) return undefined;
 
-  for (const [pattern, paramMap] of Object.entries(parameters)) {
-    if (expressPathToOpenApi(pattern) === openApiRoutePath) {
-      return paramMap;
+  const result: RouteParameterMap = {};
+
+  for (const paramName of paramNames) {
+    const paramRef = parameters[paramName];
+    if (!paramRef) {
+      throw new Error(
+        `Route "${operationId || 'unknown'}" path "${routePath}" declares path parameter "${paramName}" but no parameter ref was registered in defineRoutes({ parameters }).`,
+      );
     }
+    result[paramName] = paramRef;
   }
 
-  return undefined;
+  return result;
 }
 
 function mergeInferredComponents(target: InferredRouteComponents, source: InferredRouteComponents): void {
@@ -105,6 +118,12 @@ function compileRouteOperationWithRefs(
     responses: compileResponsesWithRefs(route, inferred),
   };
 
+  // Use component refs for parameters
+  const routeParams = getParameterRefsForRoute(route, inferred);
+  if (routeParams.length > 0) {
+    operation.parameters = routeParams;
+  }
+
   // Use component ref for request body
   if (route.body) {
     for (const body of inferred.requestBodies.values()) {
@@ -113,7 +132,47 @@ function compileRouteOperationWithRefs(
     }
   }
 
+  // Add x-codegen metadata with querySchema if route.query is a ComponentRef or RefUsage<ComponentRef>
+  if (route.meta) {
+    const codegenMeta: CodegenMetadata = {
+      kind: 'operation',
+      resource: route.meta.resource,
+      refId: route.meta.refId,
+    };
+
+    if (route.query) {
+      let queryRef: ComponentRef | undefined;
+      if (isComponentRef(route.query)) {
+        queryRef = route.query;
+      } else if (isRefUsage(route.query) && isComponentRef(route.query.ref)) {
+        queryRef = route.query.ref;
+      }
+
+      if (queryRef) {
+        const schemaName = resolver.schemas.get(queryRef.id);
+        if (schemaName) {
+          codegenMeta.querySchema = { $ref: `#/components/schemas/${schemaName}` };
+        }
+      }
+    }
+
+    return applyCodegenMetadata(operation as unknown as Record<string, unknown>, codegenMeta) as unknown as OpenApiOperation;
+  }
+
   return operation;
+}
+
+function getParameterRefsForRoute(route: RouteDefinition, inferred: InferredRouteComponents): unknown[] {
+  const refs: unknown[] = [];
+
+  // Get parameters that belong to this route's operationId
+  for (const param of inferred.parameters.values()) {
+    if (param.operationId === route.operationId) {
+      refs.push({ $ref: `#/components/parameters/${param.name}` });
+    }
+  }
+
+  return refs;
 }
 
 function compileResponsesWithRefs(route: RouteDefinition, inferred: InferredRouteComponents): Record<string, unknown> {

@@ -6,19 +6,24 @@ import type {
   RouteResponseObjectInput,
   RouteBodyObjectInput,
 } from '../../routes/route.types.js';
-import { applySdkExtensions } from '../../sdk/apply-sdk-extensions.js';
+import type { VersionContract } from '../../version/version-contract.types.js';
+import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
-import type { RequestBodyRef, ResponseRef } from '../../refs/ref.types.js';
+import type { RequestBodyRef, ResponseRef, ComponentRef } from '../../refs/ref.types.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { toParameterOpenApiRef, toRequestBodyOpenApiRef, toResponseOpenApiRef } from '../refs/to-component-bucket-ref.js';
 import { compileRouteParameters } from './compile-route-parameters.js';
 import { compileRouteSchema } from './compile-route-schema.js';
+import { isRefUsage } from '../../validation/ref-usage-guards.js';
+import { isComponentRef } from '../../validation/ref-guards.js';
 
 export function compileRouteOperation(
   route: RouteDefinition,
   resolver: RefResolver,
-  defaultResponses: Record<number, ResponseRef> = {},
+  defaultResponses: Record<number, ResponseRef | RouteResponseInput> = {},
+  contract?: VersionContract,
 ): OpenApiOperation {
   const operation: OpenApiOperation = {
     operationId: route.operationId,
@@ -28,7 +33,10 @@ export function compileRouteOperation(
     responses: compileResponses(route, resolver, defaultResponses),
   };
 
-  const parameters = [...compileRouteParameters(route.params, 'path', resolver), ...compileRouteParameters(route.query, 'query', resolver)];
+  const parameters = [
+    ...compileRouteParameters(route.params, 'path', resolver, contract),
+    ...compileRouteParameters(route.query, 'query', resolver, contract),
+  ];
 
   if (parameters.length > 0) {
     operation.parameters = parameters;
@@ -39,8 +47,30 @@ export function compileRouteOperation(
   }
 
   if (route.meta) {
-    // @ts-expect-error
-    applySdkExtensions(operation, route.meta);
+    const codegenMeta: CodegenMetadata = {
+      kind: 'operation',
+      resource: route.meta.resource,
+      refId: route.meta.refId,
+    };
+
+    // Add querySchema if route.query is a ComponentRef or RefUsage<ComponentRef>
+    if (route.query) {
+      let queryRef: ComponentRef | undefined;
+      if (isComponentRef(route.query)) {
+        queryRef = route.query;
+      } else if (isRefUsage(route.query) && isComponentRef(route.query.ref)) {
+        queryRef = route.query.ref;
+      }
+
+      if (queryRef) {
+        const schemaName = resolver.schemas.get(queryRef.id);
+        if (schemaName) {
+          codegenMeta.querySchema = { $ref: `#/components/schemas/${schemaName}` };
+        }
+      }
+    }
+
+    applyCodegenMetadata(operation as unknown as Record<string, unknown>, codegenMeta);
   }
 
   return operation;
@@ -83,12 +113,16 @@ function isBodyObjectInput(body: RouteBodyInput): body is RouteBodyObjectInput {
 function compileResponses(
   route: RouteDefinition,
   resolver: RefResolver,
-  defaultResponses: Record<number, ResponseRef>,
+  defaultResponses: Record<number, ResponseRef | RouteResponseInput>,
 ): Record<string, unknown> {
   const responses: Record<string, unknown> = {};
 
   for (const [status, response] of Object.entries(defaultResponses)) {
-    responses[status] = toResponseOpenApiRef(response, resolver);
+    if (isResponseRef(response)) {
+      responses[status] = toResponseOpenApiRef(response, resolver);
+    } else {
+      responses[status] = compileResponseValue(`Default ${status}`, response, resolver);
+    }
   }
 
   if (route.response) {

@@ -18,6 +18,8 @@ export { HttpMethod } from './routes/http-method.js';
 
 export { SdkExtensionKey } from './sdk/sdk-extension.keys.js';
 export { SdkKind, SdkPlacement, SdkScope, SdkSource } from './sdk/sdk-extension.types.js';
+export { CODEGEN_EXTENSION_KEY } from './sdk/codegen-extension.keys.js';
+export type { CodegenKind, CodegenMetadata } from './sdk/codegen-extension.types.js';
 
 export { validateContract } from './validation/validate-contract.js';
 export type { ValidationIssue, ValidationResult } from './validation/validation-result.types.js';
