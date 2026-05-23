@@ -4,7 +4,7 @@ from logger import console, setup_logging
 from openapi.loader import load_openapi
 from openapi.validator import validate_openapi_shape
 
-from ..options.models import DocsOptions
+from cli.options.models import DocsOptions
 
 
 def handle_docs(options: DocsOptions) -> None:

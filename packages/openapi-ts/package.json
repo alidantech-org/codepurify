@@ -28,7 +28,11 @@
             "clean": "rm -rf dist",
             "typecheck": "tsc -p tsconfig.json --noEmit",
             "dev:build": "pnpm build",
-            "dart-py": "cd generators/dart_py && PYTHONPATH=src python -m __main__"
+            "dart-py": "cd generators/dart_py && python -m cli.app",
+            "dart-py:generate": "cd generators/dart_py && python -m cli.app generate",
+            "dart-py:docs": "cd generators/dart_py && python -m cli.app docs",
+            "dart-py:inspect": "cd generators/dart_py && python -m cli.app inspect",
+            "dart-py:version": "cd generators/dart_py && python -m cli.app version"
       },
       "dependencies": {
             "@apidevtools/swagger-parser": "^10.1.1",

@@ -1,7 +1,7 @@
 """Default path constants for folder and file names."""
 
 # Default paths (relative to project root)
-DEFAULT_OPENAPI_INPUT = "../../openapi/openapi.yaml"
+DEFAULT_OPENAPI_INPUT = "C:/Users/peter/Projects/work/riderescue/backend/sdk/openapi/v1/openapi.v1.yaml"
 DEFAULT_DART_OUTPUT = "../../packages/dart/lib"
 DEFAULT_DOCS_OUTPUT = "../../packages/dart/doc"
 DEFAULT_DART_PACKAGE_NAME = "riderescue_api"

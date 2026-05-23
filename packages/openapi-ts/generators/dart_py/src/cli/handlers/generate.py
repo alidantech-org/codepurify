@@ -7,7 +7,7 @@ from logger import console, get_logger, setup_logging
 from openapi.loader import load_openapi
 from openapi.validator import validate_openapi_shape
 
-from ..options.mode import GenerationSelection
+from cli.options.mode import GenerationSelection
 
 log = get_logger(__name__)
 
@@ -27,7 +27,7 @@ def handle_generate(
     setup_logging(debug=debug)
 
     if selection.interactive:
-        from ..interactive.generate_wizard import run_wizard
+        from cli.interactive.generate_wizard import run_wizard
 
         selection = run_wizard(
             selection.clean,

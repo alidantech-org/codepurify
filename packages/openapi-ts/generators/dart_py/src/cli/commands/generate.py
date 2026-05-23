@@ -41,11 +41,9 @@ from constants.paths import (
     DEFAULT_DART_PACKAGE_NAME,
 )
 
-from ..app import app
-from ..options.mode import resolve_generation_mode
+from cli.options.mode import resolve_generation_mode
 
 
-@app.command("generate")
 def generate(
     input: Path = typer.Option(DEFAULT_OPENAPI_INPUT, CLI_OPTION_INPUT, help=CLI_HELP_INPUT),
     dart_output: Path = typer.Option(DEFAULT_DART_OUTPUT, CLI_OPTION_DART_OUTPUT, help=CLI_HELP_DART_OUTPUT),
@@ -69,7 +67,7 @@ def generate(
     debug: bool = typer.Option(False, CLI_OPTION_DEBUG, help=CLI_HELP_DEBUG),
 ) -> None:
     """Generate SDK outputs. By default, runs interactive wizard."""
-    from ..handlers.generate import handle_generate
+    from cli.handlers.generate import handle_generate
 
     selection = resolve_generation_mode(
         yes=yes,

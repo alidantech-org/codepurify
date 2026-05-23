@@ -4,7 +4,7 @@ PACKAGE_NAME = "riderescue_api"
 GENERATOR_NAME = "dart-py"
 GENERATOR_VERSION = "0.1.0"
 
-DEFAULT_OPENAPI_INPUT = Path("../../openapi/openapi.yaml")
+DEFAULT_OPENAPI_INPUT = Path("C:/Users/peter/Projects/work/riderescue/backend/sdk/openapi/v1/openapi.v1.yaml")
 DEFAULT_DART_OUTPUT_DIR = Path("../../packages/dart/lib")
 DEFAULT_DOCS_OUTPUT_DIR = Path("../../packages/dart/doc")
 

@@ -18,11 +18,9 @@ from constants.cli import (
 )
 from constants.paths import DEFAULT_DOCS_OUTPUT, DEFAULT_OPENAPI_INPUT
 
-from ..app import app
-from ..options.models import CommonOptions, DocsOptions
+from cli.options.models import CommonOptions, DocsOptions
 
 
-@app.command("docs")
 def docs(
     input: Path = typer.Option(DEFAULT_OPENAPI_INPUT, CLI_OPTION_INPUT, help=CLI_HELP_INPUT),
     output: Path = typer.Option(DEFAULT_DOCS_OUTPUT, CLI_OPTION_OUTPUT, CLI_OPTION_OUTPUT_SHORT, help="Docs output dir."),
@@ -31,7 +29,7 @@ def docs(
     debug: bool = typer.Option(False, CLI_OPTION_DEBUG, help=CLI_HELP_DEBUG),
 ) -> None:
     """Generate Markdown API docs from OpenAPI (shortcut for generate --only-docs)."""
-    from ..handlers.docs import handle_docs
+    from cli.handlers.docs import handle_docs
 
     common = CommonOptions(input=input, dry_run=dry_run, debug=debug)
     options = DocsOptions(common=common, output=output, clean=clean)

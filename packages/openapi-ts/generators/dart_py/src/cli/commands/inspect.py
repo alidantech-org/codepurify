@@ -25,11 +25,9 @@ from constants.paths import (
     DEFAULT_DART_PACKAGE_NAME,
 )
 
-from ..app import app
-from ..options.models import CommonOptions, InspectOptions, OutputOptions
+from cli.options.models import CommonOptions, InspectOptions, OutputOptions
 
 
-@app.command("inspect")
 def inspect(
     input: Path = typer.Option(DEFAULT_OPENAPI_INPUT, CLI_OPTION_INPUT, help=CLI_HELP_INPUT),
     dart_output: Path = typer.Option(DEFAULT_DART_OUTPUT, CLI_OPTION_DART_OUTPUT, help=CLI_HELP_DART_OUTPUT),
@@ -39,7 +37,7 @@ def inspect(
     debug: bool = typer.Option(False, CLI_OPTION_DEBUG, help=CLI_HELP_DEBUG),
 ) -> None:
     """Load and inspect an OpenAPI file."""
-    from ..handlers.inspect import handle_inspect
+    from cli.handlers.inspect import handle_inspect
 
     common = CommonOptions(input=input, dry_run=dry_run, debug=debug)
     output = OutputOptions(dart_output=dart_output, docs_output=docs_output, package_name=package_name)
