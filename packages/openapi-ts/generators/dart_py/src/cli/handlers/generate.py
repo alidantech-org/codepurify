@@ -33,6 +33,7 @@ def handle_generate(
             selection.clean,
             selection.tooling,
             selection.format,
+            selection.format_non_dart,
         )
 
     config = build_generator_config(
@@ -125,6 +126,6 @@ def generate_dart_if_enabled(
         console.print("[yellow]Dart generation skipped[/yellow]")
         return
 
-    from dart.api import generate_dart_sdk
+    from dart.generation import generate_dart_sdk
 
     generate_dart_sdk(spec, config)

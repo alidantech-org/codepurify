@@ -22,6 +22,7 @@ class GeneratorConfig(BaseModel):
 
     format: bool = False
     strict_format: bool = False
+    format_non_dart: bool = False
     tooling: bool = False
     force_tooling: bool = False
 

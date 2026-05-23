@@ -23,7 +23,7 @@ from constants.prompts import (
 from cli.options.mode import GenerationSelection
 
 
-def run_wizard(clean: bool, tooling: bool, format: bool) -> GenerationSelection:
+def run_wizard(clean: bool, tooling: bool, format: bool, format_non_dart: bool) -> GenerationSelection:
     """Run the interactive generation wizard."""
 
     choices = [
@@ -48,6 +48,7 @@ def run_wizard(clean: bool, tooling: bool, format: bool) -> GenerationSelection:
     clean = typer.confirm(PROMPT_CLEAN_OUTPUT, default=clean)
     tooling = typer.confirm(PROMPT_TOOLING, default=tooling)
     format = typer.confirm(PROMPT_FORMAT, default=format)
+    format_non_dart = typer.confirm("Format non-Dart files (JSON, YAML, Markdown) with Prettier?", default=format_non_dart)
 
     generate_docs = True
     generate_dart = True
@@ -109,5 +110,6 @@ def run_wizard(clean: bool, tooling: bool, format: bool) -> GenerationSelection:
         clean=clean,
         tooling=tooling,
         format=format,
+        format_non_dart=format_non_dart,
         interactive=True,
     )

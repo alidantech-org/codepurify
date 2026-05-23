@@ -25,7 +25,6 @@ from constants.dart_syntax import (
     DART_CONTEXT_KEY_PLAN,
     DART_CONTEXT_KEY_SOURCE_FILE,
     DART_DEFAULT_SOURCE_FILE,
-    DART_FILE_ENCODING,
     DART_LOG_CONTENT_PREFIX,
     DART_LOG_DRY_RUN_PREFIX,
     DART_LOG_WROTE_PREFIX,
@@ -168,6 +167,7 @@ def render_barrel(
     version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
+    generated_files: Any = None,
 ) -> None:
     """Render a barrel index.dart file."""
     output_path = output_dir / version_folder / plan.output_path
@@ -296,11 +296,22 @@ def write_rendered_content(
     dry_run: bool = False,
 ) -> None:
     """Write rendered content or log dry-run output."""
+    from .file_writer import write_text_if_changed
+
     if dry_run:
         log.info(f"{DART_LOG_DRY_RUN_PREFIX}{output_path}")
         log.debug(f"{DART_LOG_CONTENT_PREFIX}{content}")
         return
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(content, encoding=DART_FILE_ENCODING)
-    log.info(f"{DART_LOG_WROTE_PREFIX}{output_path}")
+    result = write_text_if_changed(
+        path=output_path,
+        content=content,
+        dry_run=False,
+    )
+
+    if result.status == "created":
+        log.info(f"{DART_LOG_WROTE_PREFIX}{output_path} (created)")
+    elif result.status == "updated":
+        log.info(f"{DART_LOG_WROTE_PREFIX}{output_path} (updated)")
+    else:
+        log.debug(f"{output_path} unchanged")

@@ -26,21 +26,10 @@ def write_if_changed(path: Path, content: str, dry_run: bool = False) -> str:
         "unchanged" - file existed with identical content
         "dry_run" - dry run mode, no write performed
     """
-    if dry_run:
-        return "dry_run"
+    from .file_writer import write_text_if_changed
 
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    if path.exists():
-        existing_content = path.read_text(encoding="utf-8")
-        if existing_content == content:
-            return "unchanged"
-        else:
-            path.write_text(content, encoding="utf-8")
-            return "updated"
-    else:
-        path.write_text(content, encoding="utf-8")
-        return "created"
+    result = write_text_if_changed(path, content, dry_run)
+    return result.status
 
 
 def render_jinja_file(
@@ -170,6 +159,21 @@ def render_package_files(
         dry_run,
     )
     console.print(f"[green]{analysis_status.capitalize()}:[/green] [cyan]analysis_options.yaml[/cyan]")
+
+    # Copy Prettier files
+    prettierrc_status = copy_static_file(
+        templates_dir / "package" / "prettierrc.json",
+        package_root / ".prettierrc",
+        dry_run,
+    )
+    console.print(f"[green]{prettierrc_status.capitalize()}:[/green] [cyan].prettierrc[/cyan]")
+
+    prettierignore_status = copy_static_file(
+        templates_dir / "package" / "prettierignore.txt",
+        package_root / ".prettierignore",
+        dry_run,
+    )
+    console.print(f"[green]{prettierignore_status.capitalize()}:[/green] [cyan].prettierignore[/cyan]")
 
     vscode_dir = package_root / ".vscode"
     vscode_status = copy_static_file(

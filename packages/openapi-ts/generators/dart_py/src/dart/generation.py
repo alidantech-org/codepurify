@@ -156,9 +156,14 @@ def render_feature_plans(plan, config: GeneratorConfig, version_folder: str = "l
 def run_post_generation_steps(config: GeneratorConfig) -> None:
     """Run formatting and tooling after Dart generation."""
     if config.format and not config.dry_run:
-        from cli.services.formatter import run_dart_format
+        from dart.render.formatters import run_dart_format
 
-        run_dart_format(config.dart_output, config.strict_format)
+        run_dart_format(config.dart_output, strict=config.strict_format)
+
+    if config.format_non_dart and not config.dry_run:
+        from dart.render.formatters import run_prettier
+
+        run_prettier(config.dart_output, strict=config.strict_format)
 
     if config.tooling and not config.dry_run:
         from cli.services.tooling import generate_tooling_files

@@ -145,6 +145,8 @@ def _render_file(
         context: Template context variables.
         force_overwrite: If True, overwrite existing file.
     """
+    from ..render.file_writer import write_text_if_changed
+
     # Check if file exists and not forcing overwrite
     if output_path.exists() and not force_overwrite:
         return
@@ -155,6 +157,5 @@ def _render_file(
     # Render content
     content = template.render(**context)
 
-    # Write file
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(content, encoding="utf-8")
+    # Write file using centralized writer
+    write_text_if_changed(output_path, content, dry_run=False)

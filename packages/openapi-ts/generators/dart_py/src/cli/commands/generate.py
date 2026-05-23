@@ -59,6 +59,7 @@ def generate(
     clean: bool = typer.Option(False, CLI_OPTION_CLEAN, help=CLI_HELP_CLEAN),
     format: bool = typer.Option(False, CLI_OPTION_FORMAT, help=CLI_HELP_FORMAT),
     strict_format: bool = typer.Option(False, CLI_OPTION_STRICT_FORMAT, help=CLI_HELP_STRICT_FORMAT),
+    format_non_dart: bool = typer.Option(False, "--format-non-dart", help="Format non-Dart files (JSON, YAML, Markdown) with Prettier."),
     tooling: bool = typer.Option(False, CLI_OPTION_TOOLING, help=CLI_HELP_TOOLING),
     force_tooling: bool = typer.Option(False, CLI_OPTION_FORCE_TOOLING, help=CLI_HELP_FORCE_TOOLING),
     dry_run: bool = typer.Option(False, CLI_OPTION_DRY_RUN, help=CLI_HELP_DRY_RUN),
@@ -81,6 +82,7 @@ def generate(
         only_classes=only_classes,
         clean=clean,
         format=format,
+        format_non_dart=format_non_dart,
         tooling=tooling,
     )
 
