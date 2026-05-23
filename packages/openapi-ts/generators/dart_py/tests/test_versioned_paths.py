@@ -18,9 +18,10 @@ def test_build_package_paths_v1():
     assert paths.version_docs == package_root / "doc" / "v1"
     assert paths.pubspec_file == package_root / "pubspec.yaml"
     assert paths.readme_file == package_root / "README.md"
-    assert paths.root_entry_file == package_root / "lib" / "dart.dart"
-    assert paths.version_entry_file == package_root / "lib" / "v1.dart"
-    assert paths.latest_entry_file == package_root / "lib" / "latest.dart"
+    # Root-level entry files are no longer generated
+    # assert paths.root_entry_file == package_root / "lib" / "dart.dart"
+    # assert paths.version_entry_file == package_root / "lib" / "v1.dart"
+    # assert paths.latest_entry_file == package_root / "lib" / "latest.dart"
     assert paths.version_index_file == package_root / "lib" / "v1" / "index.dart"
 
 

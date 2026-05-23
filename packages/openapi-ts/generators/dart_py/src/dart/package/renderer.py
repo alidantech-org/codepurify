@@ -82,42 +82,17 @@ def render_version_entry_files(
     metadata: DartPackageMetadata,
     paths: DartPackagePaths,
     template_env: Any,
+    route_version: Any = None,
 ) -> None:
     """
-    Render version entry files (root, version, latest).
+    Render version-scoped entry files.
 
     Args:
         metadata: Package metadata from OpenAPI spec.
         paths: Package path structure.
         template_env: Jinja2 template environment.
+        route_version: Route version plan for generating routes.dart barrel.
     """
-    # Render root entry file (lib/package_name.dart)
-    _render_file(
-        template_env=template_env,
-        template_name="dart/root_entry.dart.j2",
-        output_path=paths.root_entry_file,
-        context={"metadata": metadata, "paths": paths},
-        force_overwrite=True,
-    )
-
-    # Render version entry file (lib/v1.dart)
-    _render_file(
-        template_env=template_env,
-        template_name="dart/version_entry.dart.j2",
-        output_path=paths.version_entry_file,
-        context={"metadata": metadata, "paths": paths},
-        force_overwrite=True,
-    )
-
-    # Render latest entry file (lib/latest.dart)
-    _render_file(
-        template_env=template_env,
-        template_name="dart/latest_entry.dart.j2",
-        output_path=paths.latest_entry_file,
-        context={"metadata": metadata, "paths": paths},
-        force_overwrite=True,
-    )
-
     # Render version index file (lib/v1/index.dart)
     _render_file(
         template_env=template_env,
@@ -126,6 +101,21 @@ def render_version_entry_files(
         context={"metadata": metadata, "paths": paths},
         force_overwrite=True,
     )
+
+    # Render version routes barrel file (lib/v1/routes.dart)
+    if route_version:
+        routes_barrel_path = paths.version_lib / "routes.dart"
+        _render_file(
+            template_env=template_env,
+            template_name="dart/version_routes.dart.j2",
+            output_path=routes_barrel_path,
+            context={
+                "metadata": metadata,
+                "paths": paths,
+                "endpoint_groups": route_version.endpoint_groups,
+            },
+            force_overwrite=True,
+        )
 
 
 def _render_file(

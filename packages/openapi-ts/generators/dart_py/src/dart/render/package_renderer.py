@@ -182,17 +182,3 @@ def render_package_files(
         dry_run,
     )
     console.print(f"[green]{vscode_status.capitalize()}:[/green] [cyan].vscode/settings.json[/cyan]")
-
-    # Render entry Dart files
-    lib_root = package_root / "lib"
-
-    root_entry_status = render_jinja_file(template_env, "dart/root_entry.dart.j2", context, lib_root / f"{package_name}.dart", dry_run)
-    console.print(f"[green]{root_entry_status.capitalize()}:[/green] [cyan]lib/{package_name}.dart[/cyan]")
-
-    version_entry_status = render_jinja_file(
-        template_env, "dart/version_entry.dart.j2", context, lib_root / f"{version_folder}.dart", dry_run
-    )
-    console.print(f"[green]{version_entry_status.capitalize()}:[/green] [cyan]lib/{version_folder}.dart[/cyan]")
-
-    latest_entry_status = render_jinja_file(template_env, "dart/latest_entry.dart.j2", context, lib_root / "latest.dart", dry_run)
-    console.print(f"[green]{latest_entry_status.capitalize()}:[/green] [cyan]lib/latest.dart[/cyan]")

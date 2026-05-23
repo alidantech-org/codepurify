@@ -250,8 +250,8 @@ def build_base_feature_imports(
         package_import(
             package_name,
             version_folder,
-            Path("routes"),
-            f"{route_version.version_name}.dart",
+            Path(""),
+            "routes.dart",
         ),
     ]
 

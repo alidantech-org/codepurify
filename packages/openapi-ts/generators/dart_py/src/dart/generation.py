@@ -54,6 +54,26 @@ def generate_dart_sdk(
                 shutil.rmtree(old_path)
                 console.print(f"[yellow]Cleaned old root folder:[/yellow] [cyan]{old_path}[/cyan]")
 
+        # Clean stale root-level Dart entry files
+        stale_files = ["latest.dart"]
+        for file_name in stale_files:
+            old_file = config.lib_output / file_name
+            if old_file.exists():
+                old_file.unlink()
+                console.print(f"[yellow]Cleaned stale root file:[/yellow] [cyan]{old_file}[/cyan]")
+
+        # Clean package_name.dart if it exists
+        package_entry_file = config.lib_output / f"{config.package_name}.dart"
+        if package_entry_file.exists():
+            package_entry_file.unlink()
+            console.print(f"[yellow]Cleaned package entry file:[/yellow] [cyan]{package_entry_file}[/cyan]")
+
+        # Clean version_folder.dart (e.g., v1.dart) if it exists
+        version_entry_file = config.lib_output / f"{version_folder}.dart"
+        if version_entry_file.exists():
+            version_entry_file.unlink()
+            console.print(f"[yellow]Cleaned version entry file:[/yellow] [cyan]{version_entry_file}[/cyan]")
+
     plan = build_dart_plans(spec, config.package_name, version_folder)
     validate_generation_plan(plan)
 
@@ -79,6 +99,7 @@ def generate_dart_sdk(
     render_class_plans(plan, config, version_folder)
     render_barrel_plans(plan, config, version_folder)
     render_route_plans(plan, config, version_folder)
+    render_version_routes_barrel(plan, config, version_folder, template_env)
     render_feature_plans(plan, config, version_folder)
 
     run_post_generation_steps(config)
@@ -138,6 +159,38 @@ def render_route_plans(plan, config: GeneratorConfig, version_folder: str = "lat
             render_endpoint_group(group, config.lib_output, version_folder, config.dry_run)
 
     console.print(f"[green]Routes generated:[/green] [cyan]{config.lib_output}[/cyan]")
+
+
+def render_version_routes_barrel(plan, config: GeneratorConfig, version_folder: str, template_env) -> None:
+    """Render version routes barrel file (lib/v1/routes.dart)."""
+    if not plan.route_versions:
+        return
+
+    # Get the first route version plan
+    route_version = plan.route_versions[0]
+
+    # Build paths
+    from dart.package.paths import build_package_paths
+    from dart.package.metadata import DartPackageMetadata
+
+    paths = build_package_paths(config.dart_output, version_folder)
+
+    # Build minimal metadata for template
+    metadata = DartPackageMetadata(
+        name=config.package_name,
+        title="API SDK",
+        description=None,
+        version="0.1.0",
+        servers=[],
+        tags=[],
+    )
+
+    # Render the routes barrel file
+    from dart.package.renderer import render_version_entry_files
+
+    render_version_entry_files(metadata, paths, template_env, route_version)
+
+    console.print(f"[green]Routes barrel generated:[/green] [cyan]{paths.version_lib / 'routes.dart'}[/cyan]")
 
 
 def render_feature_plans(plan, config: GeneratorConfig, version_folder: str = "latest") -> None:
