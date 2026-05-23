@@ -45,7 +45,8 @@ def test_builds_class_plan_for_model() -> None:
     assert plan.class_name == "User"
     assert plan.schema_name == schema_name
     assert plan.kind == SchemaKind.MODEL
-    assert plan.output_path == Path("models/user/user.dart")
+    assert plan.artifact_folder == Path("models/user")
+    assert plan.model_path == Path("models/user/model.dart")
     assert plan.fields_class_name == "UserFields"
     assert len(plan.fields) == 2
     assert plan.generate_constructor

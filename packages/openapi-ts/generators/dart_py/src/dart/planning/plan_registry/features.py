@@ -8,9 +8,7 @@ from typing import Any
 from constants.dart_syntax import (
     DART_BODY_TO_JSON_EXPR,
     DART_DEFAULT_TAG,
-    DART_DEFAULT_VERSION_NAME,
     DART_ENDPOINT_PARAM_ACCESS_FORMAT,
-    DART_PACKAGE_IMPORT_PATH_FORMAT,
     DART_PARAMS_EXPR,
     DART_QUERY_TO_JSON_EXPR,
     DART_REQUEST_FALLBACK_CLASS,
@@ -18,14 +16,11 @@ from constants.dart_syntax import (
 )
 from constants.dart_requests import HTTP_METHOD_TO_REQUEST_CLASS
 from constants.features import (
-    API_REQUEST_IMPORT,
-    API_REQUEST_OPTIONS_IMPORT,
-    API_RESULT_IMPORT,
     FEATURE_CLASS_SUFFIX,
     FEATURE_FILE_SUFFIX,
     FEATURE_PROVIDER_SUFFIX,
     FEATURES_DIR_NAME,
-    RIDERESCUE_API_IMPORT,
+    FLUTTER_API_BRIDGE_IMPORT,
     RIVERPOD_IMPORT,
 )
 from constants.openapi_keys import (
@@ -36,6 +31,7 @@ from constants.openapi_keys import (
     SUPPORTED_OPERATION_METHODS,
 )
 from utils.naming import camel_case, pascal_case, snake_case
+from ...type_system.imports import package_import
 from ..feature_plan import DartFeatureMethodPlan, DartFeaturePlan
 from ..route_plan import (
     DartEndpointGroupPlan,
@@ -50,6 +46,8 @@ def build_feature_plans(
     spec: OpenApiSpec,
     class_plans: dict[str, Any],
     route_versions: list[DartRouteVersionPlan],
+    version_folder: str = "latest",
+    package_name: str = "riderescue_api",
 ) -> list[DartFeaturePlan]:
     """Build feature plans from OpenAPI operations and generated DTO plans."""
     paths = spec.get(OPENAPI_PATHS, {})
@@ -68,6 +66,8 @@ def build_feature_plans(
             operations=operations,
             class_plans=class_plans,
             route_version=route_version,
+            version_folder=version_folder,
+            package_name=package_name,
         )
         for tag, operations in sorted(tag_groups.items())
     ]
@@ -107,15 +107,17 @@ def build_feature_plan_for_tag(
     operations: list[dict],
     class_plans: dict[str, Any],
     route_version: DartRouteVersionPlan,
+    version_folder: str = "latest",
+    package_name: str = "riderescue_api",
 ) -> DartFeaturePlan:
     """Build one feature file plan for a tag group."""
     group_snake = snake_case(tag)
     feature_class_name = f"{pascal_case(tag)}{FEATURE_CLASS_SUFFIX}"
     provider_name = f"{camel_case(group_snake)}{FEATURE_PROVIDER_SUFFIX}"
-    feature_folder = Path(FEATURES_DIR_NAME) / DART_DEFAULT_VERSION_NAME
+    feature_folder = Path(FEATURES_DIR_NAME)
     feature_file = f"{group_snake}{FEATURE_FILE_SUFFIX}"
 
-    feature_imports = build_base_feature_imports(route_version)
+    feature_imports = build_base_feature_imports(route_version, package_name, version_folder)
     methods: list[DartFeatureMethodPlan] = []
 
     for operation_data in operations:
@@ -124,6 +126,8 @@ def build_feature_plan_for_tag(
             class_plans=class_plans,
             route_version=route_version,
             tag=tag,
+            package_name=package_name,
+            version_folder=version_folder,
         )
 
         if method_plan:
@@ -135,7 +139,7 @@ def build_feature_plan_for_tag(
                 feature_imports.append(import_uri)
 
     return DartFeaturePlan(
-        version_name=DART_DEFAULT_VERSION_NAME,
+        version_name=version_folder,
         group_name=tag,
         class_name=feature_class_name,
         provider_name=provider_name,
@@ -151,6 +155,8 @@ def build_feature_method_plan(
     class_plans: dict[str, Any],
     route_version: DartRouteVersionPlan,
     tag: str,
+    package_name: str = "riderescue_api",
+    version_folder: str = "latest",
 ) -> DartFeatureMethodPlan | None:
     """Build one feature method plan."""
     operation = operation_data["operation"]
@@ -200,7 +206,9 @@ def build_feature_method_plan(
             query_plan,
             body_plan,
             response_plan,
-        ]
+        ],
+        package_name=package_name,
+        version_folder=version_folder,
     )
 
     signature = build_method_signature(
@@ -232,17 +240,18 @@ def build_feature_method_plan(
 
 def build_base_feature_imports(
     route_version: DartRouteVersionPlan,
+    package_name: str,
+    version_folder: str,
 ) -> list[str]:
     """Build common imports for every feature file."""
     return [
+        FLUTTER_API_BRIDGE_IMPORT,
         RIVERPOD_IMPORT,
-        API_REQUEST_IMPORT,
-        API_REQUEST_OPTIONS_IMPORT,
-        API_RESULT_IMPORT,
-        RIDERESCUE_API_IMPORT,
-        DART_PACKAGE_IMPORT_PATH_FORMAT.format(
-            "riderescue_api",
-            f"routes/{route_version.version_name}/{route_version.version_name}.dart",
+        package_import(
+            package_name,
+            version_folder,
+            Path("routes"),
+            f"{route_version.version_name}.dart",
         ),
     ]
 
@@ -293,6 +302,8 @@ def build_endpoint_expr(
 
 def build_method_imports(
     class_plans: list[Any | None],
+    package_name: str = "riderescue_api",
+    version_folder: str = "latest",
 ) -> list[str]:
     """Build imports for DTO classes used by a feature method."""
     imports: list[str] = []
@@ -301,10 +312,14 @@ def build_method_imports(
         if not plan:
             continue
 
+        # Use artifact_folder from the plan to build versioned import
+        artifact_folder = plan.artifact_folder if hasattr(plan, "artifact_folder") else plan.model_path.parent
         imports.append(
-            DART_PACKAGE_IMPORT_PATH_FORMAT.format(
-                "riderescue_api",
-                normalize_path(plan.model_path),
+            package_import(
+                package_name,
+                version_folder,
+                artifact_folder,
+                "index.dart",
             )
         )
 
@@ -378,8 +393,3 @@ def build_request_option_params(supports_cache_options: bool) -> list[str]:
     if supports_cache_options:
         return ["ApiGetRequestOptions? options"]
     return ["ApiRequestOptions? options"]
-
-
-def normalize_path(path: Path) -> str:
-    """Normalize path for Dart imports."""
-    return str(path).replace("\\", "/")

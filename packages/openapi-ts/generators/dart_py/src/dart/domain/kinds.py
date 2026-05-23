@@ -43,6 +43,7 @@ class SchemaKind(StrEnum):
     ENUM = "enum"
     MODEL = "model"
     DTO = "dto"
+    QUERY = "query"
     SKIP = "skip"
 
 

@@ -11,7 +11,7 @@ This module must not:
 - classify schemas as class/enum
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +38,7 @@ from ..type_system.imports import (
     dedupe_imports,
     needs_collection_import,
 )
+from ..type_system.schema_normalizer import get_effective_object_schema
 from .field_plan import DartFieldPlan, build_field_plans
 
 Schema = dict[str, Any]
@@ -77,6 +78,14 @@ class DartClassPlan:
     source_schema: str | None
     is_shared: bool
 
+    # Inheritance fields (with defaults)
+    base_schema_name: str | None = None
+    base_class_name: str | None = None
+    base_import_uri: str | None = None
+    base_fields: list[DartFieldPlan] = field(default_factory=list)
+    own_fields: list[DartFieldPlan] = field(default_factory=list)
+    render_fields: list[DartFieldPlan] = field(default_factory=list)
+
 
 def build_class_plan(
     schema_name: str,
@@ -90,6 +99,8 @@ def build_class_plan(
     status_code: str | None = None,
     source_schema: str | None = None,
     is_shared: bool = False,
+    schemas: dict[str, Schema] | None = None,
+    version_folder: str = "latest",
 ) -> DartClassPlan:
     """Build a full Dart class generation plan for one schema symbol."""
     class_name = symbol.dart_name
@@ -117,22 +128,71 @@ def build_class_plan(
     index_path = artifact_folder / INDEX_FILE_NAME
     fields_class_name = build_fields_class_name(class_name)
 
-    properties = get_schema_properties(schema)
-    required_fields = get_required_fields(schema)
+    # Use effective schema to extract properties from allOf, $ref, and direct properties
+    effective_schema = get_effective_object_schema(schema, schemas)
 
-    field_plans = build_field_plans(
-        properties=properties,
-        required_fields=required_fields,
+    # Build base fields if there's a base class
+    base_schema_name = effective_schema.base_schema_name
+    base_class_name = None
+    base_import_uri = None
+    base_field_plans = []
+    own_field_plans = []
+
+    if base_schema_name and base_schema_name in symbol_registry:
+        base_symbol = symbol_registry[base_schema_name]
+        base_class_name = base_symbol.dart_name
+        if base_symbol.path:
+            from ..type_system.imports import format_package_import
+
+            # Import the index.dart barrel instead of model.dart
+            # base_symbol.path is version-root-relative, so prepend version_folder for package import
+            base_path = base_symbol.path.parent / "index.dart"
+            base_import_uri = format_package_import(package_name, f"{version_folder}/{base_path.as_posix()}")
+
+        # Build base field plans
+        base_required = set(effective_schema.base_required)
+        base_field_plans = build_field_plans(
+            properties=effective_schema.base_properties,
+            required_fields=base_required,
+            symbol_registry=symbol_registry,
+            package_name=package_name,
+            fields_class_name=f"{fields_class_name}Base",
+            owner_name=class_name,
+            schemas=schemas,
+            version_folder=version_folder,
+        )
+
+    # Build own field plans
+    own_required = set(effective_schema.own_required)
+    own_field_plans = build_field_plans(
+        properties=effective_schema.own_properties,
+        required_fields=own_required,
         symbol_registry=symbol_registry,
         package_name=package_name,
         fields_class_name=fields_class_name,
         owner_name=class_name,
+        schemas=schemas,
+        version_folder=version_folder,
     )
+
+    # Combined fields for compatibility
+    # Deduplicate: own fields override base fields with same name
+    field_plans_by_name = {field.json_name: field for field in base_field_plans}
+    for field in own_field_plans:
+        field_plans_by_name[field.json_name] = field
+    field_plans = list(field_plans_by_name.values())
+
+    # Render fields: own fields only if base class exists, otherwise all fields
+    render_fields = own_field_plans if base_class_name else field_plans
 
     imports, has_collection_fields = build_class_imports(
         field_plans=field_plans,
         package_name=package_name,
         fields_path=fields_path,
+        model_path=model_path,
+        base_class_name=base_class_name,
+        base_import_uri=base_import_uri,
+        version_folder=version_folder,
     )
 
     return DartClassPlan(
@@ -160,6 +220,12 @@ def build_class_plan(
         status_code=status_code,
         source_schema=source_schema,
         is_shared=is_shared,
+        base_schema_name=base_schema_name,
+        base_class_name=base_class_name,
+        base_import_uri=base_import_uri,
+        base_fields=base_field_plans,
+        own_fields=own_field_plans,
+        render_fields=render_fields,
     )
 
 
@@ -230,10 +296,18 @@ def build_class_imports(
     field_plans: list[DartFieldPlan],
     package_name: str,
     fields_path: Path,
+    model_path: Path | None = None,
+    base_class_name: str | None = None,
+    base_import_uri: str | None = None,
+    version_folder: str = "latest",
 ) -> tuple[list[DartImport], bool]:
     """Collect, add required generated imports, and dedupe class imports."""
     imports: list[DartImport] = []
     has_collection_fields = False
+
+    # Add base class import if present
+    if base_class_name and base_import_uri:
+        imports.append(DartImport(uri=base_import_uri))
 
     for field in field_plans:
         if field.import_uri:
@@ -245,7 +319,11 @@ def build_class_imports(
     if needs_collection_import(has_list=has_collection_fields):
         imports.append(DartImport(uri=DART_COLLECTION_IMPORT))
 
-    imports.append(DartImport.from_package(package_name, fields_path.as_posix()))
+    # Use relative import for same-folder fields.dart
+    if model_path and fields_path.parent == model_path.parent:
+        imports.append(DartImport(uri="fields.dart"))
+    else:
+        imports.append(DartImport.from_package(package_name, fields_path.as_posix()))
 
     return dedupe_imports(imports), has_collection_fields
 

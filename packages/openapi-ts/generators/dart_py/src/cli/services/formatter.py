@@ -13,8 +13,8 @@ def run_dart_format(dart_output: Path, strict: bool = False) -> None:
     """Run dart format on the generated Dart files."""
     import subprocess
 
-    # Navigate to the dart package directory
-    dart_package_dir = dart_output.parent.parent
+    # dart_output is now the package root (e.g., packages/dart/)
+    dart_package_dir = dart_output
 
     log.info(f"Running dart format on {dart_output}")
 

@@ -31,22 +31,24 @@ def build_barrel_plans(
     class_plans: dict[str, Any],
     enum_plans: dict[str, Any],
     features: list[DartFeaturePlan],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
     """Build all barrel export plans."""
     barrel_plans: list[DartBarrelPlan] = []
 
-    barrel_plans.extend(build_class_artifact_barrels(class_plans))
-    barrel_plans.extend(build_enum_barrels(enum_plans))
-    barrel_plans.extend(build_operation_barrels(class_plans))
-    barrel_plans.extend(build_shared_response_barrels(class_plans))
-    barrel_plans.extend(build_category_barrels(class_plans, enum_plans))
-    barrel_plans.extend(build_feature_barrels(features))
+    barrel_plans.extend(build_class_artifact_barrels(class_plans, version_folder))
+    barrel_plans.extend(build_enum_barrels(enum_plans, version_folder))
+    barrel_plans.extend(build_operation_barrels(class_plans, version_folder))
+    barrel_plans.extend(build_shared_response_barrels(class_plans, version_folder))
+    barrel_plans.extend(build_category_barrels(class_plans, enum_plans, version_folder))
+    barrel_plans.extend(build_feature_barrels(features, version_folder))
 
     return dedupe_barrel_plans(barrel_plans)
 
 
 def build_class_artifact_barrels(
     class_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
     barrels: list[DartBarrelPlan] = []
 
@@ -63,6 +65,7 @@ def build_class_artifact_barrels(
 
 def build_enum_barrels(
     enum_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
     enum_folder_files: dict[Path, list[str]] = {}
 
@@ -85,6 +88,7 @@ def build_enum_barrels(
 
 def build_operation_barrels(
     class_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
     operation_folders: dict[Path, list[str]] = {}
 
@@ -105,6 +109,7 @@ def build_operation_barrels(
 
 def build_shared_response_barrels(
     class_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
     exports: list[str] = []
 
@@ -115,7 +120,9 @@ def build_shared_response_barrels(
     if not exports:
         return []
 
-    shared_responses_folder = Path(DART_DTOS_FOLDER) / DART_SHARED_FOLDER / "responses"
+    from ...render.paths import as_path
+
+    shared_responses_folder = as_path(DART_DTOS_FOLDER) / DART_SHARED_FOLDER / "responses"
 
     return [
         DartBarrelPlan(
@@ -128,6 +135,7 @@ def build_shared_response_barrels(
 def build_category_barrels(
     class_plans: dict[str, Any],
     enum_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
     category_exports: dict[Path, list[str]] = {
         Path(DART_MODELS_FOLDER): [],
@@ -137,19 +145,49 @@ def build_category_barrels(
 
     for plan in class_plans.values():
         if plan.usage_type == SDK_USAGE_MODEL:
-            category_exports[Path(DART_MODELS_FOLDER)].append(relative_index_export(plan.artifact_folder, DART_MODELS_FOLDER))
+            # artifact_folder is version-root-relative: models/shared/base_model
+            # root is just models
+            models_root = Path(DART_MODELS_FOLDER)
+            category_exports[models_root].append(relative_index_export(plan.artifact_folder, models_root))
 
         elif (
             plan.usage_type in SDK_OPERATION_DTO_USAGES or plan.usage_type == SDK_USAGE_SHARED or plan.usage_type == SDK_USAGE_SHARED_ERROR
         ):
-            category_exports[Path(DART_DTOS_FOLDER)].append(relative_index_export(plan.artifact_folder, DART_DTOS_FOLDER))
+            # artifact_folder is version-root-relative: dtos/user/create_user/body
+            # root is just dtos
+            dtos_root = Path(DART_DTOS_FOLDER)
+            category_exports[dtos_root].append(relative_index_export(plan.artifact_folder, dtos_root))
 
-    enum_folders = {plan.output_path.parent for plan in enum_plans.values()}
+    # Enum barrels: enums are now under models/{resource}/enums/
+    # Create barrels at the resource level, not top-level enums/
+    enum_resource_folders: dict[Path, list[str]] = {}
 
-    for folder in enum_folders:
-        category_exports[Path(DART_ENUMS_FOLDER)].append(relative_index_export(folder, DART_ENUMS_FOLDER))
+    for plan in enum_plans.values():
+        # output_path is version-root-relative: models/{resource}/enums/{enum_name}/enum.dart
+        # We want to create models/{resource}/enums/index.dart
+        # And also export from models/{resource}/index.dart
+        enum_folder = plan.output_path.parent  # models/{resource}/enums/{enum_name}
+        enums_subfolder = enum_folder.parent  # models/{resource}/enums
+        resource_folder = enums_subfolder.parent  # models/{resource}
+
+        # Add to enums subfolder barrel
+        enum_export = f"{enum_folder.name}/{DART_INDEX_FILE_NAME}"
+        enum_resource_folders.setdefault(enums_subfolder, []).append(enum_export)
+
+        # Also track for resource-level barrel
+        resource_export = f"{DART_ENUMS_FOLDER}/{DART_INDEX_FILE_NAME}"
+        category_exports.setdefault(resource_folder, []).append(resource_export)
 
     barrels: list[DartBarrelPlan] = []
+
+    # Create enums subfolder barrels (models/{resource}/enums/index.dart)
+    for folder, exports in enum_resource_folders.items():
+        barrels.append(
+            DartBarrelPlan(
+                output_path=folder / DART_INDEX_FILE_NAME,
+                exports=sorted(set(exports)),
+            )
+        )
 
     for category, exports in category_exports.items():
         if exports:
@@ -165,14 +203,20 @@ def build_category_barrels(
 
 def build_feature_barrels(
     features: list[DartFeaturePlan],
+    version_folder: str = "latest",
 ) -> list[DartBarrelPlan]:
+    from ...render.paths import normalize_artifact_folder, as_path
+
     feature_version_folders: dict[Path, list[str]] = {}
 
     for feature in features:
-        feature_version_folders.setdefault(feature.folder, []).append(feature.file_name)
+        # Normalize artifact folder to strip any accidental version prefix
+        normalized_folder = normalize_artifact_folder(feature.folder, version_folder)
+        feature_version_folders.setdefault(normalized_folder, []).append(feature.file_name)
 
     barrels: list[DartBarrelPlan] = []
 
+    # Build per-feature barrel files (e.g., features/user/index.dart)
     for folder, files in feature_version_folders.items():
         barrels.append(
             DartBarrelPlan(
@@ -182,20 +226,56 @@ def build_feature_barrels(
         )
 
     if feature_version_folders:
-        version_exports = [relative_index_export(folder, DART_FEATURES_ROOT) for folder in feature_version_folders.keys()]
+        # Build features/index.dart barrel
+        # Exports should be relative to features/ folder
+        features_root = as_path(DART_FEATURES_ROOT)
+        feature_exports = []
+
+        for folder in feature_version_folders.keys():
+            # folder is now normalized to version-root-relative, e.g., "features" or "features/user"
+            if folder == features_root:
+                # Feature files are directly under features/, export them by name
+                for file_name in feature_version_folders[folder]:
+                    feature_exports.append(normalize_path(Path(file_name)))
+            elif folder.is_relative_to(features_root):
+                # Feature files are in subfolders, export the subfolder index
+                folder_rel = folder.relative_to(features_root)
+                feature_exports.append(normalize_path(folder_rel / DART_INDEX_FILE_NAME))
+            else:
+                raise ValueError(f"Feature artifact folder must be under {features_root}; got {folder}")
 
         barrels.append(
             DartBarrelPlan(
-                output_path=Path(DART_FEATURES_ROOT) / DART_INDEX_FILE_NAME,
-                exports=sorted(set(version_exports)),
+                output_path=features_root / DART_INDEX_FILE_NAME,
+                exports=sorted(set(feature_exports)),
             )
         )
 
     return barrels
 
 
-def relative_index_export(folder: Path, root: str) -> str:
-    """Return normalized relative index export path."""
+def relative_index_export(folder: Path, root: Path | str) -> str:
+    """Return normalized relative index export path.
+
+    Args:
+        folder: The artifact folder path (must be version-root-relative, e.g., models/shared/base_model)
+        root: The category root path (e.g., models, dtos, features)
+
+    Returns:
+        Normalized export path like 'shared/base_model/index.dart'
+
+    Raises:
+        ValueError: If folder is not under root, indicating version folder was incorrectly included
+    """
+    if isinstance(root, str):
+        root = Path(root)
+
+    if not folder.is_relative_to(root):
+        raise ValueError(
+            f"Cannot build barrel export: folder={folder} is not under root={root}. "
+            "Artifact folders must be version-root-relative, e.g. models/..., not latest/models/..."
+        )
+
     return normalize_path(folder.relative_to(root) / DART_INDEX_FILE_NAME)
 
 

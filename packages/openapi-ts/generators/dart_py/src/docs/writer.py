@@ -32,11 +32,14 @@ def generate_docs(
     output: Path,
     clean: bool = False,
     dry_run: bool = False,
+    version_folder: str = "latest",
 ) -> None:
-    if clean and output.exists() and not dry_run:
-        shutil.rmtree(output)
+    versioned_output = output / version_folder
 
-    ensure_dir(output)
+    if clean and versioned_output.exists() and not dry_run:
+        shutil.rmtree(versioned_output)
+
+    ensure_dir(versioned_output)
 
     operations_by_tag = collect_operations_by_tag(spec)
     schemas = collect_important_schemas(spec)
@@ -54,7 +57,7 @@ def generate_docs(
         },
     )
 
-    write_text(output / OUTPUT_FILE_INDEX, index_content, dry_run=dry_run)
+    write_text(versioned_output / OUTPUT_FILE_INDEX, index_content, dry_run=dry_run)
 
     for tag, operations in operations_by_tag.items():
         content = render_template(
@@ -65,7 +68,7 @@ def generate_docs(
             },
         )
 
-        write_text(output / f"{snake_case(tag)}.md", content, dry_run=dry_run)
+        write_text(versioned_output / f"{snake_case(tag)}.md", content, dry_run=dry_run)
 
     models_content = render_template(
         TEMPLATE_DOCS_MODELS,
@@ -74,4 +77,4 @@ def generate_docs(
         },
     )
 
-    write_text(output / OUTPUT_FILE_MODELS, models_content, dry_run=dry_run)
+    write_text(versioned_output / OUTPUT_FILE_MODELS, models_content, dry_run=dry_run)

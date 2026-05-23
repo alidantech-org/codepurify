@@ -37,6 +37,7 @@ from constants.sdk_usage import (
     SDK_USAGE_SHARED_ERROR,
 )
 from dart.registry import DartSymbol, build_schema_registry
+from openapi.codegen_metadata import read_codegen_metadata
 from utils.naming import pascal_case
 from ...domain.kinds import SchemaKind
 from ...domain.models import infer_operation_name, infer_tag_domain
@@ -69,6 +70,7 @@ OpenApiSpec = dict[str, Any]
 def build_dart_plans(
     spec: OpenApiSpec,
     package_name: str,
+    version_folder: str = "latest",
 ) -> DartGenerationPlan:
     """Build the full Dart generation plan."""
     symbol_registry = build_schema_registry(spec)
@@ -88,6 +90,7 @@ def build_dart_plans(
         package_name=package_name,
         class_plans=class_plans,
         enum_plans=enum_plans,
+        version_folder=version_folder,
     )
 
     build_operation_dto_plans(
@@ -97,6 +100,7 @@ def build_dart_plans(
         package_name=package_name,
         class_plans=class_plans,
         spec=spec,
+        version_folder=version_folder,
     )
 
     build_shared_error_plans(
@@ -105,11 +109,12 @@ def build_dart_plans(
         symbol_registry=symbol_registry,
         package_name=package_name,
         class_plans=class_plans,
+        version_folder=version_folder,
     )
 
-    route_versions = build_route_plans(spec, class_plans)
-    features = build_feature_plans(spec, class_plans, route_versions)
-    barrels = build_barrel_plans(class_plans, enum_plans, features)
+    route_versions = build_route_plans(spec, class_plans, version_folder)
+    features = build_feature_plans(spec, class_plans, route_versions, version_folder, package_name)
+    barrels = build_barrel_plans(class_plans, enum_plans, features, version_folder)
 
     return DartGenerationPlan(
         classes=class_plans,
@@ -127,6 +132,7 @@ def build_component_plans(
     package_name: str,
     class_plans: dict[str, Any],
     enum_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> None:
     """Build plans for reusable component schemas."""
     for schema_name, schema in sorted(schemas.items()):
@@ -143,7 +149,18 @@ def build_component_plans(
             enum_plans[schema_name] = build_enum_plan(schema_name, schema, symbol)
             continue
 
-        if symbol.kind in {SchemaKind.MODEL, SchemaKind.DTO}:
+        if symbol.kind in {SchemaKind.MODEL, SchemaKind.DTO, SchemaKind.QUERY}:
+            # For DTOs, check if they should be skipped because operation plans will handle them
+            # QUERY and MODEL schemas are always built as reusable components
+            if symbol.kind == SchemaKind.DTO:
+                schema_meta = read_codegen_metadata(schema)
+                has_operation_usage = len(usage_operations) > 0
+
+                # Skip DTO if it has operation usage and is not explicitly marked as shared
+                # Operation plans will generate it in the operation-specific folder
+                if has_operation_usage and not (schema_meta and schema_meta.shared):
+                    continue
+
             class_plans[schema_name] = build_class_plan(
                 schema_name=schema_name,
                 schema=schema,
@@ -152,6 +169,8 @@ def build_component_plans(
                 package_name=package_name,
                 usage=usage_operations,
                 usage_type=usage_type,
+                schemas=schemas,
+                version_folder=version_folder,
             )
 
 
@@ -162,6 +181,7 @@ def build_operation_dto_plans(
     package_name: str,
     class_plans: dict[str, Any],
     spec: OpenApiSpec,
+    version_folder: str = "latest",
 ) -> None:
     """Build query/params/body/response operation-specific DTO plans."""
     for path, path_item in paths.items():
@@ -189,6 +209,8 @@ def build_operation_dto_plans(
                 symbol_registry=symbol_registry,
                 package_name=package_name,
                 class_plans=class_plans,
+                schemas=schemas,
+                version_folder=version_folder,
             )
 
             build_params_plan(
@@ -199,6 +221,8 @@ def build_operation_dto_plans(
                 symbol_registry=symbol_registry,
                 package_name=package_name,
                 class_plans=class_plans,
+                schemas=schemas,
+                version_folder=version_folder,
             )
 
             build_body_plan(
@@ -209,6 +233,7 @@ def build_operation_dto_plans(
                 symbol_registry=symbol_registry,
                 package_name=package_name,
                 class_plans=class_plans,
+                version_folder=version_folder,
             )
 
             build_response_plans(
@@ -219,6 +244,7 @@ def build_operation_dto_plans(
                 symbol_registry=symbol_registry,
                 package_name=package_name,
                 class_plans=class_plans,
+                version_folder=version_folder,
             )
 
 
@@ -233,9 +259,17 @@ def build_operation_context(
     tags = operation.get(OPENAPI_TAGS, [])
     tag = tags[0] if isinstance(tags, list) and tags else "default"
 
+    # Read x-codegen metadata for operation
+    operation_meta = read_codegen_metadata(operation)
+
+    # Use x-codegen resource if available, otherwise use tag
+    # Normalize through infer_tag_domain to handle singular/plural consistently
+    resource = operation_meta.resource if operation_meta and operation_meta.resource else tag
+    group = infer_tag_domain(resource)
+
     return {
         "operation_id": operation_id,
-        "group": infer_tag_domain(tag),
+        "group": group,
         "operation_name": infer_operation_name(operation_id),
     }
 
@@ -248,6 +282,8 @@ def build_query_plan(
     symbol_registry: dict[str, DartSymbol],
     package_name: str,
     class_plans: dict[str, Any],
+    schemas: dict[str, Schema],
+    version_folder: str = "latest",
 ) -> None:
     """Build operation query DTO plan."""
     query_params = extract_parameters(spec, operation, path_item, PARAM_LOCATION_QUERY)
@@ -277,6 +313,8 @@ def build_query_plan(
         usage_type=SDK_USAGE_QUERY,
         operation_id=operation_id,
         is_shared=False,
+        schemas=schemas,
+        version_folder=version_folder,
     )
 
 
@@ -288,6 +326,8 @@ def build_params_plan(
     symbol_registry: dict[str, DartSymbol],
     package_name: str,
     class_plans: dict[str, Any],
+    schemas: dict[str, Schema],
+    version_folder: str = "latest",
 ) -> None:
     """Build operation path params DTO plan."""
     path_params = extract_parameters(spec, operation, path_item, PARAM_LOCATION_PATH)
@@ -317,6 +357,8 @@ def build_params_plan(
         usage_type=SDK_USAGE_PARAMS,
         operation_id=operation_id,
         is_shared=False,
+        schemas=schemas,
+        version_folder=version_folder,
     )
 
 
@@ -328,6 +370,7 @@ def build_body_plan(
     symbol_registry: dict[str, DartSymbol],
     package_name: str,
     class_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> None:
     """Build operation body DTO plan."""
     request_body = operation.get(OPENAPI_REQUEST_BODY)
@@ -344,16 +387,23 @@ def build_body_plan(
 
     class_plans.pop(schema_ref, None)
 
+    # Read x-codegen metadata from the schema to get component name
+    schema = schemas.get(schema_ref, {})
+    schema_meta = read_codegen_metadata(schema)
+
+    # Use component name from x-codegen if available
+    dart_name = pascal_case(schema_meta.component) if schema_meta and schema_meta.component else pascal_case(schema_ref)
+
     body_symbol = DartSymbol(
         schema_name=schema_ref,
-        dart_name=pascal_case(schema_ref),
+        dart_name=dart_name,
         kind=SchemaKind.DTO,
         path=dto_body_output_path(context["group"], context["operation_name"]),
     )
 
     class_plans[plan_key] = build_class_plan(
         schema_name=schema_ref,
-        schema=schemas.get(schema_ref, {}),
+        schema=schema,
         symbol=body_symbol,
         symbol_registry=symbol_registry,
         package_name=package_name,
@@ -362,6 +412,8 @@ def build_body_plan(
         operation_id=operation_id,
         source_schema=schema_ref,
         is_shared=False,
+        schemas=schemas,
+        version_folder=version_folder,
     )
 
 
@@ -373,6 +425,7 @@ def build_response_plans(
     symbol_registry: dict[str, DartSymbol],
     package_name: str,
     class_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> None:
     """Build operation success response DTO plans."""
     responses = operation.get(OPENAPI_RESPONSES, {})
@@ -397,16 +450,23 @@ def build_response_plans(
 
         plan_key = f"{operation_id}{SDK_RESPONSE_SCHEMA_SUFFIX}"
 
+        # Read x-codegen metadata from the schema to get component name
+        schema = schemas.get(schema_ref, {})
+        schema_meta = read_codegen_metadata(schema)
+
+        # Use component name from x-codegen if available
+        dart_name = pascal_case(schema_meta.component) if schema_meta and schema_meta.component else f"{pascal_case(operation_id)}Response"
+
         response_symbol = DartSymbol(
             schema_name=plan_key,
-            dart_name=f"{pascal_case(operation_id)}Response",
+            dart_name=dart_name,
             kind=SchemaKind.DTO,
             path=dto_response_output_path(context["group"], context["operation_name"]),
         )
 
         class_plans[plan_key] = build_class_plan(
             schema_name=plan_key,
-            schema=schemas.get(schema_ref, {}),
+            schema=schema,
             symbol=response_symbol,
             symbol_registry=symbol_registry,
             package_name=package_name,
@@ -416,6 +476,8 @@ def build_response_plans(
             status_code=status_code,
             source_schema=schema_ref,
             is_shared=False,
+            schemas=schemas,
+            version_folder=version_folder,
         )
 
 
@@ -425,6 +487,7 @@ def build_shared_error_plans(
     symbol_registry: dict[str, DartSymbol],
     package_name: str,
     class_plans: dict[str, Any],
+    version_folder: str = "latest",
 ) -> None:
     """Build deduped shared error DTO plans."""
     for _key, (status_code, schema_name) in shared_error_responses.items():
@@ -449,6 +512,8 @@ def build_shared_error_plans(
             status_code=status_code,
             source_schema=schema_name,
             is_shared=True,
+            schemas=schemas,
+            version_folder=version_folder,
         )
 
 

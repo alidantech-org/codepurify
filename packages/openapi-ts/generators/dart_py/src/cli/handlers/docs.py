@@ -15,12 +15,16 @@ def handle_docs(options: DocsOptions) -> None:
     validate_openapi_shape(spec)
 
     from docs.writer import generate_docs
+    from dart.package.version import resolve_api_version_folder
+
+    version_folder = resolve_api_version_folder(spec)
 
     generate_docs(
         spec=spec,
         output=options.output,
         clean=options.clean,
         dry_run=options.common.dry_run,
+        version_folder=version_folder,
     )
 
-    console.print(f"[bold green]Docs generated:[/bold green] [cyan]{options.output}[/cyan]")
+    console.print(f"[bold green]Docs generated:[/bold green] [cyan]{options.output / version_folder}[/cyan]")

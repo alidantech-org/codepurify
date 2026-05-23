@@ -12,7 +12,8 @@ from .tooling_plan import build_tooling_file_plans
 
 def generate_tooling_files(dart_output: Path, force: bool = False) -> None:
     """Generate tooling files (.vscode/settings.json, analysis_options.yaml)."""
-    dart_package_dir = dart_output.parent.parent
+    # dart_output is now the package root (not lib), so use it directly
+    dart_package_dir = dart_output
     templates_dir = get_tooling_templates_dir()
 
     env = create_template_env(templates_dir)

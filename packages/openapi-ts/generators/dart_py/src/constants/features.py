@@ -13,7 +13,7 @@ API_VERSION_CLASS = "ApiVersion"
 
 # Client imports
 RIVERPOD_IMPORT = "package:flutter_riverpod/flutter_riverpod.dart"
-API_REQUEST_IMPORT = "package:riderescue_api/client/api/api_request.dart"
-API_REQUEST_OPTIONS_IMPORT = "package:riderescue_api/client/api/api_request_options.dart"
-API_RESULT_IMPORT = "package:riderescue_api/client/api/api_result.dart"
-RIDERESCUE_API_IMPORT = "package:riderescue_api/riderescue_api.dart"
+API_REQUEST_IMPORT = "package:flutter_api_bridge/flutter_api_bridge.dart"
+API_REQUEST_OPTIONS_IMPORT = "package:flutter_api_bridge/flutter_api_bridge.dart"
+API_RESULT_IMPORT = "package:flutter_api_bridge/flutter_api_bridge.dart"
+FLUTTER_API_BRIDGE_IMPORT = "package:flutter_api_bridge/flutter_api_bridge.dart"

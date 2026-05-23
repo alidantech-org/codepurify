@@ -57,6 +57,8 @@ DART_EXPORT_ENUM = ENUM_FILE_NAME
 DART_MODELS_FOLDER = "models"
 DART_DTOS_FOLDER = "dtos"
 DART_ENUMS_FOLDER = "enums"
+DART_ENUMS_SUBFOLDER = "enums"
+DART_QUERY_FOLDER = "query"
 DART_FEATURES_ROOT = "features"
 DART_ROUTES_ROOT = "routes"
 DART_SHARED_FOLDER = "shared"
@@ -127,6 +129,46 @@ DART_VALUE_SUFFIX = "Value"
 DART_LOCATION_REQUEST_BODY = "request_body"
 DART_LOCATION_RESPONSE = "response"
 DART_LOCATION_PARAMETER = "parameter"
+
+# ---------------------------------------------------------------------------
+# Dart keywords
+# ---------------------------------------------------------------------------
+
+DART_REQUIRED = "required"
+DART_FINAL = "final"
+DART_CONST = "const"
+DART_CLASS = "class"
+DART_EXTENDS = "extends"
+DART_SUPER = "super"
+DART_FACTORY = "factory"
+DART_OVERRIDE = "override"
+DART_ABSTRACT = "abstract"
+DART_STATIC = "static"
+DART_GET = "get"
+DART_SET = "set"
+DART_RETURN = "return"
+DART_IF = "if"
+DART_ELSE = "else"
+DART_NEW = "new"
+DART_THIS = "this"
+
+# ---------------------------------------------------------------------------
+# Dart operators
+# ---------------------------------------------------------------------------
+
+DART_AS = "as"
+DART_IS = "is"
+DART_QUESTION = "?"
+DART_DOT = "."
+DART_COLON = ":"
+DART_SEMICOLON = ";"
+DART_COMMA = ","
+DART_ARROW = "=>"
+DART_EQUALS = "=="
+DART_NOT_EQUALS = "!="
+DART_ASSIGN = "="
+DART_NULL_COALESCE = "??"
+DART_OPTIONAL_CHAIN = "?."
 
 # ---------------------------------------------------------------------------
 # Dart tokens

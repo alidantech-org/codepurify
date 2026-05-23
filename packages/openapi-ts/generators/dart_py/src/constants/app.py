@@ -5,8 +5,8 @@ GENERATOR_NAME = "dart-py"
 GENERATOR_VERSION = "0.1.0"
 
 DEFAULT_OPENAPI_INPUT = Path("C:/Users/peter/Projects/work/riderescue/backend/sdk/openapi/v1/openapi.v1.yaml")
-DEFAULT_DART_OUTPUT_DIR = Path("../../packages/dart/lib")
-DEFAULT_DOCS_OUTPUT_DIR = Path("../../packages/dart/doc")
+DEFAULT_DART_OUTPUT_DIR = Path("C:/Users/peter/Projects/work/riderescue/backend/sdk/packages/riderescue")
+DEFAULT_DOCS_OUTPUT_DIR = Path("C:/Users/peter/Projects/work/riderescue/backend/sdk/packages/riderescue/doc")
 
 SUPPORTED_OPENAPI_EXTENSIONS = {".json", ".yaml", ".yml"}
 TEMPLATE_DIR_NAME = "templates"

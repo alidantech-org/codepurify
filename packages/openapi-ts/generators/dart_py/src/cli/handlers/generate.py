@@ -101,15 +101,19 @@ def generate_docs_if_enabled(
         return
 
     from docs.writer import generate_docs
+    from dart.package.version import resolve_api_version_folder
+
+    version_folder = resolve_api_version_folder(spec)
 
     generate_docs(
         spec=spec,
         output=config.docs_output,
         clean=config.clean,
         dry_run=config.dry_run,
+        version_folder=version_folder,
     )
 
-    console.print(f"[green]Docs generated:[/green] [cyan]{config.docs_output}[/cyan]")
+    console.print(f"[green]Docs generated:[/green] [cyan]{config.docs_output / version_folder}[/cyan]")
 
 
 def generate_dart_if_enabled(

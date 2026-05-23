@@ -36,6 +36,7 @@ from dart.domain.kinds import SchemaKind
 from dart.planning.operation_usage import collect_schema_usage
 from dart.render.paths import schema_output_path
 from dart.type_system.schema_normalizer import normalize_nullable_schema
+from openapi.codegen_metadata import read_codegen_metadata
 from utils.naming import pascal_case
 
 Schema = dict[str, Any]
@@ -86,6 +87,28 @@ def resolve_symbol_dart_name(schema_name: str, schema: Schema, kind: SchemaKind)
     if kind == SchemaKind.PRIMITIVE_ALIAS:
         return primitive_alias_type(schema)
 
+    # Use x-codegen metadata for naming
+    meta = read_codegen_metadata(schema)
+
+    # Priority 1: Use component name if available
+    if meta.component:
+        return pascal_case(meta.component)
+
+    # Priority 2: For enums, use the schema name (not entity)
+    if kind == SchemaKind.ENUM:
+        return pascal_case(schema_name)
+
+    # Priority 3: Use entity + model suffix for models/DTOs
+    if meta.entity and meta.model:
+        if meta.model == "default":
+            return pascal_case(meta.entity)
+        return f"{pascal_case(meta.entity)}{pascal_case(meta.model)}"
+
+    # Priority 4: Use entity name for models/DTOs
+    if meta.entity and kind in {SchemaKind.MODEL, SchemaKind.DTO}:
+        return pascal_case(meta.entity)
+
+    # Priority 5: Fallback to schema name
     return pascal_case(schema_name)
 
 

@@ -60,7 +60,10 @@ from constants.openapi_keys import (
 )
 from ..domain.kinds import SchemaKind
 from ..registry import DartSymbol
-from .schema_normalizer import normalize_nullable_schema
+from .schema_normalizer import (
+    is_scalar_like_schema,
+    normalize_nullable_schema,
+)
 
 Schema = dict[str, Any]
 
@@ -110,9 +113,6 @@ class DartResolvedType:
     @property
     def dart_type(self) -> str:
         """Full Dart type including nullable suffix when needed."""
-        if self.is_nullable:
-            return f"{self.name}{DART_NULLABLE_SUFFIX}"
-
         return self.name
 
     @property
@@ -131,6 +131,8 @@ def resolve_type(
     symbol_registry: dict[str, DartSymbol],
     package_name: str,
     required: bool = False,
+    schemas: dict[str, Schema] | None = None,
+    version_folder: str = "latest",
 ) -> DartResolvedType:
     """
     Resolve an OpenAPI schema into Dart type metadata.
@@ -151,6 +153,8 @@ def resolve_type(
             package_name=package_name,
             required=required,
             schema_nullable=schema_nullable,
+            schemas=schemas,
+            version_folder=version_folder,
         )
 
     schema_type = normalized_schema.get(OPENAPI_TYPE)
@@ -162,6 +166,8 @@ def resolve_type(
             package_name=package_name,
             required=required,
             schema_nullable=schema_nullable,
+            schemas=schemas,
+            version_folder=version_folder,
         )
 
     if schema_type == OPENAPI_TYPE_OBJECT:
@@ -171,6 +177,8 @@ def resolve_type(
             package_name=package_name,
             required=required,
             schema_nullable=schema_nullable,
+            schemas=schemas,
+            version_folder=version_folder,
         )
 
     dart_type, is_primitive = resolve_primitive_type(
@@ -197,17 +205,64 @@ def resolve_ref_type(
     package_name: str,
     required: bool,
     schema_nullable: bool = False,
+    schemas: dict[str, Schema] | None = None,
+    version_folder: str = "latest",
 ) -> DartResolvedType:
     """
     Resolve a $ref schema into Dart type metadata.
 
     Unknown refs fail loudly because silently falling back to Object/dynamic hides
     planning bugs.
+
+    Property refs (x-codegen.kind: property) are only inlined if the referenced
+    schema is scalar-like (primitive, enum, or array of primitives). Object-like
+    property refs are treated as model refs to generate proper class plans.
     """
     symbol = symbol_registry.get(schema_name)
 
     if not symbol:
         raise ValueError(f"Unknown OpenAPI $ref '{schema_name}'. " "The schema must be planned and registered before type resolution.")
+
+    # Check if this is a $ref to another schema (ref chain)
+    # Follow the chain to find the actual schema
+    if schemas and schema_name in schemas:
+        ref_schema = schemas[schema_name]
+        inner_ref = ref_schema.get(OPENAPI_REF)
+        if inner_ref:
+            # Recursively resolve the inner ref
+            inner_schema_name = extract_ref_name(inner_ref)
+            return resolve_ref_type(
+                schema_name=inner_schema_name,
+                symbol_registry=symbol_registry,
+                package_name=package_name,
+                required=required,
+                schema_nullable=schema_nullable,
+                schemas=schemas,
+                version_folder=version_folder,
+            )
+
+    # If this is a property ref (kind: property), check schema shape before inlining
+    if schemas and schema_name in schemas:
+        from openapi.codegen_metadata import read_codegen_metadata
+
+        ref_schema = schemas[schema_name]
+        meta = read_codegen_metadata(ref_schema)
+
+        # If this is a property schema, check if it's scalar-like before inlining
+        if meta.kind == "property":
+            # Only inline scalar-like schemas (primitives, enums, arrays of primitives)
+            # Object-like property refs should be treated as model refs
+            if is_scalar_like_schema(ref_schema):
+                # Recursively resolve the property schema's actual type
+                return resolve_type(
+                    schema=ref_schema,
+                    symbol_registry=symbol_registry,
+                    package_name=package_name,
+                    required=required,
+                    schemas=schemas,
+                    version_folder=version_folder,
+                )
+            # If object-like, fall through to treat as model ref below
 
     is_enum = symbol.kind == SchemaKind.ENUM
     is_model = symbol.kind in {SchemaKind.MODEL, SchemaKind.DTO}
@@ -215,9 +270,15 @@ def resolve_ref_type(
 
     import_uri = None
     if symbol.path and not is_primitive_alias:
+        # Use index.dart barrel for imports when available
+        if symbol.path.name == "enum.dart":
+            import_path = symbol.path.parent / "index.dart"
+        else:
+            import_path = symbol.path.parent / "index.dart"
+        # Include version folder in import path
         import_uri = format_package_import(
             package_name,
-            symbol.path.as_posix(),
+            f"{version_folder}/{import_path.as_posix()}",
         )
 
     return create_resolved_type(
@@ -239,6 +300,8 @@ def resolve_array_type(
     package_name: str,
     required: bool,
     schema_nullable: bool = False,
+    schemas: dict[str, Schema] | None = None,
+    version_folder: str = "latest",
 ) -> DartResolvedType:
     """
     Resolve an OpenAPI array schema into List<T>.
@@ -249,11 +312,16 @@ def resolve_array_type(
     items = schema.get(OPENAPI_ITEMS)
 
     if isinstance(items, dict):
+        # Resolve item type with its own nullable state from the items schema
+        # Items are required by default in the array context
+        # but the items schema itself can be nullable (e.g., anyOf with null)
         item_type = resolve_type(
             schema=items,
             symbol_registry=symbol_registry,
             package_name=package_name,
-            required=True,
+            required=True,  # Items are required in array context
+            schemas=schemas,
+            version_folder=version_folder,
         )
     else:
         item_type = create_resolved_type(
@@ -278,7 +346,7 @@ def resolve_array_type(
         is_list=True,
         is_enum=item_type.is_enum,
         is_model=item_type.is_model,
-        is_primitive=False,
+        is_primitive=item_type.is_primitive,
         import_uri=item_type.import_uri,
         item_type=item_type,
     )
@@ -290,6 +358,8 @@ def resolve_object_type(
     package_name: str,
     required: bool,
     schema_nullable: bool = False,
+    schemas: dict[str, Schema] | None = None,
+    version_folder: str = "latest",
 ) -> DartResolvedType:
     """
     Resolve an OpenAPI object schema.
@@ -315,6 +385,8 @@ def resolve_object_type(
             symbol_registry=symbol_registry,
             package_name=package_name,
             required=True,
+            schemas=schemas,
+            version_folder=version_folder,
         )
 
         map_type = DART_MAP_STRING_TYPE_FORMAT.format(value_type.name)
@@ -385,13 +457,17 @@ def create_resolved_type(
 ) -> DartResolvedType:
     """Create a DartResolvedType with consistent nullability rules."""
     is_optional = not required
+    is_nullable = is_optional or schema_nullable
+
+    # Add nullable suffix to name when nullable
+    final_name = f"{name}{DART_NULLABLE_SUFFIX}" if is_nullable else name
 
     return DartResolvedType(
-        name=name,
+        name=final_name,
         base_name=base_name,
         is_required=required,
         is_optional=is_optional,
-        is_nullable=is_optional or schema_nullable,
+        is_nullable=is_nullable,
         is_list=is_list,
         is_enum=is_enum,
         is_model=is_model,

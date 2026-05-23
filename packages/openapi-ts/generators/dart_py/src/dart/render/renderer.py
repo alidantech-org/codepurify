@@ -99,11 +99,12 @@ def get_plan_output_path(plan: Any) -> Path:
 def render_enum(
     plan: DartEnumPlan,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render an enum plan to enum.dart."""
-    output_path = output_dir / plan.output_path
+    output_path = output_dir / version_folder / plan.output_path
 
     render_template_to_file(
         template_name=DART_TEMPLATE_ENUM,
@@ -120,11 +121,12 @@ def render_enum(
 def render_class(
     plan: Any,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render a class plan to model.dart."""
-    output_path = output_dir / plan.model_path
+    output_path = output_dir / version_folder / plan.model_path
 
     render_template_to_file(
         template_name=DART_TEMPLATE_CLASS,
@@ -141,11 +143,12 @@ def render_class(
 def render_fields(
     plan: Any,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render a class plan fields file to fields.dart."""
-    output_path = output_dir / plan.fields_path
+    output_path = output_dir / version_folder / plan.fields_path
 
     render_template_to_file(
         template_name=DART_TEMPLATE_FIELDS,
@@ -162,11 +165,12 @@ def render_fields(
 def render_barrel(
     plan: Any,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render a barrel index.dart file."""
-    output_path = output_dir / plan.output_path
+    output_path = output_dir / version_folder / plan.output_path
 
     render_template_to_file(
         template_name=TEMPLATE_BARREL,
@@ -183,12 +187,13 @@ def render_barrel(
 def render_route_version(
     plan: Any,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render a route version file."""
     relative_path = plan.folder / plan.file_name
-    output_path = output_dir / relative_path
+    output_path = output_dir / version_folder / relative_path
 
     render_template_to_file(
         template_name=TEMPLATE_ROUTE_VERSION,
@@ -205,12 +210,13 @@ def render_route_version(
 def render_endpoint_group(
     plan: Any,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render an endpoint group constants file."""
     relative_path = plan.folder / plan.file_name
-    output_path = output_dir / relative_path
+    output_path = output_dir / version_folder / relative_path
 
     render_template_to_file(
         template_name=TEMPLATE_ROUTE_ENDPOINTS,
@@ -227,12 +233,13 @@ def render_endpoint_group(
 def render_feature(
     plan: Any,
     output_dir: Path,
+    version_folder: str = "latest",
     dry_run: bool = False,
     source_file: str = DART_DEFAULT_SOURCE_FILE,
 ) -> None:
     """Render a feature orchestrator file."""
     relative_path = plan.folder / plan.file_name
-    output_path = output_dir / relative_path
+    output_path = output_dir / version_folder / relative_path
 
     render_template_to_file(
         template_name=TEMPLATE_FEATURE,

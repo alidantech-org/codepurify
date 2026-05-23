@@ -9,10 +9,11 @@ from constants.paths import (
     TEMPLATES_DIR_NAME,
     TOOLING_TEMPLATE_DIR_NAME,
 )
+from paths.project_paths import find_project_root
 
-# Resolve paths relative to this file
-SRC_DIR = Path(__file__).resolve().parents[1]
-PACKAGE_ROOT = SRC_DIR.parent
+# Use central project root resolver
+PACKAGE_ROOT = find_project_root()
+SRC_DIR = PACKAGE_ROOT / "src"
 
 # Computed template directories
 TEMPLATES_DIR = PACKAGE_ROOT / TEMPLATES_DIR_NAME

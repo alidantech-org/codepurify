@@ -18,7 +18,7 @@ dev = [
 ]
 
 [project.scripts]
-dart-py = "cli:app"
+dart-py = "cli.app:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

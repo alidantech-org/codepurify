@@ -29,12 +29,11 @@ from utils.naming import pascal_case, snake_case
 from ..route_plan import DartEndpointGroupPlan, DartEndpointOperationPlan, DartRouteVersionPlan
 
 
-def build_route_plans(spec: dict, class_plans: dict[str, Any]) -> list[DartRouteVersionPlan]:
+def build_route_plans(spec: dict, class_plans: dict[str, Any], version_folder: str = "latest") -> list[DartRouteVersionPlan]:
     """Build route version and endpoint group plans from OpenAPI spec."""
     paths = spec.get(OPENAPI_PATHS, {})
-    version_name = "v1"
+    version_name = version_folder
     version_class_name = pascal_case(version_name)
-    version_folder = Path(f"{ROUTES_DIR_NAME}/{version_name}")
     version_file = f"{version_name}{ROUTE_VERSION_FILE_SUFFIX}"
 
     # Group operations by tag
@@ -62,7 +61,7 @@ def build_route_plans(spec: dict, class_plans: dict[str, Any]) -> list[DartRoute
         group_snake = snake_case(tag)
         group_class_name = f"{pascal_case(tag)}{ENDPOINTS_CLASS_SUFFIX}"
         group_property_name = group_snake
-        group_folder = version_folder / ROUTE_CONSTANTS_DIR_NAME
+        group_folder = Path(ROUTES_DIR_NAME) / ROUTE_CONSTANTS_DIR_NAME
         group_file = f"{group_snake}{ENDPOINTS_FILE_SUFFIX}"
 
         # Build endpoint operations
@@ -154,7 +153,7 @@ def build_route_plans(spec: dict, class_plans: dict[str, Any]) -> list[DartRoute
         DartRouteVersionPlan(
             version_name=version_name,
             class_name=version_class_name,
-            folder=version_folder,
+            folder=Path(ROUTES_DIR_NAME),
             file_name=version_file,
             imports=imports,
             endpoint_groups=endpoint_groups,

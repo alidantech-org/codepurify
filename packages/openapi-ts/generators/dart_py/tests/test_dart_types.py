@@ -84,7 +84,8 @@ def test_resolves_ref_to_enum() -> None:
 
     assert resolved.name == "UserStatus"
     assert resolved.is_enum
-    assert resolved.import_uri == f"package:{DEFAULT_DART_PACKAGE_NAME}/enums/user/user_status.dart"
+    # Import now uses index.dart barrel with version prefix
+    assert resolved.import_uri == f"package:{DEFAULT_DART_PACKAGE_NAME}/latest/enums/user/index.dart"
 
 
 def test_resolves_ref_to_model() -> None:
@@ -102,7 +103,8 @@ def test_resolves_ref_to_model() -> None:
 
     assert resolved.name == "User"
     assert resolved.is_model
-    assert resolved.import_uri == f"package:{DEFAULT_DART_PACKAGE_NAME}/models/user/user.dart"
+    # Import now uses index.dart barrel with version prefix
+    assert resolved.import_uri == f"package:{DEFAULT_DART_PACKAGE_NAME}/latest/models/user/index.dart"
 
 
 def test_resolves_optional_field_as_nullable() -> None:

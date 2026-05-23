@@ -12,6 +12,7 @@ This module must not:
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Self
 
 from constants.dart_syntax import DART_COLLECTION_IMPORT, format_package_import
@@ -49,3 +50,26 @@ def dedupe_imports(imports: list[DartImport]) -> list[DartImport]:
 
 def needs_collection_import(has_list: bool = False, has_map: bool = False, has_set: bool = False) -> bool:
     return has_list or has_map or has_set
+
+
+def package_import(
+    package_name: str,
+    version_folder: str,
+    artifact_folder: Path | str,
+    file_name: str = "index.dart",
+) -> str:
+    """
+    Build a versioned package import URI.
+
+    Args:
+        package_name: Package name (e.g., "riderescue_api")
+        version_folder: Version folder (e.g., "v1", "latest")
+        artifact_folder: Artifact folder path (e.g., "dtos/user/list_users/query")
+        file_name: File name to import (default: "index.dart")
+
+    Returns:
+        Package import URI like "package:riderescue_api/v1/dtos/user/list_users/query/index.dart"
+    """
+    artifact = Path(artifact_folder)
+    relative_path = (artifact / file_name).as_posix()
+    return f"package:{package_name}/{version_folder}/{relative_path}"

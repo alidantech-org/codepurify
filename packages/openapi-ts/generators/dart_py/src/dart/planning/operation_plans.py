@@ -45,6 +45,7 @@ from constants.openapi_keys import (
     REF_PREFIX_COMPONENTS_REQUEST_BODIES,
     REF_PREFIX_COMPONENTS_RESPONSES,
 )
+from openapi.codegen_metadata import read_codegen_metadata
 from .operation_usage import schema_ref_name
 from ..domain.models import infer_tag_domain
 from ..render.paths import dto_fields_output_path, dto_params_output_path
@@ -131,7 +132,14 @@ def build_single_operation_plan(
     spec: OpenApiSpec,
 ) -> OperationPlan:
     """Build a single operation plan."""
-    operation_folder = Path(DART_DTOS_FOLDER) / snake_case(tag) / snake_case(operation_id)
+    # Read x-codegen metadata for operation
+    operation_meta = read_codegen_metadata(operation)
+
+    # Use x-codegen resource if available, otherwise use tag
+    resource = operation_meta.resource if operation_meta and operation_meta.resource else tag
+    normalized_tag = infer_tag_domain(resource)
+
+    operation_folder = Path(DART_DTOS_FOLDER) / snake_case(normalized_tag) / snake_case(operation_id)
 
     # Collect parameters - merge path-level and operation-level with proper override logic
     path_params_map = {}
@@ -198,8 +206,16 @@ def build_single_operation_plan(
     if all_params and not (path_params or query_params or header_params or cookie_params):
         warnings.append(f"Operation has parameters in OpenAPI but no params plan generated")
 
-    # Normalize tag for path building
-    normalized_tag = infer_tag_domain(tag)
+    # Check for x-codegen querySchema
+    query_schema_ref = None
+    if operation_meta and operation_meta.raw:
+        query_schema_obj = operation_meta.raw.get("querySchema", {})
+        if isinstance(query_schema_obj, dict):
+            query_schema_ref = query_schema_obj.get("$ref")
+            if query_schema_ref:
+                # Extract schema name from $ref
+                if query_schema_ref.startswith("#/components/schemas/"):
+                    query_schema_ref = query_schema_ref.split("/")[-1]
 
     # Build params plan if any parameters exist
     params_plan = None
@@ -227,6 +243,10 @@ def build_single_operation_plan(
             request_body_schema = schema_ref
         else:
             print(f"DEBUG: Failed to extract schema from request body for {operation_id}: {request_body}")
+
+    # If x-codegen querySchema is present, use it instead of extracted request body
+    if query_schema_ref:
+        request_body_schema = query_schema_ref
 
     # Add field names from responses (follow component refs)
     response_schemas = []

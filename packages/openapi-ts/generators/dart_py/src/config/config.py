@@ -29,3 +29,8 @@ class GeneratorConfig(BaseModel):
     dry_run: bool = False
     debug: bool = False
     interactive: bool = False
+
+    @property
+    def lib_output(self) -> Path:
+        """Derive lib root from package root."""
+        return self.dart_output / "lib"

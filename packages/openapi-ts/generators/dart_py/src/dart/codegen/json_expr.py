@@ -12,33 +12,25 @@ This module must not:
 """
 
 from constants.dart_syntax import (
+    DART_AS,
     DART_BOOL_TYPE,
     DART_DATETIME_TYPE,
     DART_DOUBLE_TYPE,
     DART_ENUM_VALUE_PROPERTY,
-    DART_EXPR_FIELD_ACCESS,
     DART_EXPR_FROM_JSON_FIELD_VALUE,
     DART_EXPR_ITEM_METHOD_CALL,
     DART_EXPR_ITEM_PROPERTY,
-    DART_EXPR_LIST_OR_EMPTY,
     DART_EXPR_MAP_CALL,
-    DART_EXPR_METHOD_CALL,
-    DART_EXPR_NULLABLE_BOOL_FROM_JSON,
     DART_EXPR_NULLABLE_DATETIME_FROM_JSON,
-    DART_EXPR_NULLABLE_METHOD_CALL,
-    DART_EXPR_NULLABLE_STRING_FROM_JSON,
-    DART_EXPR_NULLABLE_VALUE,
     DART_EXPR_NULLABLE_MAP_CALL,
-    DART_EXPR_REQUIRED_BOOL_FROM_JSON,
+    DART_EXPR_NULLABLE_VALUE,
     DART_EXPR_REQUIRED_DATETIME_FROM_JSON,
-    DART_EXPR_REQUIRED_STRING_FROM_JSON,
-    DART_EXPR_TO_ISO_8601,
     DART_INT_TYPE,
     DART_JSON_MAP_VAR,
     DART_LAMBDA_ITEM_VAR,
     DART_NUM_TYPE,
+    DART_OPTIONAL_CHAIN,
     DART_STRING_TYPE,
-    DART_TO_ISO_8601_STRING,
     DART_TO_JSON_METHOD,
 )
 from ..type_system.resolver import DartResolvedType
@@ -163,32 +155,43 @@ def build_list_from_json_expr(
     resolved_type: DartResolvedType,
 ) -> str:
     """Build Dart expression for reading a list from JSON."""
-    list_value = DART_EXPR_LIST_OR_EMPTY.format(value)
     item_type = resolved_type.item_type
 
     if item_type is None:
-        return list_value
+        # Fallback for unknown item type
+        if resolved_type.is_nullable:
+            return f"{value} == null ? null : ({value} as List?) ?? []"
+        return f"({value} as List?) ?? []"
+
+    # Handle nullable list
+    if resolved_type.is_nullable:
+        list_value = f"{value} == null ? null : ({value} as List)"
+    else:
+        list_value = f"({value} as List?) ?? []"
 
     if item_type.is_enum:
-        enum_expr = build_required_enum_expr(
-            enum_name=item_type.base_name,
-            value=DART_LAMBDA_ITEM_VAR,
-        )
+        # Use fromJson for enums
+        if item_type.is_nullable:
+            enum_expr = f"{DART_LAMBDA_ITEM_VAR} == null ? null : {item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR})"
+        else:
+            enum_expr = f"{item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR})"
 
-        return DART_EXPR_MAP_CALL.format(
-            list_value,
-            DART_LAMBDA_ITEM_VAR,
-            enum_expr,
-        )
+        return f"{list_value}.map(({DART_LAMBDA_ITEM_VAR}) => {enum_expr}).toList()"
 
     if item_type.is_model:
-        model_expr = f"{item_type.base_name}.fromJson({build_safe_map_expr(DART_LAMBDA_ITEM_VAR)})"
+        if item_type.is_nullable:
+            model_expr = (
+                f"{DART_LAMBDA_ITEM_VAR} == null ? null : {item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR} as Map<String, dynamic>)"
+            )
+        else:
+            model_expr = f"{item_type.base_name}.fromJson({DART_LAMBDA_ITEM_VAR} as Map<String, dynamic>)"
 
-        return DART_EXPR_MAP_CALL.format(
-            list_value,
-            DART_LAMBDA_ITEM_VAR,
-            model_expr,
-        )
+        return f"{list_value}.map(({DART_LAMBDA_ITEM_VAR}) => {model_expr}).toList()"
+
+    # Primitive list items
+    if item_type.is_primitive:
+        primitive_cast = f"{DART_LAMBDA_ITEM_VAR} as {item_type.name}"
+        return f"{list_value}.map(({DART_LAMBDA_ITEM_VAR}) => {primitive_cast}).toList()"
 
     return list_value
 
@@ -213,19 +216,12 @@ def build_enum_from_json_expr(
     """
     Build Dart expression for reading an enum from JSON.
 
-    Required enums use a safe String fallback.
-    Nullable enums return null safely before calling fromValue.
+    Uses fromJson method for enum parsing.
     """
     if resolved_type.is_nullable:
-        return build_nullable_enum_expr(
-            enum_name=resolved_type.base_name,
-            value=value,
-        )
+        return f"{value} == null ? null : {resolved_type.base_name}.fromJson({value})"
 
-    return build_required_enum_expr(
-        enum_name=resolved_type.base_name,
-        value=value,
-    )
+    return f"{resolved_type.base_name}.fromJson({value})"
 
 
 def build_datetime_from_json_expr(
@@ -246,33 +242,33 @@ def build_primitive_from_json_expr(
     """Build Dart expression for reading a primitive value from JSON."""
     if resolved_type.base_name == DART_STRING_TYPE:
         if resolved_type.is_nullable:
-            return DART_EXPR_NULLABLE_STRING_FROM_JSON.format(value)
+            return f"{value} {DART_AS} {DART_STRING_TYPE}?"
 
-        return DART_EXPR_REQUIRED_STRING_FROM_JSON.format(value)
+        return f"{value} {DART_AS} {DART_STRING_TYPE}"
 
     if resolved_type.base_name == DART_BOOL_TYPE:
         if resolved_type.is_nullable:
-            return DART_EXPR_NULLABLE_BOOL_FROM_JSON.format(value)
+            return f"{value} {DART_AS} {DART_BOOL_TYPE}?"
 
-        return DART_EXPR_REQUIRED_BOOL_FROM_JSON.format(value)
+        return f"{value} {DART_AS} {DART_BOOL_TYPE}"
 
     if resolved_type.base_name == DART_INT_TYPE:
         if resolved_type.is_nullable:
-            return build_nullable_int_expr(value)
+            return f"({value} {DART_AS} {DART_NUM_TYPE}?){DART_OPTIONAL_CHAIN}toInt()"
 
-        return build_required_int_expr(value)
+        return f"({value} {DART_AS} {DART_NUM_TYPE}).toInt()"
 
     if resolved_type.base_name == DART_DOUBLE_TYPE:
         if resolved_type.is_nullable:
-            return build_nullable_double_expr(value)
+            return f"({value} {DART_AS} {DART_NUM_TYPE}?){DART_OPTIONAL_CHAIN}toDouble()"
 
-        return build_required_double_expr(value)
+        return f"({value} {DART_AS} {DART_NUM_TYPE}).toDouble()"
 
     if resolved_type.base_name == DART_NUM_TYPE:
         if resolved_type.is_nullable:
-            return build_nullable_num_expr(value)
+            return f"{value} {DART_AS} {DART_NUM_TYPE}?"
 
-        return build_required_num_expr(value)
+        return f"{value} {DART_AS} {DART_NUM_TYPE}"
 
     return value
 
@@ -296,37 +292,23 @@ def build_to_json_expr(
 
     if resolved_type.is_model:
         if resolved_type.is_nullable:
-            return DART_EXPR_NULLABLE_METHOD_CALL.format(
-                dart_name,
-                DART_TO_JSON_METHOD,
-            )
+            return f"{dart_name}?.toJson()"
 
-        return DART_EXPR_METHOD_CALL.format(
-            dart_name,
-            DART_TO_JSON_METHOD,
-        )
+        return f"{dart_name}.toJson()"
 
     if resolved_type.is_enum:
         if resolved_type.is_nullable:
-            return build_nullable_value_expr(
-                value=dart_name,
-                property_name=DART_ENUM_VALUE_PROPERTY,
-            )
+            return f"{dart_name}?.toJson()"
 
-        return DART_EXPR_FIELD_ACCESS.format(
-            dart_name,
-            DART_ENUM_VALUE_PROPERTY,
-        )
+        return f"{dart_name}.toJson()"
 
     if resolved_type.base_name == DART_DATETIME_TYPE:
         if resolved_type.is_nullable:
-            return DART_EXPR_NULLABLE_METHOD_CALL.format(
-                dart_name,
-                DART_TO_ISO_8601_STRING,
-            )
+            return f"{dart_name}?.toIso8601String()"
 
-        return DART_EXPR_TO_ISO_8601.format(dart_name)
+        return f"{dart_name}.toIso8601String()"
 
+    # Primitive types - just use the field name
     return dart_name
 
 

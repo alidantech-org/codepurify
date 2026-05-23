@@ -18,8 +18,10 @@ from constants.dart_syntax import (
     DART_NULLABLE_SUFFIX,
 )
 from constants.openapi_keys import (
+    OPENAPI_ITEMS,
     OPENAPI_PROPERTIES,
     OPENAPI_TYPE,
+    OPENAPI_TYPE_ARRAY,
     OPENAPI_TYPE_OBJECT,
 )
 from constants.sensitive_fields import (
@@ -30,6 +32,7 @@ from ..codegen.json_expr import build_from_json_expr, build_to_json_expr
 from ..fields import to_dart_name
 from ..registry import DartSymbol
 from ..type_system.resolver import resolve_type
+from utils.naming import pascal_case
 
 Schema = dict[str, Any]
 
@@ -66,6 +69,8 @@ def build_field_plans(
     package_name: str,
     fields_class_name: str,
     owner_name: str | None = None,
+    schemas: dict[str, Schema] | None = None,
+    version_folder: str = "latest",
 ) -> list[DartFieldPlan]:
     """
     Build Dart field plans for a class/model/DTO.
@@ -79,12 +84,41 @@ def build_field_plans(
         dart_name = to_dart_name(json_name)
         required = json_name in required_fields
 
+        # Detect inline object with properties - promote to nested class
+        if is_inline_object_schema(schema):
+            nested_class_name = f"{owner_name or 'Nested'}{pascal_case(json_name)}"
+            # TODO: Create a proper nested class plan and register it
+            # For now, create a symbol for it to avoid crash
+            if nested_class_name not in symbol_registry:
+                from ..registry import DartSymbol
+                from ..domain.kinds import SchemaKind
+                from pathlib import Path
+
+                symbol_registry[nested_class_name] = DartSymbol(
+                    schema_name=nested_class_name,
+                    dart_name=nested_class_name,
+                    kind=SchemaKind.MODEL,
+                    path=Path("models") / "nested" / nested_class_name.lower() / "model.dart",
+                )
+            # Replace inline schema with a $ref to the nested class
+            schema = {"$ref": f"#/components/schemas/{nested_class_name}"}
+
+        # Detect inline array of inline objects
+        if schema.get(OPENAPI_TYPE) == OPENAPI_TYPE_ARRAY:
+            items = schema.get(OPENAPI_ITEMS)
+            if isinstance(items, dict) and is_inline_object_schema(items):
+                # TODO: Handle arrays of inline objects properly
+                # For now, log a warning and continue
+                print(f"TODO: Array of inline objects detected for field {json_name} in {owner_name}")
+
         try:
             resolved_type = resolve_type(
                 schema=schema,
                 symbol_registry=symbol_registry,
                 package_name=package_name,
                 required=required,
+                schemas=schemas,
+                version_folder=version_folder,
             )
         except Exception as error:
             raise ValueError(
