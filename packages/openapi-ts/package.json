@@ -27,7 +27,8 @@
             "build": "pnpm clean && tsup",
             "clean": "rm -rf dist",
             "typecheck": "tsc -p tsconfig.json --noEmit",
-            "dev:build": "pnpm build"
+            "dev:build": "pnpm build",
+            "dart-py": "cd generators/dart_py && PYTHONPATH=src python -m __main__"
       },
       "dependencies": {
             "@apidevtools/swagger-parser": "^10.1.1",
