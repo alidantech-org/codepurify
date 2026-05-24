@@ -38,6 +38,11 @@ export interface XCodegenRefPointer {
   readonly $ref: string;
 }
 
+export interface XCodegenParameterTargetMeta {
+  readonly $ref: string;
+  readonly exclude?: readonly string[];
+}
+
 export interface XCodegenResourceMeta {
   /**
    * Resource output name.

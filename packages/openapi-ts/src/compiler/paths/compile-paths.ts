@@ -13,6 +13,7 @@ import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import type { ComponentRef } from '../../refs/ref.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';
+import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
 
 export function compilePaths(
   contract: VersionContract,
@@ -96,13 +97,15 @@ export function compilePaths(
     // Add resource metadata to path item
     if (operations.length > 0) {
       const firstOperation = operations[0];
-      if (firstOperation.resourceContext && firstOperation.resourceContext.name && firstOperation.resourceContext.path) {
-        pathItem['x-codegen'] = {
+      if (firstOperation.resourceContext) {
+        const xCodegen: Record<string, unknown> = {
           resource: {
-            name: firstOperation.resourceContext.name,
-            path: firstOperation.resourceContext.path,
+            name: firstOperation.resourceContext.name || firstOperation.resourceContext.key || 'unknown',
+            path: firstOperation.resourceContext.folders || [],
           },
         };
+
+        pathItem['x-codegen'] = xCodegen;
       }
     }
 
@@ -112,7 +115,7 @@ export function compilePaths(
     }
 
     // Add operations, removing duplicated path params
-    for (const { method, operation, inferred } of operations) {
+    for (const { method, operation, inferred, resourceContext } of operations) {
       const filteredOperation = { ...operation };
 
       // Replace default responses with $ref
@@ -222,6 +225,46 @@ function compileRouteOperationWithRefs(
   const parameterRefs = getParameterRefsForRoute(route, inferred);
   if (parameterRefs.length > 0) {
     operation.parameters = [...(operation.parameters || []), ...parameterRefs];
+  }
+
+  // Add parameters.target if route.query is a ComponentRef or RefUsage<ComponentRef>
+  // This happens after inferred params are added so we have the full parameter list
+  if (route.query) {
+    let queryRef: ComponentRef | undefined;
+    if (isComponentRef(route.query)) {
+      queryRef = route.query;
+    } else if (isRefUsage(route.query) && isComponentRef(route.query.ref)) {
+      queryRef = route.query.ref;
+    }
+
+    if (queryRef) {
+      const schemaName = resolver.schemas.get(queryRef.id);
+      // Use schemaName from resolver, or fallback to queryRef.id
+      const finalSchemaName = schemaName || queryRef.id;
+      if (finalSchemaName) {
+        const querySchemaRef = `#/components/schemas/${finalSchemaName}`;
+        const operationParameterRefs = (operation.parameters || [])
+          .map((p) => {
+            if (typeof p === 'object' && p !== null && '$ref' in p) {
+              return (p as { $ref: string }).$ref;
+            }
+            return undefined;
+          })
+          .filter(Boolean) as string[];
+
+        const parameterTargetMeta = createOperationParameterTargetMeta({
+          querySchemaRef,
+          operationParameterRefs,
+        });
+
+        if (parameterTargetMeta) {
+          // Directly set x-codegen with parameters.target
+          (operation as unknown as Record<string, unknown>)['x-codegen'] = {
+            parameters: parameterTargetMeta,
+          };
+        }
+      }
+    }
   }
 
   return operation;

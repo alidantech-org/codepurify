@@ -6,6 +6,7 @@ import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isEngineRef } from '../../validation/ref-guards.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
 import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import type { EngineRef } from '../../refs/ref.types.js';
 import type {
   InferredParameterComponent,
   InferredRequestBodyComponent,
@@ -46,11 +47,14 @@ function compileInferredParameters(
       schema,
     };
 
-    // Add target metadata
-    const targetRef = extractSchemaTargetRef(schema);
-    if (targetRef) {
-      const metadata = { target: targetRef };
-      applyCodegenMetadata(component, metadata as CodegenMetadata);
+    // Add target metadata - resolve the schema ref from the parameter's ref
+    const ref = isRefUsage(param.schema) ? param.schema.ref : param.schema;
+    if (isEngineRef(ref) && ref.id) {
+      const schemaName = resolver.schemas.get(ref.id);
+      if (schemaName) {
+        const metadata = { target: { $ref: `#/components/schemas/${schemaName}` } };
+        applyCodegenMetadata(component, metadata as CodegenMetadata);
+      }
     }
 
     result[name] = component;
@@ -108,35 +112,6 @@ function describeUnknownRef(value: unknown): Record<string, unknown> {
   };
 }
 
-function extractSchemaTargetRef(schema: unknown): { $ref: string } | undefined {
-  if (!schema || typeof schema !== 'object') return undefined;
-
-  const schemaObj = schema as Record<string, unknown>;
-
-  // Direct $ref
-  if (typeof schemaObj.$ref === 'string') {
-    return { $ref: schemaObj.$ref };
-  }
-
-  // Array items $ref
-  if (schemaObj.type === 'array' && typeof schemaObj.items === 'object' && schemaObj.items !== null) {
-    const items = schemaObj.items as Record<string, unknown>;
-    if (typeof items.$ref === 'string') {
-      return { $ref: items.$ref };
-    }
-  }
-
-  // anyOf with single ref
-  if (Array.isArray(schemaObj.anyOf) && schemaObj.anyOf.length === 1) {
-    const first = schemaObj.anyOf[0] as Record<string, unknown>;
-    if (typeof first.$ref === 'string') {
-      return { $ref: first.$ref };
-    }
-  }
-
-  return undefined;
-}
-
 function compileInferredRequestBodies(
   requestBodies: Map<string, InferredRequestBodyComponent>,
   resolver: RefResolver,
@@ -158,11 +133,14 @@ function compileInferredRequestBodies(
       },
     };
 
-    // Add target metadata
-    const targetRef = extractSchemaTargetRef(compiledSchema);
-    if (targetRef) {
-      const metadata = { target: targetRef };
-      applyCodegenMetadata(component, metadata as CodegenMetadata);
+    // Add target metadata - resolve schema ref from the body's ref
+    const ref = isRefUsage(body.schema) ? body.schema.ref : body.schema;
+    if (isEngineRef(ref) && ref.id) {
+      const schemaName = resolver.schemas.get(ref.id);
+      if (schemaName) {
+        const metadata = { target: { $ref: `#/components/schemas/${schemaName}` } };
+        applyCodegenMetadata(component, metadata as CodegenMetadata);
+      }
     }
 
     result[name] = component;
@@ -197,12 +175,15 @@ function compileInferredResponses(
         },
       };
 
-      // Add target metadata
-      if (compiledSchema) {
-        const targetRef = extractSchemaTargetRef(compiledSchema);
-        if (targetRef) {
-          const metadata = { target: targetRef };
-          applyCodegenMetadata(component, metadata as CodegenMetadata);
+      // Add target metadata - resolve schema ref from the response's ref
+      if (schema) {
+        const ref = isRefUsage(schema) ? schema.ref : schema;
+        if (isEngineRef(ref) && ref.id) {
+          const schemaName = resolver.schemas.get(ref.id);
+          if (schemaName) {
+            const metadata = { target: { $ref: `#/components/schemas/${schemaName}` } };
+            applyCodegenMetadata(component, metadata as CodegenMetadata);
+          }
         }
       }
 

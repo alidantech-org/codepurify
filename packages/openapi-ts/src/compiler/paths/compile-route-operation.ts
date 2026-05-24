@@ -19,6 +19,7 @@ import { compileRouteParameters } from './compile-route-parameters.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';
+import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
 
 export function compileRouteOperation(
   route: RouteDefinition,
@@ -48,26 +49,9 @@ export function compileRouteOperation(
     operation.requestBody = compileRequestBody(route.body, resolver);
   }
 
+  // Apply route.meta if present (for other metadata)
   if (route.meta) {
     const codegenMeta: CodegenMetadata = route.meta;
-
-    // Add target if route.query is a ComponentRef or RefUsage<ComponentRef>
-    if (route.query) {
-      let queryRef: ComponentRef | undefined;
-      if (isComponentRef(route.query)) {
-        queryRef = route.query;
-      } else if (isRefUsage(route.query) && isComponentRef(route.query.ref)) {
-        queryRef = route.query.ref;
-      }
-
-      if (queryRef) {
-        const schemaName = resolver.schemas.get(queryRef.id);
-        if (schemaName) {
-          (codegenMeta as any).target = { $ref: `#/components/schemas/${schemaName}` };
-        }
-      }
-    }
-
     applyCodegenMetadata(operation as unknown as Record<string, unknown>, codegenMeta);
   }
 
