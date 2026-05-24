@@ -7,8 +7,10 @@ import type {
   RouteBodyObjectInput,
 } from '../../routes/route.types.js';
 import type { VersionContract } from '../../version/version-contract.types.js';
+import type { CompilerContext } from '../compiler-context.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
 import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { XCodegenDtoRole } from '../../sdk/codegen-extension.types.js';
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import type { RequestBodyRef, ResponseRef, ComponentRef } from '../../refs/ref.types.js';
@@ -18,13 +20,24 @@ import { compileRouteParameters } from './compile-route-parameters.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';
+import { recordDtoRoleUsage } from '../dto-role-usage.js';
 
 export function compileRouteOperation(
   route: RouteDefinition,
   resolver: RefResolver,
   defaultResponses: Record<number, ResponseRef | RouteResponseInput> = {},
   contract?: VersionContract,
+  context?: CompilerContext,
 ): OpenApiOperation {
+  // Record DTO role usage for route properties
+  if (context?.dtoRoleUsage) {
+    recordDtoRoleUsage(route.query, XCodegenDtoRole.query, context.dtoRoleUsage);
+    recordDtoRoleUsage(route.body, XCodegenDtoRole.body, context.dtoRoleUsage);
+    recordDtoRoleUsage(route.response, XCodegenDtoRole.response, context.dtoRoleUsage);
+    recordDtoRoleUsage(route.responses, XCodegenDtoRole.response, context.dtoRoleUsage);
+    recordDtoRoleUsage(route.params, XCodegenDtoRole.params, context.dtoRoleUsage);
+  }
+
   const operation: OpenApiOperation = {
     operationId: route.operationId,
     tags: route.tags,

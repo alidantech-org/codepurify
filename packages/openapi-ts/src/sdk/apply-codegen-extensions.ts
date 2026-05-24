@@ -1,6 +1,7 @@
 import { CODEGEN_EXTENSION_KEY } from './codegen-extension.keys.js';
 import { XCodegenKind, type CodegenMetadata } from './codegen-extension.types.js';
 import { resolveCodegenKind, stripNonObjectInheritanceMetadata } from './resolve-codegen-kind.js';
+import type { CompilerContext } from '../compiler/compiler-context.js';
 
 export type CodegenExtensionTarget = Record<string, unknown>;
 
@@ -50,12 +51,16 @@ function validateCodegenMetadata(metadata: CodegenMetadata): void {
   //   throw new Error('x-codegen.role is required when x-codegen.kind is "dto".');
   // }
 
-  if (metadata.kind !== XCodegenKind.dto && 'role' in metadata) {
-    throw new Error('x-codegen.role is only allowed when x-codegen.kind is "dto".');
+  if (metadata.kind !== XCodegenKind.dto && ('role' in metadata || 'roles' in metadata)) {
+    throw new Error('x-codegen.role and x-codegen.roles are only allowed when x-codegen.kind is "dto".');
   }
 }
 
-export function applyCodegenMetadata<TSchema extends Record<string, unknown>>(schema: TSchema, metadata: CodegenMetadata): TSchema {
+export function applyCodegenMetadata<TSchema extends Record<string, unknown>>(
+  schema: TSchema,
+  metadata: CodegenMetadata,
+  context?: CompilerContext,
+): TSchema {
   const resolvedKind = resolveCodegenKind(schema, metadata.kind);
 
   let finalMetadata: CodegenMetadata = {
@@ -65,6 +70,12 @@ export function applyCodegenMetadata<TSchema extends Record<string, unknown>>(sc
 
   if (!isObjectResolvedKind(resolvedKind)) {
     finalMetadata = stripNonObjectInheritanceMetadata(finalMetadata) as unknown as CodegenMetadata;
+  }
+
+  // Apply DTO role usage from context if this is a DTO component
+  if (resolvedKind === XCodegenKind.dto && context?.dtoRoleUsage) {
+    // We need the ref id to look up role usage - this is passed separately in the caller
+    // For now, we'll handle this in the caller by enriching metadata before calling this function
   }
 
   validateCodegenMetadata(finalMetadata);

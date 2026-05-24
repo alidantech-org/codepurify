@@ -3,21 +3,28 @@ import type { SchemaComponentDefinition, SchemaComponentValue } from '../../comp
 import type { ComponentRef, PropertyRef, ModelRef, EngineRef } from '../../refs/ref.types.js';
 import type { ArrayRef, ExtendedRef } from '../../refs/ref-wrapper.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
+import type { CompilerContext } from '../compiler-context.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import { XCodegenKind, XCodegenDtoRole, type CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import { normalizeExtendWithInput, normalizeExtendWithInputWithSource } from './normalize-extend-with.js';
 
-export function compileComponentSchema(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
+export function compileComponentSchema(
+  definition: SchemaComponentDefinition,
+  ref?: ComponentRef,
+  context?: CompilerContext,
+): Record<string, unknown> {
   // Handle RefUsage with extendWith (allOf)
   if (isRefUsage(definition.value)) {
-    return compileExtendedSchemaComponent(definition, ref);
+    return compileExtendedSchemaComponent(definition, ref, context);
   }
 
   // Handle direct EngineRef (alias)
   if (isEngineRef(definition.value)) {
     const refSchema = { $ref: `#/components/schemas/${definition.value.name}` };
     if (ref?.meta) {
-      return applyCodegenMetadata(refSchema, ref.meta);
+      const enrichedMeta = enrichDtoRoleMetadata(ref.meta, ref.id, context);
+      return applyCodegenMetadata(refSchema, enrichedMeta, context);
     }
     return refSchema;
   }
@@ -35,7 +42,8 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
   }
 
   if (ref?.meta) {
-    return applyCodegenMetadata(schema, ref.meta);
+    const enrichedMeta = enrichDtoRoleMetadata(ref.meta, ref.id, context);
+    return applyCodegenMetadata(schema, enrichedMeta, context);
   }
 
   return schema;
@@ -45,7 +53,11 @@ function compileComponentFields(fields: ComponentFieldMap): Record<string, unkno
   return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, compileCompositionValue(value)]));
 }
 
-function compileExtendedSchemaComponent(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
+function compileExtendedSchemaComponent(
+  definition: SchemaComponentDefinition,
+  ref?: ComponentRef,
+  context?: CompilerContext,
+): Record<string, unknown> {
   const usage = definition.value as RefUsage<EngineRef>;
   const baseRef = usage.ref as ComponentRef;
   const extendWith = usage.usage.extendWith;
@@ -74,7 +86,8 @@ function compileExtendedSchemaComponent(definition: SchemaComponentDefinition, r
   const schema: Record<string, unknown> = { allOf };
 
   if (ref?.meta) {
-    return applyCodegenMetadata(schema, ref.meta);
+    const enrichedMeta = enrichDtoRoleMetadata(ref.meta, ref.id, context);
+    return applyCodegenMetadata(schema, enrichedMeta, context);
   }
 
   return schema;
@@ -82,6 +95,47 @@ function compileExtendedSchemaComponent(definition: SchemaComponentDefinition, r
 
 function isEngineRef(value: unknown): value is EngineRef {
   return !!value && typeof value === 'object' && 'kind' in value && 'id' in value && 'name' in value;
+}
+
+function enrichDtoRoleMetadata(metadata: CodegenMetadata, refId: string, context?: CompilerContext): CodegenMetadata {
+  // Only enrich DTO metadata
+  if (metadata.kind !== XCodegenKind.dto) {
+    return metadata;
+  }
+
+  // If no context or role usage map, return as-is
+  if (!context?.dtoRoleUsage) {
+    return metadata;
+  }
+
+  const roles = context.dtoRoleUsage.get(refId);
+
+  // If no roles recorded, return as-is
+  if (!roles || roles.size === 0) {
+    return metadata;
+  }
+
+  // If metadata already has a role, don't override (entity helpers have pre-set roles)
+  if (metadata.role) {
+    return metadata;
+  }
+
+  // Convert Set to array
+  const rolesArray = Array.from(roles);
+
+  // If single role, use 'role' field
+  if (rolesArray.length === 1) {
+    return {
+      ...metadata,
+      role: rolesArray[0],
+    };
+  }
+
+  // If multiple roles, use 'roles' field
+  return {
+    ...metadata,
+    roles: rolesArray,
+  };
 }
 
 function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {

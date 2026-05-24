@@ -166,7 +166,7 @@ export interface XCodegenDtoMeta extends XCodegenBaseMeta {
   readonly kind: typeof XCodegenKind.dto;
 
   /**
-   * DTO role.
+   * DTO role (single role).
    *
    * request  = generic request DTO
    * response = response DTO
@@ -176,8 +176,18 @@ export interface XCodegenDtoMeta extends XCodegenBaseMeta {
    *
    * Role is optional and should be determined by route usage.
    * Schemas defined via defineSchemas initially have no role.
+   *
+   * If a DTO is used in multiple roles, use `roles` instead.
    */
   readonly role?: XCodegenDtoRole;
+
+  /**
+   * DTO roles (multiple roles).
+   *
+   * Used when a DTO is reused in multiple contexts (e.g., both body and response).
+   * If only one role applies, use `role` instead.
+   */
+  readonly roles?: readonly XCodegenDtoRole[];
 }
 
 export type CodegenMetadata = XCodegenPrimitiveMeta | XCodegenEnumMeta | XCodegenModelMeta | XCodegenDtoMeta;

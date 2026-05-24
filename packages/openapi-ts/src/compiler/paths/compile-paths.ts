@@ -13,6 +13,8 @@ import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import type { ComponentRef } from '../../refs/ref.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';
+import { recordDtoRoleUsage } from '../dto-role-usage.js';
+import { XCodegenDtoRole } from '../../sdk/codegen-extension.types.js';
 
 export function compilePaths(
   contract: VersionContract,
@@ -51,7 +53,7 @@ export function compilePaths(
 
         paths[fullPath] ??= {};
 
-        paths[fullPath][route.method] = compileRouteOperationWithRefs(route, resolver, inferred, context);
+        paths[fullPath][route.method] = compileRouteOperationWithRefs(route, resolver, inferred, context, contract);
       }
     }
   }
@@ -109,53 +111,22 @@ function compileRouteOperationWithRefs(
   resolver: RefResolver,
   inferred: InferredRouteComponents,
   context: CompilerContext,
+  contract?: VersionContract,
 ): OpenApiOperation {
-  const operation: OpenApiOperation = {
-    operationId: route.operationId,
-    tags: route.tags,
-    summary: route.summary,
-    description: route.description,
-    responses: compileResponsesWithRefs(route, inferred),
-  };
-
-  // Use component refs for parameters
-  const routeParams = getParameterRefsForRoute(route, inferred);
-  if (routeParams.length > 0) {
-    operation.parameters = routeParams;
-  }
-
-  // Use component ref for request body
-  if (route.body) {
+  // Record DTO role usage for inferred components
+  if (context?.dtoRoleUsage) {
+    for (const param of inferred.parameters.values()) {
+      recordDtoRoleUsage(param.schema, XCodegenDtoRole.params, context.dtoRoleUsage);
+    }
     for (const body of inferred.requestBodies.values()) {
-      operation.requestBody = { $ref: `#/components/requestBodies/${body.name}` };
-      break;
+      recordDtoRoleUsage(body.schema, XCodegenDtoRole.body, context.dtoRoleUsage);
+    }
+    for (const response of inferred.responses.values()) {
+      recordDtoRoleUsage(response.schema, XCodegenDtoRole.response, context.dtoRoleUsage);
     }
   }
 
-  // Add x-codegen metadata with target if route.query is a ComponentRef or RefUsage<ComponentRef>
-  if (route.meta) {
-    const codegenMeta: CodegenMetadata = route.meta;
-
-    if (route.query) {
-      let queryRef: ComponentRef | undefined;
-      if (isComponentRef(route.query)) {
-        queryRef = route.query;
-      } else if (isRefUsage(route.query) && isComponentRef(route.query.ref)) {
-        queryRef = route.query.ref;
-      }
-
-      if (queryRef) {
-        const schemaName = resolver.schemas.get(queryRef.id);
-        if (schemaName) {
-          (codegenMeta as any).target = { $ref: `#/components/schemas/${schemaName}` };
-        }
-      }
-    }
-
-    return applyCodegenMetadata(operation as unknown as Record<string, unknown>, codegenMeta) as unknown as OpenApiOperation;
-  }
-
-  return operation;
+  return compileRouteOperation(route, resolver, contract?.defaultResponses ?? {}, contract, context);
 }
 
 function getParameterRefsForRoute(route: RouteDefinition, inferred: InferredRouteComponents): unknown[] {

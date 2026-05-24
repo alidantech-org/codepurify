@@ -1,5 +1,6 @@
 import type { VersionContract } from '../version/version-contract.types.js';
 import type { CompilerContext } from './compiler-context.js';
+import { resolveCompilerContext } from './compiler-context.js';
 import { OpenApiVersion } from '../openapi/openapi-version.js';
 import type { OpenApiDocument } from '../openapi/openapi.types.js';
 import { validateContract } from '../validation/validate-contract.js';
@@ -9,12 +10,14 @@ import type { CompileOptions } from './compile-options.types.js';
 import type { CompileResult } from './compile-result.types.js';
 import { compileInferredComponents } from './paths/compile-inferred-components.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
+import { buildSchemaResolver } from './schemas/build-schema-resolver.js';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {
+  const resolvedContext = resolveCompilerContext(context);
   const shouldValidate = options.validate ?? true;
   const validation = shouldValidate ? validateContract(contract) : { valid: true, issues: [] };
 
-  const document = createOpenApiShell(contract, options, context);
+  const document = createOpenApiShell(contract, options, resolvedContext);
 
   if (!validation.valid) {
     return {
@@ -32,8 +35,23 @@ export function compileOpenApi(contract: VersionContract, options: CompileOption
 }
 
 function createOpenApiShell(contract: VersionContract, options: CompileOptions, context: CompilerContext): OpenApiDocument {
-  const compiledComponents = compileComponents(contract, context);
-  const { paths, inferredComponents } = compilePaths(contract, compiledComponents.resolver, context);
+  // First, build the schema resolver without compiling components yet
+  // This is needed for compilePaths to resolve refs
+  const resolver = buildSchemaResolver(
+    contract.resources,
+    contract.properties,
+    contract.schemaComponents,
+    contract.parameterComponents,
+    contract.requestBodyComponents,
+    contract.responseComponents,
+    context,
+  );
+
+  // Compile paths first to collect DTO role usage
+  const { paths, inferredComponents } = compilePaths(contract, resolver, context);
+
+  // Now compile components with the populated dtoRoleUsage map, reusing the resolver
+  const compiledComponents = compileComponents(contract, context, resolver);
   const compiledInferred = compileInferredComponents(inferredComponents, compiledComponents.resolver, context);
 
   const document = {
