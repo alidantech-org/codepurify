@@ -10,6 +10,7 @@ import { mergeInheritedFields, normalizeExtends } from './entity-inheritance.js'
 import { createPropertyRefs } from './property-ref.factory.js';
 import { PropertyKind } from './property-kind.js';
 import type {
+  EntityFieldRefs,
   EntityInheritanceInput,
   EntityLocalFields,
   EntityOptions,
@@ -108,7 +109,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
     name: TName,
     fields: TFields,
     entityOptions: EntityOptions<TExtends> = {},
-  ): EntityRegistryResult<TName, TFields, Record<string, SchemaField>> {
+  ): EntityRegistryResult<TName, TFields, ExtractInheritedFields<TExtends>> {
     return createEntityRegistry(name, fields, entityOptions);
   }
 
@@ -121,7 +122,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
       name: TName,
       fields: NoExtraEntityKeys<TEntity, TFields>,
       entityOptions: EntityOptions<TExtends> = {},
-    ): EntityRegistryResult<TName, TFields, Record<string, SchemaField>> => {
+    ): EntityRegistryResult<TName, TFields, ExtractInheritedFields<TExtends>> => {
       return createEntityRegistry(name, fields, entityOptions);
     };
   }
@@ -134,7 +135,7 @@ export function defineProperties(options: DefinePropertiesOptions) {
     name: TName,
     fields: TFields,
     entityOptions: EntityOptions<TExtends>,
-  ): EntityRegistryResult<TName, TFields, Record<string, SchemaField>> {
+  ): EntityRegistryResult<TName, TFields, ExtractInheritedFields<TExtends>> {
     const inheritedRefs = normalizeExtends(entityOptions.extends);
     const mergedFields = mergeInheritedFields(entityOptions.extends, fields as Record<string, SchemaField>) as TFields &
       ExtractInheritedFields<TExtends>;
@@ -160,12 +161,15 @@ export function defineProperties(options: DefinePropertiesOptions) {
 
     refs[name] = entityRefs as unknown as EntityPropertyRefs;
 
+    type FinalSourceFields = TFields & ExtractInheritedFields<TExtends>;
+    type FinalFieldRefs = EntityFieldRefs<FinalSourceFields>;
+
     return {
       ...registry(),
-      ref: entityRefs as EntityPropertyRefs<PropertyFieldRefMap<TFields>>,
+      ref: entityRefs as EntityPropertyRefs<FinalFieldRefs>,
       namedRef: {
         [name]: entityRefs,
-      } as Record<TName, EntityPropertyRefs<PropertyFieldRefMap<TFields>>>,
+      } as Record<TName, EntityPropertyRefs<FinalFieldRefs>>,
     };
   }
 

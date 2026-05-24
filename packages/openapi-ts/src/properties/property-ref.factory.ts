@@ -12,18 +12,18 @@ import { isRefUsage } from '../validation/ref-usage-guards.js';
 
 import type { DefinePropertiesOptions } from './define-properties.js';
 import { PropertyKind } from './property-kind.js';
-import type { PropertyRefGroup } from './property.types.js';
+import type { PropertyFieldRefMap, PropertyRefGroup } from './property.types.js';
 
-export function createPropertyRefs(
+export function createPropertyRefs<TFields extends SchemaFieldMap>(
   options: DefinePropertiesOptions,
   name: string,
-  fields: SchemaFieldMap,
+  fields: TFields,
   sourceKind: PropertyKind,
   toZod?: (ref: unknown) => z.ZodTypeAny,
-): PropertyRefGroup {
+): PropertyFieldRefMap<TFields> {
   return Object.fromEntries(
     Object.entries(fields).map(([key, field]) => [key, createPropertyRef(options, name, key, sourceKind, field, toZod)]),
-  );
+  ) as PropertyFieldRefMap<TFields>;
 }
 
 export function createPropertyRef(

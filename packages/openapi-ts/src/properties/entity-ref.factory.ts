@@ -10,25 +10,25 @@ import { createEntityQueryHelpers } from './entity-query-ref.factory.js';
 import { createModelRef } from './model-ref.factory.js';
 import { createPropertyRefs } from './property-ref.factory.js';
 import { PropertyKind } from './property-kind.js';
-import type { EntityOptions, EntityPropertyRefs, PropertyRefGroup } from './property.types.js';
+import type { EntityFieldRefs, EntityOptions, EntityPropertyRefs, PropertyRefGroup } from './property.types.js';
 
 import { withRefMethods } from '../refs/ref-methods.js';
 
 import { resolveModelEmission } from '../config/resolve-model-emission.js';
 import { resolveQueryModelOptions } from '../config/resolve-query-model-options.js';
 
-export function createEntityRefs(
+export function createEntityRefs<TFields extends Record<string, SchemaField>>(
   options: DefinePropertiesOptions,
   name: string,
-  fields: Record<string, SchemaField>,
+  fields: TFields,
   inherited: readonly EntityPropertyRefs[] = [],
   isAbstract = false,
   toZod?: (ref: unknown) => z.ZodTypeAny,
   entityOptions?: EntityOptions,
-): EntityPropertyRefs {
+): EntityPropertyRefs<EntityFieldRefs<TFields>> {
   const sourceFields = fields as SchemaFieldMap;
 
-  const fieldRefs = createPropertyRefs(options, name, sourceFields, PropertyKind.entity, toZod);
+  const fieldRefs = createPropertyRefs(options, name, sourceFields, PropertyKind.entity, toZod) as EntityFieldRefs<TFields>;
 
   const modelEmission = resolveModelEmission(options.modelEmission, entityOptions?.emitModels);
 
