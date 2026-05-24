@@ -68,15 +68,23 @@ export function compileRouteParameters(
 
 function compileParameterField(param: QueryParameterFieldValue): unknown {
   const ref = isRefUsage(param) ? param.ref : param;
-  const nullable = isRefUsage(param) ? param.nullable : undefined;
+  const nullable = isRefUsage(param) ? param.usage.nullable : undefined;
+  const array = isRefUsage(param) ? param.usage.array : undefined;
 
   if (!ref.id) {
     throw new Error('Cannot create query parameter schema: missing ref id.');
   }
 
-  const schema = { $ref: `#pending/${ref.id}` };
+  let schema: Record<string, unknown> = { $ref: `#pending/${ref.id}` };
 
-  if (nullable) {
+  if (array === true) {
+    schema = {
+      type: 'array',
+      items: schema,
+    };
+  }
+
+  if (nullable === true) {
     return {
       anyOf: [schema, { type: 'null' }],
     };

@@ -2,6 +2,7 @@ import type { ModelRef, PropertyRef } from '../../refs/ref.types.js';
 import type { SchemaField } from '../../schema/schema.types.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
 import {
+  XCodegenAccess,
   XCodegenDtoRole,
   XCodegenEntityVariant,
   XCodegenKind,
@@ -16,44 +17,42 @@ import { SchemaKind } from '../../schema/schema-kind.js';
 import { compileQueryModelSchema, type CompileQueryModelContext, type EnumComponentExtraction } from './compile-query-model-schema.js';
 
 function isQueryModel(ref: ModelRef): boolean {
-  return ref.modelKey.startsWith('query-');
+  return ref.modelKey === 'query-filter';
 }
 
 export function compileModelSchema(
   ref: ModelRef,
   context?: CompileQueryModelContext,
 ): { schema: Record<string, unknown>; enumComponents?: EnumComponentExtraction[] } {
-  // Query models use dedicated compiler for their own schema
+  // Query-filter models use dedicated compiler and return immediately to avoid model metadata override
+  if (isQueryModel(ref)) {
+    return compileQueryModelSchema(ref, context);
+  }
+
+  // Normal model compilation
   let ownSchema: Record<string, unknown>;
   let enumComponents: EnumComponentExtraction[] | undefined;
 
-  if (isQueryModel(ref)) {
-    const queryResult = compileQueryModelSchema(ref, context);
-    ownSchema = queryResult.schema;
-    enumComponents = queryResult.enumComponents;
-  } else {
-    const parentRefs = ref.inherits ?? [];
-    const inheritedFieldNames = new Set(parentRefs.flatMap((inherit) => inherit.fields ?? []));
+  const parentRefs = ref.inherits ?? [];
+  const inheritedFieldNames = new Set(parentRefs.flatMap((inherit) => inherit.fields ?? []));
 
-    // Filter to only own fields (not inherited)
-    const ownFields = Object.fromEntries(Object.entries(ref.fields ?? {}).filter(([key]) => !inheritedFieldNames.has(key)));
+  // Filter to only own fields (not inherited)
+  const ownFields = Object.fromEntries(Object.entries(ref.fields ?? {}).filter(([key]) => !inheritedFieldNames.has(key)));
 
-    ownSchema = {
-      type: 'object',
-      properties: Object.fromEntries(
-        Object.entries(ownFields).map(([key, fieldRef]) => [key, compileModelFieldRef(fieldRef, ref.sourceFields?.[key])]),
-      ),
-    };
+  ownSchema = {
+    type: 'object',
+    properties: Object.fromEntries(
+      Object.entries(ownFields).map(([key, fieldRef]) => [key, compileModelFieldRef(fieldRef, ref.sourceFields?.[key])]),
+    ),
+  };
 
-    const required = getRequiredFields(ref, ownFields);
+  const required = getRequiredFields(ref, ownFields);
 
-    if (required.length > 0) {
-      ownSchema.required = required;
-    }
+  if (required.length > 0) {
+    ownSchema.required = required;
   }
 
   // Apply inheritance wrapping for all models (including query models)
-  const parentRefs = ref.inherits ?? [];
   if (parentRefs.length > 0) {
     const schema = {
       allOf: [...parentRefs.map((inherit) => ({ $ref: inherit.modelRef.openapiRef ?? `#pending/${inherit.modelRef.id}` })), ownSchema],
@@ -187,13 +186,12 @@ function toCodegenMetadata(ref: ModelRef, modelKey?: string, parentRefs?: ModelR
   const queryBehavior = modelKey ? queryBehaviorFromModelKey(modelKey) : undefined;
   const entityName = inferEntityNameFromModelRef(ref);
 
-  // Determine variant based on modelKey
-  const variant: XCodegenEntityVariant = modelKey?.includes('partial') ? XCodegenEntityVariant.partial : XCodegenEntityVariant.full;
-
+  // Preserve entity metadata from ref.meta, only override variant if needed
   const entityMeta: XCodegenEntityMeta | undefined = entityName
     ? {
         name: entityName,
-        variant,
+        variant: ref.meta?.entity?.variant ?? (modelKey?.includes('partial') ? XCodegenEntityVariant.partial : XCodegenEntityVariant.full),
+        access: ref.meta?.entity?.access ?? XCodegenAccess.default,
       }
     : undefined;
 

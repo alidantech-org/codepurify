@@ -51,7 +51,8 @@ function compileInferredParameters(
 
 function compileParameterSchema(param: InferredQueryParameterSchema, resolver: RefResolver): unknown {
   const ref = isRefUsage(param) ? param.ref : param;
-  const nullable = isRefUsage(param) ? param.nullable : undefined;
+  const nullable = isRefUsage(param) ? param.usage.nullable : undefined;
+  const array = isRefUsage(param) ? param.usage.array : undefined;
 
   if (!isEngineRef(ref)) {
     throw new Error(
@@ -63,9 +64,16 @@ function compileParameterSchema(param: InferredQueryParameterSchema, resolver: R
     throw new Error('Cannot create pending ref for inferred component: missing ref id.');
   }
 
-  const schema = { $ref: `#pending/${ref.id}` };
+  let schema: Record<string, unknown> = { $ref: `#pending/${ref.id}` };
 
-  if (nullable) {
+  if (array === true) {
+    schema = {
+      type: 'array',
+      items: schema,
+    };
+  }
+
+  if (nullable === true) {
     return {
       anyOf: [schema, { type: 'null' }],
     };

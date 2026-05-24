@@ -387,6 +387,8 @@ function emitEntityValueSchema(input: {
       },
       {
         kind: XCodegenKind.enum,
+        resource: ref.meta?.resource,
+        entity: ref.meta?.entity,
       },
     );
     return;

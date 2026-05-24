@@ -112,17 +112,33 @@ function compileBasicFilterQuerySchema(fields: Record<string, unknown>): Record<
 }
 
 function withQueryInheritance(schema: Record<string, unknown>, parentRefs: ModelRef['inherits']): Record<string, unknown> {
-  if (!parentRefs || parentRefs.length === 0) {
-    return schema;
+  if (!parentRefs || parentRefs.length === 0) return schema;
+
+  const parentRefsAsAllOf = parentRefs.map((parent) => ({
+    $ref: parent.modelRef.openapiRef ?? `#pending/${parent.modelRef.id}`,
+  }));
+
+  if (Array.isArray(schema.allOf)) {
+    const existingRefs = new Set(
+      schema.allOf
+        .filter((item): item is { $ref: string } => {
+          return !!item && typeof item === 'object' && '$ref' in item && typeof item.$ref === 'string';
+        })
+        .map((item) => item.$ref),
+    );
+
+    const missingParents = parentRefsAsAllOf.filter((item) => !existingRefs.has(item.$ref));
+
+    if (missingParents.length === 0) return schema;
+
+    return {
+      ...schema,
+      allOf: [...missingParents, ...schema.allOf],
+    };
   }
 
   return {
-    allOf: [
-      ...parentRefs.map((parent) => ({
-        $ref: parent.modelRef.openapiRef ?? `#pending/${parent.modelRef.id}`,
-      })),
-      schema,
-    ],
+    allOf: [...parentRefsAsAllOf, schema],
   };
 }
 
