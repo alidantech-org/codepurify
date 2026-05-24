@@ -69,39 +69,33 @@ export interface CompiledComponentsResult {
   readonly resolver: SchemaResolver;
 }
 
-export function compileComponents(
-  contract: VersionContract,
-  context: CompilerContext,
-  resolver?: SchemaResolver,
-): CompiledComponentsResult {
-  const finalResolver =
-    resolver ??
-    buildSchemaResolver(
-      contract.resources,
-      contract.properties,
-      contract.schemaComponents,
-      contract.parameterComponents,
-      contract.requestBodyComponents,
-      contract.responseComponents,
-      context,
-    );
+export function compileComponents(contract: VersionContract, context: CompilerContext): CompiledComponentsResult {
+  const resolver = buildSchemaResolver(
+    contract.resources,
+    contract.properties,
+    contract.schemaComponents,
+    contract.parameterComponents,
+    contract.requestBodyComponents,
+    contract.responseComponents,
+    context,
+  );
 
   const schemas: Record<string, unknown> = {};
   const parameters: Record<string, unknown> = {};
   const requestBodies: Record<string, unknown> = {};
   const responses: Record<string, unknown> = {};
 
-  emitRootSchemaComponents(contract, schemas, finalResolver, context);
-  emitRootParameterComponents(contract, parameters, finalResolver);
-  emitRootRequestBodies(contract, requestBodies, finalResolver);
-  emitRootResponses(contract, responses, finalResolver);
+  emitRootSchemaComponents(contract, schemas, resolver, context);
+  emitRootParameterComponents(contract, parameters, resolver);
+  emitRootRequestBodies(contract, requestBodies, resolver);
+  emitRootResponses(contract, responses, resolver);
 
   for (const resource of contract.resources) {
-    emitResourcePropertyComponents(resource.properties, schemas, finalResolver, context);
-    emitResourceSchemaComponents(resource.schemaComponents, schemas, finalResolver, context);
-    emitResourceParameterComponents(resource.parameterComponents, parameters, finalResolver);
-    emitResourceRequestBodies(resource.requestBodyComponents, requestBodies, finalResolver);
-    emitResourceResponses(resource.responseComponents, responses, finalResolver);
+    emitResourcePropertyComponents(resource.properties, schemas, resolver, context);
+    emitResourceSchemaComponents(resource.schemaComponents, schemas, resolver, context);
+    emitResourceParameterComponents(resource.parameterComponents, parameters, resolver);
+    emitResourceRequestBodies(resource.requestBodyComponents, requestBodies, resolver);
+    emitResourceResponses(resource.responseComponents, responses, resolver);
   }
 
   return {
@@ -111,7 +105,7 @@ export function compileComponents(
       requestBodies,
       responses,
     },
-    resolver: finalResolver,
+    resolver,
   };
 }
 

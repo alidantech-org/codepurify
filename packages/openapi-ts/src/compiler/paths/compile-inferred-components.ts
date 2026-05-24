@@ -4,6 +4,8 @@ import { compilePropertySchema } from '../schemas/compile-property-schema.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isEngineRef } from '../../validation/ref-guards.js';
+import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import type {
   InferredParameterComponent,
   InferredRequestBodyComponent,
@@ -36,12 +38,20 @@ function compileInferredParameters(
   const result: Record<string, unknown> = {};
 
   for (const [name, param] of parameters.entries()) {
+    const schema = compileParameterSchema(param.schema, resolver);
     const component: Record<string, unknown> = {
       name: param.parameterName,
       in: param.in,
       required: param.required,
-      schema: compileParameterSchema(param.schema, resolver),
+      schema,
     };
+
+    // Add target metadata
+    const targetRef = extractSchemaTargetRef(schema);
+    if (targetRef) {
+      const metadata = { target: targetRef };
+      applyCodegenMetadata(component, metadata as CodegenMetadata);
+    }
 
     result[name] = component;
   }
@@ -98,6 +108,35 @@ function describeUnknownRef(value: unknown): Record<string, unknown> {
   };
 }
 
+function extractSchemaTargetRef(schema: unknown): { $ref: string } | undefined {
+  if (!schema || typeof schema !== 'object') return undefined;
+
+  const schemaObj = schema as Record<string, unknown>;
+
+  // Direct $ref
+  if (typeof schemaObj.$ref === 'string') {
+    return { $ref: schemaObj.$ref };
+  }
+
+  // Array items $ref
+  if (schemaObj.type === 'array' && typeof schemaObj.items === 'object' && schemaObj.items !== null) {
+    const items = schemaObj.items as Record<string, unknown>;
+    if (typeof items.$ref === 'string') {
+      return { $ref: items.$ref };
+    }
+  }
+
+  // anyOf with single ref
+  if (Array.isArray(schemaObj.anyOf) && schemaObj.anyOf.length === 1) {
+    const first = schemaObj.anyOf[0] as Record<string, unknown>;
+    if (typeof first.$ref === 'string') {
+      return { $ref: first.$ref };
+    }
+  }
+
+  return undefined;
+}
+
 function compileInferredRequestBodies(
   requestBodies: Map<string, InferredRequestBodyComponent>,
   resolver: RefResolver,
@@ -107,16 +146,26 @@ function compileInferredRequestBodies(
 
   for (const [name, body] of requestBodies.entries()) {
     const schema = typeof body.schema === 'object' && body.schema && 'schema' in body.schema ? body.schema.schema : body.schema;
+    const compiledSchema = compileRouteSchema(schema, resolver);
 
-    result[name] = {
+    const component: Record<string, unknown> = {
       required: body.required,
       description: body.description,
       content: {
         [body.contentType]: {
-          schema: compileRouteSchema(schema, resolver),
+          schema: compiledSchema,
         },
       },
     };
+
+    // Add target metadata
+    const targetRef = extractSchemaTargetRef(compiledSchema);
+    if (targetRef) {
+      const metadata = { target: targetRef };
+      applyCodegenMetadata(component, metadata as CodegenMetadata);
+    }
+
+    result[name] = component;
   }
 
   return result;
@@ -137,15 +186,27 @@ function compileInferredResponses(
     } else if (response.contentType) {
       const schema =
         response.schema && typeof response.schema === 'object' && 'schema' in response.schema ? response.schema.schema : response.schema;
+      const compiledSchema = schema ? compileRouteSchema(schema, resolver) : undefined;
 
-      result[name] = {
+      const component: Record<string, unknown> = {
         description: response.description,
         content: {
           [response.contentType]: {
-            schema: schema ? compileRouteSchema(schema, resolver) : undefined,
+            schema: compiledSchema,
           },
         },
       };
+
+      // Add target metadata
+      if (compiledSchema) {
+        const targetRef = extractSchemaTargetRef(compiledSchema);
+        if (targetRef) {
+          const metadata = { target: targetRef };
+          applyCodegenMetadata(component, metadata as CodegenMetadata);
+        }
+      }
+
+      result[name] = component;
     } else {
       result[name] = {
         description: response.description,
