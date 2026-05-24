@@ -1,6 +1,6 @@
 import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
-import { SdkKind, SdkPlacement } from '../sdk/sdk-extension.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '../sdk/codegen-extension.types.js';
 import type { DefineRoutesInput, RouteDefinition, RouteParameterRegistry, RouteRegistry } from './route.types.js';
 
 export interface DefineRoutesOptions extends OptionalResourceContext {
@@ -52,14 +52,15 @@ function withRouteMeta(options: DefineRoutesOptions, key: string, route: RouteDe
     operationId,
     tags: [options.resource?.tag].filter((tag): tag is string => Boolean(tag)),
     meta: {
-      kind: SdkKind.operation,
-      placement: getPlacement(options),
-      group: options.resource?.group,
-      resource: options.resource?.key,
-      operation: toSnakeCase(key),
-      method: route.method,
-      path: route.path,
-      refId: createScopedId(options, EngineIdPart.operation, key),
+      kind: XCodegenKind.dto,
+      role: XCodegenDtoRole.body,
+      ...(!options.resource ? { shared: true } : {}),
+      resource: options.resource
+        ? {
+            name: options.resource.alias,
+            path: options.resource.folders,
+          }
+        : undefined,
     },
   };
 }
@@ -79,8 +80,4 @@ function createScopedId(options: DefineRoutesOptions, ...parts: string[]): strin
   if (!options.resource) return createEngineId(...parts);
 
   return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
-}
-
-function getPlacement(options: DefineRoutesOptions): SdkPlacement {
-  return options.resource ? SdkPlacement.operationLocal : SdkPlacement.globalShared;
 }

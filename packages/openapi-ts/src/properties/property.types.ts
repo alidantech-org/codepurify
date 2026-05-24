@@ -2,9 +2,33 @@ import type { PropertyKind } from './property-kind.js';
 import type { ModelRef, PropertyRef, ComponentRef } from '../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types.js';
-import type { SdkExtensionMeta } from '../sdk/sdk-extension.types.js';
+import type { CodegenMetadata } from '../sdk/codegen-extension.types.js';
 import type { DeepPartial, ModelEmissionInput, ModelEmissionOptions } from '../config/model-emission-defaults.js';
 import type { QueryModelOptions } from '../config/query-model-defaults.js';
+
+export interface EntityValueRefs {
+  /**
+   * Sort value enum ref.
+   *
+   * Emits:
+   * {Entity}QuerySortValue
+   *
+   * Example values:
+   * +createdAt
+   * -createdAt
+   * +name
+   * -name
+   */
+  readonly querySort: RefWithUsageMethods<PropertyRef>;
+
+  /**
+   * Select value enum ref.
+   *
+   * Emits:
+   * {Entity}QuerySelectValue
+   */
+  readonly querySelect: RefWithUsageMethods<PropertyRef>;
+}
 
 export type EntityFieldInput<TEntity> = Partial<Record<Extract<keyof TEntity, string>, SchemaField>>;
 
@@ -23,7 +47,7 @@ export type UnionToIntersection<TUnion> = (TUnion extends unknown ? (value: TUni
   : never;
 
 export type EntityFieldRefs<TFields extends Record<string, SchemaField>> = {
-  readonly [Key in keyof TFields & string]: PropertyRefGroup[string];
+  readonly [Key in keyof TFields & string]: RefWithUsageMethods<PropertyRef>;
 };
 
 export type EntityFields<TEntity> = {
@@ -38,7 +62,7 @@ export interface PropertyGroupOptions {
 export interface PropertyDefinitionBase {
   readonly name: string;
   readonly fields: PropertyDefinitionFieldMap;
-  readonly meta?: SdkExtensionMeta;
+  readonly meta?: CodegenMetadata;
   readonly emitSchema?: boolean;
   readonly abstract?: boolean;
 }
@@ -51,7 +75,7 @@ export interface EntityPropertyDefinition<TEntity> extends Omit<PropertyDefiniti
   readonly kind: typeof PropertyKind.entity;
   readonly fields: EntityFields<TEntity>;
   readonly extends?: readonly NamedEntityPropertyRegistry<string, PropertyRefGroup, EntityExtensionMap>[];
-  readonly refs?: EntityPropertyRefs | EntityPropertyRefsV2;
+  readonly refs?: EntityPropertyRefs;
 }
 
 export interface ForRefPropertyDefinition extends PropertyDefinitionBase {
@@ -70,56 +94,92 @@ export type PropertyGroupRegistry<TRefs extends PropertyRefGroup = PropertyRefGr
   readonly ref: TRefs;
 };
 
-export interface EntityQueryRefs {
-  readonly exact: RefWithUsageMethods<ModelRef>;
-  readonly search: RefWithUsageMethods<ModelRef>;
-  readonly exactSearch: RefWithUsageMethods<ModelRef>;
-  readonly range: RefWithUsageMethods<ModelRef>;
-  readonly in: RefWithUsageMethods<ModelRef>;
-  readonly exists: RefWithUsageMethods<ModelRef>;
-  readonly sort: RefWithUsageMethods<ModelRef>;
-  readonly select: RefWithUsageMethods<ModelRef>;
-}
-
 export interface EntityPropertyRefs<TFields extends PropertyRefGroup = PropertyRefGroup> {
   readonly name: string;
-  readonly fields: TFields;
-  readonly model: RefWithUsageMethods<ModelRef>;
-  readonly publicModel: RefWithUsageMethods<ModelRef>;
-  readonly partialModel: RefWithUsageMethods<ModelRef>;
-  readonly query: EntityQueryRefs;
-  readonly abstract?: boolean;
-  readonly schemaRef?: string;
-}
 
-export interface EntityPropertyRefsV2<TFields extends Record<string, SchemaField> = Record<string, SchemaField>> {
-  readonly fields: EntityFieldRefs<TFields>;
+  /**
+   * Final resolved field refs:
+   * inherited base fields + own entity fields.
+   */
+  readonly fields: TFields;
+
+  /**
+   * Full default model.
+   *
+   * Emits:
+   * {Entity}Model
+   */
   readonly model: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Full public model.
+   *
+   * Emits:
+   * {Entity}PublicModel
+   */
   readonly publicModel: RefWithUsageMethods<ModelRef>;
-  readonly privateModel: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Full internal model.
+   *
+   * Emits:
+   * {Entity}InternalModel
+   */
   readonly internalModel: RefWithUsageMethods<ModelRef>;
-  readonly systemModel: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Partial default model.
+   *
+   * Emits:
+   * {Entity}PartialModel
+   */
   readonly partialModel: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Partial public model.
+   *
+   * Emits:
+   * {Entity}PublicPartialModel
+   */
   readonly publicPartialModel: RefWithUsageMethods<ModelRef>;
-  readonly privatePartialModel: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Partial internal model.
+   *
+   * Emits:
+   * {Entity}InternalPartialModel
+   */
   readonly internalPartialModel: RefWithUsageMethods<ModelRef>;
-  readonly systemPartialModel: RefWithUsageMethods<ModelRef>;
-  readonly query: EntityQueryRefs;
+
+  /**
+   * Basic field=value query filter model.
+   *
+   * Emits:
+   * {Entity}QueryFilter
+   */
+  readonly queryFilterModel: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Reusable enum/value refs.
+   */
+  readonly values: EntityValueRefs;
+
   readonly abstract?: boolean;
   readonly schemaRef?: string;
+
   readonly modelEmission: ModelEmissionOptions;
   readonly queryModelOptions: QueryModelOptions;
 }
 
 export type AnyEntityRegistryResult = EntityRegistryResult<string, Record<string, SchemaField>, Record<string, SchemaField>>;
 
-export type EntityInheritanceInput = EntityPropertyRefsV2<Record<string, SchemaField>> | AnyEntityRegistryResult;
+export type EntityInheritanceInput = EntityPropertyRefs<PropertyRefGroup> | AnyEntityRegistryResult;
 
 export type ExtractEntityFields<TValue> =
   TValue extends EntityRegistryResult<string, infer TFields, infer TInherited>
     ? TFields & TInherited
-    : TValue extends EntityPropertyRefsV2<infer TFields>
-      ? TFields
+    : TValue extends EntityPropertyRefs
+      ? Record<string, SchemaField>
       : {};
 
 export type ExtractInheritedFields<TExtends> = TExtends extends readonly unknown[]
@@ -131,8 +191,8 @@ export interface EntityRegistryResult<
   TFields extends Record<string, SchemaField>,
   TInheritedFields extends Record<string, SchemaField> = {},
 > extends Omit<PropertyRegistry, 'ref'> {
-  readonly ref: EntityPropertyRefsV2<TFields & TInheritedFields>;
-  readonly namedRef: Record<TName, EntityPropertyRefsV2<TFields & TInheritedFields>>;
+  readonly ref: EntityPropertyRefs<EntityFieldRefs<TFields & TInheritedFields>>;
+  readonly namedRef: Record<TName, EntityPropertyRefs<EntityFieldRefs<TFields & TInheritedFields>>>;
 }
 
 export type PropertyRegistryRef = PropertyRef | PropertyRefGroup | EntityPropertyRefs;

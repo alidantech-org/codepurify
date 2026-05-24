@@ -47,12 +47,9 @@ export function compileRouteOperation(
   }
 
   if (route.meta) {
-    const codegenMeta: CodegenMetadata = {
-      kind: 'operation',
-      resource: route.meta.resource,
-    };
+    const codegenMeta: CodegenMetadata = route.meta;
 
-    // Add querySchema if route.query is a ComponentRef or RefUsage<ComponentRef>
+    // Add target if route.query is a ComponentRef or RefUsage<ComponentRef>
     if (route.query) {
       let queryRef: ComponentRef | undefined;
       if (isComponentRef(route.query)) {
@@ -64,7 +61,7 @@ export function compileRouteOperation(
       if (queryRef) {
         const schemaName = resolver.schemas.get(queryRef.id);
         if (schemaName) {
-          codegenMeta.querySchema = { $ref: `#/components/schemas/${schemaName}` };
+          (codegenMeta as any).target = { $ref: `#/components/schemas/${schemaName}` };
         }
       }
     }

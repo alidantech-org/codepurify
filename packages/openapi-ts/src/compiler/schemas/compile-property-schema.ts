@@ -117,9 +117,26 @@ function compileRef(field: RefSchemaField, mode: ZodSchemaMode): unknown {
 
   // Step 4: Apply nullable from usage
   if (refUsage && getRefNullable(refUsage)) {
-    schema = {
-      anyOf: [schema, { type: 'null' }],
-    };
+    const schemaObj = asObject(schema);
+    // For OpenAPI 3.1, use type arrays for simple nullable primitives
+    if (schemaObj.type && typeof schemaObj.type === 'string') {
+      const primitiveTypes = ['string', 'number', 'integer', 'boolean'];
+      if (primitiveTypes.includes(schemaObj.type)) {
+        const { type, ...rest } = schemaObj;
+        schema = {
+          ...rest,
+          type: [type, 'null'],
+        };
+      } else {
+        schema = {
+          anyOf: [schema, { type: 'null' }],
+        };
+      }
+    } else {
+      schema = {
+        anyOf: [schema, { type: 'null' }],
+      };
+    }
   }
 
   // Step 5: Apply description from field options
@@ -228,6 +245,22 @@ function isRequired(value: SchemaField): boolean {
 function applyNullable(schema: unknown, nullable: boolean | undefined): unknown {
   if (!nullable) return schema;
 
+  const schemaObj = asObject(schema);
+
+  // For OpenAPI 3.1, use type arrays for simple nullable primitives
+  // This is cleaner and avoids classification issues
+  if (schemaObj.type && typeof schemaObj.type === 'string') {
+    const primitiveTypes = ['string', 'number', 'integer', 'boolean'];
+    if (primitiveTypes.includes(schemaObj.type)) {
+      const { type, ...rest } = schemaObj;
+      return {
+        ...rest,
+        type: [type, 'null'],
+      };
+    }
+  }
+
+  // For complex schemas, use anyOf
   return {
     anyOf: [schema, { type: 'null' }],
   };

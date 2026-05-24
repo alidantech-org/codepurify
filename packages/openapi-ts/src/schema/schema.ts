@@ -20,6 +20,7 @@ import type { RefUsage } from '../refs/ref-usage.types.js';
 
 export interface PrimitiveOptions extends SchemaBehaviorOptions {
   query?: false | PrimitiveQueryOptions;
+  sensitive?: boolean;
 }
 
 export interface CompositeOptions extends SchemaBehaviorOptions {}

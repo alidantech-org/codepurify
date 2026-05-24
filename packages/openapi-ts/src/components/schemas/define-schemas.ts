@@ -4,7 +4,7 @@ import type { ComponentRef } from '../../refs/ref.types.js';
 import { withRefMethods } from '../../refs/ref-methods.js';
 import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { SdkKind, SdkPlacement } from '../../sdk/sdk-extension.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '../../sdk/codegen-extension.types.js';
 import type { ComponentFieldMap, ComponentRefMap } from '../component.types.js';
 import type { SchemaComponentDefinition, SchemaComponentRegistry, SchemaComponentValue } from './schema-component.types.js';
 import { compileZodRef } from '../../zod/compile-zod-ref.js';
@@ -65,13 +65,15 @@ function createSchemaRef(
       kind: RefKind.component,
       componentKey: name,
       meta: {
-        kind: SdkKind.dto,
-        placement: getPlacement(options),
-        group: options.resource?.group ?? 'shared',
-        resource: options.resource?.key,
-        component: name,
-        refId,
-        shared: isShared,
+        kind: XCodegenKind.dto,
+        // Do not set role here - role is determined by route usage (query, body, response, params)
+        ...(isShared ? { shared: true } : {}),
+        resource: options.resource
+          ? {
+              name: options.resource.alias,
+              path: options.resource.folders,
+            }
+          : undefined,
       },
     },
     { toZod },
@@ -81,8 +83,4 @@ function createSchemaRef(
 function createScopedId(options: DefineSchemasOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
   return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
-}
-
-function getPlacement(options: DefineSchemasOptions): SdkPlacement {
-  return options.resource ? SdkPlacement.resourceLocal : SdkPlacement.globalShared;
 }

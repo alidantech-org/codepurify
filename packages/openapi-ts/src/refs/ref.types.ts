@@ -1,19 +1,27 @@
 import { RefKind } from './ref-kind.js';
-import type { SdkExtensionMeta } from '../sdk/sdk-extension.types.js';
+import type { CodegenMetadata } from '../sdk/codegen-extension.types.js';
 import type { RefWithUsageMethods } from './ref-usage.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
+
+export interface GeneratedEnumPropertySchema {
+  readonly kind: 'enum';
+  readonly values: readonly string[];
+}
+
+export type GeneratedPropertySchema = GeneratedEnumPropertySchema;
 
 export interface EngineRefBase {
   readonly id: string;
   readonly name: string;
   readonly kind: RefKind;
-  readonly meta?: SdkExtensionMeta;
+  readonly meta?: CodegenMetadata;
 }
 
 export interface PropertyRef extends EngineRefBase {
   readonly kind: typeof RefKind.property;
   readonly propertyKey: string;
   readonly targetRefId?: string;
+  readonly generatedSchema?: GeneratedPropertySchema;
 }
 
 export interface ComponentRef extends EngineRefBase {

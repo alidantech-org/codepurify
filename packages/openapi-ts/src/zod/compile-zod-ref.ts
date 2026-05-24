@@ -55,9 +55,15 @@ function getCacheKey(ref: PropertyRef | ModelRef | ComponentRef | ArrayRef<Engin
       return `array:${getCacheKey(ref.ref as PropertyRef | ModelRef | ComponentRef)}`;
     }
     if (ref.kind === 'extended-ref') {
+      if (!ref.fields) {
+        throw new Error(`extended-ref is missing fields property: ${JSON.stringify(ref)}`);
+      }
       const fieldsKey = Object.keys(ref.fields).sort().join(',');
       return `extended:${getCacheKey(ref.ref as PropertyRef | ModelRef | ComponentRef)}:${fieldsKey}`;
     }
+  }
+  if (!ref.id) {
+    throw new Error(`ref is missing id property: ${JSON.stringify(ref)}`);
   }
   return ref.id;
 }

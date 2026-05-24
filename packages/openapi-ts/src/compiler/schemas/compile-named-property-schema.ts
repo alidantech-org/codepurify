@@ -1,42 +1,66 @@
 import type { PropertyRef } from '../../refs/ref.types.js';
+import type { PrimitiveQueryOptions } from '../../schema/query-behavior.js';
 import type { SchemaField } from '../../schema/schema.types.js';
 import { isZodEnum } from '../../schema/is-zod-enum.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { XCodegenKind, type CodegenMetadata, type XCodegenQueryMeta } from '../../sdk/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
 
 export function compileNamedPropertySchema(field: SchemaField, ref: PropertyRef): unknown {
   const schema = compilePropertySchema(field);
 
-  if (!schema || typeof schema !== 'object' || Array.isArray(schema) || !ref.meta) {
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
     return schema;
   }
 
   const isEnum = 'zod' in field && isZodEnum(field.zod);
 
-  const codegenMeta: CodegenMetadata = {
-    kind: isEnum ? 'enum' : 'property',
-    resource: ref.meta.resource,
-    group: ref.meta.group,
-    entity: ref.meta.placement === 'resource-local' ? extractEntityFromRefId(ref.meta.refId) : undefined,
-    property: ref.meta.property,
-    refId: ref.meta.refId,
-    skip: isEnum ? undefined : true,
-  };
-
-  if (ref.meta.shared) {
-    codegenMeta.shared = true;
-  }
-
-  return applyCodegenMetadata(schema as Record<string, unknown>, codegenMeta);
+  return applyCodegenMetadata(schema as Record<string, unknown>, buildFieldCodegenMetadata(field, isEnum));
 }
 
-function extractEntityFromRefId(refId: string | undefined): string | undefined {
-  if (!refId) return undefined;
-  const parts = refId.split(':');
-  const propertyIndex = parts.indexOf('property');
-  if (propertyIndex >= 0 && propertyIndex + 1 < parts.length) {
-    return parts[propertyIndex + 1];
+function buildFieldCodegenMetadata(field: SchemaField, isEnum: boolean): CodegenMetadata {
+  const query = getQueryMetadata(field);
+  const sensitive = isSensitiveField(field);
+
+  if (isEnum) {
+    return {
+      kind: XCodegenKind.enum,
+      ...(sensitive ? { sensitive: true } : {}),
+      ...(query ? { query } : {}),
+    };
   }
-  return undefined;
+
+  return {
+    kind: XCodegenKind.primitive,
+    ...(sensitive ? { sensitive: true } : {}),
+    ...(query ? { query } : {}),
+  };
+}
+
+function isSensitiveField(field: SchemaField): boolean {
+  if (!('access' in field)) return false;
+
+  return field.access === 'secret' || field.access === 'internal' || field.access === 'system';
+}
+
+function getQueryMetadata(field: SchemaField): XCodegenQueryMeta | undefined {
+  if (!('query' in field)) return undefined;
+  if (!isPrimitiveQueryOptions(field.query)) return undefined;
+
+  return normalizeQueryMetadata(field.query);
+}
+
+function normalizeQueryMetadata(query: PrimitiveQueryOptions): XCodegenQueryMeta | undefined {
+  const normalized: XCodegenQueryMeta = {
+    ...(query.filter === true ? { filter: true } : {}),
+    ...(query.operators && query.operators.length > 0 ? { operators: query.operators } : {}),
+    ...(query.sort === true ? { sort: true } : {}),
+    ...(query.select === true ? { select: true } : {}),
+  };
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+function isPrimitiveQueryOptions(value: unknown): value is PrimitiveQueryOptions {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }

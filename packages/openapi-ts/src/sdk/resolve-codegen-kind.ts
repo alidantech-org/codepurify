@@ -2,57 +2,54 @@ import type { CodegenKind, CodegenMetadata } from './codegen-extension.types.js'
 
 /**
  * Resolves the correct x-codegen.kind based on actual schema shape.
- * Actual schema shape takes priority over intended usage metadata.
+ *
+ * Important rule:
+ * Schema shape wins over requested metadata when the requested metadata is unsafe.
+ *
+ * New valid kinds:
+ * - primitive
+ * - enum
+ * - model
+ * - dto
  *
  * Priority rules:
- * 1. schema has enum -> kind: enum
- * 2. schema type is string + enum -> kind: enum
- * 3. schema type is array/items enum -> keep parent object/query, but item schema/ref must be enum
- * 4. schema type is object -> kind: model or query
- * 5. schema allOf object composition -> kind: model or query
- * 6. scalar schema -> kind: property / primitive_alias
- * 7. unknown/non-object/non-enum -> never mark as model
+ * 1. enum schema shape always resolves to kind: enum
+ * 2. object/allOf schemas resolve to requested dto/model, otherwise model
+ * 3. scalar schemas resolve to primitive
+ * 4. array schemas resolve to requested dto/model when object-like usage is requested,
+ *    otherwise primitive
+ * 5. unknown schemas fall back to requested kind, otherwise primitive
  */
 export function resolveCodegenKind(schema: Record<string, unknown>, requestedKind?: CodegenKind): CodegenKind {
-  // Rule 1 & 2: schema has enum or is string with enum
-  if (schema.enum && Array.isArray(schema.enum)) {
+  // First, unwrap nullable unions (anyOf/oneOf with null)
+  const unwrapped = unwrapNullableUnion(schema);
+  if (unwrapped) {
+    return resolveCodegenKind(unwrapped, requestedKind);
+  }
+
+  if (isEnumShape(schema)) {
     return 'enum';
   }
 
-  // Rule 3: array with enum items - the array itself is not an enum, but check if it's a property
-  if (schema.type === 'array' && schema.items && typeof schema.items === 'object') {
-    const items = schema.items as Record<string, unknown>;
-    if (items.enum && Array.isArray(items.enum)) {
-      // Array of enum values - this is a property, not an enum itself
-      return requestedKind === 'query' ? 'query' : 'property';
-    }
-  }
+  if (isObjectShape(schema)) {
+    if (requestedKind === 'dto') return 'dto';
+    if (requestedKind === 'model') return 'model';
 
-  // Rule 4: object type
-  if (schema.type === 'object' || schema.properties) {
-    // For query models, keep the requested 'query' kind
-    if (requestedKind === 'query') {
-      return 'query';
-    }
-    // Otherwise, it's a model
     return 'model';
   }
 
-  // Rule 5: allOf composition (object composition)
-  if (schema.allOf && Array.isArray(schema.allOf)) {
-    if (requestedKind === 'query') {
-      return 'query';
-    }
-    return 'model';
+  if (isScalarShape(schema)) {
+    return 'primitive';
   }
 
-  // Rule 6: scalar schemas
-  if (schema.type === 'string' || schema.type === 'number' || schema.type === 'integer' || schema.type === 'boolean') {
-    return 'property';
+  if (isArrayShape(schema)) {
+    if (requestedKind === 'dto') return 'dto';
+    if (requestedKind === 'model') return 'model';
+
+    return 'primitive';
   }
 
-  // Rule 7: unknown - return requested kind if provided, otherwise undefined
-  return requestedKind ?? 'property';
+  return requestedKind ?? 'primitive';
 }
 
 /**
@@ -63,18 +60,94 @@ export function isEnumSchema(schema: Record<string, unknown>): boolean {
 }
 
 /**
- * Checks if a schema is an object schema (model or query).
+ * Checks if a schema is a model-like object schema.
  */
-export function isObjectSchema(schema: Record<string, unknown>): boolean {
-  const kind = resolveCodegenKind(schema);
-  return kind === 'model' || kind === 'query';
+export function isModelSchema(schema: Record<string, unknown>): boolean {
+  return resolveCodegenKind(schema) === 'model';
 }
 
 /**
- * Strips invalid inheritance metadata from enum schemas.
- * Enum schemas should not have model inheritance metadata.
+ * Checks if a schema is a DTO-like object schema.
  */
-export function stripEnumInheritanceMetadata(metadata: Record<string, unknown> | CodegenMetadata): Record<string, unknown> {
+export function isDtoSchema(schema: Record<string, unknown>, requestedKind?: CodegenKind): boolean {
+  return resolveCodegenKind(schema, requestedKind) === 'dto';
+}
+
+/**
+ * Checks if a schema is any object-like schema.
+ */
+export function isObjectSchema(schema: Record<string, unknown>): boolean {
+  const kind = resolveCodegenKind(schema);
+  return kind === 'model' || kind === 'dto';
+}
+
+/**
+ * Checks if a schema is a primitive schema.
+ */
+export function isPrimitiveSchema(schema: Record<string, unknown>): boolean {
+  return resolveCodegenKind(schema) === 'primitive';
+}
+
+/**
+ * Strips invalid inheritance metadata from enum and primitive schemas.
+ *
+ * Enum and primitive schemas should not have model inheritance metadata.
+ */
+export function stripNonObjectInheritanceMetadata(metadata: Record<string, unknown> | CodegenMetadata): Record<string, unknown> {
   const { inherits, ...rest } = metadata as Record<string, unknown>;
   return rest;
+}
+
+/**
+ * Backward-compatible alias.
+ *
+ * Prefer stripNonObjectInheritanceMetadata.
+ */
+export function stripEnumInheritanceMetadata(metadata: Record<string, unknown> | CodegenMetadata): Record<string, unknown> {
+  return stripNonObjectInheritanceMetadata(metadata);
+}
+
+function unwrapNullableUnion(schema: Record<string, unknown>): Record<string, unknown> | undefined {
+  const union = Array.isArray(schema.anyOf) ? schema.anyOf : Array.isArray(schema.oneOf) ? schema.oneOf : undefined;
+
+  if (!union) return undefined;
+
+  const nonNull = union.filter((item) => {
+    return item && typeof item === 'object' && item.type !== 'null';
+  });
+
+  // If there's exactly one non-null schema, unwrap it
+  return nonNull.length === 1 ? (nonNull[0] as Record<string, unknown>) : undefined;
+}
+
+function isEnumShape(schema: Record<string, unknown>): boolean {
+  return Array.isArray(schema.enum);
+}
+
+function isObjectShape(schema: Record<string, unknown>): boolean {
+  return (
+    schema.type === 'object' ||
+    Boolean(schema.properties) ||
+    Array.isArray(schema.allOf) ||
+    Array.isArray(schema.anyOf) ||
+    Array.isArray(schema.oneOf)
+  );
+}
+
+function isScalarShape(schema: Record<string, unknown>): boolean {
+  // Handle OpenAPI 3.1 type arrays for nullable primitives
+  if (Array.isArray(schema.type)) {
+    const types = schema.type as unknown[];
+    // If the type array contains scalar types, treat as scalar
+    const scalarTypes = types.filter((t) => t === 'string' || t === 'number' || t === 'integer' || t === 'boolean' || t === 'null');
+    return scalarTypes.length > 0;
+  }
+
+  return (
+    schema.type === 'string' || schema.type === 'number' || schema.type === 'integer' || schema.type === 'boolean' || schema.type === 'null'
+  );
+}
+
+function isArrayShape(schema: Record<string, unknown>): boolean {
+  return schema.type === 'array';
 }

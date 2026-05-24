@@ -1,22 +1,29 @@
 import { CODEGEN_EXTENSION_KEY } from './codegen-extension.keys.js';
-import type { CodegenMetadata } from './codegen-extension.types.js';
-import { resolveCodegenKind, stripEnumInheritanceMetadata } from './resolve-codegen-kind.js';
+import { XCodegenKind, type CodegenMetadata } from './codegen-extension.types.js';
+import { resolveCodegenKind, stripNonObjectInheritanceMetadata } from './resolve-codegen-kind.js';
 
 export type CodegenExtensionTarget = Record<string, unknown>;
 
-function cleanCodegenValue(value: unknown): unknown {
-  if (value === undefined || value === null || value === false) return undefined;
+function cleanCodegenValue(value: unknown, preserveFalse = false): unknown {
+  if (value === undefined || value === null) return undefined;
+  if (value === false && !preserveFalse) return undefined;
   if (typeof value === 'string' && value.length === 0) return undefined;
 
   if (Array.isArray(value)) {
-    const items = value.map(cleanCodegenValue).filter((item): item is Exclude<unknown, undefined> => item !== undefined);
+    const items = value
+      .map((item) => cleanCodegenValue(item, preserveFalse))
+      .filter((item): item is Exclude<unknown, undefined> => item !== undefined);
 
     return items.length > 0 ? items : undefined;
   }
 
   if (typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>)
-      .map(([key, child]) => [key, cleanCodegenValue(child)] as const)
+      .map(([key, child]) => {
+        // Preserve false for query.select specifically
+        const shouldPreserveFalse = key === 'select' && preserveFalse;
+        return [key, cleanCodegenValue(child, shouldPreserveFalse)] as const;
+      })
       .filter(([, child]) => child !== undefined);
 
     return entries.length > 0 ? Object.fromEntries(entries) : undefined;
@@ -25,18 +32,42 @@ function cleanCodegenValue(value: unknown): unknown {
   return value;
 }
 
-export function applyCodegenMetadata<TSchema extends Record<string, unknown>>(schema: TSchema, metadata: CodegenMetadata): TSchema {
-  // Resolve the correct kind based on actual schema shape
-  const resolvedKind = resolveCodegenKind(schema, metadata.kind);
+function isObjectResolvedKind(kind: CodegenMetadata['kind']): boolean {
+  return kind === XCodegenKind.model || kind === XCodegenKind.dto;
+}
 
-  // If the resolved kind is enum, strip inheritance metadata
-  let finalMetadata = metadata;
-  if (resolvedKind === 'enum') {
-    finalMetadata = stripEnumInheritanceMetadata(metadata) as CodegenMetadata;
+function validateCodegenMetadata(metadata: CodegenMetadata): void {
+  // Query metadata is allowed on primitive and enum fields
+  if ('query' in metadata) {
+    const kind = metadata.kind;
+    if (kind !== XCodegenKind.primitive && kind !== XCodegenKind.enum) {
+      throw new Error('x-codegen.query is only allowed on primitive and enum model fields.');
+    }
   }
 
-  // Override the kind with the shape-aware resolution
-  finalMetadata = { ...finalMetadata, kind: resolvedKind };
+  // Role is optional for DTOs - it's determined by route usage
+  // if (metadata.kind === XCodegenKind.dto && !metadata.role) {
+  //   throw new Error('x-codegen.role is required when x-codegen.kind is "dto".');
+  // }
+
+  if (metadata.kind !== XCodegenKind.dto && 'role' in metadata) {
+    throw new Error('x-codegen.role is only allowed when x-codegen.kind is "dto".');
+  }
+}
+
+export function applyCodegenMetadata<TSchema extends Record<string, unknown>>(schema: TSchema, metadata: CodegenMetadata): TSchema {
+  const resolvedKind = resolveCodegenKind(schema, metadata.kind);
+
+  let finalMetadata: CodegenMetadata = {
+    ...metadata,
+    kind: resolvedKind,
+  } as CodegenMetadata;
+
+  if (!isObjectResolvedKind(resolvedKind)) {
+    finalMetadata = stripNonObjectInheritanceMetadata(finalMetadata) as unknown as CodegenMetadata;
+  }
+
+  validateCodegenMetadata(finalMetadata);
 
   const cleaned = cleanCodegenValue(finalMetadata);
 

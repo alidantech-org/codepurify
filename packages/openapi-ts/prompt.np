@@ -55,3 +55,29 @@ Refs should behave like pointers.
 If a field is defined using another field ref, we should not create a new primitive schema for the alias field.
 The alias field should resolve to the original/primary schema ref.
 If the alias usage changes required/nullable, only the usage wrapper changes, not the target schema.
+
+  
+
+x-codegen:
+  kind: primitive | enum | model | dto
+  sensitive?: true
+  shared: true
+  resource:
+    name: users
+    path:
+      - platform
+      - auth
+  entity: 
+    name: User
+    variant: partial | create | update | detail | list | 
+    access: default | public | internal
+  query:
+    operators:
+      - exact
+      - search
+      - in
+      - range
+      - exists
+    filter: true        
+    sort: true
+    select: true

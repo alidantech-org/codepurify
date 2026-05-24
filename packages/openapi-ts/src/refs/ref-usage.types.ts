@@ -11,7 +11,6 @@ export interface FieldSourceMetadata {
   readonly sourceRefId?: string;
   readonly sourceSchemaName?: string;
   readonly sourceResource?: string;
-  readonly sourceGroup?: string;
 
   readonly fieldKey?: string;
   readonly propertyRefId?: string;

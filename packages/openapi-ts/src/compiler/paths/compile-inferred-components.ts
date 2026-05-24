@@ -9,8 +9,8 @@ import type {
   InferredRequestBodyComponent,
   InferredResponseComponent,
   InferredRouteComponents,
+  InferredQueryParameterSchema,
 } from './inferred-route-components.types.js';
-import { RouteParameterFieldValue } from '../../routes/route.types.js';
 
 export function compileInferredComponents(
   inferred: InferredRouteComponents,
@@ -49,7 +49,7 @@ function compileInferredParameters(
   return result;
 }
 
-function compileParameterSchema(param: RouteParameterFieldValue, resolver: RefResolver): unknown {
+function compileParameterSchema(param: InferredQueryParameterSchema, resolver: RefResolver): unknown {
   const ref = isRefUsage(param) ? param.ref : param;
   const nullable = isRefUsage(param) ? param.nullable : undefined;
 
@@ -98,12 +98,14 @@ function compileInferredRequestBodies(
   const result: Record<string, unknown> = {};
 
   for (const [name, body] of requestBodies.entries()) {
+    const schema = typeof body.schema === 'object' && body.schema && 'schema' in body.schema ? body.schema.schema : body.schema;
+
     result[name] = {
       required: body.required,
       description: body.description,
       content: {
         [body.contentType]: {
-          schema: compileRouteSchema(body.schema, resolver),
+          schema: compileRouteSchema(schema, resolver),
         },
       },
     };
@@ -125,11 +127,14 @@ function compileInferredResponses(
         description: response.description,
       };
     } else if (response.contentType) {
+      const schema =
+        response.schema && typeof response.schema === 'object' && 'schema' in response.schema ? response.schema.schema : response.schema;
+
       result[name] = {
         description: response.description,
         content: {
           [response.contentType]: {
-            schema: response.schema ? compileRouteSchema(response.schema, resolver) : undefined,
+            schema: schema ? compileRouteSchema(schema, resolver) : undefined,
           },
         },
       };

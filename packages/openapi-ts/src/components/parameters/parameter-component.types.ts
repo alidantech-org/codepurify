@@ -2,7 +2,7 @@ import type { ComponentRef, ParameterRef, PropertyRef } from '../../refs/ref.typ
 import type { EngineRef } from '../../refs/ref.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
 import type { ParameterLocation } from './parameter-location.js';
-import type { SdkExtensionMeta } from '../../sdk/sdk-extension.types.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 
 export type ParameterSchemaRef = PropertyRef | ComponentRef | RefUsage<EngineRef>;
 
@@ -13,7 +13,7 @@ export interface ParameterComponentDefinition {
   readonly schema: ParameterSchemaRef;
   readonly required?: boolean;
   readonly description?: string;
-  readonly meta?: SdkExtensionMeta;
+  readonly meta?: CodegenMetadata;
 }
 
 export interface ParameterComponentRegistry<TRefs extends Record<string, ParameterRef> = Record<string, ParameterRef>> {

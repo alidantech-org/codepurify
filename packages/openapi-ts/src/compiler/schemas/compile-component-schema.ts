@@ -5,7 +5,6 @@ import type { ArrayRef, ExtendedRef } from '../../refs/ref-wrapper.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 import { normalizeExtendWithInput, normalizeExtendWithInputWithSource } from './normalize-extend-with.js';
 
 export function compileComponentSchema(definition: SchemaComponentDefinition, ref?: ComponentRef): Record<string, unknown> {
@@ -18,17 +17,7 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
   if (isEngineRef(definition.value)) {
     const refSchema = { $ref: `#/components/schemas/${definition.value.name}` };
     if (ref?.meta) {
-      const codegenMeta: CodegenMetadata = {
-        kind: 'dto',
-        resource: ref.meta.resource,
-        group: ref.meta.group,
-        component: definition.name,
-        refId: ref.meta.refId,
-        shared: ref.meta.shared ? true : undefined,
-      };
-      // Wrap direct ref with allOf when metadata is present
-      const schema = { allOf: [refSchema] };
-      return applyCodegenMetadata(schema, codegenMeta);
+      return applyCodegenMetadata(refSchema, ref.meta);
     }
     return refSchema;
   }
@@ -46,15 +35,7 @@ export function compileComponentSchema(definition: SchemaComponentDefinition, re
   }
 
   if (ref?.meta) {
-    const codegenMeta: CodegenMetadata = {
-      kind: 'dto',
-      resource: ref.meta.resource,
-      group: ref.meta.group,
-      component: definition.name,
-      refId: ref.meta.refId,
-      shared: ref.meta.shared ? true : undefined,
-    };
-    return applyCodegenMetadata(schema, codegenMeta);
+    return applyCodegenMetadata(schema, ref.meta);
   }
 
   return schema;
@@ -93,15 +74,7 @@ function compileExtendedSchemaComponent(definition: SchemaComponentDefinition, r
   const schema: Record<string, unknown> = { allOf };
 
   if (ref?.meta) {
-    const codegenMeta: CodegenMetadata = {
-      kind: 'dto',
-      resource: ref.meta.resource,
-      group: ref.meta.group,
-      component: definition.name,
-      refId: ref.meta.refId,
-      shared: ref.meta.shared ? true : undefined,
-    };
-    return applyCodegenMetadata(schema, codegenMeta);
+    return applyCodegenMetadata(schema, ref.meta);
   }
 
   return schema;
@@ -157,12 +130,37 @@ function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
 
   // Apply nullable
   if (nullable) {
-    schema = {
-      anyOf: [schema, { type: 'null' }],
-    };
+    const schemaObj = asObject(schema);
+    // For OpenAPI 3.1, use type arrays for simple nullable primitives
+    if (schemaObj.type && typeof schemaObj.type === 'string') {
+      const primitiveTypes = ['string', 'number', 'integer', 'boolean'];
+      if (primitiveTypes.includes(schemaObj.type)) {
+        const { type, ...rest } = schemaObj;
+        schema = {
+          ...rest,
+          type: [type, 'null'],
+        };
+      } else {
+        schema = {
+          anyOf: [schema, { type: 'null' }],
+        };
+      }
+    } else {
+      schema = {
+        anyOf: [schema, { type: 'null' }],
+      };
+    }
   }
 
   return schema;
+}
+
+function asObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
 }
 
 function getRequiredKeys(fields: ComponentFieldMap): string[] {

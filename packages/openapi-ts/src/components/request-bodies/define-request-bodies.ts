@@ -2,7 +2,7 @@ import { EngineIdPart, createEngineId } from '../../ids/engine-id.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import type { RequestBodyRef } from '../../refs/ref.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { SdkKind, SdkPlacement } from '../../sdk/sdk-extension.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '../../sdk/codegen-extension.types.js';
 import type { ComponentRefMap } from '../component.types.js';
 import type { RequestBodyComponentDefinition, RequestBodyComponentRegistry } from './request-body-component.types.js';
 
@@ -40,14 +40,15 @@ function createRequestBodyRef(options: DefineRequestBodiesOptions, name: string)
     kind: RefKind.requestBody,
     requestBodyKey: name,
     meta: {
-      kind: SdkKind.dto,
-      placement: getPlacement(options),
-      group: options.resource?.group ?? 'shared',
-      resource: options.resource?.key,
-      component: name,
-      refId,
-      shared: !options.resource,
-      skip: true,
+      kind: XCodegenKind.dto,
+      role: XCodegenDtoRole.body,
+      ...(!options.resource ? { shared: true } : {}),
+      resource: options.resource
+        ? {
+            name: options.resource.alias,
+            path: options.resource.folders,
+          }
+        : undefined,
     },
   };
 }
@@ -55,8 +56,4 @@ function createRequestBodyRef(options: DefineRequestBodiesOptions, name: string)
 function createScopedId(options: DefineRequestBodiesOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
   return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
-}
-
-function getPlacement(options: DefineRequestBodiesOptions): SdkPlacement {
-  return options.resource ? SdkPlacement.resourceLocal : SdkPlacement.globalShared;
 }

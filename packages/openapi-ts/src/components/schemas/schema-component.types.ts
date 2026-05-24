@@ -3,14 +3,14 @@ import type { ComponentRef } from '../../refs/ref.types.js';
 import type { EngineRef } from '../../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
-import type { SdkExtensionMeta } from '../../sdk/sdk-extension.types.js';
+import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
 
 export type SchemaComponentValue = ComponentFieldMap | EngineRef | RefUsage<EngineRef> | RefUsage<ComponentRef>;
 
 export interface SchemaComponentDefinition {
   readonly name: string;
   readonly value: SchemaComponentValue;
-  readonly meta?: SdkExtensionMeta;
+  readonly meta?: CodegenMetadata;
 }
 
 export type SchemaComponentRefs<TInput extends Record<string, SchemaComponentValue>> = {

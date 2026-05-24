@@ -8,7 +8,6 @@ import { compilePaths } from './paths/compile-paths.js';
 import type { CompileOptions } from './compile-options.types.js';
 import type { CompileResult } from './compile-result.types.js';
 import { compileInferredComponents } from './paths/compile-inferred-components.js';
-import type { InferredRouteComponents } from './paths/inferred-route-components.types.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {

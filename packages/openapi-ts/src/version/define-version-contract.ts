@@ -11,7 +11,6 @@ import type {
 } from '../components/request-bodies/request-body-component.types.js';
 import { defineResponses } from '../components/responses/define-responses.js';
 import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
-import type { ComponentFieldMap } from '../components/component.types.js';
 import type { RouteResponseInput } from '../routes/route.types.js';
 import type { PropertyRegistry } from '../properties/property.types.js';
 import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types.js';

@@ -1,7 +1,13 @@
 import type { ModelRef, PropertyRef } from '../../refs/ref.types.js';
 import type { SchemaField } from '../../schema/schema.types.js';
 import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import {
+  XCodegenDtoRole,
+  XCodegenEntityVariant,
+  XCodegenKind,
+  type CodegenMetadata,
+  type XCodegenEntityMeta,
+} from '../../sdk/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
 import { toOpenApiSchemaRef } from '../refs/to-openapi-ref.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
@@ -101,14 +107,6 @@ function getRequiredFields(ref: ModelRef, ownFields: Record<string, unknown>): s
     'private-partial-model',
     'internal-partial-model',
     'system-partial-model',
-    'query-exact',
-    'query-search',
-    'query-exact-search',
-    'query-range',
-    'query-in',
-    'query-exists',
-    'query-sort',
-    'query-select',
   ];
 
   if (noRequiredModels.includes(ref.modelKey)) {
@@ -142,8 +140,6 @@ function queryBehaviorFromModelKey(modelKey: string): string | undefined {
       return 'exact';
     case 'query-search':
       return 'search';
-    case 'query-exact-search':
-      return 'exactSearch';
     case 'query-range':
       return 'range';
     case 'query-in':
@@ -189,40 +185,41 @@ function inferEntityNameFromModelRef(ref: ModelRef): string | undefined {
 
 function toCodegenMetadata(ref: ModelRef, modelKey?: string, parentRefs?: ModelRef['inherits']): CodegenMetadata {
   const queryBehavior = modelKey ? queryBehaviorFromModelKey(modelKey) : undefined;
+  const entityName = inferEntityNameFromModelRef(ref);
 
-  // Query models first
-  if (queryBehavior) {
-    const inherits =
-      parentRefs && parentRefs.length > 0
-        ? parentRefs.map((p) => ({ $ref: p.modelRef.openapiRef ?? `#pending/${p.modelRef.id}` }))
-        : undefined;
+  // Determine variant based on modelKey
+  const variant: XCodegenEntityVariant = modelKey?.includes('partial') ? XCodegenEntityVariant.partial : XCodegenEntityVariant.full;
 
-    return {
-      kind: 'query',
-      resource: ref.meta?.resource,
-      group: ref.meta?.group,
-      entity: inferEntityNameFromModelRef(ref),
-      behavior: queryBehavior,
-      refId: ref.id,
-      inherits,
-    };
-  }
+  const entityMeta: XCodegenEntityMeta | undefined = entityName
+    ? {
+        name: entityName,
+        variant,
+      }
+    : undefined;
 
-  // Normal models fallback
   const inherits =
     parentRefs && parentRefs.length > 0
       ? parentRefs.map((p) => ({ $ref: p.modelRef.openapiRef ?? `#pending/${p.modelRef.id}` }))
       : undefined;
 
+  // Query models first
+  if (queryBehavior) {
+    return {
+      kind: XCodegenKind.dto,
+      role: XCodegenDtoRole.query,
+      resource: ref.meta?.resource,
+      entity: entityMeta,
+      inherits,
+    };
+  }
+
+  // Normal models fallback
   return {
-    kind: 'model',
+    kind: XCodegenKind.model,
     resource: ref.meta?.resource,
-    group: ref.meta?.group,
-    entity: inferEntityNameFromModelRef(ref),
-    model: modelKey ? modelVariantFromModelKey(modelKey) : undefined,
-    refId: ref.id,
+    entity: entityMeta,
     abstract: ref.abstract === true ? true : undefined,
-    shared: ref.meta?.shared ? true : undefined,
+    ...(ref.meta?.shared ? { shared: true } : {}),
     inherits,
   };
 }

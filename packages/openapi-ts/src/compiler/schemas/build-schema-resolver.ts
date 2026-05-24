@@ -4,13 +4,7 @@ import type { RequestBodyComponentRegistry } from '../../components/request-bodi
 import type { ResponseComponentRegistry } from '../../components/responses/response-component.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import { componentRefToSchemaName, modelRefToSchemaName } from '../../naming/ref-schema-name.js';
-import type {
-  EntityPropertyRefs,
-  PropertyDefinition,
-  PropertyRefGroup,
-  PropertyRegistry,
-  PropertyRegistryRef,
-} from '../../properties/property.types.js';
+import type { EntityPropertyRefs, PropertyRefGroup, PropertyRegistry, PropertyRegistryRef } from '../../properties/property.types.js';
 import type { PropertyRef } from '../../refs/ref.types.js';
 import type { ResourceBuilder } from '../../resource/define-resource.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
@@ -72,7 +66,12 @@ export function buildSchemaResolver(
     }
   }
 
-  return { schemas, parameters, requestBodies, responses };
+  return {
+    schemas,
+    parameters,
+    requestBodies,
+    responses,
+  };
 }
 
 function registerComponentRegistry(registry: SchemaComponentRegistry, schemas: Map<string, string>): void {
@@ -83,7 +82,10 @@ function registerComponentRegistry(registry: SchemaComponentRegistry, schemas: M
 
 function registerPropertyRegistry(registry: PropertyRegistry, schemas: Map<string, string>): void {
   for (const [groupName, value] of Object.entries(registry.ref)) {
-    const definition = registry.definitions.find((d) => d.name === groupName);
+    const definition = registry.definitions.find((item) => {
+      return item.name === groupName;
+    });
+
     registerPropertyRegistryRef(groupName, value, schemas, definition);
   }
 }
@@ -99,30 +101,49 @@ function registerPropertyRegistryRef(
   }
 
   if (isEntityRefs(value)) {
-    for (const [key, ref] of Object.entries(value.fields)) {
-      if (registerAliasRef(ref, schemas)) continue;
-      schemas.set(ref.id, toSchemaName(groupName, key));
-    }
-
-    schemas.set(value.model.id, modelRefToSchemaName(value.model));
-    schemas.set(value.publicModel.id, modelRefToSchemaName(value.publicModel));
-    schemas.set(value.partialModel.id, modelRefToSchemaName(value.partialModel));
-    schemas.set(value.query.exact.id, modelRefToSchemaName(value.query.exact));
-    schemas.set(value.query.search.id, modelRefToSchemaName(value.query.search));
-    schemas.set(value.query.exactSearch.id, modelRefToSchemaName(value.query.exactSearch));
-    schemas.set(value.query.range.id, modelRefToSchemaName(value.query.range));
-    schemas.set(value.query.in.id, modelRefToSchemaName(value.query.in));
-    schemas.set(value.query.exists.id, modelRefToSchemaName(value.query.exists));
-    schemas.set(value.query.sort.id, modelRefToSchemaName(value.query.sort));
-    schemas.set(value.query.select.id, modelRefToSchemaName(value.query.select));
+    registerEntityPropertyRefs(groupName, value, schemas);
     return;
   }
 
   if (isPropertyRefGroup(value)) {
-    for (const [key, ref] of Object.entries(value)) {
-      if (registerAliasRef(ref, schemas)) continue;
-      schemas.set(ref.id, toSchemaName(groupName, key));
-    }
+    registerPropertyGroupRefs(groupName, value, schemas);
+  }
+}
+
+function registerEntityPropertyRefs(groupName: string, value: EntityPropertyRefs, schemas: Map<string, string>): void {
+  for (const [key, ref] of Object.entries(value.fields)) {
+    if (registerAliasRef(ref, schemas)) continue;
+
+    schemas.set(ref.id, toSchemaName(groupName, key));
+  }
+
+  registerEntityModelRefs(value, schemas);
+  registerEntityQueryHelperRefs(value, schemas);
+}
+
+function registerEntityModelRefs(value: EntityPropertyRefs, schemas: Map<string, string>): void {
+  schemas.set(value.model.id, modelRefToSchemaName(value.model));
+  schemas.set(value.publicModel.id, modelRefToSchemaName(value.publicModel));
+  schemas.set(value.internalModel.id, modelRefToSchemaName(value.internalModel));
+
+  schemas.set(value.partialModel.id, modelRefToSchemaName(value.partialModel));
+  schemas.set(value.publicPartialModel.id, modelRefToSchemaName(value.publicPartialModel));
+  schemas.set(value.internalPartialModel.id, modelRefToSchemaName(value.internalPartialModel));
+}
+
+function registerEntityQueryHelperRefs(value: EntityPropertyRefs, schemas: Map<string, string>): void {
+  schemas.set(value.queryFilterModel.id, modelRefToSchemaName(value.queryFilterModel));
+
+  schemas.set(value.values.querySort.id, toSchemaName(`${value.name}QuerySortValue`));
+
+  schemas.set(value.values.querySelect.id, toSchemaName(`${value.name}QuerySelectValue`));
+}
+
+function registerPropertyGroupRefs(groupName: string, value: PropertyRefGroup, schemas: Map<string, string>): void {
+  for (const [key, ref] of Object.entries(value)) {
+    if (registerAliasRef(ref, schemas)) continue;
+
+    schemas.set(ref.id, toSchemaName(groupName, key));
   }
 }
 
@@ -133,11 +154,25 @@ function registerRefRegistry(refs: Record<string, { id: string; name: string }>,
 }
 
 function isEntityRefs(value: PropertyRegistryRef): value is EntityPropertyRefs {
-  return !!value && typeof value === 'object' && 'fields' in value && 'model' in value && 'publicModel' in value;
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    'name' in value &&
+    'fields' in value &&
+    'model' in value &&
+    'publicModel' in value &&
+    'internalModel' in value &&
+    'partialModel' in value &&
+    'publicPartialModel' in value &&
+    'internalPartialModel' in value &&
+    'queryFilterModel' in value &&
+    'values' in value
+  );
 }
 
 function isPropertyRefGroup(value: PropertyRegistryRef): value is PropertyRefGroup {
-  return !!value && typeof value === 'object' && !isEntityRefs(value);
+  return !!value && typeof value === 'object' && !Array.isArray(value) && !isEntityRefs(value);
 }
 
 function registerAliasRef(ref: PropertyRef, schemas: Map<string, string>): boolean {
@@ -145,10 +180,8 @@ function registerAliasRef(ref: PropertyRef, schemas: Map<string, string>): boole
 
   const targetName = schemas.get(ref.targetRefId);
 
-  if (targetName) {
-    schemas.set(ref.id, targetName);
-    return true;
-  }
+  if (!targetName) return false;
 
-  return false;
+  schemas.set(ref.id, targetName);
+  return true;
 }

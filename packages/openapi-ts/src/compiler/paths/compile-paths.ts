@@ -32,7 +32,7 @@ export function compilePaths(
   for (const resource of contract.resources) {
     for (const registry of resource.routes) {
       for (const route of Object.values(registry.routes)) {
-        const fullPath = expressPathToOpenApi(`${resource.context.basePath}${route.path}`);
+        const fullPath = expressPathToOpenApi(`${resource.context.route}${route.path}`);
         const pathParams = resolvePathParameters(registry.parameters, route.path, route.operationId);
 
         // Infer components for this route
@@ -132,13 +132,9 @@ function compileRouteOperationWithRefs(
     }
   }
 
-  // Add x-codegen metadata with querySchema if route.query is a ComponentRef or RefUsage<ComponentRef>
+  // Add x-codegen metadata with target if route.query is a ComponentRef or RefUsage<ComponentRef>
   if (route.meta) {
-    const codegenMeta: CodegenMetadata = {
-      kind: 'operation',
-      resource: route.meta.resource,
-      refId: route.meta.refId,
-    };
+    const codegenMeta: CodegenMetadata = route.meta;
 
     if (route.query) {
       let queryRef: ComponentRef | undefined;
@@ -151,7 +147,7 @@ function compileRouteOperationWithRefs(
       if (queryRef) {
         const schemaName = resolver.schemas.get(queryRef.id);
         if (schemaName) {
-          codegenMeta.querySchema = { $ref: `#/components/schemas/${schemaName}` };
+          (codegenMeta as any).target = { $ref: `#/components/schemas/${schemaName}` };
         }
       }
     }

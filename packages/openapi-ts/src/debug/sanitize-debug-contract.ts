@@ -1,6 +1,7 @@
 import type { VersionContract } from '../version/version-contract.types.js';
 import type { FieldSourceMetadata } from '../refs/ref-usage.types.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
+import type { XCodegenResourceMeta } from '../sdk/codegen-extension.types.js';
 
 export function sanitizeDebugContract(value: unknown): unknown {
   const sanitized = sanitizeDebugValue(value);
@@ -97,7 +98,6 @@ function sanitizeFieldSourceMetadata(metadata: FieldSourceMetadata): Record<stri
 
   if (metadata.sourceSchemaName) sanitized.sourceSchemaName = metadata.sourceSchemaName;
   if (metadata.sourceResource) sanitized.sourceResource = metadata.sourceResource;
-  if (metadata.sourceGroup) sanitized.sourceGroup = metadata.sourceGroup;
   if (metadata.shared !== undefined) sanitized.shared = metadata.shared;
   if (metadata.fieldKey) sanitized.fieldKey = metadata.fieldKey;
   if (metadata.propertyResource) sanitized.propertyResource = metadata.propertyResource;
@@ -116,18 +116,16 @@ function extractExtendWithFieldsSource(extendWith: unknown): Record<string, unkn
           origin: 'extension',
           propertyRefId: field.ref.id,
           fieldKey: field.ref.propertyKey,
-          propertyResource: field.ref.meta?.resource,
-          shared: field.ref.meta?.resource === 'shared' || field.ref.meta?.group === 'shared',
+          propertyResource: field.ref.meta?.resource ? (field.ref.meta.resource as XCodegenResourceMeta).name : undefined,
+          shared: field.ref.meta?.shared === true,
         });
       } else if (typeof field === 'object' && 'kind' in field && field.kind === 'property') {
         fieldsDebug[name] = sanitizeFieldSourceMetadata({
           origin: 'extension',
           propertyRefId: (field as { id: string }).id,
           fieldKey: (field as { propertyKey: string }).propertyKey,
-          propertyResource: (field as { meta?: { resource?: string } }).meta?.resource,
-          shared:
-            (field as { meta?: { resource?: string; group?: string } }).meta?.resource === 'shared' ||
-            (field as { meta?: { resource?: string; group?: string } }).meta?.group === 'shared',
+          propertyResource: (field as { meta?: { resource?: XCodegenResourceMeta } }).meta?.resource?.name,
+          shared: (field as { meta?: { shared?: boolean } }).meta?.shared === true,
         });
       }
     }
