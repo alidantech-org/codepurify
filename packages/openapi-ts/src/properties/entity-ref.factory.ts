@@ -76,6 +76,7 @@ export function createEntityRefs(
     ),
 
     queryFilterModel: queryHelpers.queryFilterModel,
+    advancedQueryFilterModel: queryHelpers.advancedQueryFilterModel,
     values: queryHelpers.values,
 
     modelEmission,

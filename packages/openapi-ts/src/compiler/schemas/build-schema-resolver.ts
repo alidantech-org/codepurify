@@ -111,7 +111,10 @@ function registerPropertyRegistryRef(
 }
 
 function registerEntityPropertyRefs(groupName: string, value: EntityPropertyRefs, schemas: Map<string, string>): void {
-  for (const [key, ref] of Object.entries(value.fields)) {
+  for (const [key, fieldRef] of Object.entries(value.fields)) {
+    // Extract underlying ref if it's a RefUsage
+    const ref = 'ref' in fieldRef ? fieldRef.ref : fieldRef;
+
     if (registerAliasRef(ref, schemas)) continue;
 
     schemas.set(ref.id, toSchemaName(groupName, key));
@@ -133,6 +136,7 @@ function registerEntityModelRefs(value: EntityPropertyRefs, schemas: Map<string,
 
 function registerEntityQueryHelperRefs(value: EntityPropertyRefs, schemas: Map<string, string>): void {
   schemas.set(value.queryFilterModel.id, modelRefToSchemaName(value.queryFilterModel));
+  schemas.set(value.advancedQueryFilterModel.id, modelRefToSchemaName(value.advancedQueryFilterModel));
 
   schemas.set(value.values.querySort.id, toSchemaName(`${value.name}QuerySortValue`));
 
@@ -140,7 +144,10 @@ function registerEntityQueryHelperRefs(value: EntityPropertyRefs, schemas: Map<s
 }
 
 function registerPropertyGroupRefs(groupName: string, value: PropertyRefGroup, schemas: Map<string, string>): void {
-  for (const [key, ref] of Object.entries(value)) {
+  for (const [key, fieldRef] of Object.entries(value)) {
+    // Extract underlying ref if it's a RefUsage
+    const ref = 'ref' in fieldRef ? fieldRef.ref : fieldRef;
+
     if (registerAliasRef(ref, schemas)) continue;
 
     schemas.set(ref.id, toSchemaName(groupName, key));

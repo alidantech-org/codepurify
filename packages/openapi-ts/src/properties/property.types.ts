@@ -1,6 +1,6 @@
 import type { PropertyKind } from './property-kind.js';
 import type { ModelRef, PropertyRef, ComponentRef } from '../refs/ref.types.js';
-import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
+import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types.js';
 import type { CodegenMetadata } from '../sdk/codegen-extension.types.js';
 import type { DeepPartial, ModelEmissionInput, ModelEmissionOptions } from '../config/model-emission-defaults.js';
@@ -84,7 +84,7 @@ export interface ForRefPropertyDefinition extends PropertyDefinitionBase {
 
 export type PropertyDefinition<TEntity = unknown> = SharedPropertyDefinition | EntityPropertyDefinition<TEntity> | ForRefPropertyDefinition;
 
-export type PropertyRefGroup = Record<string, RefWithUsageMethods<PropertyRef>>;
+export type PropertyRefGroup = Record<string, RefWithUsageMethods<PropertyRef> | RefUsage<PropertyRef>>;
 
 export type PropertyFieldRefMap<TFields> = {
   readonly [Key in keyof TFields & string]: RefWithUsageMethods<PropertyRef>;
@@ -158,6 +158,14 @@ export interface EntityPropertyRefs<TFields extends PropertyRefGroup = PropertyR
    * {Entity}QueryFilter
    */
   readonly queryFilterModel: RefWithUsageMethods<ModelRef>;
+
+  /**
+   * Advanced suffix query filter model (search/in/range/exists).
+   *
+   * Emits:
+   * {Entity}AdvancedQueryFilter
+   */
+  readonly advancedQueryFilterModel: RefWithUsageMethods<ModelRef>;
 
   /**
    * Reusable enum/value refs.

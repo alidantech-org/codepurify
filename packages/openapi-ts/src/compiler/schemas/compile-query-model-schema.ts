@@ -15,7 +15,7 @@ import { SchemaKind } from '../../schema/schema-kind.js';
 import type { QueryModelOptions } from '../../config/query-model-defaults.js';
 import { DEFAULT_QUERY_MODEL_OPTIONS } from '../../config/query-model-defaults.js';
 
-export type QueryModelBehavior = 'filter';
+export type QueryModelBehavior = 'filter' | 'advanced-filter';
 
 export interface CompileQueryModelContext {
   readonly queryModelOptions?: QueryModelOptions;
@@ -66,11 +66,12 @@ export function compileQueryModelSchema(
 
 function getQueryBehaviorFromModelKey(modelKey: string): QueryModelBehavior {
   if (modelKey === 'query-filter') return 'filter';
+  if (modelKey === 'advanced-query-filter') return 'advanced-filter';
 
   throw new Error(
     [
       `Unknown query model behavior for modelKey: ${modelKey}.`,
-      'Only "query-filter" is supported by the current query helper compiler.',
+      'Only "query-filter" and "advanced-query-filter" are supported by the current query helper compiler.',
       'Sort/select values are emitted as virtual enum property refs, not query models.',
     ].join(' '),
   );
@@ -86,6 +87,10 @@ function compileQueryBehaviorSchema(
 } {
   switch (behavior) {
     case 'filter':
+      return {
+        schema: compileBasicFilterQuerySchema(fields),
+      };
+    case 'advanced-filter':
       return {
         schema: compileBasicFilterQuerySchema(fields),
       };
@@ -180,6 +185,11 @@ function compileFieldSchemaRef(fieldRef: unknown): unknown {
   }
 
   if (isPropertyRef(fieldRef)) {
+    // Handle generated boolean schema for exists filters
+    if (fieldRef.generatedSchema?.kind === 'boolean') {
+      return { type: 'boolean' };
+    }
+
     return {
       $ref: `#pending/${fieldRef.targetRefId ?? fieldRef.id}`,
     };

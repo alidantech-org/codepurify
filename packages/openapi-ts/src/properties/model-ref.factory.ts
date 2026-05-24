@@ -18,6 +18,7 @@ export type EntityModelKey =
   | 'public-partial-model'
   | 'internal-partial-model'
   | 'query-filter'
+  | 'advanced-query-filter'
   | 'query-sort-value'
   | 'query-select-value';
 
@@ -86,6 +87,8 @@ export function getModelSchemaName(name: string, modelKey: EntityModelKey, isAbs
       return toSchemaName(`${name}InternalPartialModel`);
     case 'query-filter':
       return toSchemaName(`${name}QueryFilter`);
+    case 'advanced-query-filter':
+      return toSchemaName(`${name}AdvancedQueryFilter`);
     case 'query-sort-value':
       return toSchemaName(`${name}QuerySortValue`);
     case 'query-select-value':
@@ -144,6 +147,9 @@ function selectInheritedModelRef(parent: EntityPropertyRefs, childModelKey: Enti
 
     case 'query-filter':
       return parent.queryFilterModel;
+
+    case 'advanced-query-filter':
+      return parent.advancedQueryFilterModel;
 
     case 'query-sort-value':
     case 'query-select-value':

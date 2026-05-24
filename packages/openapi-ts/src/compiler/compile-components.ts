@@ -4,7 +4,7 @@ import type { CompilerContext } from './compiler-context.js';
 
 import type { EntityPropertyRefs, PropertyRefGroup } from '../properties/property.types.js';
 import type { ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
+import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
 import type { CompileQueryModelContext } from './schemas/compile-query-model-schema.js';
 
@@ -35,6 +35,7 @@ interface EntityModelEmission {
 
   readonly query?: {
     readonly filter?: boolean;
+    readonly advancedFilter?: boolean;
     readonly sortValue?: boolean;
     readonly selectValue?: boolean;
   };
@@ -52,6 +53,7 @@ interface EntityRefs {
   readonly internalPartialModel: CompilableModelRef;
 
   readonly queryFilterModel: CompilableModelRef;
+  readonly advancedQueryFilterModel: CompilableModelRef;
 
   readonly values: {
     readonly querySort: RefWithUsageMethods<PropertyRef>;
@@ -299,9 +301,12 @@ function emitPropertyGroupNamedSchemas(input: {
   const { value, schemas, resolver, context, definitions } = input;
 
   for (const [key, fieldRef] of Object.entries(value)) {
-    if (fieldRef.targetRefId) continue;
+    // Extract underlying ref if it's a RefUsage
+    const ref = 'ref' in fieldRef ? fieldRef.ref : fieldRef;
 
-    const name = resolver.schemas.get(fieldRef.id);
+    if (ref.targetRefId) continue;
+
+    const name = resolver.schemas.get(ref.id);
 
     const definition = definitions.find((item) => {
       return key in (item.fields as Record<string, unknown>);
@@ -311,7 +316,7 @@ function emitPropertyGroupNamedSchemas(input: {
 
     if (!name || !sourceField) continue;
 
-    schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, fieldRef), resolver, context);
+    schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, ref), resolver, context);
   }
 }
 
@@ -460,6 +465,10 @@ function createEntityModelEmissionPlan(value: EntityRefs): readonly {
     {
       ref: value.queryFilterModel,
       enabled: value.modelEmission.query?.filter ?? true,
+    },
+    {
+      ref: value.advancedQueryFilterModel,
+      enabled: value.modelEmission.query?.advancedFilter ?? true,
     },
   ];
 }

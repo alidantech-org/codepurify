@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { withRefMethods } from '../refs/ref-methods.js';
-import type { GeneratedEnumPropertySchema, ModelRef, PropertyRef } from '../refs/ref.types.js';
+import type { GeneratedBooleanPropertySchema, GeneratedEnumPropertySchema, ModelRef, PropertyRef } from '../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import { QueryOperator } from '../schema/query-behavior.js';
 import { SchemaKind } from '../schema/schema-kind.js';
@@ -22,10 +22,12 @@ export function createEntityQueryHelpers(
   inherited?: readonly EntityPropertyRefs[],
 ): {
   queryFilterModel: RefWithUsageMethods<ModelRef>;
+  advancedQueryFilterModel: RefWithUsageMethods<ModelRef>;
   values: EntityValueRefs;
 } {
   return {
     queryFilterModel: createFilterModel(options, name, fields, refs, inherited),
+    advancedQueryFilterModel: createAdvancedFilterModel(options, name, fields, refs, inherited),
     values: {
       querySort: createSortValueRef(options, name, fields, refs),
       querySelect: createSelectValueRef(options, name, fields, refs),
@@ -55,6 +57,69 @@ function createFilterModel(
   );
 
   return withRefMethods(createModelRef(options, name, 'query-filter', filterRefs, fields, inherited));
+}
+
+function createAdvancedFilterModel(
+  options: DefinePropertiesOptions,
+  name: string,
+  fields: SchemaFieldMap,
+  refs: PropertyRefGroup,
+  inherited?: readonly EntityPropertyRefs[],
+): RefWithUsageMethods<ModelRef> {
+  const advancedFilterRefs: PropertyRefGroup = {};
+
+  for (const [key, ref] of Object.entries(refs)) {
+    const field = fields[key];
+
+    if (!hasFieldOptions(field) || !('query' in field) || !field.query || field.query.filter !== true) {
+      continue;
+    }
+
+    const operators = field.query.operators ?? [];
+
+    if (operators.includes(QueryOperator.search)) {
+      advancedFilterRefs[`${key}Search`] = ref;
+    }
+
+    if (operators.includes(QueryOperator.in)) {
+      advancedFilterRefs[`${key}In`] = ref.array();
+    }
+
+    if (operators.includes(QueryOperator.range)) {
+      advancedFilterRefs[`${key}Gte`] = ref;
+      advancedFilterRefs[`${key}Lte`] = ref;
+    }
+
+    if (operators.includes(QueryOperator.exists)) {
+      advancedFilterRefs[`${key}Exists`] = createBooleanPropertyRef(options, name, `${key}Exists`);
+    }
+  }
+
+  return withRefMethods(createModelRef(options, name, 'advanced-query-filter', advancedFilterRefs, fields, inherited));
+}
+
+function createBooleanPropertyRef(options: DefinePropertiesOptions, name: string, key: string): RefWithUsageMethods<PropertyRef> {
+  const generatedSchema: GeneratedBooleanPropertySchema = {
+    kind: 'boolean',
+  };
+
+  return createPropertyRef(
+    options,
+    name,
+    key,
+    PropertyKind.entity,
+    {
+      kind: SchemaKind.primitive,
+      zod: z.boolean(),
+      query: {
+        filter: false,
+        operators: [],
+        sort: false,
+      },
+    },
+    undefined,
+    generatedSchema,
+  );
 }
 
 function createSortValueRef(

@@ -1,6 +1,6 @@
 import { RefKind } from './ref-kind.js';
 import type { CodegenMetadata } from '../sdk/codegen-extension.types.js';
-import type { RefWithUsageMethods } from './ref-usage.types.js';
+import type { RefUsage, RefWithUsageMethods } from './ref-usage.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
 
 export interface GeneratedEnumPropertySchema {
@@ -8,7 +8,11 @@ export interface GeneratedEnumPropertySchema {
   readonly values: readonly string[];
 }
 
-export type GeneratedPropertySchema = GeneratedEnumPropertySchema;
+export interface GeneratedBooleanPropertySchema {
+  readonly kind: 'boolean';
+}
+
+export type GeneratedPropertySchema = GeneratedEnumPropertySchema | GeneratedBooleanPropertySchema;
 
 export interface EngineRefBase {
   readonly id: string;
@@ -47,7 +51,7 @@ export interface ResponseRef extends EngineRefBase {
 export interface ModelRef extends EngineRefBase {
   readonly kind: typeof RefKind.model;
   readonly modelKey: string;
-  readonly fields: Record<string, RefWithUsageMethods<PropertyRef>>;
+  readonly fields: Record<string, RefWithUsageMethods<PropertyRef> | RefUsage<PropertyRef>>;
   readonly sourceFields?: SchemaFieldMap;
   readonly openapiRef?: string;
   readonly inherits?: readonly {

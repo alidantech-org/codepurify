@@ -17,7 +17,7 @@ import { SchemaKind } from '../../schema/schema-kind.js';
 import { compileQueryModelSchema, type CompileQueryModelContext, type EnumComponentExtraction } from './compile-query-model-schema.js';
 
 function isQueryModel(ref: ModelRef): boolean {
-  return ref.modelKey === 'query-filter';
+  return ref.modelKey === 'query-filter' || ref.modelKey === 'advanced-query-filter';
 }
 
 export function compileModelSchema(
