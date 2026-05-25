@@ -1,25 +1,46 @@
 from __future__ import annotations
 
-from core.logging import key_value_table
+from constants.files import (
+    COL_OPERATIONS,
+    COL_PATH,
+    COL_RESOURCE,
+    LABEL_DASH,
+    ROW_API_VERSION,
+    ROW_COMPONENT_REFS,
+    ROW_MISSING_COMPONENT_REFS,
+    ROW_OPENAPI,
+    ROW_OPERATIONS,
+    ROW_PARAMETERS,
+    ROW_PATHS,
+    ROW_REFS,
+    ROW_REQUEST_BODIES,
+    ROW_RESPONSES,
+    ROW_SCHEMAS,
+    ROW_TITLE,
+    SEPARATOR_PATH,
+    TITLE_DETECTED_RESOURCES,
+    TITLE_OPENAPI_SUMMARY,
+)
+from core.logging import STYLE_VALUE_BOLD_CYAN, console, key_value_table
 from openapi.inspector import OpenApiInspection
 
 
 def present_inspection(inspection: OpenApiInspection) -> None:
     key_value_table(
-        "OpenAPI Summary",
+        TITLE_OPENAPI_SUMMARY,
         [
-            ("Title", inspection.title),
-            ("OpenAPI", inspection.openapi_version),
-            ("API Version", inspection.api_version),
-            ("Paths", inspection.path_count),
-            ("Operations", inspection.operation_count),
-            ("Schemas", inspection.schema_count),
-            ("Responses", inspection.response_count),
-            ("Request Bodies", inspection.request_body_count),
-            ("Parameters", inspection.parameter_count),
-            ("Refs", inspection.ref_count),
-            ("Component Refs", inspection.component_ref_count),
-            ("Missing Component Refs", inspection.missing_component_ref_count),
+            (ROW_TITLE, inspection.title),
+            (ROW_OPENAPI, inspection.openapi_version),
+            (ROW_API_VERSION, inspection.api_version),
+            (ROW_PATHS, inspection.path_count),
+            (ROW_OPERATIONS, inspection.operation_count),
+            (ROW_SCHEMAS, inspection.schema_count),
+            (ROW_RESPONSES, inspection.response_count),
+            (ROW_REQUEST_BODIES, inspection.request_body_count),
+            (ROW_PARAMETERS, inspection.parameter_count),
+            (ROW_REFS, inspection.ref_count),
+            (ROW_COMPONENT_REFS, inspection.component_ref_count),
+            (ROW_MISSING_COMPONENT_REFS, inspection.missing_component_ref_count),
         ],
     )
 
@@ -27,19 +48,18 @@ def present_inspection(inspection: OpenApiInspection) -> None:
         rows = [
             (
                 resource.name,
-                "/".join(resource.path) if resource.path else "-",
+                SEPARATOR_PATH.join(resource.path) if resource.path else LABEL_DASH,
                 resource.operation_count,
             )
             for resource in inspection.resources
         ]
 
         from rich.table import Table
-        from core.logging import console
 
-        table = Table(title="Detected Resources", show_header=True, header_style="bold cyan")
-        table.add_column("Resource")
-        table.add_column("Path")
-        table.add_column("Operations")
+        table = Table(title=TITLE_DETECTED_RESOURCES, show_header=True, header_style=STYLE_VALUE_BOLD_CYAN)
+        table.add_column(COL_RESOURCE)
+        table.add_column(COL_PATH)
+        table.add_column(COL_OPERATIONS)
 
         for name, path, count in rows:
             table.add_row(str(name), str(path), str(count))

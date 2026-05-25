@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from constants.openapi import OPERATION_PREFIX
 from inference.models import InferredDependency, InferredOperation, InferredSchema
+from inference.operations.dependencies import collect_operation_dependencies
 
 
 def collect_dependencies(
@@ -19,9 +21,9 @@ def collect_dependencies(
             )
 
     for operation in operations:
-        source_ref = f"operation:{operation.operation_id}"
+        source_ref = f"{OPERATION_PREFIX}{operation.operation_id}"
 
-        for target_ref in operation.schema_refs:
+        for target_ref in collect_operation_dependencies(operation):
             dependencies.append(
                 InferredDependency(
                     source_ref=source_ref,

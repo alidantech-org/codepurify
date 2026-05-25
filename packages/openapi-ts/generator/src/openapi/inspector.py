@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from core.constants import HTTP_METHODS, X_CODEGEN
+from constants.codegen import X_CODEGEN
+from constants.http import HTTP_METHODS
 from openapi.document import OpenApiDocument
 from openapi.refs import find_refs
 from openapi.resolver import build_component_index
@@ -94,12 +95,14 @@ def inspect_openapi_document(document: OpenApiDocument) -> OpenApiInspection:
 
 
 def _extract_resource(node: dict[str, Any]) -> ResourceSummary | None:
+    from constants.openapi import X_CODEGEN_NAME, X_CODEGEN_PATH, X_CODEGEN_RESOURCE
+
     x_codegen = node.get(X_CODEGEN)
 
     if not isinstance(x_codegen, dict):
         return None
 
-    resource = x_codegen.get("resource")
+    resource = x_codegen.get(X_CODEGEN_RESOURCE)
 
     if isinstance(resource, str):
         return ResourceSummary(name=resource)
@@ -107,8 +110,8 @@ def _extract_resource(node: dict[str, Any]) -> ResourceSummary | None:
     if not isinstance(resource, dict):
         return None
 
-    name = resource.get("name")
-    raw_path = resource.get("path", ())
+    name = resource.get(X_CODEGEN_NAME)
+    raw_path = resource.get(X_CODEGEN_PATH, ())
 
     if not isinstance(name, str) or not name:
         return None

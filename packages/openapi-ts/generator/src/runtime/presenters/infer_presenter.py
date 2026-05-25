@@ -2,7 +2,31 @@ from __future__ import annotations
 
 from collections import Counter
 
-from core.logging import key_value_table, warning
+from constants.files import (
+    COL_ALIAS_OF,
+    COL_KIND,
+    COL_KEYS,
+    COL_NAME,
+    COL_REF,
+    COL_RESOURCE,
+    COL_X_CODEGEN_KIND,
+    LABEL_DASH,
+    MSG_UNKNOWN_SCHEMAS_DETECTED,
+    ROW_ALIAS_SCHEMAS,
+    ROW_API_VERSION,
+    ROW_DEPENDENCIES,
+    ROW_OPENAPI,
+    ROW_OPERATIONS,
+    ROW_RESOURCES,
+    ROW_SCHEMA_KIND_PREFIX,
+    ROW_SCHEMAS,
+    ROW_TITLE,
+    SEPARATOR_COMMA,
+    TITLE_ALIAS_SCHEMAS,
+    TITLE_INFERENCE_SUMMARY,
+    TITLE_UNKNOWN_SCHEMAS,
+)
+from core.logging import STYLE_VALUE_BOLD_CYAN, STYLE_VALUE_BOLD_YELLOW, console, key_value_table, warning
 from inference.models import InferenceGraph
 
 
@@ -11,61 +35,59 @@ def present_inference(graph: InferenceGraph) -> None:
     alias_schemas = [schema for schema in graph.schemas if schema.is_alias]
 
     rows = [
-        ("Title", graph.title),
-        ("OpenAPI", graph.openapi_version),
-        ("API Version", graph.api_version),
-        ("Resources", len(graph.resources)),
-        ("Schemas", len(graph.schemas)),
-        ("Operations", len(graph.operations)),
-        ("Dependencies", len(graph.dependencies)),
-        ("Alias Schemas", len(alias_schemas)),
+        (ROW_TITLE, graph.title),
+        (ROW_OPENAPI, graph.openapi_version),
+        (ROW_API_VERSION, graph.api_version),
+        (ROW_RESOURCES, len(graph.resources)),
+        (ROW_SCHEMAS, len(graph.schemas)),
+        (ROW_OPERATIONS, len(graph.operations)),
+        (ROW_DEPENDENCIES, len(graph.dependencies)),
+        (ROW_ALIAS_SCHEMAS, len(alias_schemas)),
     ]
 
     for kind, count in sorted(kind_counts.items()):
-        rows.append((f"Schema Kind: {kind}", count))
+        rows.append((f"{ROW_SCHEMA_KIND_PREFIX}{kind}", count))
 
-    key_value_table("Inference Summary", rows)
+    key_value_table(TITLE_INFERENCE_SUMMARY, rows)
 
     unknown_schemas = [schema for schema in graph.schemas if schema.kind.value == "unknown"]
 
     if unknown_schemas:
         from rich.table import Table
-        from core.logging import console
 
-        warning("Unknown schemas detected. These need classifier improvement.")
+        warning(MSG_UNKNOWN_SCHEMAS_DETECTED)
 
-        table = Table(title="Unknown Schemas", show_header=True, header_style="bold yellow")
-        table.add_column("Name")
-        table.add_column("Ref")
-        table.add_column("x-codegen.kind")
-        table.add_column("Keys")
+        table = Table(title=TITLE_UNKNOWN_SCHEMAS, show_header=True, header_style=STYLE_VALUE_BOLD_YELLOW)
+        table.add_column(COL_NAME)
+        table.add_column(COL_REF)
+        table.add_column(COL_X_CODEGEN_KIND)
+        table.add_column(COL_KEYS)
 
         for schema in unknown_schemas:
             table.add_row(
                 schema.name,
                 schema.ref,
-                str(schema.x_codegen.get("kind", "-")),
-                ", ".join(sorted(schema.raw.keys())),
+                str(schema.x_codegen.get("kind", LABEL_DASH)),
+                SEPARATOR_COMMA.join(sorted(schema.raw.keys())),
             )
 
         console.print(table)
 
     if alias_schemas:
         from rich.table import Table
-        from core.logging import console
 
-        table = Table(title="Alias Schemas", show_header=True, header_style="bold cyan")
-        table.add_column("Name")
-        table.add_column("Kind")
-        table.add_column("Alias Of")
-        table.add_column("Resource")
+        table = Table(title=TITLE_ALIAS_SCHEMAS, show_header=True, header_style=STYLE_VALUE_BOLD_CYAN)
+        table.add_column(COL_NAME)
+        table.add_column(COL_KIND)
+        table.add_column(COL_ALIAS_OF)
+        table.add_column(COL_RESOURCE)
 
         for schema in alias_schemas:
             table.add_row(
                 schema.name,
                 schema.kind.value,
-                schema.alias_of or "-",
-                schema.resource.name if schema.resource else "-",
+                schema.alias_of or LABEL_DASH,
+                schema.resource.name if schema.resource else LABEL_DASH,
             )
 
         console.print(table)

@@ -4,6 +4,19 @@ from pathlib import Path
 
 import typer
 
+from constants.cli import (
+    HEADER_INFER,
+    HELP_DEBUG,
+    HELP_INPUT,
+    HELP_OUTPUT_INFERENCE,
+    HELP_QUIET,
+    HELP_VERBOSE,
+    OPT_DEBUG,
+    OPT_INPUT,
+    OPT_OUTPUT,
+    OPT_QUIET,
+    OPT_VERBOSE,
+)
 from core.config import CliOptions, create_runtime_context
 from core.logging import error, print_header
 from runtime.app import GeneratorApp
@@ -12,9 +25,9 @@ from runtime.app import GeneratorApp
 def infer_command(
     input_file: Path = typer.Option(
         ...,
-        "--input",
+        f"--{OPT_INPUT}",
         "-i",
-        help="Path to the OpenAPI YAML or JSON file.",
+        help=HELP_INPUT,
         exists=False,
         file_okay=True,
         dir_okay=False,
@@ -22,13 +35,13 @@ def infer_command(
     ),
     output: Path | None = typer.Option(
         None,
-        "--output",
+        f"--{OPT_OUTPUT}",
         "-o",
-        help="Optional output path for inference JSON.",
+        help=HELP_OUTPUT_INFERENCE,
     ),
-    debug: bool = typer.Option(False, "--debug", help="Show debug logs."),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show verbose logs."),
-    quiet: bool = typer.Option(False, "--quiet", "-q", help="Reduce terminal output."),
+    debug: bool = typer.Option(False, f"--{OPT_DEBUG}", help=HELP_DEBUG),
+    verbose: bool = typer.Option(False, f"--{OPT_VERBOSE}", "-v", help=HELP_VERBOSE),
+    quiet: bool = typer.Option(False, f"--{OPT_QUIET}", "-q", help=HELP_QUIET),
 ) -> None:
     try:
         options = CliOptions(debug=debug, verbose=verbose, quiet=quiet)
@@ -38,7 +51,7 @@ def infer_command(
         resolved_input = context.paths.resolve_input(input_file)
         resolved_output = context.paths.resolve_output(output) if output else None
 
-        print_header("Infer OpenAPI", str(resolved_input))
+        print_header(HEADER_INFER, str(resolved_input))
         app.infer(resolved_input, resolved_output)
 
     except Exception as exc:

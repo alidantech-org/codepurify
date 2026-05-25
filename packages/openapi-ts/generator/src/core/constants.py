@@ -1,54 +1,60 @@
 from __future__ import annotations
 
-APP_NAME = "OpenAPI Generator"
-APP_COMMAND = "generator"
+# Config constants
+DEFAULT_PROJECT_NAME = "generator"
+PYDANTIC_ARBITRARY_TYPES_ALLOWED = "arbitrary_types_allowed"
 
-DEFAULT_CONFIG_FILE_NAMES = (
-    "generator.config.yaml",
-    "generator.config.yml",
-    "generator.config.json",
-)
+# Path constants
+DIR_SRC = "src"
+DIR_TESTS = "tests"
+DIR_TEMPLATES = "templates"
+DIR_LANGUAGES = "languages"
+FILE_PYPROJECT = "pyproject.toml"
+DIR_GENERATOR = "generator"
+ERROR_PROJECT_ROOT_NOT_FOUND = "Could not find generator project root. Run from generator/ or from the repo root."
 
-OPENAPI_FILE_EXTENSIONS = (".yaml", ".yml", ".json")
+# Logging theme style names
+STYLE_TITLE = "title"
+STYLE_SUCCESS = "success"
+STYLE_WARNING = "warning"
+STYLE_ERROR = "error"
+STYLE_MUTED = "muted"
+STYLE_PATH = "path"
+STYLE_COMMAND = "command"
 
-X_CODEGEN = "x-codegen"
-X_CODEGEN_RESOURCE = "resource"
-X_CODEGEN_PARAMETERS = "parameters"
-X_CODEGEN_REQUEST_BODY = "requestBody"
-X_CODEGEN_RESPONSES = "responses"
+# Logging theme style values
+STYLE_VALUE_BOLD_CYAN = "bold cyan"
+STYLE_VALUE_BOLD_GREEN = "bold green"
+STYLE_VALUE_BOLD_YELLOW = "bold yellow"
+STYLE_VALUE_BOLD_RED = "bold red"
+STYLE_VALUE_DIM = "dim"
+STYLE_VALUE_MAGENTA = "magenta"
+STYLE_VALUE_BOLD_BLUE = "bold blue"
 
-REF_KEY = "$ref"
-OPENAPI_KEY = "openapi"
-INFO_KEY = "info"
-TITLE_KEY = "title"
-VERSION_KEY = "version"
-PATHS_KEY = "paths"
-COMPONENTS_KEY = "components"
-SCHEMAS_KEY = "schemas"
-RESPONSES_KEY = "responses"
-REQUEST_BODIES_KEY = "requestBodies"
-PARAMETERS_KEY = "parameters"
+# Logging Rich markup tags
+TAG_TITLE_OPEN = "[title]"
+TAG_TITLE_CLOSE = "[/title]"
+TAG_MUTED_OPEN = "[muted]"
+TAG_MUTED_CLOSE = "[/muted]"
+TAG_CYAN_OPEN = "[cyan]"
+TAG_CYAN_CLOSE = "[/cyan]"
+TAG_SUCCESS_OPEN = "[success]"
+TAG_SUCCESS_CLOSE = "[/success]"
+TAG_WARNING_OPEN = "[warning]"
+TAG_WARNING_CLOSE = "[/warning]"
+TAG_ERROR_OPEN = "[error]"
+TAG_ERROR_CLOSE = "[/error]"
+TAG_PROGRESS_DESCRIPTION = "[progress.description]{task.description}"
 
-HTTP_METHODS = {
-    "get",
-    "post",
-    "put",
-    "patch",
-    "delete",
-    "options",
-    "head",
-    "trace",
-}
+# Logging symbols
+SYMBOL_INFO = "›"
+SYMBOL_SUCCESS = "✓"
+SYMBOL_WARNING = "⚠"
+SYMBOL_ERROR = "✗"
 
-JSON_POINTER_PREFIX = "#/"
-COMPONENT_REF_PREFIX = "#/components/"
-
-COMPONENT_SECTIONS = {
-    "schemas",
-    "responses",
-    "requestBodies",
-    "parameters",
-    "headers",
-    "examples",
-    "securitySchemes",
-}
+# Logging other constants
+BORDER_STYLE_CYAN = "cyan"
+PADDING = (1, 3)
+DEBUG_PREFIX = "debug:"
+COLUMN_KEY = "Key"
+COLUMN_VALUE = "Value"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from inference.graph import collect_dependencies
 from inference.models import InferenceGraph, InferredResource
-from inference.operations import infer_operations
+from inference.operations.engine import infer_operations
 from inference.schemas import infer_schemas
 from openapi.document import OpenApiDocument
 

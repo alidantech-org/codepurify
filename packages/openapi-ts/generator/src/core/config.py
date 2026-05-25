@@ -4,6 +4,10 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from core.constants import (
+    DEFAULT_PROJECT_NAME,
+    PYDANTIC_ARBITRARY_TYPES_ALLOWED,
+)
 from core.paths import ProjectPaths
 
 
@@ -15,7 +19,7 @@ class CliOptions(BaseModel):
 
 
 class GeneratorConfig(BaseModel):
-    project_name: str = "generator"
+    project_name: str = DEFAULT_PROJECT_NAME
     default_language: str | None = None
     templates_dir: Path | None = None
     output_dir: Path | None = None
@@ -28,7 +32,7 @@ class RuntimeContext(BaseModel):
     options: CliOptions
 
     model_config = {
-        "arbitrary_types_allowed": True,
+        PYDANTIC_ARBITRARY_TYPES_ALLOWED: True,
     }
 
 

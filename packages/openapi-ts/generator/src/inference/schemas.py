@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.constants import X_CODEGEN
+from constants.codegen import X_CODEGEN
+from constants.openapi import COMP_REF_SCHEMAS
 from inference.classifiers import classify_schema
 from inference.models import InferredResource, InferredSchema
 from inference.resources import extract_resource_from_x_codegen
@@ -17,7 +18,7 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
         if not isinstance(schema, dict):
             continue
 
-        ref = f"#/components/schemas/{name}"
+        ref = f"{COMP_REF_SCHEMAS}{name}"
         x_codegen = schema.get(X_CODEGEN)
         x_codegen_dict = x_codegen if isinstance(x_codegen, dict) else {}
 
@@ -33,7 +34,7 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
                 resource=extract_resource_from_x_codegen(x_codegen_dict) or _infer_resource_from_alias(schema, document),
                 x_codegen=x_codegen_dict,
                 raw=schema,
-                dependencies=tuple(ref.raw for ref in find_refs(schema) if ref.raw != f"#/components/schemas/{name}"),
+                dependencies=tuple(ref.raw for ref in find_refs(schema) if ref.raw != f"{COMP_REF_SCHEMAS}{name}"),
                 alias_of=alias_of,
                 is_alias=is_alias,
             )

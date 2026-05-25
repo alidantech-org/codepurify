@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.constants import REF_KEY, X_CODEGEN
+from constants.codegen import X_CODEGEN, KIND
+from constants.openapi import REF, TYPE, PROPERTIES, ALL_OF, ENUM
 from inference.models import InferredSchemaKind
 from openapi.document import OpenApiDocument
 
@@ -16,13 +17,13 @@ def classify_schema(
     x_codegen = schema.get(X_CODEGEN)
 
     if isinstance(x_codegen, dict):
-        explicit_kind = x_codegen.get("kind")
+        explicit_kind = x_codegen.get(KIND)
         if isinstance(explicit_kind, str):
             mapped = _map_codegen_kind(explicit_kind)
             if mapped is not None:
                 return mapped
 
-    if REF_KEY in schema and document is not None:
+    if REF in schema and document is not None:
         from inference.ref_metadata import infer_kind_from_ref_alias
 
         inferred = infer_kind_from_ref_alias(schema, document, seen_refs)
@@ -62,24 +63,24 @@ def _map_codegen_kind(value: str) -> InferredSchemaKind | None:
 
 
 def _is_enum_schema(schema: dict[str, Any]) -> bool:
-    return isinstance(schema.get("enum"), list)
+    return isinstance(schema.get(ENUM), list)
 
 
 def _is_object_schema(schema: dict[str, Any]) -> bool:
-    if schema.get("type") == "object":
+    if schema.get(TYPE) == "object":
         return True
 
-    if isinstance(schema.get("properties"), dict):
+    if isinstance(schema.get(PROPERTIES), dict):
         return True
 
-    if isinstance(schema.get("allOf"), list):
+    if isinstance(schema.get(ALL_OF), list):
         return True
 
     return False
 
 
 def _is_primitive_schema(schema: dict[str, Any]) -> bool:
-    schema_type = schema.get("type")
+    schema_type = schema.get(TYPE)
 
     if isinstance(schema_type, str):
         return schema_type in {"string", "integer", "number", "boolean", "null"}

@@ -3,6 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.constants import (
+    DIR_GENERATOR,
+    DIR_LANGUAGES,
+    DIR_SRC,
+    DIR_TEMPLATES,
+    DIR_TESTS,
+    ERROR_PROJECT_ROOT_NOT_FOUND,
+    FILE_PYPROJECT,
+)
 from core.errors import PathResolutionError
 
 
@@ -12,38 +21,38 @@ class ProjectPaths:
 
     @property
     def src(self) -> Path:
-        return self.root / "src"
+        return self.root / DIR_SRC
 
     @property
     def tests(self) -> Path:
-        return self.root / "tests"
+        return self.root / DIR_TESTS
 
     @property
     def templates(self) -> Path:
-        return self.src / "templates"
+        return self.src / DIR_TEMPLATES
 
     @property
     def language_templates(self) -> Path:
-        return self.src / "languages"
+        return self.src / DIR_LANGUAGES
 
     @property
     def pyproject(self) -> Path:
-        return self.root / "pyproject.toml"
+        return self.root / FILE_PYPROJECT
 
     @classmethod
     def from_cwd(cls, cwd: Path | None = None) -> "ProjectPaths":
         current = (cwd or Path.cwd()).resolve()
 
         # If command is run inside generator/, detect it directly.
-        if (current / "pyproject.toml").exists() and (current / "src").exists():
+        if (current / FILE_PYPROJECT).exists() and (current / DIR_SRC).exists():
             return cls(root=current)
 
         # If command is run from parent repo, detect generator/.
-        generator_root = current / "generator"
-        if (generator_root / "pyproject.toml").exists() and (generator_root / "src").exists():
+        generator_root = current / DIR_GENERATOR
+        if (generator_root / FILE_PYPROJECT).exists() and (generator_root / DIR_SRC).exists():
             return cls(root=generator_root.resolve())
 
-        raise PathResolutionError("Could not find generator project root. Run from generator/ or from the repo root.")
+        raise PathResolutionError(ERROR_PROJECT_ROOT_NOT_FOUND)
 
     def resolve_input(self, value: str | Path) -> Path:
         path = Path(value)

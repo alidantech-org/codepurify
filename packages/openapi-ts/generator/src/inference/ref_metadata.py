@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from constants.openapi import COMP_SCHEMAS
 from inference.models import InferredResource, InferredSchemaKind
 from inference.resources import extract_resource_from_x_codegen
 from openapi.document import OpenApiDocument
@@ -27,7 +28,7 @@ def infer_kind_from_ref_alias(
 
     seen_refs.add(ref.raw)
 
-    if ref.section != "schemas":
+    if ref.section != COMP_SCHEMAS:
         return None
 
     schema_name = ref.name
@@ -62,7 +63,7 @@ def _extract_resource_from_ref(
     ref,
     document: OpenApiDocument,
 ):
-    if ref.section != "schemas":
+    if ref.section != COMP_SCHEMAS:
         return None
 
     schema_name = ref.name
@@ -71,7 +72,7 @@ def _extract_resource_from_ref(
     if not isinstance(schema, dict):
         return None
 
-    from core.constants import X_CODEGEN
+    from constants.codegen import X_CODEGEN
 
     x_codegen = schema.get(X_CODEGEN)
     if not isinstance(x_codegen, dict):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from core.constants import COMPONENT_REF_PREFIX, JSON_POINTER_PREFIX, REF_KEY
+from constants.openapi import COMPONENTS, COMPONENT_REF_PREFIX, JSON_POINTER_PREFIX, REF
 
 
 @dataclass(frozen=True)
@@ -21,13 +21,13 @@ class OpenApiRef:
 
     @property
     def section(self) -> str | None:
-        if len(self.parts) >= 2 and self.parts[0] == "components":
+        if len(self.parts) >= 2 and self.parts[0] == COMPONENTS:
             return self.parts[1]
         return None
 
     @property
     def name(self) -> str | None:
-        if len(self.parts) >= 3 and self.parts[0] == "components":
+        if len(self.parts) >= 3 and self.parts[0] == COMPONENTS:
             return self.parts[2]
         return None
 
@@ -56,7 +56,7 @@ def get_ref(node: Any) -> OpenApiRef | None:
     if not isinstance(node, dict):
         return None
 
-    value = node.get(REF_KEY)
+    value = node.get(REF)
 
     if not isinstance(value, str) or not value:
         return None

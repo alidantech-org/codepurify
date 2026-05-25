@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from constants.codegen import RESOURCE, NAME, KEY, PATH
 from inference.models import InferredResource
 
 
@@ -21,7 +22,7 @@ def make_resource(
 
 
 def extract_resource_from_x_codegen(x_codegen: dict[str, Any]) -> InferredResource | None:
-    resource = x_codegen.get("resource")
+    resource = x_codegen.get(RESOURCE)
 
     if isinstance(resource, str):
         return make_resource(name=resource, key=resource)
@@ -29,14 +30,14 @@ def extract_resource_from_x_codegen(x_codegen: dict[str, Any]) -> InferredResour
     if not isinstance(resource, dict):
         return None
 
-    name = resource.get("name")
-    raw_path = resource.get("path", ())
+    name = resource.get(NAME)
+    raw_path = resource.get(PATH, ())
 
     # Important:
     # Only use an explicit resource.key.
     # Do not use group as resource key.
     # group can be used later for folder grouping, but it is not identity.
-    key = resource.get("key")
+    key = resource.get(KEY)
 
     if not isinstance(name, str) or not name.strip():
         return None

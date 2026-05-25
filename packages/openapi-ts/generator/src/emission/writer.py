@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from constants.files import ENCODING_UTF8
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -37,16 +38,16 @@ class FileWriter:
             target.parent.mkdir(parents=True, exist_ok=True)
 
             if target.exists():
-                existing = target.read_text(encoding="utf-8")
+                existing = target.read_text(encoding=ENCODING_UTF8)
                 if existing == normalized_content:
                     unchanged += 1
                     continue
 
-                target.write_text(normalized_content, encoding="utf-8")
+                target.write_text(normalized_content, encoding=ENCODING_UTF8)
                 updated += 1
                 continue
 
-            target.write_text(normalized_content, encoding="utf-8")
+            target.write_text(normalized_content, encoding=ENCODING_UTF8)
             created += 1
 
         return WriteResult(

@@ -1,6 +1,18 @@
 from __future__ import annotations
 
 import json
+from constants.files import ENCODING_UTF8, EXT_JSON, EXT_YAML, EXT_YML
+from constants.openapi import (
+    ERR_FILE_NOT_FOUND,
+    ERR_LOAD_FAILED,
+    ERR_MISSING_OPENAPI,
+    ERR_MISSING_PATHS,
+    ERR_NOT_A_FILE,
+    ERR_ROOT_NOT_OBJECT,
+    ERR_UNSUPPORTED_EXTENSION,
+    OPENAPI,
+    PATHS,
+)
 from pathlib import Path
 from typing import Any
 
@@ -12,46 +24,46 @@ from openapi.document import OpenApiDocument
 
 def load_openapi_document(path: Path) -> OpenApiDocument:
     if not path.exists():
-        raise OpenApiLoadError(f"OpenAPI file does not exist: {path}")
+        raise OpenApiLoadError(ERR_FILE_NOT_FOUND.format(path=path))
 
     if not path.is_file():
-        raise OpenApiLoadError(f"OpenAPI path is not a file: {path}")
+        raise OpenApiLoadError(ERR_NOT_A_FILE.format(path=path))
 
     suffix = path.suffix.lower()
 
     try:
-        if suffix in {".yaml", ".yml"}:
+        if suffix in {EXT_YAML, EXT_YML}:
             raw = _load_yaml(path)
-        elif suffix == ".json":
+        elif suffix == EXT_JSON:
             raw = _load_json(path)
         else:
-            raise OpenApiLoadError(f"Unsupported OpenAPI file extension '{suffix}'. Use .yaml, .yml, or .json.")
+            raise OpenApiLoadError(ERR_UNSUPPORTED_EXTENSION.format(suffix=suffix))
     except OpenApiLoadError:
         raise
     except Exception as exc:
-        raise OpenApiLoadError(f"Failed to load OpenAPI document: {path}") from exc
+        raise OpenApiLoadError(ERR_LOAD_FAILED.format(path=path)) from exc
 
     if not isinstance(raw, dict):
-        raise OpenApiLoadError("OpenAPI document root must be an object.")
+        raise OpenApiLoadError(ERR_ROOT_NOT_OBJECT)
 
-    if "openapi" not in raw:
-        raise OpenApiLoadError("OpenAPI document is missing required 'openapi' field.")
+    if OPENAPI not in raw:
+        raise OpenApiLoadError(ERR_MISSING_OPENAPI)
 
-    if "paths" not in raw:
-        raise OpenApiLoadError("OpenAPI document is missing required 'paths' field.")
+    if PATHS not in raw:
+        raise OpenApiLoadError(ERR_MISSING_PATHS)
 
     return OpenApiDocument(path=path, raw=raw)
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as file:
+    with path.open("r", encoding=ENCODING_UTF8) as file:
         value = yaml.safe_load(file)
 
     return value or {}
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as file:
+    with path.open("r", encoding=ENCODING_UTF8) as file:
         value = json.load(file)
 
     return value or {}
