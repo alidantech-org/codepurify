@@ -7,7 +7,7 @@ import { withRefMethods } from '../refs/ref-methods.js';
 import type { GeneratedPropertySchema, PropertyRef } from '../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { SchemaField, SchemaFieldMap } from '../schema/schema.types.js';
-import { XCodegenKind } from '../sdk/codegen-extension.types.js';
+import { XCodegenKind } from '../codegen/codegen-extension.types.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
 
 import type { DefinePropertiesOptions } from './define-properties.js';

@@ -1,4 +1,4 @@
-import { XCodegenDtoRole } from '../sdk/codegen-extension.types.js';
+import { XCodegenDtoRole } from '../codegen/codegen-extension.types.js';
 import type { VersionContract } from '../version/version-contract.types.js';
 import type { CompilerContext } from './compiler-context.js';
 import { isComponentRef, isPropertyRef } from '../validation/ref-guards.js';

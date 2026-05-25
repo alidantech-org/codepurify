@@ -2,7 +2,7 @@ import { EngineIdPart, createEngineId } from '../../ids/engine-id.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import type { ResponseRef } from '../../refs/ref.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../../sdk/codegen-extension.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '../../codegen/codegen-extension.types.js';
 import type { ComponentRefMap } from '../component.types.js';
 import type { ResponseComponentDefinition, ResponseComponentRegistry } from './response-component.types.js';
 

@@ -1,7 +1,7 @@
 import type { VersionContract } from '../version/version-contract.types.js';
 import type { FieldSourceMetadata } from '../refs/ref-usage.types.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
-import type { XCodegenResourceMeta } from '../sdk/codegen-extension.types.js';
+import type { XCodegenResourceMeta } from '../codegen/codegen-extension.types.js';
 
 export function sanitizeDebugContract(value: unknown): unknown {
   const sanitized = sanitizeDebugValue(value);

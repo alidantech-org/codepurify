@@ -7,7 +7,7 @@ from constants.codegen import X_CODEGEN
 from constants.http import HTTP_METHODS
 from openapi.document import OpenApiDocument
 from openapi.refs import find_refs
-from openapi.resolver import build_component_index
+from openapi.resolver.components import build_component_index
 
 
 @dataclass(frozen=True)

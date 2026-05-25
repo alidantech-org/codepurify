@@ -2,7 +2,7 @@ import type { ComponentFieldMap } from '../component.types.js';
 import type { ComponentRef, ModelRef, RequestBodyRef } from '../../refs/ref.types.js';
 import type { EngineRef } from '../../refs/ref.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 
 export type RequestBodySchemaRef = ComponentRef | ModelRef | ComponentFieldMap | RefUsage<EngineRef>;
 

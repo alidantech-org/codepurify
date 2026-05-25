@@ -4,8 +4,8 @@ import type { ComponentRef, ModelRef, RequestBodyRef } from '../../refs/ref.type
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import { XCodegenDtoRole, XCodegenKind, type CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+import { XCodegenDtoRole, XCodegenKind, type CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 import { compileComponentSchema } from '../schemas/compile-component-schema.js';
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';

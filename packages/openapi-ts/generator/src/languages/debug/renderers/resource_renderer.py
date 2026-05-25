@@ -18,7 +18,7 @@ def render_resource(resource: InferredResource, graph: InferenceGraph) -> str:
 
     lines = [
         f"{LABEL_RESOURCE}{SEPARATOR_PATH}{resource.name}",
-        f"{LABEL_KEY}{SEPARATOR_PATH}{resource.key}",
+        f"{LABEL_KEY}{SEPARATOR_PATH}{resource.name}",
         f"{LABEL_PATH}{SEPARATOR_PATH}{SEPARATOR_PATH.join(resource.path) if resource.path else LABEL_DASH}",
         "",
         f"{LABEL_SCHEMAS}{SEPARATOR_PATH}{len(schemas)}",

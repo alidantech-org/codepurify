@@ -18,8 +18,8 @@ import { compileParameterComponent } from './components/compile-parameter-compon
 import { compileRequestBodyComponent } from './components/compile-request-body-component.js';
 import { compileResponseComponent } from './components/compile-response-component.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
-import { applyCodegenMetadata } from '../sdk/apply-codegen-extensions.js';
-import { XCodegenKind } from '../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../codegen/apply-codegen-extensions.js';
+import { XCodegenKind } from '../codegen/codegen-extension.types.js';
 
 type SchemaResolver = ReturnType<typeof buildSchemaResolver>;
 type CompilableModelRef = Parameters<typeof compileModelSchema>[0];

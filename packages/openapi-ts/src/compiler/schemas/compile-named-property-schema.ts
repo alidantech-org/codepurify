@@ -2,8 +2,8 @@ import type { PropertyRef } from '../../refs/ref.types.js';
 import type { PrimitiveQueryOptions } from '../../schema/query-behavior.js';
 import type { SchemaField } from '../../schema/schema.types.js';
 import { isZodEnum } from '../../schema/is-zod-enum.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import { XCodegenKind, type CodegenMetadata, type XCodegenQueryMeta } from '../../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+import { XCodegenKind, type CodegenMetadata, type XCodegenQueryMeta } from '../../codegen/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
 
 export function compileNamedPropertySchema(field: SchemaField, ref: PropertyRef): unknown {

@@ -3,7 +3,7 @@ import type { ComponentRef } from '../../refs/ref.types.js';
 import type { EngineRef } from '../../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 
 export type SchemaComponentValue = ComponentFieldMap | EngineRef | RefUsage<EngineRef> | RefUsage<ComponentRef>;
 

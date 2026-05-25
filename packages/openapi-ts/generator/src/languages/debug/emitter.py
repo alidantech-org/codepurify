@@ -35,7 +35,7 @@ class DebugEmitter:
         for resource in graph.resources:
             files.append(
                 EmittedFile(
-                    path=build_resource_path(FOLDER_RESOURCES, resource.key),
+                    path=build_resource_path(FOLDER_RESOURCES, resource.name),
                     content=resource_renderer.render_resource(resource, graph),
                 )
             )
@@ -43,7 +43,7 @@ class DebugEmitter:
         for schema in graph.schemas:
             files.append(
                 EmittedFile(
-                    path=build_schema_path(FOLDER_SCHEMAS, schema.name),
+                    path=build_schema_path(FOLDER_SCHEMAS, schema.name, schema.kind),
                     content=schema_renderer.render_schema(schema),
                 )
             )

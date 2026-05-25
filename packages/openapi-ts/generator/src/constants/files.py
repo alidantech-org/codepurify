@@ -16,6 +16,12 @@ FOLDER_SCHEMAS = "schemas"
 FOLDER_OPERATIONS = "operations"
 FOLDER_OUTPUT = "output"
 
+# Schema kind folder names
+FOLDER_PRIMITIVE = "primitive"
+FOLDER_ENUM = "enum"
+FOLDER_MODEL = "model"
+FOLDER_DTO = "dto"
+
 # File names
 FILE_SUMMARY = "summary.txt"
 FILE_PYPROJECT = "pyproject.toml"

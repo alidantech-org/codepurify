@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from constants.codegen import ATTR_RESOURCE
 from inference.graph import collect_dependencies
 from inference.models import InferenceGraph, InferredResource
 from inference.operations.engine import infer_operations
@@ -32,17 +33,17 @@ def _collect_resources(
     resources: dict[str, InferredResource] = {}
 
     for item in (*schemas, *operations):
-        resource = getattr(item, "resource", None)
+        resource = getattr(item, ATTR_RESOURCE, None)
 
         if resource is None:
             continue
 
-        existing = resources.get(resource.key)
+        existing = resources.get(resource.name)
         if existing is None:
-            resources[resource.key] = resource
+            resources[resource.name] = resource
             continue
 
         if not existing.path and resource.path:
-            resources[resource.key] = resource
+            resources[resource.name] = resource
 
-    return tuple(sorted(resources.values(), key=lambda item: item.key.lower()))
+    return tuple(sorted(resources.values(), key=lambda item: item.name.lower()))

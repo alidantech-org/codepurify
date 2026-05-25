@@ -1,6 +1,6 @@
 import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../sdk/codegen-extension.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '../codegen/codegen-extension.types.js';
 import type { DefineRoutesInput, RouteDefinition, RouteParameterRegistry, RouteRegistry } from './route.types.js';
 
 export interface DefineRoutesOptions extends OptionalResourceContext {

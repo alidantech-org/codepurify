@@ -8,8 +8,8 @@ import type {
 } from '../../routes/route.types.js';
 import type { VersionContract } from '../../version/version-contract.types.js';
 import type { CompilerContext } from '../compiler-context.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 import { ContentType } from '../../output/output.constants.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import type { RequestBodyRef, ResponseRef, ComponentRef } from '../../refs/ref.types.js';

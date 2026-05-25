@@ -2,7 +2,7 @@ import type { ComponentRef, ParameterRef, PropertyRef } from '../../refs/ref.typ
 import type { EngineRef } from '../../refs/ref.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
 import type { ParameterLocation } from './parameter-location.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 
 export type ParameterSchemaRef = PropertyRef | ComponentRef | RefUsage<EngineRef>;
 

@@ -3,7 +3,7 @@ import type { SchemaComponentValue } from '../../components/schemas/schema-compo
 import type { ModelRef, ComponentRef, PropertyRef } from '../../refs/ref.types.js';
 import type { ExtendWithInput, FieldSourceMetadata, RefUsage } from '../../refs/ref-usage.types.js';
 import type { RouteParameterRef, RouteParameterMap, RouteParameterFieldValue, RouteQueryInput } from '../../routes/route.types.js';
-import type { XCodegenResourceMeta } from '../../sdk/codegen-extension.types.js';
+import type { XCodegenResourceMeta } from '../../codegen/codegen-extension.types.js';
 import type { VersionContract } from '../../version/version-contract.types.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 

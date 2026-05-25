@@ -1,6 +1,6 @@
 import type { ParameterComponentDefinition } from '../../components/parameters/parameter-component.types.js';
 import { RefKind } from '../../refs/ref-kind.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 

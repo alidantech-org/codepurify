@@ -3,7 +3,8 @@ from __future__ import annotations
 from constants.codegen import X_CODEGEN
 from constants.http import HTTP_METHODS
 from constants.openapi import OPERATION_ID, PARAMETERS, REQUEST_BODY, RESPONSES
-from inference.models import InferredOperation
+from inference.models import InferredOperation, InferredOperationTarget
+from inference.metadata.targets import get_codegen_target_ref, get_codegen_target_source
 from inference.operations.parameters import infer_parameters
 from inference.operations.request_bodies import infer_request_body
 from inference.operations.responses import infer_responses
@@ -35,6 +36,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
             parameters = infer_parameters(operation.get(PARAMETERS), document, path_parameters)
             request_body = infer_request_body(operation.get(REQUEST_BODY), document)
             responses = infer_responses(operation.get(RESPONSES), document)
+            target = infer_operation_target(operation, parameters, request_body, responses)
 
             operations.append(
                 InferredOperation(
@@ -45,11 +47,66 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
                     parameters=parameters,
                     request_body=request_body,
                     responses=responses,
+                    target=target,
                     raw=operation,
                 )
             )
 
     return tuple(operations)
+
+
+def infer_operation_target(
+    operation: dict,
+    parameters: tuple,
+    request_body,
+    responses: tuple,
+) -> InferredOperationTarget | None:
+    """Infer generic operation target from x-codegen.target metadata.
+
+    Args:
+        operation: The operation node.
+        parameters: Inferred parameters.
+        request_body: Inferred request body.
+        responses: Inferred responses.
+
+    Returns:
+        An InferredOperationTarget if target metadata exists, None otherwise.
+    """
+    target_ref = get_codegen_target_ref(operation)
+    if not target_ref:
+        return None
+
+    source = get_codegen_target_source(operation) or "x-codegen.target"
+
+    # Infer roles from operation context
+    inferred_roles: list[str] = []
+    locations: list[str] = []
+
+    if parameters:
+        param_locations = set(param.location for param in parameters)
+        locations.extend(param_locations)
+
+        if "query" in param_locations:
+            inferred_roles.append("query")
+        if "path" in param_locations:
+            inferred_roles.append("params")
+
+    if request_body:
+        inferred_roles.append("body")
+
+    if responses:
+        success_responses = [r for r in responses if r.is_success]
+        if success_responses:
+            inferred_roles.append("response")
+
+    return InferredOperationTarget(
+        ref=target_ref,
+        source=source,
+        exclude=(),
+        inferred_roles=tuple(sorted(set(inferred_roles))),
+        locations=tuple(sorted(set(locations))),
+        reason="inferred from operation context",
+    )
 
 
 def method_upper(method: str) -> str:

@@ -4,7 +4,7 @@ import type { ComponentRef } from '../../refs/ref.types.js';
 import { withRefMethods } from '../../refs/ref-methods.js';
 import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../../sdk/codegen-extension.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '../../codegen/codegen-extension.types.js';
 import type { ComponentFieldMap, ComponentRefMap } from '../component.types.js';
 import type { SchemaComponentDefinition, SchemaComponentRegistry, SchemaComponentValue } from './schema-component.types.js';
 import { compileZodRef } from '../../zod/compile-zod-ref.js';

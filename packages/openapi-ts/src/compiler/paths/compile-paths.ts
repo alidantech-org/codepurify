@@ -8,8 +8,8 @@ import type { InferredParameterComponent, InferredRouteComponents } from './infe
 import { inferRouteComponents } from './infer-route-components.js';
 import { compileRouteOperation } from './compile-route-operation.js';
 import { extractPathParamNames } from '../../routes/route.types.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 import type { ComponentRef } from '../../refs/ref.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';

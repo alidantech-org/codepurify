@@ -2,24 +2,25 @@ from __future__ import annotations
 
 from typing import Any
 
-from constants.openapi import (
-    CONTENT,
-    DESCRIPTION,
-    SCHEMA,
-    STATUS_DEFAULT,
-    STATUS_ERROR_MIN,
-    STATUS_SUCCESS_MAX,
-    STATUS_SUCCESS_MIN,
-)
+from constants.openapi import SCHEMA
 from inference.models import InferredMediaType, InferredResponse
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
-from openapi.resolver import extract_content_types, extract_schema_refs_from_content
+from openapi.resolver.responses import (
+    get_response_content,
+    get_response_content_types,
+    get_response_description,
+    get_response_ref,
+    get_response_schema_refs,
+    is_error_status,
+    is_success_status,
+    resolve_response,
+)
 
 
 def infer_responses(
     responses: Any,
-    _document: OpenApiDocument,
+    document: OpenApiDocument,
 ) -> tuple[InferredResponse, ...]:
     """Infer responses from operation."""
     if not isinstance(responses, dict):
@@ -31,27 +32,28 @@ def infer_responses(
         if not isinstance(response, dict):
             continue
 
-        ref = get_ref(response)
-        description = response.get(DESCRIPTION, "")
-        content = response.get(CONTENT)
+        original_ref = get_response_ref(response)
+        resolved_response = resolve_response(document, response)
 
-        content_types = extract_content_types(content)
+        if resolved_response is None:
+            continue
+
+        content = get_response_content(resolved_response)
+        content_types = get_response_content_types(resolved_response)
+        schema_refs = get_response_schema_refs(resolved_response)
+        description = get_response_description(resolved_response)
         media_types = _infer_media_types(content)
-        schema_refs = extract_schema_refs_from_content(content)
-
-        is_success = _is_success_status(status_code)
-        is_error = _is_error_status(status_code)
 
         result.append(
             InferredResponse(
                 status_code=str(status_code),
-                ref=ref.raw if ref else None,
+                ref=original_ref,
                 description=description,
                 content_types=content_types,
                 media_types=media_types,
                 schema_refs=schema_refs,
-                is_success=is_success,
-                is_error=is_error,
+                is_success=is_success_status(status_code),
+                is_error=is_error_status(status_code),
             )
         )
 
@@ -81,24 +83,3 @@ def _infer_media_types(content: dict[str, Any] | None) -> tuple[InferredMediaTyp
         )
 
     return tuple(result)
-
-
-def _is_success_status(status_code: str) -> bool:
-    """Check if status code indicates success (2xx)."""
-    try:
-        code = int(status_code)
-        return STATUS_SUCCESS_MIN <= code < STATUS_SUCCESS_MAX
-    except (ValueError, TypeError):
-        return False
-
-
-def _is_error_status(status_code: str) -> bool:
-    """Check if status code indicates error (4xx, 5xx, or default)."""
-    if status_code == STATUS_DEFAULT:
-        return True
-
-    try:
-        code = int(status_code)
-        return code >= STATUS_ERROR_MIN
-    except (ValueError, TypeError):
-        return False

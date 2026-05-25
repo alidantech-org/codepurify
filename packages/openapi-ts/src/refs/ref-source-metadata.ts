@@ -2,7 +2,7 @@ import type { ComponentRef, EngineRef, ModelRef, PropertyRef } from './ref.types
 import type { FieldSourceMetadata, FieldSourceOrigin, ExtendWithInput } from './ref-usage.types.js';
 import { RefKind } from './ref-kind.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
-import type { XCodegenResourceMeta } from '../sdk/codegen-extension.types.js';
+import type { XCodegenResourceMeta } from '../codegen/codegen-extension.types.js';
 
 function resourceMetaToString(resource: XCodegenResourceMeta | undefined): string | undefined {
   if (!resource) return undefined;

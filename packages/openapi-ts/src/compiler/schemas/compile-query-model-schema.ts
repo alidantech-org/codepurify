@@ -1,13 +1,13 @@
 import type { ModelRef } from '../../refs/ref.types.js';
 import type { SchemaField } from '../../schema/schema.types.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
 import {
   XCodegenDtoRole,
   XCodegenEntityVariant,
   XCodegenKind,
   type CodegenMetadata,
   type XCodegenEntityMeta,
-} from '../../sdk/codegen-extension.types.js';
+} from '../../codegen/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isPropertyRef } from '../../validation/ref-guards.js';

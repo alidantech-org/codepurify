@@ -3,7 +3,7 @@ import { toSchemaName } from '../naming/schema-name.js';
 import { RefKind } from '../refs/ref-kind.js';
 import type { ModelRef } from '../refs/ref.types.js';
 import { SchemaFieldMap } from '../schema/schema.types.js';
-import { XCodegenAccess, XCodegenEntityVariant, XCodegenKind } from '../sdk/codegen-extension.types.js';
+import { XCodegenAccess, XCodegenEntityVariant, XCodegenKind } from '../codegen/codegen-extension.types.js';
 
 import type { DefinePropertiesOptions } from './define-properties.js';
 import { createScopedId } from './property-ref.factory.js';

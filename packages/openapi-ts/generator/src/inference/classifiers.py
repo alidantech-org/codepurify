@@ -2,8 +2,20 @@ from __future__ import annotations
 
 from typing import Any
 
-from constants.codegen import X_CODEGEN, KIND
-from constants.openapi import REF, TYPE, PROPERTIES, ALL_OF, ENUM
+from constants.codegen import X_CODEGEN, KIND, KIND_PRIMITIVE, KIND_ENUM, KIND_MODEL, KIND_DTO
+from constants.openapi import (
+    REF,
+    TYPE,
+    PROPERTIES,
+    ALL_OF,
+    ENUM,
+    TYPE_OBJECT,
+    TYPE_STRING,
+    TYPE_INTEGER,
+    TYPE_NUMBER,
+    TYPE_BOOLEAN,
+    TYPE_NULL,
+)
 from inference.models import InferredSchemaKind
 from openapi.document import OpenApiDocument
 
@@ -46,17 +58,10 @@ def _map_codegen_kind(value: str) -> InferredSchemaKind | None:
     normalized = value.strip().lower().replace("-", "_")
 
     mapping = {
-        "enum": InferredSchemaKind.ENUM,
-        "model": InferredSchemaKind.MODEL,
-        "query": InferredSchemaKind.QUERY,
-        "dto": InferredSchemaKind.DTO,
-        "response": InferredSchemaKind.RESPONSE,
-        "request_body": InferredSchemaKind.REQUEST_BODY,
-        "body": InferredSchemaKind.REQUEST_BODY,
-        "parameter": InferredSchemaKind.PARAMETER,
-        "params": InferredSchemaKind.PARAMETER,
-        "primitive": InferredSchemaKind.PRIMITIVE,
-        "value": InferredSchemaKind.PRIMITIVE,
+        KIND_ENUM: InferredSchemaKind.ENUM,
+        KIND_MODEL: InferredSchemaKind.MODEL,
+        KIND_DTO: InferredSchemaKind.DTO,
+        KIND_PRIMITIVE: InferredSchemaKind.PRIMITIVE,
     }
 
     return mapping.get(normalized)
@@ -67,7 +72,7 @@ def _is_enum_schema(schema: dict[str, Any]) -> bool:
 
 
 def _is_object_schema(schema: dict[str, Any]) -> bool:
-    if schema.get(TYPE) == "object":
+    if schema.get(TYPE) == TYPE_OBJECT:
         return True
 
     if isinstance(schema.get(PROPERTIES), dict):
@@ -83,9 +88,9 @@ def _is_primitive_schema(schema: dict[str, Any]) -> bool:
     schema_type = schema.get(TYPE)
 
     if isinstance(schema_type, str):
-        return schema_type in {"string", "integer", "number", "boolean", "null"}
+        return schema_type in {TYPE_STRING, TYPE_INTEGER, TYPE_NUMBER, TYPE_BOOLEAN, TYPE_NULL}
 
     if isinstance(schema_type, list):
-        return any(item in {"string", "integer", "number", "boolean", "null"} for item in schema_type)
+        return any(item in {TYPE_STRING, TYPE_INTEGER, TYPE_NUMBER, TYPE_BOOLEAN, TYPE_NULL} for item in schema_type)
 
     return False

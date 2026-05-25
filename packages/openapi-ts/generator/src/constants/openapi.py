@@ -55,6 +55,20 @@ ANY_OF = "anyOf"
 ONE_OF = "oneOf"
 ENUM = "enum"
 ITEMS = "items"
+FORMAT = "format"
+
+# Schema type values
+TYPE_OBJECT = "object"
+TYPE_STRING = "string"
+TYPE_INTEGER = "integer"
+TYPE_NUMBER = "number"
+TYPE_BOOLEAN = "boolean"
+TYPE_NULL = "null"
+
+# Composition kinds
+COMPOSITION_ALL_OF = "allOf"
+COMPOSITION_ANY_OF = "anyOf"
+COMPOSITION_ONE_OF = "oneOf"
 
 # Parameter keys
 PARAM_NAME = "name"

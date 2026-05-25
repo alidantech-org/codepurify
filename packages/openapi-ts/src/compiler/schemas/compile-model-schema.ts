@@ -1,6 +1,6 @@
 import type { ModelRef, PropertyRef } from '../../refs/ref.types.js';
 import type { SchemaField } from '../../schema/schema.types.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
 import {
   XCodegenAccess,
   XCodegenDtoRole,
@@ -8,7 +8,7 @@ import {
   XCodegenKind,
   type CodegenMetadata,
   type XCodegenEntityMeta,
-} from '../../sdk/codegen-extension.types.js';
+} from '../../codegen/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
 import { toOpenApiSchemaRef } from '../refs/to-openapi-ref.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';

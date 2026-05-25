@@ -31,7 +31,7 @@ def render_operation(operation: InferredOperation) -> str:
         f"Method{SEPARATOR_COLON}{operation.method}",
         f"{LABEL_PATH}{SEPARATOR_COLON}{operation.path}",
         f"{LABEL_RESOURCE}{SEPARATOR_COLON}{operation.resource.name if operation.resource else LABEL_DASH}",
-        f"Resource Key{SEPARATOR_COLON}{operation.resource.key if operation.resource else LABEL_DASH}",
+        f"Resource Key{SEPARATOR_COLON}{operation.resource.name if operation.resource else LABEL_DASH}",
         "",
         f"{LABEL_PARAMETERS}{SEPARATOR_COLON}{len(operation.parameters)}",
     ]
@@ -54,6 +54,20 @@ def render_operation(operation: InferredOperation) -> str:
             lines.append(f"    {media.content_type}{SEPARATOR_ARROW}{media.schema_ref or LABEL_DASH}")
 
     lines.extend(render_responses(operation.responses))
+
+    # Add generic operation target section
+    if operation.target:
+        lines.append("")
+        lines.append(f"Codegen Operation Target{SEPARATOR_COLON}")
+        lines.append(f"  {LABEL_REF}{SEPARATOR_COLON}{operation.target.ref}")
+        lines.append(f"  Source{SEPARATOR_COLON}{operation.target.source}")
+        if operation.target.inferred_roles:
+            lines.append(f"  Inferred Roles{SEPARATOR_COLON}{SEPARATOR_COMMA.join(operation.target.inferred_roles)}")
+        if operation.target.locations:
+            lines.append(f"  Locations{SEPARATOR_COLON}{SEPARATOR_COMMA.join(operation.target.locations)}")
+        if operation.target.reason:
+            lines.append(f"  Matched By{SEPARATOR_COLON}{operation.target.reason}")
+
     lines.extend(render_schema_refs(operation))
 
     return "\n".join(lines)

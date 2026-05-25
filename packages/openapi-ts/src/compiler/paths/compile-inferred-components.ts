@@ -4,8 +4,8 @@ import { compilePropertySchema } from '../schemas/compile-property-schema.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isEngineRef } from '../../validation/ref-guards.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 import type { EngineRef } from '../../refs/ref.types.js';
 import type {
   InferredParameterComponent,

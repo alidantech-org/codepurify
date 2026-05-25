@@ -5,8 +5,8 @@ import type { ArrayRef, ExtendedRef } from '../../refs/ref-wrapper.types.js';
 import type { RefUsage } from '../../refs/ref-usage.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { applyCodegenMetadata } from '../../sdk/apply-codegen-extensions.js';
-import { XCodegenKind, XCodegenDtoRole, type CodegenMetadata } from '../../sdk/codegen-extension.types.js';
+import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+import { XCodegenKind, XCodegenDtoRole, type CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 import { normalizeExtendWithInput, normalizeExtendWithInputWithSource } from './normalize-extend-with.js';
 
 export function compileComponentSchema(

@@ -1,5 +1,5 @@
 import { RefKind } from './ref-kind.js';
-import type { CodegenMetadata } from '../sdk/codegen-extension.types.js';
+import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
 import type { RefUsage, RefWithUsageMethods } from './ref-usage.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
 
