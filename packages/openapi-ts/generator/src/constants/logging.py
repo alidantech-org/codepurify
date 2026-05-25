@@ -1,17 +1,4 @@
-from __future__ import annotations
-
-# Config constants
-DEFAULT_PROJECT_NAME = "generator"
-PYDANTIC_ARBITRARY_TYPES_ALLOWED = "arbitrary_types_allowed"
-
-# Path constants
-DIR_SRC = "src"
-DIR_TESTS = "tests"
-DIR_TEMPLATES = "templates"
-DIR_LANGUAGES = "languages"
-FILE_PYPROJECT = "pyproject.toml"
-DIR_GENERATOR = "generator"
-ERROR_PROJECT_ROOT_NOT_FOUND = "Could not find generator project root. Run from generator/ or from the repo root."
+"""Logging and UI theme constants."""
 
 # Logging theme style names
 STYLE_TITLE = "title"

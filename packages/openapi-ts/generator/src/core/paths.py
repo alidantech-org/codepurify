@@ -3,13 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.constants import (
+from constants.files import (
     DIR_GENERATOR,
     DIR_LANGUAGES,
     DIR_SRC,
     DIR_TEMPLATES,
     DIR_TESTS,
-    ERROR_PROJECT_ROOT_NOT_FOUND,
+    ERR_PROJECT_ROOT_NOT_FOUND,
     FILE_PYPROJECT,
 )
 from core.errors import PathResolutionError
@@ -52,7 +52,7 @@ class ProjectPaths:
         if (generator_root / FILE_PYPROJECT).exists() and (generator_root / DIR_SRC).exists():
             return cls(root=generator_root.resolve())
 
-        raise PathResolutionError(ERROR_PROJECT_ROOT_NOT_FOUND)
+        raise PathResolutionError(ERR_PROJECT_ROOT_NOT_FOUND)
 
     def resolve_input(self, value: str | Path) -> Path:
         path = Path(value)

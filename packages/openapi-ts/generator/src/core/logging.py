@@ -9,7 +9,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.theme import Theme
 
-from core.constants import (
+from constants.logging import (
     BORDER_STYLE_CYAN,
     COLUMN_KEY,
     COLUMN_VALUE,

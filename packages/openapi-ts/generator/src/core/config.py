@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from core.constants import (
+from constants.app import (
     DEFAULT_PROJECT_NAME,
     PYDANTIC_ARBITRARY_TYPES_ALLOWED,
 )

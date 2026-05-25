@@ -12,10 +12,10 @@ from languages.debug.helpers import (
     build_schema_path,
 )
 from languages.debug.renderers import (
-    render_operation,
-    render_resource,
-    render_schema,
-    render_summary,
+    operation_renderer,
+    resource_renderer,
+    schema_renderer,
+    summary_renderer,
 )
 
 
@@ -28,7 +28,7 @@ class DebugEmitter:
         files.append(
             EmittedFile(
                 path=Path(FILE_SUMMARY),
-                content=render_summary(graph),
+                content=summary_renderer.render_summary(graph),
             )
         )
 
@@ -36,7 +36,7 @@ class DebugEmitter:
             files.append(
                 EmittedFile(
                     path=build_resource_path(FOLDER_RESOURCES, resource.key),
-                    content=render_resource(resource, graph),
+                    content=resource_renderer.render_resource(resource, graph),
                 )
             )
 
@@ -44,7 +44,7 @@ class DebugEmitter:
             files.append(
                 EmittedFile(
                     path=build_schema_path(FOLDER_SCHEMAS, schema.name),
-                    content=render_schema(schema),
+                    content=schema_renderer.render_schema(schema),
                 )
             )
 
@@ -52,7 +52,7 @@ class DebugEmitter:
             files.append(
                 EmittedFile(
                     path=build_operation_path(FOLDER_OPERATIONS, operation.operation_id),
-                    content=render_operation(operation),
+                    content=operation_renderer.render_operation(operation),
                 )
             )
 
