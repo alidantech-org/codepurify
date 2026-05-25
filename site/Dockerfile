@@ -6,12 +6,7 @@ WORKDIR /app/site
 
 COPY site/package.json site/package-lock.json* site/pnpm-lock.yaml* site/yarn.lock* ./
 
-RUN \
-  if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install --frozen-lockfile; \
-  elif [ -f yarn.lock ]; then npm install -g yarn && yarn install --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  else npm install; \
-  fi
+RUN npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app/site
@@ -20,11 +15,7 @@ COPY --from=deps /app/site/node_modules ./node_modules
 COPY site/ ./
 COPY docs/ ../docs/
 
-RUN \
-  if [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm build; \
-  elif [ -f yarn.lock ]; then npm install -g yarn && yarn build; \
-  else npm run build; \
-  fi
+RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app/site
