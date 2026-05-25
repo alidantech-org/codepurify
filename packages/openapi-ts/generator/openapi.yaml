@@ -1,0 +1,1229 @@
+openapi: 3.1.0
+info:
+  title: RideRescue API
+  version: v1
+  description: RideRescue backend API
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://api.riderescueautolink.com
+    description: RideRescue API
+security:
+  - bearerAuth: []
+paths:
+  /users:
+    x-codegen:
+      resource:
+        name: User
+        path:
+          - platform
+          - auth
+    get:
+      operationId: listUsers
+      tags:
+        - User
+      summary: List users
+      responses:
+        '200':
+          $ref: '#/components/responses/ListUsers200Response'
+        '400':
+          $ref: '#/components/responses/Default400Response'
+        '401':
+          $ref: '#/components/responses/Default401Response'
+        '403':
+          $ref: '#/components/responses/Default403Response'
+        '404':
+          $ref: '#/components/responses/Default404Response'
+        '422':
+          $ref: '#/components/responses/Default422Response'
+        '500':
+          $ref: '#/components/responses/Default500Response'
+      parameters:
+        - $ref: '#/components/parameters/PageQueryParam'
+        - $ref: '#/components/parameters/LimitQueryParam'
+        - $ref: '#/components/parameters/SortQueryParam'
+        - $ref: '#/components/parameters/FieldsQueryParam'
+        - $ref: '#/components/parameters/PopulateQueryParam'
+        - $ref: '#/components/parameters/SearchQueryParam'
+        - $ref: '#/components/parameters/UsersFilterQueryParam'
+        - $ref: '#/components/parameters/UsersSortQueryParam'
+        - $ref: '#/components/parameters/UsersSelectQueryParam'
+      x-codegen:
+        parameters:
+          target:
+            $ref: '#/components/schemas/UserListQuery'
+    post:
+      operationId: createUser
+      tags:
+        - User
+      summary: Create user
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateUser201Response'
+        '400':
+          $ref: '#/components/responses/Default400Response'
+        '401':
+          $ref: '#/components/responses/Default401Response'
+        '403':
+          $ref: '#/components/responses/Default403Response'
+        '404':
+          $ref: '#/components/responses/Default404Response'
+        '409':
+          $ref: '#/components/responses/CreateUser409Response'
+        '422':
+          $ref: '#/components/responses/Default422Response'
+        '500':
+          $ref: '#/components/responses/Default500Response'
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUserRequestBody'
+  /users/me:
+    x-codegen:
+      resource:
+        name: User
+        path:
+          - platform
+          - auth
+    get:
+      operationId: getCurrentUser
+      tags:
+        - User
+      summary: Get current user
+      responses:
+        '200':
+          $ref: '#/components/responses/GetCurrentUser200Response'
+        '400':
+          $ref: '#/components/responses/Default400Response'
+        '401':
+          $ref: '#/components/responses/Default401Response'
+        '403':
+          $ref: '#/components/responses/Default403Response'
+        '404':
+          $ref: '#/components/responses/Default404Response'
+        '422':
+          $ref: '#/components/responses/Default422Response'
+        '500':
+          $ref: '#/components/responses/Default500Response'
+      parameters:
+        - $ref: '#/components/parameters/FieldsQueryParam'
+        - $ref: '#/components/parameters/PopulateQueryParam'
+        - $ref: '#/components/parameters/UsersSelectQueryParam'
+      x-codegen:
+        parameters:
+          target:
+            $ref: '#/components/schemas/UserDetailQuery'
+  /users/{userId}:
+    x-codegen:
+      resource:
+        name: User
+        path:
+          - platform
+          - auth
+    parameters:
+      - $ref: '#/components/parameters/UsersUserIdPathParam'
+    get:
+      operationId: getUserById
+      tags:
+        - User
+      summary: Get user by ID
+      responses:
+        '200':
+          $ref: '#/components/responses/GetUserById200Response'
+        '400':
+          $ref: '#/components/responses/Default400Response'
+        '401':
+          $ref: '#/components/responses/Default401Response'
+        '403':
+          $ref: '#/components/responses/Default403Response'
+        '404':
+          $ref: '#/components/responses/Default404Response'
+        '422':
+          $ref: '#/components/responses/Default422Response'
+        '500':
+          $ref: '#/components/responses/Default500Response'
+      parameters:
+        - $ref: '#/components/parameters/FieldsQueryParam'
+        - $ref: '#/components/parameters/PopulateQueryParam'
+        - $ref: '#/components/parameters/UsersSelectQueryParam'
+      x-codegen:
+        parameters:
+          target:
+            $ref: '#/components/schemas/UserDetailQuery'
+    patch:
+      operationId: updateUser
+      tags:
+        - User
+      summary: Update user
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdateUser200Response'
+        '400':
+          $ref: '#/components/responses/Default400Response'
+        '401':
+          $ref: '#/components/responses/Default401Response'
+        '403':
+          $ref: '#/components/responses/Default403Response'
+        '404':
+          $ref: '#/components/responses/Default404Response'
+        '422':
+          $ref: '#/components/responses/Default422Response'
+        '500':
+          $ref: '#/components/responses/Default500Response'
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateUserRequestBody'
+    delete:
+      operationId: deleteUser
+      tags:
+        - User
+      summary: Delete user
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteUser200Response'
+        '400':
+          $ref: '#/components/responses/Default400Response'
+        '401':
+          $ref: '#/components/responses/Default401Response'
+        '403':
+          $ref: '#/components/responses/Default403Response'
+        '404':
+          $ref: '#/components/responses/Default404Response'
+        '422':
+          $ref: '#/components/responses/Default422Response'
+        '500':
+          $ref: '#/components/responses/Default500Response'
+components:
+  schemas:
+    ApiMessage:
+      type: object
+      properties:
+        success:
+          $ref: '#/components/schemas/SharedSuccess'
+        message:
+          $ref: '#/components/schemas/SharedMessage'
+      required:
+        - success
+        - message
+      x-codegen:
+        kind: dto
+        shared: true
+        role: response
+    PaginatedMeta:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/SharedPage'
+        limit:
+          $ref: '#/components/schemas/SharedLimit'
+        total:
+          $ref: '#/components/schemas/SharedTotal'
+      required:
+        - page
+        - limit
+        - total
+      x-codegen:
+        kind: dto
+        shared: true
+    PaginatedQuery:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/SharedPage'
+        limit:
+          $ref: '#/components/schemas/SharedLimit'
+        sort:
+          $ref: '#/components/schemas/SharedSort'
+        fields:
+          $ref: '#/components/schemas/SharedFields'
+        populate:
+          $ref: '#/components/schemas/SharedPopulate'
+        search:
+          $ref: '#/components/schemas/SharedSearch'
+      x-codegen:
+        kind: dto
+        shared: true
+    DetailsQuery:
+      type: object
+      properties:
+        fields:
+          $ref: '#/components/schemas/SharedFields'
+        populate:
+          $ref: '#/components/schemas/SharedPopulate'
+      x-codegen:
+        kind: dto
+        shared: true
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          $ref: '#/components/schemas/SharedSuccess'
+        message:
+          $ref: '#/components/schemas/SharedMessage'
+      required:
+        - success
+        - message
+      x-codegen:
+        kind: dto
+        shared: true
+    SharedMongoId:
+      type: string
+      pattern: ^[a-f\d]{24}$
+      description: Mongo ObjectId
+      x-codegen:
+        kind: primitive
+    SharedDateTime:
+      type: string
+      format: date-time
+      pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      description: ISO datetime
+      x-codegen:
+        kind: primitive
+    SharedDisplayName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Display name
+      x-codegen:
+        kind: primitive
+    SharedSuccess:
+      type: boolean
+      description: Request success state
+      x-codegen:
+        kind: primitive
+    SharedMessage:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: Human readable message
+      x-codegen:
+        kind: primitive
+    SharedPage:
+      type: integer
+      maximum: 10000
+      minimum: 1
+      x-codegen:
+        kind: primitive
+    SharedLimit:
+      type: integer
+      maximum: 100
+      minimum: 1
+      x-codegen:
+        kind: primitive
+    SharedTotal:
+      type: integer
+      minimum: 0
+      maximum: 9007199254740991
+      x-codegen:
+        kind: primitive
+    SharedSort:
+      type: string
+      x-codegen:
+        kind: primitive
+    SharedFields:
+      type: string
+      x-codegen:
+        kind: primitive
+    SharedPopulate:
+      type: string
+      x-codegen:
+        kind: primitive
+    SharedSearch:
+      type: string
+      x-codegen:
+        kind: primitive
+    BaseId:
+      $ref: '#/components/schemas/SharedMongoId'
+    BaseCreatedAt:
+      $ref: '#/components/schemas/SharedDateTime'
+    BaseUpdatedAt:
+      $ref: '#/components/schemas/SharedDateTime'
+    BaseDeletedAt:
+      anyOf:
+        - $ref: '#/components/schemas/SharedDateTime'
+        - type: 'null'
+      x-codegen:
+        kind: primitive
+        sensitive: true
+    BaseQuerySortValue:
+      type: string
+      enum:
+        - __none__
+      x-codegen:
+        kind: enum
+    BaseQuerySelectValue:
+      type: string
+      enum:
+        - id
+        - createdAt
+        - updatedAt
+      x-codegen:
+        kind: enum
+    BaseAbstractModel:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/BaseId'
+        createdAt:
+          $ref: '#/components/schemas/BaseCreatedAt'
+        updatedAt:
+          $ref: '#/components/schemas/BaseUpdatedAt'
+        deletedAt:
+          $ref: '#/components/schemas/BaseDeletedAt'
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - deletedAt
+      x-codegen:
+        kind: model
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: full
+          access: default
+        abstract: true
+    BasePublicModel:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/BaseId'
+        createdAt:
+          $ref: '#/components/schemas/BaseCreatedAt'
+        updatedAt:
+          $ref: '#/components/schemas/BaseUpdatedAt'
+      required:
+        - id
+        - createdAt
+        - updatedAt
+      x-codegen:
+        kind: model
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: full
+          access: public
+    BaseInternalModel:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/BaseId'
+        createdAt:
+          $ref: '#/components/schemas/BaseCreatedAt'
+        updatedAt:
+          $ref: '#/components/schemas/BaseUpdatedAt'
+        deletedAt:
+          $ref: '#/components/schemas/BaseDeletedAt'
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - deletedAt
+      x-codegen:
+        kind: model
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: full
+          access: internal
+    BasePartialModel:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/BaseId'
+        createdAt:
+          $ref: '#/components/schemas/BaseCreatedAt'
+        updatedAt:
+          $ref: '#/components/schemas/BaseUpdatedAt'
+        deletedAt:
+          $ref: '#/components/schemas/BaseDeletedAt'
+      x-codegen:
+        kind: model
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: partial
+          access: default
+    BasePublicPartialModel:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/BaseId'
+        createdAt:
+          $ref: '#/components/schemas/BaseCreatedAt'
+        updatedAt:
+          $ref: '#/components/schemas/BaseUpdatedAt'
+      x-codegen:
+        kind: model
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: partial
+          access: public
+    BaseInternalPartialModel:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/BaseId'
+        createdAt:
+          $ref: '#/components/schemas/BaseCreatedAt'
+        updatedAt:
+          $ref: '#/components/schemas/BaseUpdatedAt'
+        deletedAt:
+          $ref: '#/components/schemas/BaseDeletedAt'
+      x-codegen:
+        kind: model
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: partial
+          access: internal
+    BaseQueryFilter:
+      type: object
+      properties: {}
+      x-codegen:
+        kind: dto
+        role: query
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: partial
+    BaseAdvancedQueryFilter:
+      type: object
+      properties: {}
+      x-codegen:
+        kind: dto
+        role: query
+        resource:
+          name: shared
+          path:
+            - shared
+        entity:
+          name: Base
+          variant: partial
+    UserId:
+      $ref: '#/components/schemas/SharedMongoId'
+    UserCreatedAt:
+      $ref: '#/components/schemas/SharedDateTime'
+    UserUpdatedAt:
+      $ref: '#/components/schemas/SharedDateTime'
+    UserDeletedAt:
+      anyOf:
+        - $ref: '#/components/schemas/SharedDateTime'
+        - type: 'null'
+      x-codegen:
+        kind: primitive
+        sensitive: true
+    UserEmail:
+      type: string
+      format: email
+      pattern: ^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$
+      x-codegen:
+        kind: primitive
+        query:
+          filter: true
+          operators:
+            - exact
+            - search
+          sort: true
+    UserName:
+      $ref: '#/components/schemas/SharedDisplayName'
+    UserPhone:
+      type:
+        - string
+        - 'null'
+      x-codegen:
+        kind: primitive
+        query:
+          filter: true
+          operators:
+            - exact
+            - search
+    UserAvatar:
+      format: uri
+      type:
+        - string
+        - 'null'
+      x-codegen:
+        kind: primitive
+    UserPassword:
+      type: string
+      x-codegen:
+        kind: primitive
+        sensitive: true
+    UserRoles:
+      type: string
+      enum:
+        - admin
+        - user
+        - driver
+        - service_provider
+      x-codegen:
+        kind: enum
+        query:
+          filter: true
+          operators:
+            - exact
+            - in
+          sort: true
+    UserStatus:
+      type: string
+      enum:
+        - active
+        - suspended
+        - deleted
+      x-codegen:
+        kind: enum
+        query:
+          filter: true
+          operators:
+            - exact
+            - in
+          sort: true
+    UserEmailVerified:
+      type: boolean
+      x-codegen:
+        kind: primitive
+        query:
+          filter: true
+          operators:
+            - exact
+    UserIsOnline:
+      type: boolean
+      x-codegen:
+        kind: primitive
+        query:
+          filter: true
+          operators:
+            - exact
+          sort: true
+    UserQuerySortValue:
+      type: string
+      enum:
+        - +email
+        - '-email'
+        - +roles
+        - '-roles'
+        - +status
+        - '-status'
+        - +isOnline
+        - '-isOnline'
+      x-codegen:
+        kind: enum
+    UserQuerySelectValue:
+      type: string
+      enum:
+        - id
+        - createdAt
+        - updatedAt
+        - email
+        - name
+        - phone
+        - avatar
+        - roles
+        - status
+        - emailVerified
+        - isOnline
+      x-codegen:
+        kind: enum
+    UserModel:
+      allOf:
+        - $ref: '#/components/schemas/BaseAbstractModel'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            name:
+              $ref: '#/components/schemas/UserName'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            avatar:
+              $ref: '#/components/schemas/UserAvatar'
+            password:
+              $ref: '#/components/schemas/UserPassword'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+          required:
+            - email
+            - name
+            - password
+            - roles
+            - status
+            - emailVerified
+            - isOnline
+      x-codegen:
+        kind: model
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: full
+          access: default
+        inherits:
+          - $ref: '#/components/schemas/BaseAbstractModel'
+    UserPublicModel:
+      allOf:
+        - $ref: '#/components/schemas/BasePublicModel'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            name:
+              $ref: '#/components/schemas/UserName'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            avatar:
+              $ref: '#/components/schemas/UserAvatar'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+          required:
+            - email
+            - name
+            - roles
+            - status
+            - emailVerified
+            - isOnline
+      x-codegen:
+        kind: model
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: full
+          access: public
+        inherits:
+          - $ref: '#/components/schemas/BasePublicModel'
+    UserInternalModel:
+      allOf:
+        - $ref: '#/components/schemas/BaseInternalModel'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            name:
+              $ref: '#/components/schemas/UserName'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            avatar:
+              $ref: '#/components/schemas/UserAvatar'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+          required:
+            - email
+            - name
+            - roles
+            - status
+            - emailVerified
+            - isOnline
+      x-codegen:
+        kind: model
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: full
+          access: internal
+        inherits:
+          - $ref: '#/components/schemas/BaseInternalModel'
+    UserPartialModel:
+      allOf:
+        - $ref: '#/components/schemas/BasePartialModel'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            name:
+              $ref: '#/components/schemas/UserName'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            avatar:
+              $ref: '#/components/schemas/UserAvatar'
+            password:
+              $ref: '#/components/schemas/UserPassword'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+      x-codegen:
+        kind: model
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: partial
+          access: default
+        inherits:
+          - $ref: '#/components/schemas/BasePartialModel'
+    UserPublicPartialModel:
+      allOf:
+        - $ref: '#/components/schemas/BasePublicPartialModel'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            name:
+              $ref: '#/components/schemas/UserName'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            avatar:
+              $ref: '#/components/schemas/UserAvatar'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+      x-codegen:
+        kind: model
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: partial
+          access: public
+        inherits:
+          - $ref: '#/components/schemas/BasePublicPartialModel'
+    UserInternalPartialModel:
+      allOf:
+        - $ref: '#/components/schemas/BaseInternalPartialModel'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            name:
+              $ref: '#/components/schemas/UserName'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            avatar:
+              $ref: '#/components/schemas/UserAvatar'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+      x-codegen:
+        kind: model
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: partial
+          access: internal
+        inherits:
+          - $ref: '#/components/schemas/BaseInternalPartialModel'
+    UserQueryFilter:
+      allOf:
+        - $ref: '#/components/schemas/BaseQueryFilter'
+        - type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/UserEmail'
+            phone:
+              $ref: '#/components/schemas/UserPhone'
+            roles:
+              $ref: '#/components/schemas/UserRoles'
+            status:
+              $ref: '#/components/schemas/UserStatus'
+            emailVerified:
+              $ref: '#/components/schemas/UserEmailVerified'
+            isOnline:
+              $ref: '#/components/schemas/UserIsOnline'
+      x-codegen:
+        kind: dto
+        role: query
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: partial
+        inherits:
+          - $ref: '#/components/schemas/BaseQueryFilter'
+    UserAdvancedQueryFilter:
+      allOf:
+        - $ref: '#/components/schemas/BaseAdvancedQueryFilter'
+        - type: object
+          properties:
+            emailSearch:
+              $ref: '#/components/schemas/UserEmail'
+            phoneSearch:
+              $ref: '#/components/schemas/UserPhone'
+            rolesIn:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserRoles'
+            statusIn:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserStatus'
+      x-codegen:
+        kind: dto
+        role: query
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        entity:
+          name: User
+          variant: partial
+        inherits:
+          - $ref: '#/components/schemas/BaseAdvancedQueryFilter'
+    UserListQuery:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedQuery'
+        - type: object
+          properties:
+            filter:
+              $ref: '#/components/schemas/UserQueryFilter'
+            sort:
+              $ref: '#/components/schemas/UserQuerySortValue'
+            select:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserQuerySelectValue'
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: query
+    UserDetailQuery:
+      allOf:
+        - $ref: '#/components/schemas/DetailsQuery'
+        - type: object
+          properties:
+            select:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserQuerySelectValue'
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: query
+    UsersListOk:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserPublicModel'
+            pagination:
+              $ref: '#/components/schemas/PaginatedMeta'
+          required:
+            - users
+            - pagination
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: response
+    UserOk:
+      allOf:
+        - $ref: '#/components/schemas/ApiMessage'
+        - type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/UserPublicModel'
+          required:
+            - user
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: response
+    CreateUserBody:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/UserEmail'
+        name:
+          $ref: '#/components/schemas/UserName'
+        phone:
+          anyOf:
+            - $ref: '#/components/schemas/UserPhone'
+            - type: 'null'
+      required:
+        - email
+        - name
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: body
+    UpdateUserBody:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/UserEmail'
+        name:
+          $ref: '#/components/schemas/UserName'
+        phone:
+          anyOf:
+            - $ref: '#/components/schemas/UserPhone'
+            - type: 'null'
+        avatar:
+          anyOf:
+            - $ref: '#/components/schemas/UserAvatar'
+            - type: 'null'
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: body
+    UserDeleted:
+      $ref: '#/components/schemas/ApiMessage'
+      x-codegen:
+        kind: dto
+        resource:
+          name: users
+          path:
+            - platform
+            - auth
+        role: response
+  parameters:
+    PageQueryParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/SharedPage'
+    LimitQueryParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/SharedLimit'
+    SortQueryParam:
+      name: sort
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/SharedSort'
+    FieldsQueryParam:
+      name: fields
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/SharedFields'
+    PopulateQueryParam:
+      name: populate
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/SharedPopulate'
+    SearchQueryParam:
+      name: search
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/SharedSearch'
+    UsersFilterQueryParam:
+      name: filter
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/UserQueryFilter'
+    UsersSortQueryParam:
+      name: sort
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/UserQuerySortValue'
+    UsersSelectQueryParam:
+      name: select
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/UserQuerySelectValue'
+    UsersUserIdPathParam:
+      name: userId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserId'
+  requestBodies:
+    CreateUserRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserBody'
+    UpdateUserRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserBody'
+  responses:
+    Default400Response:
+      description: Default 400 response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    Default401Response:
+      description: Default 401 response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    Default403Response:
+      description: Default 403 response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    Default404Response:
+      description: Default 404 response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    Default422Response:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    Default500Response:
+      description: Default 500 response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    ListUsers200Response:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UsersListOk'
+    CreateUser201Response:
+      description: Response 201
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserOk'
+    CreateUser409Response:
+      description: Response 409
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiMessage'
+    GetCurrentUser200Response:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserOk'
+    GetUserById200Response:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserOk'
+    UpdateUser200Response:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserOk'
+    DeleteUser200Response:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserDeleted'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
