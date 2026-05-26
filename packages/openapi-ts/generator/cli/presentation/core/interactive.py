@@ -10,9 +10,16 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
 
-T = TypeVar("T")
+from cli.constants.defaults import (
+    DEFAULT_CONFIRM,
+    DEFAULT_DRY_RUN,
+    DEFAULT_INFERENCE_OUTPUT,
+    DEFAULT_USE_CUSTOM_TEMPLATES,
+    DEFAULT_WRITE_OUTPUT,
+    LANGUAGE_CHOICES,
+)
 
-_LANGUAGE_CHOICES = ["debug", "dart", "typescript"]
+T = TypeVar("T")
 
 
 def should_prompt(force: bool = False) -> bool:
@@ -44,7 +51,7 @@ def ask_language() -> str:
     return _ask(
         lambda q: q.select(
             "Target language:",
-            choices=_LANGUAGE_CHOICES,
+            choices=LANGUAGE_CHOICES,
             use_shortcuts=True,
         )
     )
@@ -58,18 +65,29 @@ def ask_output_path() -> Path:
 
 def ask_optional_output_path() -> Path | None:
     """Ask whether to write optional output."""
-    should_write = _ask(lambda q: q.confirm("Write output file?", default=False))
+    questionary = _load_questionary()
+    should_write = questionary.confirm(
+        "Write output file?",
+        default=DEFAULT_WRITE_OUTPUT,
+    ).ask()
 
     if not should_write:
         return None
 
-    value = _ask(lambda q: q.path("Output file:"))
+    value = questionary.path(
+        "Output file:",
+        default=DEFAULT_INFERENCE_OUTPUT,
+    ).ask()
+
+    if not value:
+        return None
+
     return Path(value)
 
 
 def ask_templates_path() -> Path | None:
     """Ask whether to use a custom template path."""
-    use_custom = _ask(lambda q: q.confirm("Use custom templates?", default=False))
+    use_custom = _ask(lambda q: q.confirm("Use custom templates?", default=DEFAULT_USE_CUSTOM_TEMPLATES))
 
     if not use_custom:
         return None
@@ -80,10 +98,10 @@ def ask_templates_path() -> Path | None:
 
 def ask_dry_run() -> bool:
     """Ask whether emit should run as dry-run."""
-    return _ask(lambda q: q.confirm("Dry run only?", default=True))
+    return _ask(lambda q: q.confirm("Dry run only?", default=DEFAULT_DRY_RUN))
 
 
-def ask_confirm(message: str, *, default: bool = False) -> bool:
+def ask_confirm(message: str, *, default: bool = DEFAULT_CONFIRM) -> bool:
     """Ask a yes/no confirmation question."""
     return _ask(lambda q: q.confirm(message, default=default))
 

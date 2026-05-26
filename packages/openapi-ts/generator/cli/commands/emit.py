@@ -97,10 +97,10 @@ def emit_command(
         if resolved_output is None and prompt:
             resolved_output = ask_output_path()
 
-        if resolved_templates is None and prompt:
+        if resolved_templates is None and interactive:
             resolved_templates = ask_templates_path()
 
-        if not dry_run and prompt:
+        if not dry_run and interactive:
             resolved_dry_run = ask_dry_run()
 
         if resolved_input is None:

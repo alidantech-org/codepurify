@@ -67,7 +67,7 @@ def infer_command(
         if resolved_input is None and prompt:
             resolved_input = ask_input_path()
 
-        if resolved_output is None and prompt:
+        if resolved_output is None and interactive:
             resolved_output = ask_optional_output_path()
 
         if resolved_input is None:

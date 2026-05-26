@@ -10,6 +10,7 @@ from rich import box
 from rich.table import Table
 from rich.text import Text
 
+from cli.constants.defaults import ACRONYM_REPLACEMENTS, NUMERIC_COLUMN_TOKENS
 from cli.presentation.core.console import console
 
 
@@ -71,7 +72,7 @@ def create_table(title: str) -> Table:
     """Create the default CLI table style."""
     return Table(
         title=Text(title, style="bold #7F77DD"),
-        box=box.SIMPLE_HEAVY,
+        box=box.HEAVY,
         show_header=True,
         header_style="dim",
         border_style="bright_black",
@@ -96,7 +97,13 @@ def _to_mapping(data: Mapping[str, Any] | object) -> Mapping[str, Any]:
 
 
 def _format_key(key: str) -> str:
-    return str(key).replace("_", " ").title()
+    """Format table keys while preserving common acronyms."""
+    text = str(key).replace("_", " ").title()
+
+    for source, target in ACRONYM_REPLACEMENTS.items():
+        text = text.replace(source, target)
+
+    return text
 
 
 def _format_value(value: Any, *, highlight_zero: bool = False) -> str:
@@ -104,7 +111,7 @@ def _format_value(value: Any, *, highlight_zero: bool = False) -> str:
         return "[dim]—[/dim]"
 
     if isinstance(value, bool):
-        return "[bold green]✓[/bold green]" if value else "[bold red]✗[/bold red]"
+        return "[bold green]yes[/bold green]" if value else "[dim]no[/dim]"
 
     if isinstance(value, int | float):
         if value == 0 and highlight_zero:
@@ -129,16 +136,4 @@ def _format_value(value: Any, *, highlight_zero: bool = False) -> str:
 
 def _looks_numeric_column(column: str) -> bool:
     lowered = column.lower()
-    return any(
-        token in lowered
-        for token in (
-            "count",
-            "total",
-            "files",
-            "operations",
-            "schemas",
-            "paths",
-            "refs",
-            "value",
-        )
-    )
+    return any(token in lowered for token in NUMERIC_COLUMN_TOKENS)

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from cli.presentation.emit.diagnostics import render_diagnostics
 from cli.presentation.emit.files import render_emit_files
+from cli.presentation.emit.status import render_emit_status
 from cli.presentation.emit.summary import render_emit_summary
 
 
 def render_emit_result(result, *, verbose: bool = False) -> None:
     """Render an EmitOutput-like object."""
+    render_emit_status(result)
     render_emit_summary(result)
 
     if verbose:

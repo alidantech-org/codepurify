@@ -13,6 +13,7 @@ from cli.presentation.validate.summary import render_validate_summary
 def render_validate_result(result, *, verbose: bool = False) -> None:
     """Render a ValidateOutput-like object."""
     render_validate_summary(result)
+
     render_validation_errors(getattr(result, "errors", []))
     render_validation_warnings(getattr(result, "warnings", []))
 

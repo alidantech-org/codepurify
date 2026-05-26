@@ -8,9 +8,10 @@ from cli.presentation.core.console import console
 def render_validate_summary(result) -> None:
     """Render validation status."""
     valid = bool(getattr(result, "valid", False))
+    input_path = getattr(result, "input_path", "-")
 
     if valid:
-        console.print("[bold green]✓ Validation passed[/bold green]")
+        console.print(f"[bold green]✓ Validation passed[/bold green] [dim]{input_path}[/dim]")
         return
 
-    console.print("[bold red]✗ Validation failed[/bold red]")
+    console.print(f"[bold red]✗ Validation failed[/bold red] [dim]{input_path}[/dim]")
