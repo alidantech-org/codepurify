@@ -4,10 +4,14 @@ from pathlib import Path
 
 from core.config import RuntimeContext
 from core.logging import debug, step, success
-from emission.writer import FileWriter
+
+# TODO: Replace with new emission.templates.planning module
+# from emission.writer import FileWriter
 from inference.engine import InferenceEngine
 from openapi.loader import load_openapi_document
-from runtime.presenters.emit_presenter import present_emission
+
+# TODO: Replace with new emission.templates.planning module
+# from runtime.presenters.emit_presenter import present_emission
 from runtime.registry import create_language_emitter
 
 
@@ -25,14 +29,16 @@ def run_emit(context: RuntimeContext, input_path: Path, language: str, output_pa
     with step(f"Creating {language} emission plan"):
         emitter = create_language_emitter(language)
         plan = emitter.emit(graph)
+        _ = plan  # TODO: Use plan with new emission write logic
 
-    with step("Writing emitted files"):
-        result = FileWriter().write_plan(
-            plan=plan,
-            output_root=output_path,
-            dry_run=context.options.dry_run,
-        )
+    # TODO: Replace with new emission write logic
+    # with step("Writing emitted files"):
+    #     result = FileWriter().write_plan(
+    #         plan=plan,
+    #         output_root=output_path,
+    #         dry_run=context.options.dry_run,
+    #     )
+    #
+    # present_emission(plan, result, output_path)
 
-    present_emission(plan, result, output_path)
-
-    success("Emission completed")
+    success("Emission completed (TODO: implement new emission write logic)")

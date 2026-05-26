@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from emission.plan import EmissionPlan
+# TODO: Replace with new emission.templates.planning module
+# from emission.plan import EmissionPlan
 from inference.models import InferenceGraph
+
+
+class EmissionPlan:
+    """Temporary stub for old emission.plan.EmissionPlan"""
+
+    pass
 
 
 class LanguageEmitter(Protocol):

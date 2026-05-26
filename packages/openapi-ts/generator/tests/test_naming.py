@@ -1,0 +1,43 @@
+"""Tests for the unified naming provider."""
+
+from utils.naming import build_name
+
+
+def test_singular_input_keeps_original_and_builds_plural():
+    name = build_name("user")
+
+    assert name.snake.o == "user"
+    assert name.snake.s == "user"
+    assert name.snake.p == "users"
+
+
+def test_plural_input_keeps_original_and_builds_singular():
+    name = build_name("users")
+
+    assert name.snake.o == "users"
+    assert name.snake.s == "user"
+    assert name.snake.p == "users"
+
+
+def test_protected_input_is_invariant():
+    name = build_name("shared")
+
+    assert name.snake.o == "shared"
+    assert name.snake.s == "shared"
+    assert name.snake.p == "shared"
+
+
+def test_plural_pascal_input_keeps_original():
+    name = build_name("UserProfiles")
+
+    assert name.pascal.o == "UserProfiles"
+    assert name.pascal.s == "UserProfile"
+    assert name.pascal.p == "UserProfiles"
+
+
+def test_path_case_is_available_for_all_forms():
+    name = build_name("UserProfiles")
+
+    assert name.path.o == "user_profiles"
+    assert name.path.s == "user_profile"
+    assert name.path.p == "user_profiles"

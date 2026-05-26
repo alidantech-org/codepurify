@@ -1,9 +1,5 @@
-"""
-Emission planning package.
+"""Shared emission engine for template-driven code generation.
 
-This package converts an inference graph into planned files, imports, barrels,
-template contexts, and write operations.
-
-Language-specific syntax belongs in languages/, while low-level file writing
-and shared emission infrastructure belong here.
+Emission owns template scanning, path expansion, rendering, and final output
+planning. Language modules prepare contexts; emission consumes those contexts.
 """

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from constants.files import DEBUG_LANGUAGE, FILE_SUMMARY, FOLDER_OPERATIONS, FOLDER_RESOURCES, FOLDER_SCHEMAS
-from emission.files import EmittedFile
-from emission.plan import EmissionPlan
+
+# TODO: Replace with new emission.templates.planning module
+# from emission.files import EmittedFile
+# from emission.plan import EmissionPlan
 from inference.models import InferenceGraph
 from languages.debug.helpers import (
     build_operation_path,
@@ -17,6 +20,22 @@ from languages.debug.renderers import (
     schema_renderer,
     summary_renderer,
 )
+
+
+@dataclass(frozen=True)
+class EmittedFile:
+    """Temporary stub for old emission.files.EmittedFile"""
+
+    path: Path
+    content: str
+
+
+@dataclass(frozen=True)
+class EmissionPlan:
+    """Temporary stub for old emission.plan.EmissionPlan"""
+
+    language: str
+    files: tuple[EmittedFile, ...]
 
 
 class DebugEmitter:
