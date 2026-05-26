@@ -1,7 +1,5 @@
-"""
-Language-specific emitter package.
+"""Language adapter package.
 
-This package contains target-language emitters that consume the inference graph
-and produce language-specific code. Each language subpackage (dart, typescript, debug)
-implements the LanguageEmitter protocol.
+Language implementations register themselves through decorators and are
+discovered dynamically. This package must not import emission internals.
 """

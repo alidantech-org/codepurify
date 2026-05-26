@@ -3,6 +3,10 @@
 # Character encoding
 ENCODING_UTF8 = "utf-8"
 
+EXT_JSON = ".json"
+EXT_YAML = ".yaml"
+EXT_YML = ".yml"
+
 # Project folder names
 DIR_SRC = "src"
 DIR_TESTS = "tests"

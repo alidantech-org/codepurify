@@ -1,79 +1,111 @@
 """Runtime emit workflow.
 
-Temporary implementation while the real template emission pipeline is being
-rewired. It returns structured output only; adapters decide presentation.
+Orchestrates the full emission pipeline: OpenAPI loading, inference, contract
+building, language adaptation, and template emission.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
+from emission.engine import emit as run_emission
+from inference.contract import build_api_contract
+from inference.engine import InferenceEngine
+from languages.discovery import resolve_language_adapter
+from openapi.loader import load_openapi_document
 
 
 def run_emit(request: EmitInput) -> EmitOutput:
     """Run the emit workflow and return structured output."""
     _notify(
         request,
-        stage="planning_emission",
-        message=f"Planning {request.language} emission",
+        stage="loading_openapi",
+        message=f"Loading OpenAPI document from {request.input_path}",
     )
 
-    planned = _fake_planned_paths(request.output_path)
+    document = load_openapi_document(request.input_path)
 
-    if request.dry_run:
-        _notify(
-            request,
-            stage="dry_run_complete",
-            message="Dry run completed",
-            total=len(planned),
-        )
-        return EmitOutput(
-            input_path=request.input_path,
-            language=request.language,
-            output_path=request.output_path,
-            dry_run=True,
-            planned=planned,
-            diagnostics=[
-                RuntimeDiagnostic(
-                    level="info",
-                    message="Dry run completed; no files were written.",
-                )
-            ],
-        )
+    _notify(
+        request,
+        stage="running_inference",
+        message="Running OpenAPI inference",
+    )
+
+    inference_engine = InferenceEngine()
+    graph = inference_engine.infer(document)
+
+    _notify(
+        request,
+        stage="building_contract",
+        message="Building API contract",
+    )
+
+    api_contract = build_api_contract(graph)
+
+    _notify(
+        request,
+        stage="resolving_language",
+        message=f"Resolving language adapter: {request.language}",
+    )
+
+    adapter = resolve_language_adapter(request.language)
+
+    _notify(
+        request,
+        stage="building_template_contract",
+        message="Building template contract",
+    )
+
+    template_root = request.templates_path if request.templates_path else None
+    template_contract = adapter.build_template_contract(
+        api=api_contract,
+        output_path=request.output_path,
+        template_root=template_root,
+        dry_run=request.dry_run,
+    )
+
+    _notify(
+        request,
+        stage="emitting_files",
+        message="Emitting files",
+    )
+
+    emission_result = run_emission(template_contract)
 
     _notify(
         request,
         stage="emission_complete",
-        message="Temporary emit workflow completed",
-        total=len(planned),
+        message="Emission completed",
+        total=len(emission_result.plan.files),
     )
+
+    diagnostics = [
+        RuntimeDiagnostic(
+            level="info",
+            message=f"Emission completed: {len(emission_result.write_result.created)} created, "
+            f"{len(emission_result.write_result.updated)} updated, "
+            f"{len(emission_result.write_result.unchanged)} unchanged.",
+        )
+    ]
+
+    if emission_result.write_result.skipped:
+        diagnostics.append(
+            RuntimeDiagnostic(
+                level="info",
+                message=f"{len(emission_result.write_result.skipped)} files skipped (dry run).",
+            )
+        )
 
     return EmitOutput(
         input_path=request.input_path,
         language=request.language,
         output_path=request.output_path,
-        dry_run=False,
-        planned=planned,
-        written=planned,
-        updated=[],
-        skipped=[],
-        diagnostics=[
-            RuntimeDiagnostic(
-                level="warning",
-                message="Using temporary emit workflow; real emission is not wired yet.",
-            )
-        ],
+        dry_run=request.dry_run,
+        planned=[f.output_path for f in emission_result.plan.files],
+        written=list(emission_result.write_result.created),
+        updated=list(emission_result.write_result.updated),
+        skipped=list(emission_result.write_result.skipped),
+        diagnostics=diagnostics,
     )
-
-
-def _fake_planned_paths(output_path: Path) -> list[Path]:
-    """Return temporary planned output paths for CLI/runtime integration tests."""
-    return [
-        output_path / "summary.txt",
-        output_path / "schemas" / "user" / "schema.txt",
-        output_path / "operations" / "create_user" / "operation.txt",
-    ]
 
 
 def _notify(

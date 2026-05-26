@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
-from emission.model import TemplateContext
+from contracts.emission import TemplateContext
 
 
 def create_environment(template_root: Path) -> Environment:
@@ -26,10 +24,9 @@ def create_environment(template_root: Path) -> Environment:
 def render_template(
     template_root: Path,
     relative_path: Path,
-    context: Mapping[str, Any] | TemplateContext,
+    context: TemplateContext,
 ) -> str:
     """Render a template by relative path."""
     environment = create_environment(template_root)
     template = environment.get_template(relative_path.as_posix())
-    values = context.to_dict() if isinstance(context, TemplateContext) else context
-    return template.render(**values)
+    return template.render(**context)

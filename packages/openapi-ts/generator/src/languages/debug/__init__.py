@@ -1,9 +1,5 @@
-"""Debug language planner.
+"""Debug language adapter.
 
-The debug language emits text reports from the same generic emission pipeline
-used by real source-code languages.
+The debug language emits human-readable text reports through the same language
+and emission contracts used by real source-code generators.
 """
-
-from languages.debug.planner import DebugLanguagePlanner
-
-__all__ = ["DebugLanguagePlanner"]

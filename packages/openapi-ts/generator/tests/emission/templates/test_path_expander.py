@@ -1,15 +1,36 @@
 """Tests for template path expansion."""
 
+from __future__ import annotations
+
 from pathlib import Path
 
-from emission.templates.path_expander import expand_template_path
-from utils.naming import build_name
+from src.contracts.names import make_contract_name
+from src.emission.templates.path_expander import expand_template_path
+
+
+def test_expand_template_path_strips_final_j2(tmp_path) -> None:
+    schema_name = make_contract_name("User")
+    output = expand_template_path(
+        Path("schemas/[schema.name.path]/schema.txt.j2"),
+        {"schema": {"name": schema_name}},
+    )
+
+    assert output.as_posix() == "schemas/user/schema.txt"
+
+
+def test_expand_template_path_keeps_raw_file_extension(tmp_path) -> None:
+    output = expand_template_path(
+        Path(".gitignore"),
+        {},
+    )
+
+    assert output.as_posix() == ".gitignore"
 
 
 def test_expands_segment_and_inline_tokens():
     context = {
         "version": "v1",
-        "schema": {"name": build_name("UserProfiles")},
+        "schema": {"name": make_contract_name("UserProfiles")},
     }
 
     result = expand_template_path(
@@ -24,7 +45,7 @@ def test_expands_spread_tokens():
     context = {
         "version": "v1",
         "schema": {
-            "name": build_name("UserProfiles"),
+            "name": make_contract_name("UserProfiles"),
             "output": {"parts": ["models", "users"]},
         },
     }
@@ -39,7 +60,7 @@ def test_expands_spread_tokens():
 
 def test_original_is_default_for_name_case():
     context = {
-        "schema": {"name": build_name("UserProfiles")},
+        "schema": {"name": make_contract_name("UserProfiles")},
     }
 
     result = expand_template_path(

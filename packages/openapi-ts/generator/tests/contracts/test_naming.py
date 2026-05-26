@@ -1,5 +1,8 @@
 """Tests for the unified naming provider."""
 
+from __future__ import annotations
+
+from src.contracts.names import make_contract_name
 from utils.naming import build_name
 
 
@@ -41,3 +44,12 @@ def test_path_case_is_available_for_all_forms():
     assert name.path.o == "user_profiles"
     assert name.path.s == "user_profile"
     assert name.path.p == "user_profiles"
+
+
+def test_make_contract_name_uses_shared_provider() -> None:
+    name = make_contract_name("UserProfile")
+
+    assert name.pascal.original == "UserProfile"
+    assert name.camel.original == "userProfile"
+    assert name.snake.original == "user_profile"
+    assert name.path.original == "user_profile"

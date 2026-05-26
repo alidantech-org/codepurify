@@ -1,1 +1,1 @@
-"""Tests for emission modules."""
+"""Tests for generic emission behavior."""

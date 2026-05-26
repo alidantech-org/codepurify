@@ -22,7 +22,9 @@ from core.errors import OpenApiLoadError
 from openapi.document import OpenApiDocument
 
 
-def load_openapi_document(path: Path) -> OpenApiDocument:
+def load_openapi_document(path: str | Path) -> OpenApiDocument:
+    path = Path(path)
+
     if not path.exists():
         raise OpenApiLoadError(ERR_FILE_NOT_FOUND.format(path=path))
 
