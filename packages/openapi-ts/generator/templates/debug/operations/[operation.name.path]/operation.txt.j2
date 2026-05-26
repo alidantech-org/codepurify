@@ -2,36 +2,37 @@ Operation
 =========
 
 ID: {{ operation.id }}
+Name: {{ operation.name.path }}
 Method: {{ operation.method }}
 Path: {{ operation.path }}
 Resource: {{ operation.resource }}
 
 Parameters: {{ operation.parameters | length }}
-{% if operation.parameters %}
-{% for parameter in operation.parameters %}
+{%- if operation.parameters %}
+{%- for parameter in operation.parameters %}
 - {{ parameter.name }}
   Location: {{ parameter.location }}
   Required: {{ parameter.required }}
   Ref: {{ parameter.ref }}
   Schema Ref: {{ parameter.schema_ref }}
-{% endfor %}
-{% else %}
+{%- endfor %}
+{%- else %}
 - none
-{% endif %}
+{%- endif %}
 
 Request Body:
-{% if operation.request_body %}
+{%- if operation.request_body %}
   Required: {{ operation.request_body.required }}
   Ref: {{ operation.request_body.ref }}
   Content Types: {{ operation.request_body.content_types | join(", ") if operation.request_body.content_types else "-" }}
   Schema Refs: {{ operation.request_body.schema_refs | join(", ") if operation.request_body.schema_refs else "-" }}
-{% else %}
+{%- else %}
   none
-{% endif %}
+{%- endif %}
 
 Responses: {{ operation.responses | length }}
-{% if operation.responses %}
-{% for response in operation.responses %}
+{%- if operation.responses %}
+{%- for response in operation.responses %}
 - {{ response.status_code }}
   Success: {{ response.is_success }}
   Error: {{ response.is_error }}
@@ -39,7 +40,7 @@ Responses: {{ operation.responses | length }}
   Ref: {{ response.ref }}
   Content Types: {{ response.content_types | join(", ") if response.content_types else "-" }}
   Schema Refs: {{ response.schema_refs | join(", ") if response.schema_refs else "-" }}
-{% endfor %}
-{% else %}
+{%- endfor %}
+{%- else %}
 - none
-{% endif %}
+{%- endif %}

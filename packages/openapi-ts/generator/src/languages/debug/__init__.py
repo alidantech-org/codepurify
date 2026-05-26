@@ -1,7 +1,9 @@
-"""
-Debug language emitter package.
+"""Debug language planner.
 
-This package contains a minimal emitter for debugging the inference graph
-and emission pipeline. It outputs plain text files to verify the generator
-works correctly before implementing real language emitters.
+The debug language emits text reports from the same generic emission pipeline
+used by real source-code languages.
 """
+
+from languages.debug.planner import DebugLanguagePlanner
+
+__all__ = ["DebugLanguagePlanner"]

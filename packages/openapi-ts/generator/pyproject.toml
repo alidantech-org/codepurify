@@ -14,17 +14,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-  "pytest>=8.3.0",
-  "ruff>=0.6.0",
-  "mypy>=1.11.0",
-]
+cli = ["typer>=0.12", "rich>=13.7", "questionary>=2.0"]
 
 [project.scripts]
-generator = "cli.main:app"
+openapi-generator = "cli.main:app"
+
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -2,40 +2,53 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from core.config import RuntimeContext
+from runtime.results import EmitResult, InferResult, InspectResult, ValidateResult
 from runtime.workflows.emit import run_emit
-from runtime.workflows.emit_plan import run_emit_plan
 from runtime.workflows.infer import run_infer
 from runtime.workflows.inspect import run_inspect
 from runtime.workflows.validate import run_validate
 
 
 class GeneratorApp:
-    def __init__(self, context: RuntimeContext) -> None:
-        self.context = context
+    """Public runtime API for the generator.
 
-    def inspect(self, input_path: Path) -> None:
-        run_inspect(self.context, input_path)
+    Interfaces such as CLI, UI, tests, or HTTP handlers should call this class.
+    Runtime methods return structured results and do not render terminal output.
+    """
 
-    def infer(self, input_path: Path, output_path: Path | None = None) -> None:
-        run_infer(self.context, input_path, output_path)
+    def inspect(self, input_path: Path) -> InspectResult:
+        """Inspect an OpenAPI document."""
+        return run_inspect(input_path=input_path)
 
-    def emit(self, input_path: Path, language: str, output_path: Path) -> None:
-        run_emit(self.context, input_path, language, output_path)
-
-    def emit_plan(
+    def infer(
         self,
-        *,
-        input_path: Path | None = None,
+        input_path: Path,
+        output_path: Path | None = None,
+    ) -> InferResult:
+        """Run OpenAPI inference."""
+        return run_infer(
+            input_path=input_path,
+            output_path=output_path,
+        )
+
+    def emit(
+        self,
+        input_path: Path,
         language: str,
+        output_path: Path,
+        *,
+        dry_run: bool = False,
         templates_path: Path | None = None,
-    ) -> str:
-        return run_emit_plan(
-            self.context,
+    ) -> EmitResult:
+        """Emit generated output for a language."""
+        return run_emit(
             input_path=input_path,
             language=language,
+            output_path=output_path,
+            dry_run=dry_run,
             templates_path=templates_path,
         )
 
-    def validate(self, input_path: Path) -> None:
-        run_validate(self.context, input_path)
+    def validate(self, input_path: Path) -> ValidateResult:
+        """Validate an OpenAPI document."""
+        return run_validate(input_path=input_path)

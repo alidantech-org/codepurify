@@ -6,10 +6,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from emission.model import TemplateContext
 from emission.templates.descriptor import TemplateOwner
 
-
-Context = Mapping[str, Any]
+Context = Mapping[str, Any] | TemplateContext
 
 
 @dataclass(frozen=True)

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
+from emission.model import TemplateContext
 from emission.planning.render_context import Context, RenderContexts
 from emission.templates.descriptor import TemplateDescriptor
 from emission.templates.path_expander import expand_template_path
@@ -18,7 +20,7 @@ class PlannedRender:
     template_path: Path
     output_path: Path
     owner: str
-    context: Context
+    context: Mapping[str, Any]
 
 
 def build_render_plan(
@@ -29,7 +31,8 @@ def build_render_plan(
     planned: list[PlannedRender] = []
 
     for descriptor in descriptors:
-        for context in contexts.for_owner(descriptor.owner):
+        for raw_context in contexts.for_owner(descriptor.owner):
+            context = _as_mapping(raw_context)
             output_path = expand_template_path(descriptor.relative_path, context)
 
             planned.append(
@@ -42,3 +45,10 @@ def build_render_plan(
             )
 
     return sorted(planned, key=lambda item: item.output_path.as_posix())
+
+
+def _as_mapping(context: Context) -> Mapping[str, Any]:
+    if isinstance(context, TemplateContext):
+        return context.to_dict()
+
+    return context
