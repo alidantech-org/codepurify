@@ -6,8 +6,8 @@ from collections import Counter
 
 from inference.engine import InferenceEngine
 from openapi.loader import load_openapi_document
-from runtime.io.inference_output import write_inference_graph
-from runtime.models import (
+from app.io.inference_output import write_inference_graph
+from app.models import (
     AliasSchemaSummary,
     InferInput,
     InferOutput,

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from runtime.models.events import ProgressSink
+from app.models.events import ProgressSink
 
 
 @dataclass(frozen=True)

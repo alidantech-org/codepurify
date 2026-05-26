@@ -4,10 +4,10 @@ These models define the public runtime interface used by CLI, tests, UI, API
 servers, and other adapters.
 """
 
-from runtime.models.diagnostics import RuntimeDiagnostic
-from runtime.models.events import ProgressSink, RuntimeEvent
-from runtime.models.inputs import EmitInput, InferInput, InspectInput, ValidateInput
-from runtime.models.outputs import (
+from app.models.diagnostics import RuntimeDiagnostic
+from app.models.events import ProgressSink, RuntimeEvent
+from app.models.inputs import EmitInput, InferInput, InspectInput, ValidateInput
+from app.models.outputs import (
     AliasSchemaSummary,
     EmitOutput,
     InferOutput,

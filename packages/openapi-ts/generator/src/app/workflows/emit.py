@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from runtime.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
+from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 
 
 def run_emit(request: EmitInput) -> EmitOutput:

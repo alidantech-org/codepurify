@@ -1,25 +1,16 @@
 """HTTP protocol constants."""
 
 # HTTP methods
-METHOD_GET = "get"
-METHOD_POST = "post"
-METHOD_PUT = "put"
-METHOD_PATCH = "patch"
-METHOD_DELETE = "delete"
-METHOD_OPTIONS = "options"
-METHOD_HEAD = "head"
-METHOD_TRACE = "trace"
+GET = "get"
+POST = "post"
+PUT = "put"
+PATCH = "patch"
+DELETE = "delete"
+OPTIONS = "options"
+HEAD = "head"
+TRACE = "trace"
 
-HTTP_METHODS = {
-    METHOD_GET,
-    METHOD_POST,
-    METHOD_PUT,
-    METHOD_PATCH,
-    METHOD_DELETE,
-    METHOD_OPTIONS,
-    METHOD_HEAD,
-    METHOD_TRACE,
-}
+HTTP_METHODS = {GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, TRACE}
 
 # Content types
 CONTENT_JSON = "application/json"

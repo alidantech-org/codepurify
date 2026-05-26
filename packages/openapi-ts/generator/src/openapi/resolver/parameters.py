@@ -6,14 +6,12 @@ and extracting information from parameter objects.
 
 from typing import Any
 
-from constants.openapi import COMP_PARAMETERS, COMP_REF_PARAMETERS, PARAM_IN, PARAM_NAME, REF, REQUIRED, SCHEMA
+from constants.openapi import PARAMETERS, REF_PARAMETERS, PARAM_IN, PARAM_NAME, REF, REQUIRED, SCHEMA
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
 
 
-def resolve_parameter(
-    document: OpenApiDocument, parameter_node: dict[str, Any]
-) -> dict[str, Any] | None:
+def resolve_parameter(document: OpenApiDocument, parameter_node: dict[str, Any]) -> dict[str, Any] | None:
     """Resolve a parameter node to its definition.
 
     If the parameter node contains a $ref, the reference is resolved.
@@ -34,11 +32,11 @@ def resolve_parameter(
     if not isinstance(ref, str):
         return None
 
-    if not ref.startswith(COMP_REF_PARAMETERS):
+    if not ref.startswith(REF_PARAMETERS):
         return None
 
-    name = ref.replace(COMP_REF_PARAMETERS, "")
-    parameters = document.components.get(COMP_PARAMETERS)
+    name = ref.replace(REF_PARAMETERS, "")
+    parameters = document.components.get(PARAMETERS)
 
     if not isinstance(parameters, dict):
         return None

@@ -6,10 +6,10 @@ from typing import Any
 
 from constants.openapi import (
     COMPONENTS,
-    COMP_PARAMETERS,
-    COMP_REQUEST_BODIES,
-    COMP_RESPONSES,
-    COMP_SCHEMAS,
+    PARAMETERS,
+    REQUEST_BODIES,
+    RESPONSES,
+    SCHEMAS,
     DEFAULT_TITLE,
     INFO,
     OPENAPI,
@@ -55,20 +55,20 @@ class OpenApiDocument:
 
     @property
     def schemas(self) -> OpenApiDict:
-        value = self.components.get(COMP_SCHEMAS)
+        value = self.components.get(SCHEMAS)
         return value if isinstance(value, dict) else {}
 
     @property
     def responses(self) -> OpenApiDict:
-        value = self.components.get(COMP_RESPONSES)
+        value = self.components.get(RESPONSES)
         return value if isinstance(value, dict) else {}
 
     @property
     def request_bodies(self) -> OpenApiDict:
-        value = self.components.get(COMP_REQUEST_BODIES)
+        value = self.components.get(REQUEST_BODIES)
         return value if isinstance(value, dict) else {}
 
     @property
     def parameters(self) -> OpenApiDict:
-        value = self.components.get(COMP_PARAMETERS)
+        value = self.components.get(PARAMETERS)
         return value if isinstance(value, dict) else {}

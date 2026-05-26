@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from runtime.models import (
+from app.models import (
     EmitInput,
     EmitOutput,
     InferInput,
@@ -14,10 +14,10 @@ from runtime.models import (
     ValidateInput,
     ValidateOutput,
 )
-from runtime.workflows.emit import run_emit
-from runtime.workflows.infer import run_infer
-from runtime.workflows.inspect import run_inspect
-from runtime.workflows.validate import run_validate
+from app.workflows.emit import run_emit
+from app.workflows.infer import run_infer
+from app.workflows.inspect import run_inspect
+from app.workflows.validate import run_validate
 
 
 class GeneratorApp:

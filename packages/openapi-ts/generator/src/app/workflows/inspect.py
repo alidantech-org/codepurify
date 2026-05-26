@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from openapi.inspector import inspect_openapi_document
 from openapi.loader import load_openapi_document
-from runtime.models import InspectInput, InspectOutput, ResourceSummary, RuntimeDiagnostic, RuntimeEvent
+from app.models import InspectInput, InspectOutput, ResourceSummary, RuntimeDiagnostic, RuntimeEvent
 
 
 def run_inspect(request: InspectInput) -> InspectOutput:

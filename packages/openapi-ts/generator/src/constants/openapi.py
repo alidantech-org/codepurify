@@ -9,13 +9,13 @@ PATHS = "paths"
 COMPONENTS = "components"
 
 # Component sections
-COMP_SCHEMAS = "schemas"
-COMP_RESPONSES = "responses"
-COMP_REQUEST_BODIES = "requestBodies"
-COMP_PARAMETERS = "parameters"
-COMP_HEADERS = "headers"
-COMP_EXAMPLES = "examples"
-COMP_SECURITY_SCHEMES = "securitySchemes"
+SCHEMAS = "schemas"
+RESPONSES = "responses"
+REQUEST_BODIES = "requestBodies"
+PARAMETERS = "parameters"
+HEADERS = "headers"
+EXAMPLES = "examples"
+SECURITY_SCHEMES = "securitySchemes"
 
 # Operation keys
 OPERATION_ID = "operationId"
@@ -37,10 +37,10 @@ JSON_POINTER_PREFIX = "#/"
 COMPONENT_REF_PREFIX = "#/components/"
 
 # Component reference paths
-COMP_REF_SCHEMAS = f"{COMPONENT_REF_PREFIX}{COMP_SCHEMAS}/"
-COMP_REF_RESPONSES = f"{COMPONENT_REF_PREFIX}{COMP_RESPONSES}/"
-COMP_REF_REQUEST_BODIES = f"{COMPONENT_REF_PREFIX}{COMP_REQUEST_BODIES}/"
-COMP_REF_PARAMETERS = f"{COMPONENT_REF_PREFIX}{COMP_PARAMETERS}/"
+REF_SCHEMAS = f"{COMPONENT_REF_PREFIX}{SCHEMAS}/"
+REF_RESPONSES = f"{COMPONENT_REF_PREFIX}{RESPONSES}/"
+REF_REQUEST_BODIES = f"{COMPONENT_REF_PREFIX}{REQUEST_BODIES}/"
+REF_PARAMETERS = f"{COMPONENT_REF_PREFIX}{PARAMETERS}/"
 
 # x-codegen keys
 X_CODEGEN_RESOURCE = "resource"
@@ -56,6 +56,7 @@ ONE_OF = "oneOf"
 ENUM = "enum"
 ITEMS = "items"
 FORMAT = "format"
+DEFAULT = "default"
 
 # Schema type values
 TYPE_OBJECT = "object"
@@ -64,6 +65,7 @@ TYPE_INTEGER = "integer"
 TYPE_NUMBER = "number"
 TYPE_BOOLEAN = "boolean"
 TYPE_NULL = "null"
+TYPE_ARRAY = "array"
 
 # Composition kinds
 COMPOSITION_ALL_OF = "allOf"
@@ -97,11 +99,11 @@ ERR_MISSING_PATHS = "OpenAPI document is missing required 'paths' field."
 
 # Component sections list
 COMPONENT_SECTIONS = (
-    COMP_SCHEMAS,
-    COMP_RESPONSES,
-    COMP_REQUEST_BODIES,
-    COMP_PARAMETERS,
-    COMP_HEADERS,
-    COMP_EXAMPLES,
-    COMP_SECURITY_SCHEMES,
+    SCHEMAS,
+    RESPONSES,
+    REQUEST_BODIES,
+    PARAMETERS,
+    HEADERS,
+    EXAMPLES,
+    SECURITY_SCHEMES,
 )

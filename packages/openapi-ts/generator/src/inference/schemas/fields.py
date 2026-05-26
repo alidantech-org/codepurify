@@ -6,12 +6,12 @@ OpenAPI schema objects including type, refs, required status, and more.
 
 from typing import Any
 
-from constants.openapi import ALL_OF, DESCRIPTION, ENUM, ITEMS, PROPERTIES, REQUIRED, TYPE
+from constants.openapi import ALL_OF, DEFAULT, DESCRIPTION, ENUM, FORMAT, ITEMS, PROPERTIES, REQUIRED, TYPE, TYPE_NULL
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
 
 from inference.models.schemas import InferredSchemaField
-from inference.schemas.field_types import infer_field_type
+from inference.schemas.field_types import ResolvedFieldType, infer_field_type
 
 
 def infer_schema_fields(schema: dict[str, Any] | None, document: OpenApiDocument | None = None) -> tuple[InferredSchemaField, ...]:
@@ -95,14 +95,14 @@ def _infer_field(
     """
     is_required = name in required_fields
     raw_type = schema.get(TYPE)
-    format_value = schema.get("format")
+    format_value = schema.get(FORMAT)
 
     # Check for nullable via type array ["string", "null"]
     nullable = False
     if isinstance(raw_type, list):
-        nullable = "null" in raw_type
+        nullable = TYPE_NULL in raw_type
         # Get the non-null type
-        non_null_types = [t for t in raw_type if t != "null"]
+        non_null_types = [t for t in raw_type if t != TYPE_NULL]
         raw_type = non_null_types[0] if non_null_types else None
 
     ref = get_ref(schema)
@@ -125,11 +125,11 @@ def _infer_field(
     else:
         enum_values = None
 
-    default = schema.get("default")
+    default = schema.get(DEFAULT)
     description = schema.get(DESCRIPTION)
 
     # Resolve field type information
-    resolved_types = {}
+    resolved_types: ResolvedFieldType | None = None
     if document:
         resolved_types = infer_field_type(schema, document)
 
@@ -146,10 +146,10 @@ def _infer_field(
         enum_values=enum_values,
         default=default,
         description=str(description) if description else None,
-        resolved_kind=resolved_types.get("resolved_kind"),
-        resolved_type=resolved_types.get("resolved_type"),
-        resolved_format=resolved_types.get("resolved_format"),
-        resolved_item_kind=resolved_types.get("resolved_item_kind"),
-        resolved_item_type=resolved_types.get("resolved_item_type"),
-        resolved_item_format=resolved_types.get("resolved_item_format"),
+        resolved_kind=resolved_types.resolved_kind if resolved_types else None,
+        resolved_type=resolved_types.resolved_type if resolved_types else None,
+        resolved_format=resolved_types.resolved_format if resolved_types else None,
+        resolved_item_kind=resolved_types.resolved_item_kind if resolved_types else None,
+        resolved_item_type=resolved_types.resolved_item_type if resolved_types else None,
+        resolved_item_format=resolved_types.resolved_item_format if resolved_types else None,
     )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from src.runtime.app import GeneratorApp
+from src.app import GeneratorApp
 import typer
 
 from cli.commands.emit import emit_command

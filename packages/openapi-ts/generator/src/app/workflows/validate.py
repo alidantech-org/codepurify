@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from openapi.loader import load_openapi_document
-from runtime.models import RuntimeDiagnostic, RuntimeEvent, ValidateInput, ValidateOutput
+from app.models import RuntimeDiagnostic, RuntimeEvent, ValidateInput, ValidateOutput
 
 
 def run_validate(request: ValidateInput) -> ValidateOutput:

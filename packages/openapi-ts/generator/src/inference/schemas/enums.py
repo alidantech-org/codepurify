@@ -6,7 +6,7 @@ OpenAPI schema objects including enum values and enum type.
 
 from typing import Any
 
-from constants.openapi import ENUM, TYPE
+from constants.openapi import ENUM, TYPE, TYPE_NULL
 
 
 def infer_enum_values(schema: dict[str, Any] | None) -> tuple[str, ...]:
@@ -47,7 +47,7 @@ def infer_enum_type(schema: dict[str, Any] | None) -> str | None:
 
     if isinstance(raw_type, list):
         # Get the non-null type from type arrays
-        non_null_types = [t for t in raw_type if t != "null"]
+        non_null_types = [t for t in raw_type if t != TYPE_NULL]
         return non_null_types[0] if non_null_types else None
 
     return None

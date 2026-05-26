@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from constants.codegen import X_CODEGEN
-from constants.openapi import COMP_SCHEMAS
+from constants.openapi import SCHEMAS
 from inference.models import InferredResource, InferredSchemaKind
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
@@ -15,7 +15,7 @@ def infer_kind_from_ref_alias(
     seen: set[str] | None = None,
 ) -> InferredSchemaKind | None:
     ref = get_ref(schema)
-    if ref is None or ref.section != COMP_SCHEMAS or ref.name is None:
+    if ref is None or ref.section != SCHEMAS or ref.name is None:
         return None
 
     seen = seen or set()
@@ -39,7 +39,7 @@ def infer_resource_from_ref_alias(
     seen: set[str] | None = None,
 ) -> InferredResource | None:
     ref = get_ref(schema)
-    if ref is None or ref.section != COMP_SCHEMAS or ref.name is None:
+    if ref is None or ref.section != SCHEMAS or ref.name is None:
         return None
 
     seen = seen or set()

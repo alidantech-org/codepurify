@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from runtime.models.diagnostics import RuntimeDiagnostic
+from app.models.diagnostics import RuntimeDiagnostic
 
 
 @dataclass(frozen=True)

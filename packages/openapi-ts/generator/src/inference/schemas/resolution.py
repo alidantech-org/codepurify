@@ -6,7 +6,7 @@ to make inferred schemas self-contained for emitters.
 
 from typing import Any
 
-from constants.openapi import COMP_REF_SCHEMAS
+from constants.openapi import REF_SCHEMAS
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
 
@@ -41,8 +41,8 @@ def resolve_schema_alias(document: OpenApiDocument, schema: dict[str, Any]) -> d
         seen_refs.add(ref_info.raw)
 
         # Extract schema name from ref path
-        if ref_info.raw.startswith(COMP_REF_SCHEMAS):
-            schema_name = ref_info.raw[len(COMP_REF_SCHEMAS) :]
+        if ref_info.raw.startswith(REF_SCHEMAS):
+            schema_name = ref_info.raw[len(REF_SCHEMAS) :]
             resolved = document.schemas.get(schema_name)
 
             if not isinstance(resolved, dict):
@@ -101,8 +101,8 @@ def resolve_schema_alias_chain(document: OpenApiDocument, schema: dict[str, Any]
         chain.append(ref_info.raw)
 
         # Extract schema name from ref path
-        if ref_info.raw.startswith(COMP_REF_SCHEMAS):
-            schema_name = ref_info.raw[len(COMP_REF_SCHEMAS) :]
+        if ref_info.raw.startswith(REF_SCHEMAS):
+            schema_name = ref_info.raw[len(REF_SCHEMAS) :]
             resolved = document.schemas.get(schema_name)
 
             if not isinstance(resolved, dict):

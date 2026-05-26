@@ -8,6 +8,16 @@ from inference.models.resources import InferredResource
 
 
 @dataclass(frozen=True)
+class QueryMetadata:
+    """Query metadata from x-codegen.query."""
+
+    filter: Any | None = None
+    operators: Any | None = None
+    sort: Any | None = None
+    select: Any | None = None
+
+
+@dataclass(frozen=True)
 class InferredSchemaField:
     """Inferred field from an OpenAPI schema object."""
 
@@ -57,7 +67,7 @@ class InferredSchema:
     # Primitive fields
     primitive_type: str | None = None
     primitive_format: str | None = None
-    primitive_query: dict[str, Any] = field(default_factory=dict)
+    primitive_query: QueryMetadata | None = None
     # Enum fields
     enum_type: str | None = None
     enum_values: tuple[str, ...] = field(default_factory=tuple)

@@ -24,9 +24,9 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
         path_parameters = infer_parameters(path_item.get(PARAMETERS), document)
 
         for method, operation in path_item.items():
-            method_lower = method.lower()
+            lower = method.lower()
 
-            if method_lower not in HTTP_METHODS:
+            if lower not in HTTP_METHODS:
                 continue
 
             if not isinstance(operation, dict):
@@ -40,8 +40,8 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
 
             operations.append(
                 InferredOperation(
-                    operation_id=_operation_id(method_lower, str(path), operation),
-                    method=method_upper(method_lower),
+                    operation_id=_operation_id(lower, str(path), operation),
+                    method=upper(lower),
                     path=str(path),
                     resource=resource,
                     parameters=parameters,
@@ -109,7 +109,7 @@ def infer_operation_target(
     )
 
 
-def method_upper(method: str) -> str:
+def upper(method: str) -> str:
     return method.upper()
 
 
