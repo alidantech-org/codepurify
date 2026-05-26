@@ -16,8 +16,8 @@ from cli.constants.constants import (
     OPT_QUIET,
     OPT_VERBOSE,
 )
-from cli.presentation.core.interactive import ask_input_path
 from cli.presentation.core.console import print_error, print_header
+from cli.presentation.core.interactive import ask_input_path, should_prompt
 from cli.presentation.inspect.renderer import render_inspect_result
 
 
@@ -49,8 +49,10 @@ def inspect_command(
 
         resolved_input = input_file
 
-        if interactive:
-            resolved_input = resolved_input or ask_input_path()
+        prompt = should_prompt(interactive)
+
+        if resolved_input is None and prompt:
+            resolved_input = ask_input_path()
 
         if resolved_input is None:
             raise ValueError("missing required option: --input")

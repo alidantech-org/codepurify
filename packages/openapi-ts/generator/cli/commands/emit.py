@@ -24,8 +24,15 @@ from cli.constants.constants import (
     OPT_TEMPLATES,
     OPT_VERBOSE,
 )
-from cli.presentation.core.interactive import ask_input_path, ask_language, ask_output_path
 from cli.presentation.core.console import print_error, print_header
+from cli.presentation.core.interactive import (
+    ask_dry_run,
+    ask_input_path,
+    ask_language,
+    ask_output_path,
+    ask_templates_path,
+    should_prompt,
+)
 from cli.presentation.emit.renderer import render_emit_result
 
 
@@ -76,11 +83,25 @@ def emit_command(
         resolved_input = input_file
         resolved_language = language
         resolved_output = output
+        resolved_templates = templates
+        resolved_dry_run = dry_run
 
-        if interactive:
-            resolved_input = resolved_input or ask_input_path()
-            resolved_language = resolved_language or ask_language()
-            resolved_output = resolved_output or ask_output_path()
+        prompt = should_prompt(interactive)
+
+        if resolved_input is None and prompt:
+            resolved_input = ask_input_path()
+
+        if resolved_language is None and prompt:
+            resolved_language = ask_language()
+
+        if resolved_output is None and prompt:
+            resolved_output = ask_output_path()
+
+        if resolved_templates is None and prompt:
+            resolved_templates = ask_templates_path()
+
+        if not dry_run and prompt:
+            resolved_dry_run = ask_dry_run()
 
         if resolved_input is None:
             raise ValueError("missing required option: --input")
@@ -97,8 +118,8 @@ def emit_command(
             input_path=resolved_input,
             language=resolved_language,
             output_path=resolved_output,
-            dry_run=dry_run,
-            templates_path=templates,
+            dry_run=resolved_dry_run,
+            templates_path=resolved_templates,
         )
 
         if not quiet:

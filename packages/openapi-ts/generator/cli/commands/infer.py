@@ -18,8 +18,12 @@ from cli.constants.constants import (
     OPT_QUIET,
     OPT_VERBOSE,
 )
-from cli.presentation.core.interactive import ask_input_path
 from cli.presentation.core.console import print_error, print_header
+from cli.presentation.core.interactive import (
+    ask_input_path,
+    ask_optional_output_path,
+    should_prompt,
+)
 from cli.presentation.infer.renderer import render_infer_result
 
 
@@ -56,9 +60,15 @@ def infer_command(
         from cli.main import get_runtime
 
         resolved_input = input_file
+        resolved_output = output
 
-        if interactive:
-            resolved_input = resolved_input or ask_input_path()
+        prompt = should_prompt(interactive)
+
+        if resolved_input is None and prompt:
+            resolved_input = ask_input_path()
+
+        if resolved_output is None and prompt:
+            resolved_output = ask_optional_output_path()
 
         if resolved_input is None:
             raise ValueError("missing required option: --input")
@@ -69,7 +79,7 @@ def infer_command(
         runtime = get_runtime(ctx)
         result = runtime.infer(
             input_path=resolved_input,
-            output_path=output,
+            output_path=resolved_output,
         )
 
         if not quiet:
