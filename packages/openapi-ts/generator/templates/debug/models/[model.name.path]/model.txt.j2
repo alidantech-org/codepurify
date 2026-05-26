@@ -1,0 +1,69 @@
+Model
+=====
+
+Name: {{ model.name.pascal }}
+Kind: {{ model.api.kind }}
+Ref: {{ model.api.ref }}
+Resource: {{ model.api.resource or "-" }}
+
+Fields: {{ model.fields | length }}
+--------------------
+{%- for field in model.fields %}
+Field: {{ field.name.camel }}
+  Required: {{ field.api.required }}
+  Nullable: {{ field.api.nullable }}
+  Type Kind: {{ field.api.type.kind }}
+  Type: {{ field.api.type.type or "-" }}
+  Format: {{ field.api.type.resolved_format or "-" }}
+  Schema Ref: {{ field.api.schema_ref or "-" }}
+  Schema Refs: {{ field.api.schema_refs | join(", ") if field.api.schema_refs else "-" }}
+  Item Ref: {{ field.api.item_ref or "-" }}
+  Query Enabled: {{ field.lang.query_enabled }}
+  Filterable: {{ field.lang.filterable }}
+  Sortable: {{ field.lang.sortable }}
+  Selectable: {{ field.lang.selectable }}
+  Searchable: {{ field.lang.searchable }}
+  Operators: {{ field.lang.operators | join(", ") if field.lang.operators else "-" }}
+
+{%- else %}
+- none
+{%- endfor %}
+
+Dependencies
+------------
+{%- for dependency in model.emit.dependencies %}
+- Ref: {{ dependency.ref }}
+  Purpose: {{ dependency.purpose }}
+  Reason: {{ dependency.reason }}
+  Target Kind: {{ dependency.target.kind if dependency.target else "-" }}
+  Target Name: {{ dependency.target.name.pascal if dependency.target and dependency.target.name else "-" }}
+  Is Primitive: {{ dependency.target.is_primitive if dependency.target else false }}
+  Is Inheritance: {{ dependency.is_inheritance }}
+  Importable: {{ dependency.is_importable }}
+  Exists: {{ dependency.exists }}
+  Relative Path: {{ dependency.relative_path or "-" }}
+  Import Path: {{ dependency.import_path }}
+{%- else %}
+- none
+{%- endfor %}
+
+File
+----
+{%- if file %}
+Relative Path: {{ file.relative_path }}
+Depth: {{ file.depth }}
+Root Prefix: {{ file.root_prefix }}
+
+Resolved Dependencies:
+{%- for dependency in file.dependencies %}
+- Ref: {{ dependency.ref }}
+  Exists: {{ dependency.exists }}
+  Group: {{ dependency.group }}
+  Relative Path: {{ dependency.relative_path or "-" }}
+  Import Path: {{ dependency.import_path }}
+{%- else %}
+- none
+{%- endfor %}
+{%- else %}
+File context: not injected yet
+{%- endif %}

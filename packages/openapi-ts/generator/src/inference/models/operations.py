@@ -40,6 +40,16 @@ class InferredOperationTarget:
 
 
 @dataclass(frozen=True)
+class InferredParameterTarget:
+    """Inferred parameter target from x-codegen parameter target metadata."""
+
+    ref: str
+    source: str
+    locations: tuple[str, ...] = field(default_factory=tuple)
+    parameter_names: tuple[str, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
 class InferredRequestBody:
     """Inferred request body from OpenAPI operations."""
 

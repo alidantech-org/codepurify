@@ -15,7 +15,7 @@ paths:
   /users:
     x-codegen:
       resource:
-        name: User
+        name: users
         path:
           - platform
           - auth
@@ -80,7 +80,7 @@ paths:
   /users/me:
     x-codegen:
       resource:
-        name: User
+        name: users
         path:
           - platform
           - auth
@@ -115,7 +115,7 @@ paths:
   /users/{userId}:
     x-codegen:
       resource:
-        name: User
+        name: users
         path:
           - platform
           - auth

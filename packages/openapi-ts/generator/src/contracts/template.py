@@ -1,12 +1,13 @@
 """Deterministic template variable contract.
 
-Templates should consume this contract shape only. Language adapters fill the
-`.lang` sections while source API facts remain under `.api`.
+Templates consume this stable contract only. Language adapters fill typed
+language/emission/docs models instead of loose dictionaries.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,7 @@ from contracts.api import (
     ApiField,
     ApiOperation,
     ApiParameter,
+    ApiRequestBody,
     ApiResource,
     ApiResponse,
     ApiSchema,
@@ -24,6 +26,146 @@ from contracts.names import ContractName
 MetaMap = dict[str, Any]
 
 
+class TemplateGroup(StrEnum):
+    """Stable template groups."""
+
+    GLOBAL = "global"
+    RESOURCES = "resources"
+    SCHEMAS = "schemas"
+    MODELS = "models"
+    DTOS = "dtos"
+    ENUMS = "enums"
+    PRIMITIVES = "primitives"
+    ALIASES = "aliases"
+    UNKNOWN = "unknown"
+    QUERIES = "queries"
+    PARAMS = "params"
+    BODIES = "bodies"
+    RESPONSES = "responses"
+    OPERATIONS = "operations"
+    FIELDS = "fields"
+    FILES = "files"
+
+
+class TemplateItemKey(StrEnum):
+    """Stable item keys used as template roots."""
+
+    RESOURCE = "resource"
+    SCHEMA = "schema"
+    MODEL = "model"
+    DTO = "dto"
+    ENUM = "enum"
+    PRIMITIVE = "primitive"
+    OPERATION = "operation"
+    FIELD = "field"
+    PARAMETER = "parameter"
+    RESPONSE = "response"
+    REQUEST = "request"
+    FILE = "file"
+
+
+class TemplateDependencyPurpose(StrEnum):
+    """Why one template item depends on another."""
+
+    FIELD_TYPE = "field_type"
+    ARRAY_ITEM = "array_item"
+    INHERITANCE = "inheritance"
+    OPERATION_PARAMETER = "operation_parameter"
+    OPERATION_REQUEST_BODY = "operation_request_body"
+    OPERATION_RESPONSE = "operation_response"
+    OPERATION_TARGET = "operation_target"
+    UNKNOWN = "unknown"
+
+
+class TemplateDependencyTargetKind(StrEnum):
+    """Kind of dependency target."""
+
+    PRIMITIVE = "primitive"
+    ENUM = "enum"
+    MODEL = "model"
+    DTO = "dto"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class TemplateDocs:
+    """Documentation variables exposed to templates."""
+
+    summary: str = "-"
+    description: str = "-"
+    deprecated: bool = False
+    examples: tuple[Any, ...] = ()
+
+
+@dataclass(frozen=True)
+class TemplateDependencyTarget:
+    """Resolved dependency target API/template facts."""
+
+    ref: str
+    name: ContractName | None = None
+    kind: TemplateDependencyTargetKind = TemplateDependencyTargetKind.UNKNOWN
+    schema: ApiSchema | None = None
+    is_primitive: bool = False
+    is_enum: bool = False
+    is_model: bool = False
+    is_dto: bool = False
+
+
+@dataclass(frozen=True)
+class TemplateDependency:
+    """Dependency visible to templates before/after path resolution."""
+
+    ref: str
+    purpose: TemplateDependencyPurpose = TemplateDependencyPurpose.UNKNOWN
+    reason: str = "-"
+    target: TemplateDependencyTarget | None = None
+
+    is_inheritance: bool = False
+    is_importable: bool = False
+    is_self: bool = False
+
+    output_path: Path | None = None
+    relative_path: Path | None = None
+    import_path: str = "-"
+    exists: bool = False
+
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateFile:
+    """Current emitted file context injected by emission after path planning."""
+
+    output_path: Path
+    relative_path: Path
+    name: str
+    stem: str
+    suffix: str
+    depth: int = 0
+    root_prefix: str = "."
+    group: TemplateGroup = TemplateGroup.GLOBAL
+    item_key: TemplateItemKey | None = None
+    dependencies: tuple[TemplateDependency, ...] = ()
+    imports: tuple[TemplateDependency, ...] = ()
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateProjectLang:
+    """Project-level language variables."""
+
+    name: str = "-"
+    purpose: str = "-"
+
+
+@dataclass(frozen=True)
+class TemplateProjectEmit:
+    """Project-level emission variables."""
+
+    format: str = "-"
+    root_path: Path | None = None
+
+
 @dataclass(frozen=True)
 class TemplateProject:
     """Project/package-level template variables."""
@@ -31,9 +173,41 @@ class TemplateProject:
     name: ContractName
     version: str = "0.1.0"
     description: str = "-"
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
+    lang: TemplateProjectLang = field(default_factory=TemplateProjectLang)
+    emit: TemplateProjectEmit = field(default_factory=TemplateProjectEmit)
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
     meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateFramework:
+    """Target framework variables."""
+
+    name: str = "none"
+    version: str | None = None
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplatePackage:
+    """Target package variables."""
+
+    name: str = "-"
+    version: str | None = None
+    dependencies: tuple[str, ...] = ()
+    dev_dependencies: tuple[str, ...] = ()
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateFeatures:
+    """Target feature flags."""
+
+    text_reports: bool = False
+    schema_groups: bool = False
+    field_reports: bool = False
+    dependency_reports: bool = False
+    file_context_reports: bool = False
 
 
 @dataclass(frozen=True)
@@ -41,9 +215,9 @@ class TemplateLanguage:
     """Target language/template profile variables."""
 
     name: str
-    framework: MetaMap = field(default_factory=dict)
-    package: MetaMap = field(default_factory=dict)
-    features: MetaMap = field(default_factory=dict)
+    framework: TemplateFramework = field(default_factory=TemplateFramework)
+    package: TemplatePackage = field(default_factory=TemplatePackage)
+    features: TemplateFeatures = field(default_factory=TemplateFeatures)
     meta: MetaMap = field(default_factory=dict)
 
 
@@ -54,7 +228,163 @@ class TemplateEmit:
     output_path: Path
     template_root: Path | None = None
     dry_run: bool = False
+    contract_version: str = "1.0"
     meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateItemEmit:
+    """Per-item emission variables."""
+
+    group: TemplateGroup
+    item_key: TemplateItemKey
+    key: str
+    ref: str | None = None
+    path_parts: tuple[str, ...] = ()
+    dependency_refs: tuple[str, ...] = ()
+    dependencies: tuple[TemplateDependency, ...] = ()
+
+
+@dataclass(frozen=True)
+class TemplateSchemaLang:
+    """Schema-level language variables."""
+
+    kind: str = "-"
+    type: str = "-"
+    display_name: str = "-"
+    symbol_name: str = "-"
+    field_count: int = 0
+    dependency_count: int = 0
+    query_enabled: bool = False
+
+
+@dataclass(frozen=True)
+class TemplateFieldLang:
+    """Field-level language variables."""
+
+    kind: str = "-"
+    type: str = "-"
+    display_name: str = "-"
+    required: bool = False
+    nullable: bool = False
+    query_enabled: bool = False
+    sortable: bool = False
+    selectable: bool = False
+    filterable: bool = False
+    searchable: bool = False
+    operators: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TemplateOperationLang:
+    """Operation-level language variables."""
+
+    kind: str = "-"
+    function_name: str = "-"
+    display_name: str = "-"
+    method: str = "-"
+
+
+@dataclass(frozen=True)
+class TemplateParameterLang:
+    """Parameter-level language variables."""
+
+    kind: str = "-"
+    display_name: str = "-"
+    location: str = "-"
+    required: bool = False
+
+
+@dataclass(frozen=True)
+class TemplateRequestBodyLang:
+    """Request body language variables."""
+
+    kind: str = "-"
+    required: bool = False
+    content_types: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TemplateResponseLang:
+    """Response language variables."""
+
+    kind: str = "-"
+    status_code: str = "-"
+    is_success: bool = False
+    is_error: bool = False
+    content_types: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TemplateResourceLang:
+    """Resource-level language variables."""
+
+    kind: str = "-"
+    display_name: str = "-"
+
+
+@dataclass(frozen=True)
+class TemplateFieldMeta:
+    """Stable field metadata."""
+
+    default: Any = None
+    enum_values: tuple[str, ...] = ()
+    raw_type: str | None = None
+
+
+@dataclass(frozen=True)
+class TemplateSchemaMeta:
+    """Stable schema metadata."""
+
+    is_alias: bool = False
+    alias_of: str | None = None
+    primitive_type: str | None = None
+    primitive_format: str | None = None
+    enum_type: str | None = None
+    enum_count: int = 0
+    composition_refs: tuple[str, ...] = ()
+    inherited_refs: tuple[str, ...] = ()
+    query_enabled: bool = False
+
+
+@dataclass(frozen=True)
+class TemplateResourceMeta:
+    """Stable resource metadata."""
+
+    operations_count: int = 0
+
+
+@dataclass(frozen=True)
+class TemplateOperationMeta:
+    """Stable operation metadata."""
+
+    parameter_count: int = 0
+    response_count: int = 0
+    has_request_body: bool = False
+    target_ref: str | None = None
+
+
+@dataclass(frozen=True)
+class TemplateRequestBodyMeta:
+    """Stable request body metadata."""
+
+    ref: str | None = None
+    media_type_count: int = 0
+
+
+@dataclass(frozen=True)
+class TemplateResponseMeta:
+    """Stable response metadata."""
+
+    ref: str | None = None
+    media_type_count: int = 0
+
+
+@dataclass(frozen=True)
+class TemplateParameterMeta:
+    """Stable parameter metadata."""
+
+    ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -63,23 +393,23 @@ class TemplateField:
 
     api: ApiField
     name: ContractName
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
-    docs: MetaMap = field(default_factory=dict)
-    meta: MetaMap = field(default_factory=dict)
+    lang: TemplateFieldLang = field(default_factory=TemplateFieldLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateFieldMeta = field(default_factory=TemplateFieldMeta)
 
 
 @dataclass(frozen=True)
 class TemplateSchema:
-    """Schema template variables."""
+    """Schema/model/dto/enum/primitive template variables."""
 
     api: ApiSchema
     name: ContractName
     fields: tuple[TemplateField, ...] = ()
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
-    docs: MetaMap = field(default_factory=dict)
-    meta: MetaMap = field(default_factory=dict)
+    lang: TemplateSchemaLang = field(default_factory=TemplateSchemaLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateSchemaMeta = field(default_factory=TemplateSchemaMeta)
 
 
 @dataclass(frozen=True)
@@ -92,7 +422,11 @@ class TemplateSchemaGroups:
     enums: tuple[TemplateSchema, ...] = ()
     primitives: tuple[TemplateSchema, ...] = ()
     aliases: tuple[TemplateSchema, ...] = ()
-
+    unknown: tuple[TemplateSchema, ...] = ()
+    queries: tuple[TemplateSchema, ...] = ()
+    params: tuple[TemplateSchema, ...] = ()
+    bodies: tuple[TemplateSchema, ...] = ()
+    responses: tuple[TemplateSchema, ...] = ()
     emit_models: tuple[TemplateSchema, ...] = ()
     emit_dtos: tuple[TemplateSchema, ...] = ()
     emit_enums: tuple[TemplateSchema, ...] = ()
@@ -104,10 +438,10 @@ class TemplateResource:
 
     api: ApiResource
     name: ContractName
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
-    docs: MetaMap = field(default_factory=dict)
-    meta: MetaMap = field(default_factory=dict)
+    lang: TemplateResourceLang = field(default_factory=TemplateResourceLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateResourceMeta = field(default_factory=TemplateResourceMeta)
 
 
 @dataclass(frozen=True)
@@ -116,10 +450,21 @@ class TemplateParameter:
 
     api: ApiParameter
     name: ContractName
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
-    docs: MetaMap = field(default_factory=dict)
-    meta: MetaMap = field(default_factory=dict)
+    lang: TemplateParameterLang = field(default_factory=TemplateParameterLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateParameterMeta = field(default_factory=TemplateParameterMeta)
+
+
+@dataclass(frozen=True)
+class TemplateRequestBody:
+    """Operation request body template variables."""
+
+    api: ApiRequestBody
+    lang: TemplateRequestBodyLang = field(default_factory=TemplateRequestBodyLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateRequestBodyMeta = field(default_factory=TemplateRequestBodyMeta)
 
 
 @dataclass(frozen=True)
@@ -127,10 +472,10 @@ class TemplateResponse:
     """Operation response template variables."""
 
     api: ApiResponse
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
-    docs: MetaMap = field(default_factory=dict)
-    meta: MetaMap = field(default_factory=dict)
+    lang: TemplateResponseLang = field(default_factory=TemplateResponseLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateResponseMeta = field(default_factory=TemplateResponseMeta)
 
 
 @dataclass(frozen=True)
@@ -140,11 +485,26 @@ class TemplateOperation:
     api: ApiOperation
     name: ContractName
     parameters: tuple[TemplateParameter, ...] = ()
+    request_body: TemplateRequestBody | None = None
     responses: tuple[TemplateResponse, ...] = ()
-    lang: MetaMap = field(default_factory=dict)
-    emit: MetaMap = field(default_factory=dict)
-    docs: MetaMap = field(default_factory=dict)
-    meta: MetaMap = field(default_factory=dict)
+    lang: TemplateOperationLang = field(default_factory=TemplateOperationLang)
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateOperationMeta = field(default_factory=TemplateOperationMeta)
+
+
+@dataclass(frozen=True)
+class TemplateContractMeta:
+    """Template contract metadata."""
+
+    debug: bool = False
+    schema_count: int = 0
+    model_count: int = 0
+    dto_count: int = 0
+    enum_count: int = 0
+    primitive_count: int = 0
+    operation_count: int = 0
+    resource_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -158,4 +518,5 @@ class TemplateContract:
     resources: tuple[TemplateResource, ...] = ()
     schemas: TemplateSchemaGroups = field(default_factory=TemplateSchemaGroups)
     operations: tuple[TemplateOperation, ...] = ()
-    meta: MetaMap = field(default_factory=dict)
+    file: TemplateFile | None = None
+    meta: TemplateContractMeta = field(default_factory=TemplateContractMeta)

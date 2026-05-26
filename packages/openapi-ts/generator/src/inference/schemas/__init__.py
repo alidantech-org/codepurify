@@ -6,20 +6,20 @@ fields, aliases, enums, composition, and metadata from OpenAPI schemas.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from constants.codegen import X_CODEGEN
 from constants.openapi import REF_SCHEMAS
 from inference.classifiers import classify_schema
+from inference.metadata.query import infer_query_metadata
 from inference.models import InferredResource, InferredSchema, InferredSchemaKind
-from inference.models.schemas import InferredSchemaComposition
+from inference.models.schemas import InferredSchemaComposition, InferredSchemaField, QueryMetadata
 from inference.resources import extract_resource_from_x_codegen
 from inference.schemas.composition import get_composition_refs, get_inherited_refs, infer_composition
 from inference.schemas.enums import infer_enum_type, infer_enum_values
 from inference.schemas.fields import infer_schema_fields
-from inference.models.schemas import QueryMetadata
-from inference.schemas.primitives import infer_primitive_format, infer_primitive_query_meta, infer_primitive_type
+from inference.schemas.primitives import infer_primitive_format, infer_primitive_type
 from inference.schemas.resolution import resolve_schema_alias
 from openapi.document import OpenApiDocument
 from openapi.refs import find_refs, get_ref
@@ -49,12 +49,14 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
                 resource=extract_resource_from_x_codegen(x_codegen_dict) or _infer_resource_from_alias(schema, document),
                 x_codegen=x_codegen_dict,
                 raw=schema,
-                dependencies=_dedupe_dependencies(ref.raw for ref in find_refs(schema) if ref.raw != f"{REF_SCHEMAS}{name}"),
+                dependencies=_dedupe_dependencies(
+                    found_ref.raw for found_ref in find_refs(schema) if found_ref.raw != f"{REF_SCHEMAS}{name}"
+                ),
                 alias_of=alias_of,
                 is_alias=is_alias,
                 primitive_type=kind_fields.primitive_type,
                 primitive_format=kind_fields.primitive_format,
-                primitive_query=kind_fields.primitive_query,
+                query=kind_fields.query,
                 enum_type=kind_fields.enum_type,
                 enum_values=kind_fields.enum_values,
                 fields=kind_fields.fields,
@@ -64,7 +66,7 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
             )
         )
 
-    return tuple(schemas)
+    return _resolve_field_query_metadata(tuple(schemas))
 
 
 def _infer_resource_from_alias(
@@ -109,10 +111,10 @@ class KindSpecificFields:
 
     primitive_type: str | None = None
     primitive_format: str | None = None
-    primitive_query: QueryMetadata | None = None
+    query: QueryMetadata = field(default_factory=QueryMetadata)
     enum_type: str | None = None
     enum_values: tuple[str, ...] | None = None
-    fields: tuple = ()
+    fields: tuple[InferredSchemaField, ...] = ()
     composition_refs: tuple[str, ...] = ()
     inherited_refs: tuple[str, ...] = ()
     composition: InferredSchemaComposition | None = None
@@ -136,7 +138,7 @@ def _infer_kind_specific_fields(schema: dict[str, Any], kind: InferredSchemaKind
         return KindSpecificFields(
             primitive_type=infer_primitive_type(effective_schema),
             primitive_format=infer_primitive_format(effective_schema),
-            primitive_query=infer_primitive_query_meta(effective_schema),
+            query=infer_query_metadata(effective_schema),
             fields=(),
             composition_refs=(),
             inherited_refs=(),
@@ -145,6 +147,7 @@ def _infer_kind_specific_fields(schema: dict[str, Any], kind: InferredSchemaKind
 
     if kind == InferredSchemaKind.ENUM:
         return KindSpecificFields(
+            query=infer_query_metadata(effective_schema),
             enum_type=infer_enum_type(effective_schema),
             enum_values=infer_enum_values(effective_schema),
             fields=(),
@@ -168,6 +171,64 @@ def _infer_kind_specific_fields(schema: dict[str, Any], kind: InferredSchemaKind
         inherited_refs=(),
         composition=None,
     )
+
+
+def _resolve_field_query_metadata(
+    schemas: tuple[InferredSchema, ...],
+) -> tuple[InferredSchema, ...]:
+    """Inherit field query metadata from referenced schemas when direct metadata is empty."""
+    schema_by_ref = {schema.ref: schema for schema in schemas}
+    resolved: list[InferredSchema] = []
+
+    for schema in schemas:
+        if not schema.fields:
+            resolved.append(schema)
+            continue
+
+        fields = tuple(_resolve_single_field_query(field, schema_by_ref) for field in schema.fields)
+        resolved.append(replace(schema, fields=fields))
+
+    return tuple(resolved)
+
+
+def _resolve_single_field_query(
+    field: InferredSchemaField,
+    schema_by_ref: dict[str, InferredSchema],
+) -> InferredSchemaField:
+    """Resolve query metadata for one field."""
+    if field.query.enabled:
+        return field
+
+    inherited = _query_from_refs(
+        refs=(
+            field.schema_ref,
+            *field.schema_refs,
+            field.item_ref,
+            *field.item_refs,
+        ),
+        schema_by_ref=schema_by_ref,
+    )
+
+    if not inherited.enabled:
+        return field
+
+    return replace(field, query=inherited)
+
+
+def _query_from_refs(
+    *,
+    refs: tuple[str | None, ...],
+    schema_by_ref: dict[str, InferredSchema],
+) -> QueryMetadata:
+    for ref in refs:
+        if not ref:
+            continue
+
+        schema = schema_by_ref.get(ref)
+        if schema is not None and schema.query.enabled:
+            return schema.query
+
+    return QueryMetadata()
 
 
 __all__ = ["infer_schemas"]

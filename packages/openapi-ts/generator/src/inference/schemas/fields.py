@@ -10,6 +10,7 @@ from constants.openapi import ALL_OF, DEFAULT, DESCRIPTION, ENUM, FORMAT, ITEMS,
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
 
+from inference.metadata.query import infer_query_metadata
 from inference.models.schemas import InferredSchemaField
 from inference.schemas.field_types import ResolvedFieldType, infer_field_type
 
@@ -133,6 +134,9 @@ def _infer_field(
     if document:
         resolved_types = infer_field_type(schema, document)
 
+    # Extract query metadata from x-codegen.query
+    query_meta = infer_query_metadata(schema)
+
     return InferredSchemaField(
         name=name,
         required=is_required,
@@ -152,4 +156,5 @@ def _infer_field(
         resolved_item_kind=resolved_types.resolved_item_kind if resolved_types else None,
         resolved_item_type=resolved_types.resolved_item_type if resolved_types else None,
         resolved_item_format=resolved_types.resolved_item_format if resolved_types else None,
+        query=query_meta,
     )

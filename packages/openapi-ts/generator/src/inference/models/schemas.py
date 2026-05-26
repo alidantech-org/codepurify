@@ -11,10 +11,16 @@ from inference.models.resources import InferredResource
 class QueryMetadata:
     """Query metadata from x-codegen.query."""
 
-    filter: Any | None = None
-    operators: Any | None = None
-    sort: Any | None = None
-    select: Any | None = None
+    filterable: bool = False
+    operators: tuple[str, ...] = field(default_factory=tuple)
+    sortable: bool = False
+    selectable: bool = False
+    searchable: bool = False
+
+    @property
+    def enabled(self) -> bool:
+        """Return whether any query behavior is enabled."""
+        return bool(self.filterable or self.operators or self.sortable or self.selectable or self.searchable)
 
 
 @dataclass(frozen=True)
@@ -40,6 +46,8 @@ class InferredSchemaField:
     resolved_item_kind: str | None = None
     resolved_item_type: str | None = None
     resolved_item_format: str | None = None
+    # Query metadata from x-codegen.query
+    query: QueryMetadata = field(default_factory=QueryMetadata)
 
 
 @dataclass(frozen=True)
@@ -67,7 +75,7 @@ class InferredSchema:
     # Primitive fields
     primitive_type: str | None = None
     primitive_format: str | None = None
-    primitive_query: QueryMetadata | None = None
+    query: QueryMetadata = field(default_factory=QueryMetadata)
     # Enum fields
     enum_type: str | None = None
     enum_values: tuple[str, ...] = field(default_factory=tuple)

@@ -1,0 +1,30 @@
+Model Dependencies
+==================
+
+Model: {{ model.name.pascal }}
+Ref: {{ model.api.ref }}
+
+Raw Dependency Refs
+-------------------
+{% for ref in model.emit.dependency_refs %}
+- {{ ref }}
+{% else %}
+- none
+{% endfor %}
+
+Resolved File Dependencies
+--------------------------
+{% if file %}
+{% for dependency in file.dependencies %}
+- Ref: {{ dependency.ref }}
+  Name: {{ dependency.name.pascal if dependency.name else "-" }}
+  Group: {{ dependency.group }}
+  Exists: {{ dependency.exists }}
+  Relative Path: {{ dependency.relative_path or "-" }}
+  Import Path: {{ dependency.import_path }}
+{% else %}
+- none
+{% endfor %}
+{% else %}
+File context: not injected yet
+{% endif %}

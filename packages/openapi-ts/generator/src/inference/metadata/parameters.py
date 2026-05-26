@@ -8,16 +8,8 @@ metadata values as written.
 
 from typing import Any
 
-from constants.codegen import (
-    PARAMETER_TARGET_SOURCE,
-    PARAMETER_TARGETS_SOURCE,
-    PARAMETERS,
-    TARGET,
-    TARGETS,
-    X_CODEGEN,
-)
-from constants.openapi import REF
-
+from constants.codegen import TARGET, X_CODEGEN
+from constants.openapi import PARAMETERS, REF
 
 def get_parameter_target_refs(node: dict[str, Any] | None) -> tuple[str, ...]:
     """Return parameter target refs from x-codegen metadata.
@@ -49,15 +41,6 @@ def get_parameter_target_refs(node: dict[str, Any] | None) -> tuple[str, ...]:
         if isinstance(ref, str):
             refs.append(ref)
 
-    # Check for multiple targets
-    targets = parameters.get(TARGETS)
-    if isinstance(targets, dict):
-        for target_value in targets.values():
-            if isinstance(target_value, dict):
-                ref = target_value.get(REF)
-                if isinstance(ref, str):
-                    refs.append(ref)
-
     return tuple(refs)
 
 
@@ -83,9 +66,6 @@ def get_parameter_target_source(node: dict[str, Any] | None) -> str | None:
         return None
 
     if TARGET in parameters:
-        return PARAMETER_TARGET_SOURCE
-
-    if TARGETS in parameters:
-        return PARAMETER_TARGETS_SOURCE
+        return f"{X_CODEGEN}.{PARAMETERS}.{TARGET}"
 
     return None

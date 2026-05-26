@@ -1,0 +1,36 @@
+Template Root Variables
+=======================
+
+Available global roots expected by debug templates:
+
+- project
+- api
+- lang
+- emit
+- meta
+- resources
+- schemas
+- operations
+- file
+
+Schema item roots are path-based:
+
+- schema     => schemas.all
+- model      => schemas.emit_models
+- dto        => schemas.emit_dtos
+- enum       => schemas.emit_enums
+- primitive  => schemas.primitives
+- resource   => resources
+- operation  => operations
+
+File Context
+------------
+{% if file %}
+Path: {{ file.relative_path }}
+Depth: {{ file.depth }}
+Root Prefix: {{ file.root_prefix }}
+Group: {{ file.group }}
+Item Key: {{ file.item_key }}
+{% else %}
+File context: not injected yet
+{% endif %}

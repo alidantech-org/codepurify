@@ -1,6 +1,24 @@
 Resource
 ========
 
-Name: {{ resource.name.path }}
-Path: {{ resource.api.path }}
-Operations: {{ resource.api.operations_count }}
+Name: {{ resource.name.pascal }}
+ID: {{ resource.api.id }}
+Path: {{ resource.api.path | join("/") }}
+Operations Count: {{ resource.meta.operations_count }}
+
+Emit
+----
+Group: {{ resource.emit.group }}
+Item Key: {{ resource.emit.item_key }}
+Key: {{ resource.emit.key }}
+Path Parts: {{ resource.emit.path_parts | join("/") }}
+
+File
+----
+{% if file %}
+Relative Path: {{ file.relative_path }}
+Depth: {{ file.depth }}
+Root Prefix: {{ file.root_prefix }}
+{% else %}
+File context: not injected yet
+{% endif %}

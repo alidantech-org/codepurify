@@ -23,6 +23,7 @@ PARAMETERS = "parameters"
 REQUEST_BODY = "requestBody"
 RESPONSES = "responses"
 DESCRIPTION = "description"
+SUMMARY = "summary"
 REQUIRED = "required"
 
 # Content keys
@@ -57,6 +58,9 @@ ENUM = "enum"
 ITEMS = "items"
 FORMAT = "format"
 DEFAULT = "default"
+
+# Internal keys
+RAW = "raw"
 
 # Schema type values
 TYPE_OBJECT = "object"

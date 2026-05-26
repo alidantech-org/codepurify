@@ -5,8 +5,6 @@ metadata to actual inferred parameters from OpenAPI operations.
 """
 
 from typing import Any
-
-from constants.codegen import PARAMETER_FALLBACK_SOURCE
 from inference.metadata.parameters import get_parameter_target_refs, get_parameter_target_source
 from inference.models import InferredParameter, InferredParameterTarget
 
@@ -42,7 +40,7 @@ def infer_parameter_targets(
         targets.append(
             InferredParameterTarget(
                 ref=ref,
-                source=source or PARAMETER_FALLBACK_SOURCE,
+                source=source,
                 locations=locations,
                 parameter_names=parameter_names,
             )

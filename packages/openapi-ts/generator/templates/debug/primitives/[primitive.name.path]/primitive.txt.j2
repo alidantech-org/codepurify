@@ -1,0 +1,26 @@
+Primitive
+=========
+
+Name: {{ primitive.name.pascal }}
+Ref: {{ primitive.api.ref }}
+Type: {{ primitive.meta.primitive_type or "-" }}
+Format: {{ primitive.meta.primitive_format or "-" }}
+
+Query
+-----
+Enabled: {{ primitive.api.query.enabled }}
+Filterable: {{ primitive.api.query.filterable }}
+Sortable: {{ primitive.api.query.sortable }}
+Selectable: {{ primitive.api.query.selectable }}
+Searchable: {{ primitive.api.query.searchable }}
+Operators: {{ primitive.api.query.operators | join(", ") if primitive.api.query.operators else "-" }}
+
+File
+----
+{%- if file %}
+Relative Path: {{ file.relative_path }}
+Depth: {{ file.depth }}
+Root Prefix: {{ file.root_prefix }}
+{%- else %}
+File context: not injected yet
+{%- endif %}

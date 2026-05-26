@@ -1,43 +1,102 @@
 Operation
 =========
 
-ID: {{ operation.api.id }}
-Name: {{ operation.name.path }}
-Method: {{ operation.api.method }}
+Name: {{ operation.name.pascal }}
+Function: {{ operation.lang.function_name }}
+Method: {{ operation.lang.method }}
 Path: {{ operation.api.path }}
-Resource: {{ operation.api.resource }}
+Resource: {{ operation.api.resource or "-" }}
 
-Parameters: {{ operation.api.parameters | length }}
-{%- if operation.api.parameters %}
-{%- for parameter in operation.api.parameters %}
-- {{ parameter.name }}
-  Location: {{ parameter.location }}
-  Required: {{ parameter.required }}
-  Ref: {{ parameter.ref }}
+Target
+------
+{%- if operation.api.target %}
+Ref: {{ operation.api.target.ref }}
+Source: {{ operation.api.target.source }}
+Roles: {{ operation.api.target.inferred_roles | join(", ") if operation.api.target.inferred_roles else "-" }}
+Locations: {{ operation.api.target.locations | join(", ") if operation.api.target.locations else "-" }}
+Exclude: {{ operation.api.target.exclude | join(", ") if operation.api.target.exclude else "-" }}
+Reason: {{ operation.api.target.reason or "-" }}
+{%- else %}
+none
+{%- endif %}
+
+Parameters: {{ operation.parameters | length }}
+--------------------------------
+{%- for parameter in operation.parameters %}
+- {{ parameter.name.camel }}
+  Location: {{ parameter.lang.location }}
+  Required: {{ parameter.lang.required }}
+  Schema Ref: {{ parameter.api.schema_ref or "-" }}
+{%- else %}
+- none
+{%- endfor %}
+
+Request Body
+------------
+{%- if operation.request_body %}
+Required: {{ operation.request_body.lang.required }}
+Content Types: {{ operation.request_body.lang.content_types | join(", ") if operation.request_body.lang.content_types else "-" }}
+Schema Refs:
+{%- for ref in operation.request_body.api.schema_refs %}
+- {{ ref }}
+{%- else %}
+- none
+{%- endfor %}
+Dependencies:
+{%- for dependency in operation.request_body.emit.dependencies %}
+- {{ dependency.ref }}
+  Purpose: {{ dependency.purpose }}
+  Target Kind: {{ dependency.target.kind if dependency.target else "-" }}
+  Importable: {{ dependency.is_importable }}
+{%- else %}
+- none
+{%- endfor %}
+{%- else %}
+none
+{%- endif %}
+
+Responses: {{ operation.responses | length }}
+------------------------------
+{%- for response in operation.responses %}
+- {{ response.lang.status_code }}
+  Success: {{ response.lang.is_success }}
+  Error: {{ response.lang.is_error }}
+  Description: {{ response.docs.description }}
+  Schema Refs:
+{%- for ref in response.api.schema_refs %}
+    - {{ ref }}
+{%- else %}
+    - none
 {%- endfor %}
 {%- else %}
 - none
-{%- endif %}
-
-Request Body:
-{%- if operation.api.request_body %}
-  Required: {{ operation.api.request_body.required }}
-  Content Types: {{ operation.api.request_body.content_types | join(", ") if operation.api.request_body.content_types else "-" }}
-  Schema Refs: {{ operation.api.request_body.schema_refs | join(", ") if operation.api.request_body.schema_refs else "-" }}
-{%- else %}
-  none
-{%- endif %}
-
-Responses: {{ operation.api.responses | length }}
-{%- if operation.api.responses %}
-{%- for response in operation.api.responses %}
-- {{ response.status_code }}
-  Success: {{ response.is_success }}
-  Error: {{ response.is_error }}
-  Description: {{ response.description }}
-  Content Types: {{ response.content_types | join(", ") if response.content_types else "-" }}
-  Schema Refs: {{ response.schema_refs | join(", ") if response.schema_refs else "-" }}
 {%- endfor %}
+
+Dependencies
+------------
+{%- for dependency in operation.emit.dependencies %}
+- Ref: {{ dependency.ref }}
+  Purpose: {{ dependency.purpose }}
+  Reason: {{ dependency.reason }}
+  Target Kind: {{ dependency.target.kind if dependency.target else "-" }}
+  Is Primitive: {{ dependency.target.is_primitive if dependency.target else false }}
+  Importable: {{ dependency.is_importable }}
 {%- else %}
 - none
+{%- endfor %}
+
+File
+----
+{%- if file %}
+Relative Path: {{ file.relative_path }}
+Depth: {{ file.depth }}
+Root Prefix: {{ file.root_prefix }}
+Resolved Dependencies:
+{%- for dependency in file.dependencies %}
+- {{ dependency.ref }} -> {{ dependency.relative_path or "-" }} | import={{ dependency.import_path }}
+{%- else %}
+- none
+{%- endfor %}
+{%- else %}
+File context: not injected yet
 {%- endif %}

@@ -1,0 +1,32 @@
+Enum
+====
+
+Name: {{ enum.name.pascal }}
+Ref: {{ enum.api.ref }}
+Enum Type: {{ enum.meta.enum_type or "-" }}
+Values: {{ enum.api.enum_values | length }}
+
+Query
+-----
+Enabled: {{ enum.api.query.enabled }}
+Filterable: {{ enum.api.query.filterable }}
+Sortable: {{ enum.api.query.sortable }}
+Selectable: {{ enum.api.query.selectable }}
+Searchable: {{ enum.api.query.searchable }}
+Operators: {{ enum.api.query.operators | join(", ") if enum.api.query.operators else "-" }}
+
+{%- for value in enum.api.enum_values %}
+- {{ value.name.pascal }} = {{ value.value }}
+{%- else %}
+- none
+{%- endfor %}
+
+File
+----
+{%- if file %}
+Relative Path: {{ file.relative_path }}
+Depth: {{ file.depth }}
+Root Prefix: {{ file.root_prefix }}
+{%- else %}
+File context: not injected yet
+{%- endif %}

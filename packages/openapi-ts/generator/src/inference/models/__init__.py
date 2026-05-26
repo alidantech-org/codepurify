@@ -12,6 +12,7 @@ from inference.models.operations import (
     InferredOperation,
     InferredOperationTarget,
     InferredParameter,
+    InferredParameterTarget,
     InferredRequestBody,
     InferredResponse,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "InferredOperation",
     "InferredOperationTarget",
     "InferredParameter",
+    "InferredParameterTarget",
     "InferredRequestBody",
     "InferredResponse",
     "InferredResource",

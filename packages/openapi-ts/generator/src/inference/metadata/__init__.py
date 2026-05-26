@@ -1,9 +1,5 @@
-"""Codegen metadata reading layer.
+"""Inference metadata helpers."""
 
-This layer provides utilities for reading optional x-codegen metadata
-from OpenAPI documents. It does not resolve references, classify schemas,
-or make code-generation decisions. It only extracts metadata values as written.
+from inference.metadata.query import infer_query_metadata
 
-Modules:
-- parameters: Read x-codegen parameter target metadata
-"""
+__all__ = ["infer_query_metadata"]

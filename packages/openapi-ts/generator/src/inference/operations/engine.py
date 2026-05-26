@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from constants.codegen import X_CODEGEN
 from constants.http import HTTP_METHODS
-from constants.openapi import OPERATION_ID, PARAMETERS, REQUEST_BODY, RESPONSES
+from constants.openapi import OPERATION_ID, REQUEST_BODY, RESPONSES
 from inference.models import InferredOperation, InferredOperationTarget
 from inference.metadata.targets import get_codegen_target_ref, get_codegen_target_source
 from inference.operations.parameters import infer_parameters
@@ -11,6 +11,7 @@ from inference.operations.responses import infer_responses
 from inference.operations.resources import infer_resource
 from inference.resources import extract_resource_from_x_codegen
 from openapi.document import OpenApiDocument
+from typing import Any
 
 
 def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]:
@@ -21,7 +22,6 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
             continue
 
         path_resource = extract_resource_from_x_codegen(path_item.get(X_CODEGEN, {}))
-        path_parameters = infer_parameters(path_item.get(PARAMETERS), document)
 
         for method, operation in path_item.items():
             lower = method.lower()
@@ -33,7 +33,8 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
                 continue
 
             resource = infer_resource(operation, path_item, path_resource)
-            parameters = infer_parameters(operation.get(PARAMETERS), document, path_parameters)
+            merged_params = _merged_parameters(path_item, operation)
+            parameters = infer_parameters({"parameters": merged_params}, document)
             request_body = infer_request_body(operation.get(REQUEST_BODY), document)
             responses = infer_responses(operation.get(RESPONSES), document)
             target = infer_operation_target(operation, parameters, request_body, responses)
@@ -107,6 +108,46 @@ def infer_operation_target(
         locations=tuple(sorted(set(locations))),
         reason="inferred from operation context",
     )
+
+
+def _merged_parameters(
+    path_item: dict[str, Any],
+    operation: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Merge path-level and operation-level parameters.
+
+    Operation-level parameters override path-level parameters by name + in.
+
+    Args:
+        path_item: The OpenAPI path item object.
+        operation: The OpenAPI operation object.
+
+    Returns:
+        Merged list of parameter objects.
+    """
+    merged: dict[tuple[str, str], dict[str, Any]] = {}
+
+    for parameter in path_item.get("parameters", []):
+        if not isinstance(parameter, dict):
+            continue
+
+        key = (
+            str(parameter.get("name", "")),
+            str(parameter.get("in", "")),
+        )
+        merged[key] = parameter
+
+    for parameter in operation.get("parameters", []):
+        if not isinstance(parameter, dict):
+            continue
+
+        key = (
+            str(parameter.get("name", "")),
+            str(parameter.get("in", "")),
+        )
+        merged[key] = parameter
+
+    return list(merged.values())
 
 
 def upper(method: str) -> str:

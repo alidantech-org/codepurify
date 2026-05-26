@@ -1,0 +1,67 @@
+Contract Groups
+===============
+
+Resources
+---------
+{%- for resource in resources %}
+- {{ resource.name.pascal }} | path={{ resource.api.path | join("/") }} | operations={{ resource.meta.operations_count }}
+{%- else %}
+- none
+{%- endfor %}
+
+Models
+------
+{%- for model in schemas.emit_models %}
+- {{ model.name.pascal }} | fields={{ model.lang.field_count }} | deps={{ model.lang.dependency_count }}
+{%- else %}
+- none
+{%- endfor %}
+
+DTOs
+----
+{%- for dto in schemas.emit_dtos %}
+- {{ dto.name.pascal }} | fields={{ dto.lang.field_count }} | deps={{ dto.lang.dependency_count }}
+{%- else %}
+- none
+{%- endfor %}
+
+Enums
+-----
+{%- for enum in schemas.emit_enums %}
+- {{ enum.name.pascal }} | values={{ enum.meta.enum_count }}
+{%- else %}
+- none
+{%- endfor %}
+
+Primitives
+----------
+{%- for primitive in schemas.primitives %}
+- {{ primitive.name.pascal }} | type={{ primitive.meta.primitive_type }} | format={{ primitive.meta.primitive_format }} | query={{ primitive.meta.query_enabled }}
+{%- else %}
+- none
+{%- endfor %}
+
+Operations
+----------
+{%- for operation in operations %}
+- {{ operation.name.pascal }}
+  Method: {{ operation.lang.method }}
+  Path: {{ operation.api.path }}
+  Resource: {{ operation.api.resource or "-" }}
+  Params: {{ operation.meta.parameter_count }}
+  Has Body: {{ operation.meta.has_request_body }}
+  Body Refs:
+{%- if operation.request_body %}
+{%- for ref in operation.request_body.api.schema_refs %}
+    - {{ ref }}
+{%- else %}
+    - none
+{%- endfor %}
+{%- else %}
+    - none
+{%- endif %}
+  Responses: {{ operation.meta.response_count }}
+  Target Ref: {{ operation.meta.target_ref or "-" }}
+{%- else %}
+- none
+{%- endfor %}

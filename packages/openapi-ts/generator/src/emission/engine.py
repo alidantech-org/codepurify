@@ -43,19 +43,19 @@ class EmissionContextBuilder:
 
     def model_context(self, model: Any) -> TemplateContext:
         """Build context for a model template."""
-        return self._build_context(schema=model)
+        return self._build_context(model=model)
 
     def dto_context(self, dto: Any) -> TemplateContext:
         """Build context for a DTO template."""
-        return self._build_context(schema=dto)
+        return self._build_context(dto=dto)
 
     def enum_context(self, enum: Any) -> TemplateContext:
         """Build context for an enum template."""
-        return self._build_context(schema=enum)
+        return self._build_context(enum=enum)
 
     def primitive_context(self, primitive: Any) -> TemplateContext:
         """Build context for a primitive template."""
-        return self._build_context(schema=primitive)
+        return self._build_context(primitive=primitive)
 
     def resource_context(self, resource: Any) -> TemplateContext:
         """Build context for a resource template."""
@@ -69,10 +69,17 @@ class EmissionContextBuilder:
         self,
         *,
         schema: Any = None,
-        resource: Any = None,
-        operation: Any = None,
+        model: Any = None,
         dto: Any = None,
         enum: Any = None,
+        primitive: Any = None,
+        resource: Any = None,
+        operation: Any = None,
+        field: Any = None,
+        parameter: Any = None,
+        response: Any = None,
+        request: Any = None,
+        file: Any = None,
     ) -> TemplateContext:
         context: dict[str, Any] = {
             "project": self.contract.project,
@@ -80,18 +87,34 @@ class EmissionContextBuilder:
             "lang": self.contract.lang,
             "emit": self.contract.emit,
             "meta": self.contract.meta,
+            "resources": self.contract.resources,
+            "schemas": self.contract.schemas,
+            "operations": self.contract.operations,
+            "file": file or self.contract.file,
         }
 
         if schema is not None:
             context["schema"] = schema
-        if resource is not None:
-            context["resource"] = resource
-        if operation is not None:
-            context["operation"] = operation
+        if model is not None:
+            context["model"] = model
         if dto is not None:
             context["dto"] = dto
         if enum is not None:
             context["enum"] = enum
+        if primitive is not None:
+            context["primitive"] = primitive
+        if resource is not None:
+            context["resource"] = resource
+        if operation is not None:
+            context["operation"] = operation
+        if field is not None:
+            context["field"] = field
+        if parameter is not None:
+            context["parameter"] = parameter
+        if response is not None:
+            context["response"] = response
+        if request is not None:
+            context["request"] = request
 
         return context
 
@@ -241,37 +264,37 @@ def _contexts_for_descriptor(
         yield context_builder.global_context()
         return
 
-    if descriptor.group == "schemas":
-        for schema in contract.schemas.all:
-            yield context_builder.schema_context(schema)
-        return
-
-    if descriptor.group == "models":
+    if descriptor.item_key == "model":
         for model in contract.schemas.emit_models:
             yield context_builder.model_context(model)
         return
 
-    if descriptor.group == "dtos":
+    if descriptor.item_key == "dto":
         for dto in contract.schemas.emit_dtos:
             yield context_builder.dto_context(dto)
         return
 
-    if descriptor.group == "enums":
+    if descriptor.item_key == "enum":
         for enum in contract.schemas.emit_enums:
             yield context_builder.enum_context(enum)
         return
 
-    if descriptor.group == "primitives":
+    if descriptor.item_key == "primitive":
         for primitive in contract.schemas.primitives:
             yield context_builder.primitive_context(primitive)
         return
 
-    if descriptor.group == "resources":
+    if descriptor.item_key == "schema":
+        for schema in contract.schemas.all:
+            yield context_builder.schema_context(schema)
+        return
+
+    if descriptor.item_key == "resource":
         for resource in contract.resources:
             yield context_builder.resource_context(resource)
         return
 
-    if descriptor.group == "operations":
+    if descriptor.item_key == "operation":
         for operation in contract.operations:
             yield context_builder.operation_context(operation)
         return
