@@ -1,0 +1,36 @@
+Graph Summary
+=============
+
+Schemas: {{ counts.schemas }}
+Resources: {{ counts.resources }}
+Operations: {{ counts.operations }}
+
+Resources
+---------
+{% if resources %}
+{% for resource in resources %}
+- {{ resource.name }} | path={{ resource.path }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+Schemas
+-------
+{% if schemas %}
+{% for schema in schemas %}
+- {{ schema.name }} | kind={{ schema.kind }} | ref={{ schema.ref }} | resource={{ schema.resource }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+Operations
+----------
+{% if operations %}
+{% for operation in operations %}
+- {{ operation.id }} | {{ operation.method }} {{ operation.path }} | resource={{ operation.resource }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}

@@ -1,0 +1,23 @@
+Resource
+========
+
+Name: {{ resource.name }}
+Path: {{ resource.path }}
+
+Schemas: {{ resource.schemas | length }}
+{% if resource.schemas %}
+{% for schema in resource.schemas %}
+- {{ schema }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+Operations: {{ resource.operations | length }}
+{% if resource.operations %}
+{% for operation in resource.operations %}
+- {{ operation }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}

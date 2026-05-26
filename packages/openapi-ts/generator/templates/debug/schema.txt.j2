@@ -1,0 +1,19 @@
+Schema
+======
+
+Name: {{ schema.name }}
+Kind: {{ schema.kind }}
+Ref: {{ schema.ref }}
+Resource: {{ schema.resource }}
+
+Fields: {{ schema.fields | length }}
+{% if schema.fields %}
+{% for field in schema.fields %}
+- {{ field.name }}
+  Type: {{ field.type }}
+  Required: {{ field.required }}
+  Ref: {{ field.ref }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
