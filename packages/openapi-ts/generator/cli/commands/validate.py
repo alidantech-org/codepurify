@@ -4,25 +4,27 @@ from pathlib import Path
 
 import typer
 
-from constants.cli import (
-    HEADER_VALIDATE,
+from cli.constants.constants import (
     HELP_DEBUG,
     HELP_INPUT,
+    HELP_INTERACTIVE,
     HELP_QUIET,
     HELP_VERBOSE,
     OPT_DEBUG,
     OPT_INPUT,
+    OPT_INTERACTIVE,
     OPT_QUIET,
     OPT_VERBOSE,
 )
-from core.config import CliOptions, create_runtime_context
-from core.logging import error, print_header
-from runtime.app import GeneratorApp
+from cli.presentation.core.interactive import ask_input_path
+from cli.presentation.core.console import print_error, print_header
+from cli.presentation.validate.renderer import render_validate_result
 
 
 def validate_command(
-    input_file: Path = typer.Option(
-        ...,
+    ctx: typer.Context,
+    input_file: Path | None = typer.Option(
+        None,
         f"--{OPT_INPUT}",
         "-i",
         help=HELP_INPUT,
@@ -31,22 +33,39 @@ def validate_command(
         dir_okay=False,
         readable=True,
     ),
+    interactive: bool = typer.Option(
+        False,
+        f"--{OPT_INTERACTIVE}",
+        "-I",
+        help=HELP_INTERACTIVE,
+    ),
     debug: bool = typer.Option(False, f"--{OPT_DEBUG}", help=HELP_DEBUG),
     verbose: bool = typer.Option(False, f"--{OPT_VERBOSE}", "-v", help=HELP_VERBOSE),
     quiet: bool = typer.Option(False, f"--{OPT_QUIET}", "-q", help=HELP_QUIET),
 ) -> None:
+    """Validate an OpenAPI document."""
     try:
-        options = CliOptions(debug=debug, verbose=verbose, quiet=quiet)
-        context = create_runtime_context(options)
-        app = GeneratorApp(context)
+        from cli.main import get_runtime
 
-        resolved_input = context.paths.resolve_input(input_file)
+        resolved_input = input_file
 
-        print_header(HEADER_VALIDATE, str(resolved_input))
-        app.validate(resolved_input)
+        if interactive:
+            resolved_input = resolved_input or ask_input_path()
+
+        if resolved_input is None:
+            raise ValueError("missing required option: --input")
+
+        if not quiet:
+            print_header("Validate", str(resolved_input))
+
+        runtime = get_runtime(ctx)
+        result = runtime.validate(input_path=resolved_input)
+
+        if not quiet:
+            render_validate_result(result, verbose=verbose)
 
     except Exception as exc:
-        error(str(exc))
+        print_error(str(exc))
         if debug:
             raise
         raise typer.Exit(1) from exc

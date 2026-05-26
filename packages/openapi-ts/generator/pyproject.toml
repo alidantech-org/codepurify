@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "typer>=0.12.5",
   "rich>=13.9.0",
+  "questionary>=2.0.0",
   "pydantic>=2.8.0",
   "pydantic-settings>=2.4.0",
   "PyYAML>=6.0.2",
@@ -13,18 +14,26 @@ dependencies = [
   "pluralizer>=2.0.0",
 ]
 
-[project.optional-dependencies]
-cli = ["typer>=0.12", "rich>=13.7", "questionary>=2.0"]
-
 [project.scripts]
 openapi-generator = "cli.main:app"
 
-
-[tool.setuptools]
-package-dir = { "" = "src" }
+[tool.setuptools.package-dir]
+"" = "src"
+cli = "cli"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", "."]
+include = [
+  "cli*",
+  "constants*",
+  "core*",
+  "emission*",
+  "inference*",
+  "languages*",
+  "openapi*",
+  "runtime*",
+  "utils*",
+]
 
 [tool.ruff]
 line-length = 100
@@ -36,4 +45,4 @@ ignore = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]

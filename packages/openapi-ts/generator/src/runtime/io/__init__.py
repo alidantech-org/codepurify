@@ -1,6 +1,5 @@
-"""
-Runtime input/output package.
+"""Runtime file I/O helpers.
 
-This package handles file I/O operations for the runtime layer, including writing
-inference graphs to JSON and other output formats.
+This package contains serialization and file-writing helpers used by runtime
+workflows. It must not render terminal output or import CLI presentation code.
 """

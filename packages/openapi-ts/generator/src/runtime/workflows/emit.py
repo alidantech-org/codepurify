@@ -1,44 +1,100 @@
+"""Runtime emit workflow.
+
+Temporary implementation while the real template emission pipeline is being
+rewired. It returns structured output only; adapters decide presentation.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 
-from core.config import RuntimeContext
-from core.logging import debug, step, success
-
-# TODO: Replace with new emission.templates.planning module
-# from emission.writer import FileWriter
-from inference.engine import InferenceEngine
-from openapi.loader import load_openapi_document
-
-# TODO: Replace with new emission.templates.planning module
-# from runtime.presenters.emit_presenter import present_emission
-from runtime.registry import create_language_emitter
+from runtime.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 
 
-def run_emit(context: RuntimeContext, input_path: Path, language: str, output_path: Path) -> None:
-    debug(f"Emit input: {input_path}", context.options.debug)
-    debug(f"Emit language: {language}", context.options.debug)
-    debug(f"Emit output: {output_path}", context.options.debug)
+def run_emit(request: EmitInput) -> EmitOutput:
+    """Run the emit workflow and return structured output."""
+    _notify(
+        request,
+        stage="planning_emission",
+        message=f"Planning {request.language} emission",
+    )
 
-    with step("Loading OpenAPI document"):
-        document = load_openapi_document(input_path)
+    planned = _fake_planned_paths(request.output_path)
 
-    with step("Running inference engine"):
-        graph = InferenceEngine().infer(document)
+    if request.dry_run:
+        _notify(
+            request,
+            stage="dry_run_complete",
+            message="Dry run completed",
+            total=len(planned),
+        )
+        return EmitOutput(
+            input_path=request.input_path,
+            language=request.language,
+            output_path=request.output_path,
+            dry_run=True,
+            planned=planned,
+            diagnostics=[
+                RuntimeDiagnostic(
+                    level="info",
+                    message="Dry run completed; no files were written.",
+                )
+            ],
+        )
 
-    with step(f"Creating {language} emission plan"):
-        emitter = create_language_emitter(language)
-        plan = emitter.emit(graph)
-        _ = plan  # TODO: Use plan with new emission write logic
+    _notify(
+        request,
+        stage="emission_complete",
+        message="Temporary emit workflow completed",
+        total=len(planned),
+    )
 
-    # TODO: Replace with new emission write logic
-    # with step("Writing emitted files"):
-    #     result = FileWriter().write_plan(
-    #         plan=plan,
-    #         output_root=output_path,
-    #         dry_run=context.options.dry_run,
-    #     )
-    #
-    # present_emission(plan, result, output_path)
+    return EmitOutput(
+        input_path=request.input_path,
+        language=request.language,
+        output_path=request.output_path,
+        dry_run=False,
+        planned=planned,
+        written=planned,
+        updated=[],
+        skipped=[],
+        diagnostics=[
+            RuntimeDiagnostic(
+                level="warning",
+                message="Using temporary emit workflow; real emission is not wired yet.",
+            )
+        ],
+    )
 
-    success("Emission completed (TODO: implement new emission write logic)")
+
+def _fake_planned_paths(output_path: Path) -> list[Path]:
+    """Return temporary planned output paths for CLI/runtime integration tests."""
+    return [
+        output_path / "summary.txt",
+        output_path / "schemas" / "user" / "schema.txt",
+        output_path / "operations" / "create_user" / "operation.txt",
+    ]
+
+
+def _notify(
+    request: EmitInput,
+    *,
+    stage: str,
+    message: str,
+    level: str = "info",
+    current: int | None = None,
+    total: int | None = None,
+) -> None:
+    """Emit a runtime progress event when a sink is provided."""
+    if request.progress is None:
+        return
+
+    request.progress(
+        RuntimeEvent(
+            stage=stage,
+            message=message,
+            level=level,
+            current=current,
+            total=total,
+        )
+    )

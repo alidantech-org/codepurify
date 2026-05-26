@@ -4,7 +4,7 @@ from pathlib import Path
 
 import typer
 
-from cli.constants import (
+from cli.constants.constants import (
     HELP_DEBUG,
     HELP_DRY_RUN,
     HELP_INPUT,
@@ -24,13 +24,13 @@ from cli.constants import (
     OPT_TEMPLATES,
     OPT_VERBOSE,
 )
-from cli.interactive import ask_input_path, ask_language, ask_output_path
-from cli.presentation.console import print_error, print_header
-from cli.presentation.emit import render_emit_result
-from runtime.app import GeneratorApp
+from cli.presentation.core.interactive import ask_input_path, ask_language, ask_output_path
+from cli.presentation.core.console import print_error, print_header
+from cli.presentation.emit.renderer import render_emit_result
 
 
 def emit_command(
+    ctx: typer.Context,
     input_file: Path | None = typer.Option(
         None,
         f"--{OPT_INPUT}",
@@ -71,6 +71,8 @@ def emit_command(
 ) -> None:
     """Emit output for a target language."""
     try:
+        from cli.main import get_runtime
+
         resolved_input = input_file
         resolved_language = language
         resolved_output = output
@@ -90,8 +92,8 @@ def emit_command(
         if not quiet:
             print_header("Emit", f"{resolved_language} → {resolved_output}")
 
-        app = GeneratorApp()
-        result = app.emit(
+        runtime = get_runtime(ctx)
+        result = runtime.emit(
             input_path=resolved_input,
             language=resolved_language,
             output_path=resolved_output,

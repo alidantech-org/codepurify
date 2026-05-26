@@ -4,27 +4,29 @@ from pathlib import Path
 
 import typer
 
-from constants.cli import (
-    HEADER_INFER,
+from cli.constants.constants import (
     HELP_DEBUG,
     HELP_INPUT,
+    HELP_INTERACTIVE,
     HELP_OUTPUT_INFERENCE,
     HELP_QUIET,
     HELP_VERBOSE,
     OPT_DEBUG,
     OPT_INPUT,
+    OPT_INTERACTIVE,
     OPT_OUTPUT,
     OPT_QUIET,
     OPT_VERBOSE,
 )
-from core.config import CliOptions, create_runtime_context
-from core.logging import error, print_header
-from runtime.app import GeneratorApp
+from cli.presentation.core.interactive import ask_input_path
+from cli.presentation.core.console import print_error, print_header
+from cli.presentation.infer.renderer import render_infer_result
 
 
 def infer_command(
-    input_file: Path = typer.Option(
-        ...,
+    ctx: typer.Context,
+    input_file: Path | None = typer.Option(
+        None,
         f"--{OPT_INPUT}",
         "-i",
         help=HELP_INPUT,
@@ -39,23 +41,42 @@ def infer_command(
         "-o",
         help=HELP_OUTPUT_INFERENCE,
     ),
+    interactive: bool = typer.Option(
+        False,
+        f"--{OPT_INTERACTIVE}",
+        "-I",
+        help=HELP_INTERACTIVE,
+    ),
     debug: bool = typer.Option(False, f"--{OPT_DEBUG}", help=HELP_DEBUG),
     verbose: bool = typer.Option(False, f"--{OPT_VERBOSE}", "-v", help=HELP_VERBOSE),
     quiet: bool = typer.Option(False, f"--{OPT_QUIET}", "-q", help=HELP_QUIET),
 ) -> None:
+    """Run OpenAPI inference."""
     try:
-        options = CliOptions(debug=debug, verbose=verbose, quiet=quiet)
-        context = create_runtime_context(options)
-        app = GeneratorApp(context)
+        from cli.main import get_runtime
 
-        resolved_input = context.paths.resolve_input(input_file)
-        resolved_output = context.paths.resolve_output(output) if output else None
+        resolved_input = input_file
 
-        print_header(HEADER_INFER, str(resolved_input))
-        app.infer(resolved_input, resolved_output)
+        if interactive:
+            resolved_input = resolved_input or ask_input_path()
+
+        if resolved_input is None:
+            raise ValueError("missing required option: --input")
+
+        if not quiet:
+            print_header("Infer", str(resolved_input))
+
+        runtime = get_runtime(ctx)
+        result = runtime.infer(
+            input_path=resolved_input,
+            output_path=output,
+        )
+
+        if not quiet:
+            render_infer_result(result, verbose=verbose)
 
     except Exception as exc:
-        error(str(exc))
+        print_error(str(exc))
         if debug:
             raise
         raise typer.Exit(1) from exc
