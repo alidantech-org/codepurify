@@ -2,17 +2,17 @@ Schema
 ======
 
 Name: {{ schema.name.path }}
-Kind: {{ schema.kind }}
-Ref: {{ schema.ref }}
-Resource: {{ schema.resource }}
+Kind: {{ schema.api.kind }}
+Ref: {{ schema.api.ref }}
+Resource: {{ schema.api.resource }}
 
 Fields: {{ schema.fields | length }}
 {%- if schema.fields %}
 {%- for field in schema.fields %}
-- {{ field.name }}
-  Type: {{ field.type }}
-  Required: {{ field.required }}
-  Ref: {{ field.ref }}
+- {{ field.name.path }}
+  Type: {{ field.api.api_type }}
+  Required: {{ field.api.required }}
+  Ref: {{ field.api.ref }}
 {%- endfor %}
 {%- else %}
 - none

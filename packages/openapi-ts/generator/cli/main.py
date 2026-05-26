@@ -2,8 +2,13 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from src.app import GeneratorApp
+from cli.bootstrap import ensure_src_on_path
+
+ensure_src_on_path()
+
 import typer
+
+from src.app import GeneratorApp
 
 from cli.commands.emit import emit_command
 from cli.commands.infer import infer_command

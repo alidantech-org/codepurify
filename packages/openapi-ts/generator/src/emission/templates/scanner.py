@@ -1,4 +1,4 @@
-"""Template tree scanner."""
+"""Template scanner."""
 
 from __future__ import annotations
 
@@ -7,16 +7,18 @@ from pathlib import Path
 from emission.templates.descriptor import TemplateDescriptor, describe_template
 
 
-def scan_templates(template_root: Path) -> list[TemplateDescriptor]:
-    """Scan a template folder and return descriptors for all files."""
-    root = template_root.resolve()
+def scan_templates(template_root: Path) -> tuple[TemplateDescriptor, ...]:
+    """Scan a template root and return descriptors for all files."""
+    if not template_root.exists():
+        raise FileNotFoundError(f"Template root not found: {template_root}")
 
-    if not root.exists():
-        raise FileNotFoundError(root)
+    descriptors: list[TemplateDescriptor] = []
 
-    if not root.is_dir():
-        raise NotADirectoryError(root)
+    for path in sorted(template_root.rglob("*")):
+        if not path.is_file():
+            continue
 
-    descriptors = [describe_template(root, path) for path in root.rglob("*") if path.is_file()]
+        relative_path = path.relative_to(template_root)
+        descriptors.append(describe_template(template_root, relative_path))
 
-    return sorted(descriptors, key=lambda item: item.relative_path.as_posix())
+    return tuple(descriptors)

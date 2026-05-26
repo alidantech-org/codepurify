@@ -1,87 +1,94 @@
-"""Template descriptor and owner classification."""
+"""Template descriptor models.
+
+Descriptors describe template files discovered under a template root. They are
+generic and do not hardcode language-specific or domain-specific behavior.
+"""
 
 from __future__ import annotations
 
-from constants.emission import (
-    OWNER_PREFIX_BARREL,
-    OWNER_PREFIX_DTO,
-    OWNER_PREFIX_FIELD,
-    OWNER_PREFIX_OPERATION,
-    OWNER_PREFIX_RESOURCE,
-    OWNER_PREFIX_SCHEMA,
-    VARIABLE_PATTERN,
-)
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-import re
 
+GROUP_GLOBAL = "global"
 
-class TemplateOwner(str, Enum):
-    """Render owner for a template."""
-
-    GLOBAL = "global"
-    BARREL = "barrel"
-    RESOURCE = "resource"
-    OPERATION = "operation"
-    DTO = "dto"
-    SCHEMA = "schema"
-    FIELD = "field"
+SINGULAR_TO_GROUP = {
+    "resource": "resources",
+    "schema": "schemas",
+    "operation": "operations",
+    "dto": "dtos",
+    "enum": "enums",
+    "field": "fields",
+    "parameter": "parameters",
+    "response": "responses",
+    "request": "requests",
+    "route": "routes",
+    "barrel": "barrels",
+    "file": "files",
+}
 
 
 @dataclass(frozen=True)
 class TemplateDescriptor:
-    """A scanned template file with ownership metadata."""
+    """A discovered template file."""
 
-    source_path: Path
+    template_root: Path
     relative_path: Path
-    owner: TemplateOwner
-    variables: tuple[str, ...]
+    group: str = GROUP_GLOBAL
+    item_key: str | None = None
+    is_template: bool = False
 
 
-VARIABLE_REGEX = re.compile(VARIABLE_PATTERN)
-
-
-OWNER_PRIORITY = (
-    (OWNER_PREFIX_DTO, TemplateOwner.DTO),
-    (OWNER_PREFIX_OPERATION, TemplateOwner.OPERATION),
-    (OWNER_PREFIX_SCHEMA, TemplateOwner.SCHEMA),
-    (OWNER_PREFIX_RESOURCE, TemplateOwner.RESOURCE),
-    (OWNER_PREFIX_BARREL, TemplateOwner.BARREL),
-    (OWNER_PREFIX_FIELD, TemplateOwner.FIELD),
-)
-
-
-def describe_template(template_root: Path, source_path: Path) -> TemplateDescriptor:
-    """Create a template descriptor from a source template path."""
-    relative_path = source_path.relative_to(template_root)
-    variables = extract_variables(relative_path)
-    owner = classify_owner(variables)
+def describe_template(template_root: Path, relative_path: Path) -> TemplateDescriptor:
+    """Build a generic descriptor from a relative template path."""
+    item_key = _infer_item_key(relative_path)
+    group = _group_for_item_key(item_key)
 
     return TemplateDescriptor(
-        source_path=source_path,
+        template_root=template_root,
         relative_path=relative_path,
-        owner=owner,
-        variables=variables,
+        group=group,
+        item_key=item_key,
+        is_template=relative_path.as_posix().endswith(".j2"),
     )
 
 
-def extract_variables(relative_path: Path) -> tuple[str, ...]:
-    """Extract variable expressions used by a template path."""
-    text = relative_path.as_posix()
-    found: list[str] = []
+def _infer_item_key(path: Path) -> str | None:
+    """Infer item key from path tokens like [schema.name.path]."""
+    for part in path.parts:
+        key = _item_key_from_part(part)
+        if key:
+            return key
 
-    for match in VARIABLE_REGEX.finditer(text):
-        value = next(group for group in match.groups() if group)
-        found.append(value)
-
-    return tuple(dict.fromkeys(found))
+    return None
 
 
-def classify_owner(variables: tuple[str, ...]) -> TemplateOwner:
-    """Classify a template by variable namespace."""
-    for prefix, owner in OWNER_PRIORITY:
-        if any(variable.startswith(prefix) for variable in variables):
-            return owner
+def _item_key_from_part(part: str) -> str | None:
+    """Extract root variable name from a dynamic path segment."""
+    if part.startswith("[...") and part.endswith("]"):
+        expression = part[4:-1]
+        return _root_name(expression)
 
-    return TemplateOwner.GLOBAL
+    if part.startswith("[") and part.endswith("]"):
+        expression = part[1:-1]
+        return _root_name(expression)
+
+    if "(" in part and ")" in part:
+        start = part.find("(")
+        end = part.find(")", start + 1)
+        if end > start:
+            expression = part[start + 1 : end]
+            return _root_name(expression)
+
+    return None
+
+
+def _root_name(expression: str) -> str | None:
+    root = expression.strip().split(".", 1)[0].strip()
+    return root or None
+
+
+def _group_for_item_key(item_key: str | None) -> str:
+    if item_key is None:
+        return GROUP_GLOBAL
+
+    return SINGULAR_TO_GROUP.get(item_key, f"{item_key}s")

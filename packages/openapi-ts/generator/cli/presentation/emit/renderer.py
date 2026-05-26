@@ -13,9 +13,16 @@ def render_emit_result(result, *, verbose: bool = False) -> None:
     render_emit_status(result)
     render_emit_summary(result)
 
-    if verbose:
-        render_emit_files("Planned Files", getattr(result, "planned", []))
+    if not verbose:
+        return
+
+    dry_run = bool(getattr(result, "dry_run", False))
+
+    render_emit_files("Planned Files", getattr(result, "planned", []))
+
+    if not dry_run:
         render_emit_files("Written Files", getattr(result, "written", []))
         render_emit_files("Updated Files", getattr(result, "updated", []))
         render_emit_files("Skipped Files", getattr(result, "skipped", []))
-        render_diagnostics(getattr(result, "diagnostics", []))
+
+    render_diagnostics(getattr(result, "diagnostics", []))

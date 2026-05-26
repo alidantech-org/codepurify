@@ -1,9 +1,9 @@
-{{ debug.title }}
+{{ api.info.title }}
 ==============================
 
-Language: {{ language }}
-Version: {{ version }}
+Language: {{ lang.name }}
+Version: {{ project.version }}
 
-Resources: {{ graph.resources_count }}
-Schemas: {{ graph.schemas_count }}
-Operations: {{ graph.operations_count }}
+Resources: {{ api.resources | length }}
+Schemas: {{ api.schemas | length }}
+Operations: {{ api.operations | length }}

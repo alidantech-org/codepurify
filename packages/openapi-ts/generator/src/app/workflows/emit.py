@@ -1,4 +1,4 @@
-"""Runtime emit workflow.
+"""App emit workflow.
 
 Orchestrates the full emission pipeline: OpenAPI loading, inference, contract
 building, language adaptation, and template emission.
@@ -7,6 +7,7 @@ building, language adaptation, and template emission.
 from __future__ import annotations
 
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
+from app.workflows.template_paths import resolve_template_root
 from emission.engine import emit as run_emission
 from inference.contract import build_api_contract
 from inference.engine import InferenceEngine
@@ -21,7 +22,6 @@ def run_emit(request: EmitInput) -> EmitOutput:
         stage="loading_openapi",
         message=f"Loading OpenAPI document from {request.input_path}",
     )
-
     document = load_openapi_document(request.input_path)
 
     _notify(
@@ -29,16 +29,13 @@ def run_emit(request: EmitInput) -> EmitOutput:
         stage="running_inference",
         message="Running OpenAPI inference",
     )
-
-    inference_engine = InferenceEngine()
-    graph = inference_engine.infer(document)
+    graph = InferenceEngine().infer(document)
 
     _notify(
         request,
         stage="building_contract",
         message="Building API contract",
     )
-
     api_contract = build_api_contract(graph)
 
     _notify(
@@ -46,21 +43,23 @@ def run_emit(request: EmitInput) -> EmitOutput:
         stage="resolving_language",
         message=f"Resolving language adapter: {request.language}",
     )
-
     adapter = resolve_language_adapter(request.language)
+    template_root = resolve_template_root(
+        adapter=adapter,
+        templates_path=request.templates_path,
+    )
 
     _notify(
         request,
         stage="building_template_contract",
-        message="Building template contract",
+        message=f"Building template contract from {template_root}",
     )
-
-    template_root = request.templates_path if request.templates_path else None
     template_contract = adapter.build_template_contract(
         api=api_contract,
         output_path=request.output_path,
         template_root=template_root,
         dry_run=request.dry_run,
+        progress=request.progress,
     )
 
     _notify(
@@ -68,8 +67,20 @@ def run_emit(request: EmitInput) -> EmitOutput:
         stage="emitting_files",
         message="Emitting files",
     )
+    emission_result = run_emission(
+        template_contract,
+        progress=request.progress,
+    )
 
-    emission_result = run_emission(template_contract)
+    _notify(
+        request,
+        stage="language_post_actions",
+        message="Running language post-actions",
+    )
+    post_result = adapter.after_emit(
+        result=emission_result,
+        progress=request.progress,
+    )
 
     _notify(
         request,
@@ -78,32 +89,31 @@ def run_emit(request: EmitInput) -> EmitOutput:
         total=len(emission_result.plan.files),
     )
 
+    write_result = emission_result.write_result
     diagnostics = [
         RuntimeDiagnostic(
             level="info",
-            message=f"Emission completed: {len(emission_result.write_result.created)} created, "
-            f"{len(emission_result.write_result.updated)} updated, "
-            f"{len(emission_result.write_result.unchanged)} unchanged.",
+            message=(
+                "Emission completed: "
+                f"{len(write_result.created)} created, "
+                f"{len(write_result.updated)} updated, "
+                f"{len(write_result.unchanged)} unchanged, "
+                f"{len(write_result.skipped)} skipped."
+            ),
         )
     ]
 
-    if emission_result.write_result.skipped:
-        diagnostics.append(
-            RuntimeDiagnostic(
-                level="info",
-                message=f"{len(emission_result.write_result.skipped)} files skipped (dry run).",
-            )
-        )
+    diagnostics.extend(RuntimeDiagnostic(level="info", message=message) for message in post_result.diagnostics)
 
     return EmitOutput(
         input_path=request.input_path,
         language=request.language,
         output_path=request.output_path,
         dry_run=request.dry_run,
-        planned=[f.output_path for f in emission_result.plan.files],
-        written=list(emission_result.write_result.created),
-        updated=list(emission_result.write_result.updated),
-        skipped=list(emission_result.write_result.skipped),
+        planned=[file.output_path for file in emission_result.plan.files],
+        written=list(write_result.created),
+        updated=list(write_result.updated),
+        skipped=list(write_result.skipped),
         diagnostics=diagnostics,
     )
 
