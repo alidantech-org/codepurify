@@ -21,4 +21,4 @@ def test_debug_adapter_builds_template_contract(tmp_path) -> None:
     assert contract.api.info.title == "Test API"
     assert contract.emit.dry_run is True
     assert len(contract.resources) == 1
-    assert len(contract.schemas) == 1
+    assert len(contract.schemas.all) == 1

@@ -12,7 +12,7 @@ def test_build_api_contract_from_sample_openapi(sample_openapi_path) -> None:
 
     assert api.info.title
     assert api.info.openapi_version.startswith("3.")
-    assert len(api.schemas) > 0
+    assert len(api.schemas.all) > 0
     assert len(api.operations) > 0
 
 

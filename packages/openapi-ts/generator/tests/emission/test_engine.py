@@ -12,4 +12,4 @@ def test_emission_engine_processes_template_contract(tmp_path) -> None:
 
     assert contract.emit.output_path == tmp_path
     assert contract.emit.template_root == template_root
-    assert len(contract.schemas) == 1
+    assert len(contract.schemas.all) == 1

@@ -11,5 +11,5 @@ def test_api_contract_contains_stable_api_facts() -> None:
     assert api.info.title == "Test API"
     assert api.info.openapi_version == "3.1.0"
     assert api.resources[0].name.path.original == "users"
-    assert api.schemas[0].kind == "model"
+    assert api.schemas.all[0].kind == "model"
     assert api.operations[0].method == "get"

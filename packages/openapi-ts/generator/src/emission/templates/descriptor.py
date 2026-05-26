@@ -14,9 +14,11 @@ GROUP_GLOBAL = "global"
 SINGULAR_TO_GROUP = {
     "resource": "resources",
     "schema": "schemas",
-    "operation": "operations",
+    "model": "models",
     "dto": "dtos",
     "enum": "enums",
+    "primitive": "primitives",
+    "operation": "operations",
     "field": "fields",
     "parameter": "parameters",
     "response": "responses",

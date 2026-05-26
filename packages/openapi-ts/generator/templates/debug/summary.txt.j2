@@ -5,5 +5,5 @@ Language: {{ lang.name }}
 Version: {{ project.version }}
 
 Resources: {{ api.resources | length }}
-Schemas: {{ api.schemas | length }}
+Schemas: {{ api.schemas.all | length }}
 Operations: {{ api.operations | length }}

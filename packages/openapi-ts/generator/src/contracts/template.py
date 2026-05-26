@@ -83,6 +83,22 @@ class TemplateSchema:
 
 
 @dataclass(frozen=True)
+class TemplateSchemaGroups:
+    """Classified template schema views."""
+
+    all: tuple[TemplateSchema, ...] = ()
+    models: tuple[TemplateSchema, ...] = ()
+    dtos: tuple[TemplateSchema, ...] = ()
+    enums: tuple[TemplateSchema, ...] = ()
+    primitives: tuple[TemplateSchema, ...] = ()
+    aliases: tuple[TemplateSchema, ...] = ()
+
+    emit_models: tuple[TemplateSchema, ...] = ()
+    emit_dtos: tuple[TemplateSchema, ...] = ()
+    emit_enums: tuple[TemplateSchema, ...] = ()
+
+
+@dataclass(frozen=True)
 class TemplateResource:
     """Resource template variables."""
 
@@ -140,8 +156,6 @@ class TemplateContract:
     lang: TemplateLanguage
     emit: TemplateEmit
     resources: tuple[TemplateResource, ...] = ()
-    schemas: tuple[TemplateSchema, ...] = ()
+    schemas: TemplateSchemaGroups = field(default_factory=TemplateSchemaGroups)
     operations: tuple[TemplateOperation, ...] = ()
-    dtos: tuple[TemplateSchema, ...] = ()
-    enums: tuple[TemplateSchema, ...] = ()
     meta: MetaMap = field(default_factory=dict)

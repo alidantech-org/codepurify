@@ -17,6 +17,7 @@ from contracts.template import (
     TemplateProject,
     TemplateResource,
     TemplateSchema,
+    TemplateSchemaGroups,
 )
 from languages.decorators import language_adapter
 
@@ -41,6 +42,18 @@ class DebugLanguageAdapter:
         """Build deterministic debug template variables."""
         _notify(progress, "building_debug_contract", "Building debug template contract")
 
+        schema_groups = TemplateSchemaGroups(
+            all=tuple(_schema(schema) for schema in api.schemas.all),
+            models=tuple(_schema(schema) for schema in api.schemas.models),
+            dtos=tuple(_schema(schema) for schema in api.schemas.dtos),
+            enums=tuple(_schema(schema) for schema in api.schemas.enums),
+            primitives=tuple(_schema(schema) for schema in api.schemas.primitives),
+            aliases=tuple(_schema(schema) for schema in api.schemas.aliases),
+            emit_models=tuple(_schema(schema) for schema in api.schemas.emit_models),
+            emit_dtos=tuple(_schema(schema) for schema in api.schemas.emit_dtos),
+            emit_enums=tuple(_schema(schema) for schema in api.schemas.emit_enums),
+        )
+
         return TemplateContract(
             project=TemplateProject(
                 name=make_contract_name("debug"),
@@ -61,7 +74,7 @@ class DebugLanguageAdapter:
                 dry_run=dry_run,
             ),
             resources=tuple(_resource(resource) for resource in api.resources),
-            schemas=tuple(_schema(schema) for schema in api.schemas),
+            schemas=schema_groups,
             operations=tuple(_operation(operation) for operation in api.operations),
         )
 

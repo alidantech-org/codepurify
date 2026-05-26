@@ -41,6 +41,22 @@ class EmissionContextBuilder:
         """Build context for a schema template."""
         return self._build_context(schema=schema)
 
+    def model_context(self, model: Any) -> TemplateContext:
+        """Build context for a model template."""
+        return self._build_context(schema=model)
+
+    def dto_context(self, dto: Any) -> TemplateContext:
+        """Build context for a DTO template."""
+        return self._build_context(schema=dto)
+
+    def enum_context(self, enum: Any) -> TemplateContext:
+        """Build context for an enum template."""
+        return self._build_context(schema=enum)
+
+    def primitive_context(self, primitive: Any) -> TemplateContext:
+        """Build context for a primitive template."""
+        return self._build_context(schema=primitive)
+
     def resource_context(self, resource: Any) -> TemplateContext:
         """Build context for a resource template."""
         return self._build_context(resource=resource)
@@ -48,14 +64,6 @@ class EmissionContextBuilder:
     def operation_context(self, operation: Any) -> TemplateContext:
         """Build context for an operation template."""
         return self._build_context(operation=operation)
-
-    def dto_context(self, dto: Any) -> TemplateContext:
-        """Build context for a DTO template."""
-        return self._build_context(dto=dto)
-
-    def enum_context(self, enum: Any) -> TemplateContext:
-        """Build context for an enum template."""
-        return self._build_context(enum=enum)
 
     def _build_context(
         self,
@@ -234,8 +242,28 @@ def _contexts_for_descriptor(
         return
 
     if descriptor.group == "schemas":
-        for schema in contract.schemas:
+        for schema in contract.schemas.all:
             yield context_builder.schema_context(schema)
+        return
+
+    if descriptor.group == "models":
+        for model in contract.schemas.emit_models:
+            yield context_builder.model_context(model)
+        return
+
+    if descriptor.group == "dtos":
+        for dto in contract.schemas.emit_dtos:
+            yield context_builder.dto_context(dto)
+        return
+
+    if descriptor.group == "enums":
+        for enum in contract.schemas.emit_enums:
+            yield context_builder.enum_context(enum)
+        return
+
+    if descriptor.group == "primitives":
+        for primitive in contract.schemas.primitives:
+            yield context_builder.primitive_context(primitive)
         return
 
     if descriptor.group == "resources":
@@ -246,16 +274,6 @@ def _contexts_for_descriptor(
     if descriptor.group == "operations":
         for operation in contract.operations:
             yield context_builder.operation_context(operation)
-        return
-
-    if descriptor.group == "dtos":
-        for dto in contract.dtos:
-            yield context_builder.dto_context(dto)
-        return
-
-    if descriptor.group == "enums":
-        for enum in contract.enums:
-            yield context_builder.enum_context(enum)
         return
 
     yield context_builder.global_context()

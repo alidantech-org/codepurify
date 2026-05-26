@@ -23,6 +23,19 @@ class ApiDocumentInfo:
 
 
 @dataclass(frozen=True)
+class ApiQueryOptions:
+    """Query behavior exposed by x-codegen metadata."""
+
+    filter: bool = False
+    operators: tuple[str, ...] = ()
+    sort: bool = False
+    select: bool = False
+    search: bool = False
+    exact: bool = False
+    meta: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class ApiResource:
     """Inferred resource group."""
 
@@ -45,6 +58,7 @@ class ApiField:
     ref: str | None = None
     enum_ref: str | None = None
     description: str = "-"
+    query: ApiQueryOptions = field(default_factory=ApiQueryOptions)
     meta: dict[str, Any] = field(default_factory=dict)
 
 
@@ -72,7 +86,29 @@ class ApiSchema:
     is_alias: bool = False
     alias_of: str | None = None
     description: str = "-"
+    query: ApiQueryOptions = field(default_factory=ApiQueryOptions)
     meta: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ApiSchemaGroups:
+    """Classified schema views for template contracts."""
+
+    all: tuple[ApiSchema, ...] = ()
+    models: tuple[ApiSchema, ...] = ()
+    dtos: tuple[ApiSchema, ...] = ()
+    enums: tuple[ApiSchema, ...] = ()
+    primitives: tuple[ApiSchema, ...] = ()
+    aliases: tuple[ApiSchema, ...] = ()
+    queries: tuple[ApiSchema, ...] = ()
+    params: tuple[ApiSchema, ...] = ()
+    bodies: tuple[ApiSchema, ...] = ()
+    responses: tuple[ApiSchema, ...] = ()
+
+    # default emit views
+    emit_models: tuple[ApiSchema, ...] = ()
+    emit_dtos: tuple[ApiSchema, ...] = ()
+    emit_enums: tuple[ApiSchema, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -134,6 +170,6 @@ class ApiContract:
 
     info: ApiDocumentInfo
     resources: tuple[ApiResource, ...] = ()
-    schemas: tuple[ApiSchema, ...] = ()
+    schemas: ApiSchemaGroups = field(default_factory=ApiSchemaGroups)
     operations: tuple[ApiOperation, ...] = ()
     meta: dict[str, Any] = field(default_factory=dict)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.contracts.api import ApiContract, ApiDocumentInfo, ApiOperation, ApiResource, ApiSchema
+from src.contracts.api import ApiContract, ApiDocumentInfo, ApiOperation, ApiResource, ApiSchema, ApiSchemaGroups
 from src.contracts.names import make_contract_name
 from src.contracts.template import (
     TemplateContract,
@@ -13,11 +13,20 @@ from src.contracts.template import (
     TemplateProject,
     TemplateResource,
     TemplateSchema,
+    TemplateSchemaGroups,
 )
 
 
 def make_api_contract() -> ApiContract:
     """Create a small API contract for tests."""
+    user_schema = ApiSchema(
+        id="User",
+        name=make_contract_name("User"),
+        kind="model",
+        ref="#/components/schemas/User",
+        resource="users",
+    )
+
     return ApiContract(
         info=ApiDocumentInfo(
             title="Test API",
@@ -32,14 +41,10 @@ def make_api_contract() -> ApiContract:
                 operations_count=1,
             ),
         ),
-        schemas=(
-            ApiSchema(
-                id="User",
-                name=make_contract_name("User"),
-                kind="model",
-                ref="#/components/schemas/User",
-                resource="users",
-            ),
+        schemas=ApiSchemaGroups(
+            all=(user_schema,),
+            models=(user_schema,),
+            emit_models=(user_schema,),
         ),
         operations=(
             ApiOperation(
@@ -57,15 +62,17 @@ def make_template_contract(output_path: Path, template_root: Path | None = None)
     """Create a small template contract for emission tests."""
     api = make_api_contract()
 
+    template_schema = TemplateSchema(api=api.schemas.all[0], name=api.schemas.all[0].name)
+
     return TemplateContract(
         project=TemplateProject(name=make_contract_name("test_package")),
         api=api,
         lang=TemplateLanguage(name="debug"),
         emit=TemplateEmit(output_path=output_path, template_root=template_root, dry_run=False),
-        resources=(
-            TemplateResource(api=api.resources[0], name=api.resources[0].name),
-        ),
-        schemas=(
-            TemplateSchema(api=api.schemas[0], name=api.schemas[0].name),
+        resources=(TemplateResource(api=api.resources[0], name=api.resources[0].name),),
+        schemas=TemplateSchemaGroups(
+            all=(template_schema,),
+            models=(template_schema,),
+            emit_models=(template_schema,),
         ),
     )

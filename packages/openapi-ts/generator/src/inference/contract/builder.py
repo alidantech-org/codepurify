@@ -16,10 +16,15 @@ from contracts.api import (
     ApiSchema,
 )
 from contracts.names import make_contract_name
+from inference.contract.classifier import classify_schemas
+from inference.contract.query_options import build_query_options
 
 
 def build_api_contract(graph: Any) -> ApiContract:
     """Convert an inference graph into a stable API contract."""
+    schemas = tuple(_schema(item) for item in _items(graph, "schemas"))
+    schema_groups = classify_schemas(schemas)
+
     return ApiContract(
         info=ApiDocumentInfo(
             title=str(getattr(graph, "title", "-")),
@@ -28,7 +33,7 @@ def build_api_contract(graph: Any) -> ApiContract:
             description=str(getattr(graph, "description", "-")),
         ),
         resources=tuple(_resource(item) for item in _items(graph, "resources")),
-        schemas=tuple(_schema(item) for item in _items(graph, "schemas")),
+        schemas=schema_groups,
         operations=tuple(_operation(item) for item in _items(graph, "operations")),
     )
 
@@ -51,6 +56,8 @@ def _resource(resource: Any) -> ApiResource:
 def _schema(schema: Any) -> ApiSchema:
     name = _name(schema, "name", "schema_name", "component_name", default="schema")
     kind = _kind_value(schema)
+    x_codegen = _value(schema, "x_codegen", default={})
+    query = build_query_options(x_codegen)
 
     return ApiSchema(
         id=name,
@@ -63,15 +70,18 @@ def _schema(schema: Any) -> ApiSchema:
         is_alias=bool(_value(schema, "is_alias", default=False)),
         alias_of=_nullable_str(_value(schema, "alias_of", default=None)),
         description=str(_value(schema, "description", default="-")),
+        query=query,
         meta={
             "raw": schema,
-            "x_codegen": _value(schema, "x_codegen", default={}),
+            "x_codegen": x_codegen,
         },
     )
 
 
 def _field(field: Any) -> ApiField:
     name = _name(field, "name", "field_name", default="field")
+    x_codegen = _value(field, "x_codegen", default={})
+    query = build_query_options(x_codegen)
 
     return ApiField(
         id=name,
@@ -82,8 +92,10 @@ def _field(field: Any) -> ApiField:
         ref=_nullable_str(_value(field, "ref", "schema_ref", default=None)),
         enum_ref=_nullable_str(_value(field, "enum_ref", default=None)),
         description=str(_value(field, "description", default="-")),
+        query=query,
         meta={
             "raw": field,
+            "x_codegen": x_codegen,
         },
     )
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from utils.naming import build_name
+from src.utils.naming import build_name
 
 ContractName = Any
 
