@@ -148,7 +148,37 @@ def _resource(resource: InferredResource, graph: InferenceGraph) -> ApiResource:
     )
 
 
+def _detect_field_overrides(schema: InferredSchema, schema_by_ref: dict[str, InferredSchema]) -> bool:
+    """Detect if schema overrides any inherited fields."""
+    if not schema.inherited_refs:
+        return False
+
+    # Get base schema fields by wire name
+    base_fields_by_wire = {}
+    for ref in schema.inherited_refs:
+        base_schema = schema_by_ref.get(ref)
+        if base_schema:
+            for field in base_schema.fields:
+                base_fields_by_wire[field.name] = field
+
+    # Check for overrides
+    own_fields_by_wire = {field.name: field for field in schema.fields}
+    overridden_names = set(base_fields_by_wire) & set(own_fields_by_wire)
+
+    return bool(overridden_names)
+
+
 def _schema(schema: InferredSchema, schemas: tuple[InferredSchema, ...]) -> ApiSchema:
+    schema_by_ref = {s.ref: s for s in schemas}
+    has_field_overrides = _detect_field_overrides(schema, schema_by_ref)
+
+    # For root $ref aliases to object-like schemas, copy fields from target
+    fields = tuple(_field(field, schemas) for field in _tuple(schema.fields))
+    if schema.is_alias and schema.alias_of:
+        target = schema_by_ref.get(schema.alias_of)
+        if target and target.kind in {InferredSchemaKind.MODEL, InferredSchemaKind.DTO}:
+            fields = tuple(_field(field, schemas) for field in _tuple(target.fields))
+
     return ApiSchema(
         id=schema.name,
         name=make_contract_name(schema.name),
@@ -164,10 +194,11 @@ def _schema(schema: InferredSchema, schemas: tuple[InferredSchema, ...]) -> ApiS
         query=_query(schema.query),
         enum_type=schema.enum_type,
         enum_values=tuple(_enum_value(value) for value in _tuple(schema.enum_values)),
-        fields=tuple(_field(field, schemas) for field in _tuple(schema.fields)),
+        fields=fields,
         composition_refs=_tuple(schema.composition_refs),
         inherited_refs=_tuple(schema.inherited_refs),
         composition=_composition(schema.composition),
+        has_field_overrides=has_field_overrides,
         description=str(schema.raw.get(DESCRIPTION) or "-"),
         meta={
             X_CODEGEN: schema.x_codegen,

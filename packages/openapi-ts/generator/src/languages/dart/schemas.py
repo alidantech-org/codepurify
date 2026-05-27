@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contracts.api import ApiContract, ApiSchema
+from contracts.api import ApiContract, ApiSchema, ApiSchemaKind
 from contracts.template import (
     TemplateDocs,
     TemplateEnumValue,
@@ -21,14 +21,40 @@ from languages.dart.names import DART_RESERVED_WORDS, safe_enum_key
 from languages.dart.paths import resource_path_for_schema, safe_schema_file_name
 
 
+def _merge_fields_with_overrides(
+    schema: ApiSchema,
+    base_schema: ApiSchema | None,
+) -> tuple:
+    """Merge base and child fields, with child fields overriding base fields."""
+    if base_schema is None:
+        return schema.fields
+
+    # Build dict of base fields by wire name
+    base_fields_by_wire = {field.name.camel.o: field for field in base_schema.fields}
+
+    # Build dict of child fields by wire name (child wins)
+    child_fields_by_wire = {field.name.camel.o: field for field in schema.fields}
+
+    # Merge: start with base, override with child
+    merged_fields = base_fields_by_wire.copy()
+    merged_fields.update(child_fields_by_wire)
+
+    return tuple(merged_fields.values())
+
+
 def _base_schema(
     schema: ApiSchema,
     schema_by_ref: dict[str, ApiSchema],
 ) -> ApiSchema | None:
-    if not schema.inherited_refs:
-        return None
+    if schema.inherited_refs:
+        return schema_by_ref.get(schema.inherited_refs[0])
 
-    return schema_by_ref.get(schema.inherited_refs[0])
+    if schema.alias_of:
+        target = schema_by_ref.get(schema.alias_of)
+        if target and target.kind in {ApiSchemaKind.MODEL, ApiSchemaKind.DTO}:
+            return target
+
+    return None
 
 
 def _own_api_fields(
@@ -85,9 +111,21 @@ def _schema(
     resource_paths: dict[str, tuple[str, ...]],
 ) -> TemplateSchema:
     base_schema = _base_schema(schema, schema_by_ref)
-    own_api_fields = _own_api_fields(schema, base_schema)
-    fields = tuple(template_field(field, schema_by_ref) for field in own_api_fields)
-    super_fields = _super_fields(base_schema, schema_by_ref)
+
+    # If has field overrides, use flattened composition with merged fields
+    if schema.has_field_overrides:
+        merged_fields = _merge_fields_with_overrides(schema, base_schema)
+        fields = tuple(template_field(field, schema_by_ref) for field in merged_fields)
+        super_fields = ()
+        extends_type = None
+        has_extends = False
+    else:
+        own_api_fields = _own_api_fields(schema, base_schema)
+        fields = tuple(template_field(field, schema_by_ref) for field in own_api_fields)
+        super_fields = _super_fields(base_schema, schema_by_ref)
+        extends_type = base_schema.name.pascal.o if base_schema else None
+        has_extends = base_schema is not None
+
     dependencies = schema_dependencies(schema, schema_by_ref)
     resource_path = resource_path_for_schema(schema, resource_paths)
     file_name = safe_schema_file_name(schema)
@@ -141,8 +179,8 @@ def _schema(
             composition_refs=schema.composition_refs,
             inherited_refs=schema.inherited_refs,
             query_enabled=schema.query.enabled,
-            has_extends=base_schema is not None,
-            extends_type=base_schema.name.pascal.o if base_schema else None,
+            has_extends=has_extends,
+            extends_type=extends_type,
             super_fields=super_fields,
         ),
     )

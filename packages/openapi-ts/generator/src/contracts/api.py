@@ -180,6 +180,7 @@ class ApiSchema:
     composition_refs: tuple[str, ...] = ()
     inherited_refs: tuple[str, ...] = ()
     composition: ApiComposition | None = None
+    has_field_overrides: bool = False
 
     description: str = "-"
     meta: MetaMap = field(default_factory=dict)
