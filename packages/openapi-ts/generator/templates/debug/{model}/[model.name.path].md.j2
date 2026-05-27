@@ -1,4 +1,4 @@
-# {{ model.name.pascal }}
+# {{ model.name.pascal.o }}
 
 {{ model.docs.description }}
 
@@ -6,7 +6,7 @@
 
 | Field | Value |
 |---|---|
-| Name | `{{ model.name.path }}` |
+| Name | `{{ model.name.path.o }}` |
 | Kind | `{{ model.api.kind }}` |
 | Language Kind | `{{ model.lang.kind }}` |
 | Type | `{{ model.lang.type }}` |
@@ -34,7 +34,7 @@
 | Field | Type | Required | Nullable | Sortable | Selectable | Filterable |
 |---|---|---:|---:|---:|---:|---:|
 {% for field in model.fields %}
-| `{{ field.name.camel }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.sortable }} | {{ field.lang.selectable }} | {{ field.lang.filterable }} |
+| `{{ field.name.camel.o }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.sortable }} | {{ field.lang.selectable }} | {{ field.lang.filterable }} |
 {% endfor %}
 
 ## Imports / Links
@@ -76,9 +76,9 @@ No inheritance dependencies.
 ## Example: TypeScript
 
 ```ts
-interface {{ model.name.pascal }} {
+interface {{ model.name.pascal.o }} {
 {% for field in model.fields %}
-  {{ field.name.camel }}{% if not field.lang.required %}?{% endif %}: {{ field.lang.type }};
+  {{ field.name.camel.o }}{% if not field.lang.required %}?{% endif %}: {{ field.lang.type }};
 {% endfor %}
 }
 ```
@@ -86,14 +86,14 @@ interface {{ model.name.pascal }} {
 ## Example: Dart
 
 ```dart
-class {{ model.name.pascal }} {
+class {{ model.name.pascal.o }} {
 {% for field in model.fields %}
-  final {{ field.lang.type }} {{ field.name.camel }};
+  final {{ field.lang.type }} {{ field.name.camel.o }};
 {% endfor %}
 
-  const {{ model.name.pascal }}({
+  const {{ model.name.pascal.o }}({
 {% for field in model.fields %}
-    {% if field.lang.required %}required {% endif %}this.{{ field.name.camel }},
+    {% if field.lang.required %}required {% endif %}this.{{ field.name.camel.o }},
 {% endfor %}
   });
 }
@@ -104,7 +104,7 @@ class {{ model.name.pascal }} {
 ```json
 {
 {% for field in model.fields %}
-  "{{ field.name.camel }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
+  "{{ field.name.camel.o }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
 {% endfor %}
 }
 ```

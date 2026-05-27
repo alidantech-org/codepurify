@@ -1,21 +1,21 @@
-# {{ project.name.pascal }}
+# {{ project.name.pascal.o }}
 
 {{ project.description }}
 
 ## Usage
 
 ```dart
-import 'package:{{ lang.package.name }}/{{ project.name.path }}.dart';
+import 'package:{{ lang.package.name }}/{{ project.name.path.o }}.dart';
 
 void main() {
-  {{ project.name.pascal }}.initialize();
+  {{ project.name.pascal.o }}.initialize();
 }
 ```
 
 ## Development URL override
 
 ```dart
-{{ project.name.pascal }}.initialize(
+{{ project.name.pascal.o }}.initialize(
   baseUrl: 'http://192.168.1.10:3000',
 );
 ```

@@ -1,4 +1,4 @@
-# {{ project.name.pascal }} API Documentation
+# {{ project.name.pascal.o }} API Documentation
 
 {{ project.docs.description }}
 
@@ -6,7 +6,7 @@
 
 | Field | Value |
 |---|---|
-| Name | `{{ project.name.path }}` |
+| Name | `{{ project.name.path.o }}` |
 | Version | `{{ project.version }}` |
 | Language | `{{ lang.name }}` |
 | Package | `{{ lang.package.name }}` |
@@ -28,7 +28,7 @@
 ## Resources
 
 {% for resource in resources %}
-- [{{ resource.name.pascal }}]({{ resource.emit.relative_doc_path | join("/") }})
+- [{{ resource.name.pascal.o }}]({{ resource.emit.relative_doc_path | join("/") }})
 {% endfor %}
 
 ## Example Usage

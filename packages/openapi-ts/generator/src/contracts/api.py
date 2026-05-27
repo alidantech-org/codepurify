@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
-from contracts.names import ContractName
+from contracts.names import NameSet
 
 MetaMap = dict[str, Any]
 
@@ -94,9 +94,9 @@ class ApiResource:
     """Inferred resource group."""
 
     id: str
-    name: ContractName
+    name: NameSet
     path: tuple[str, ...] = ()
-    path_name: ContractName | None = None
+    path_name: NameSet | None = None
     operations_count: int = 0
     meta: MetaMap = field(default_factory=dict)
 
@@ -120,7 +120,7 @@ class ApiField:
     """Language-neutral schema field fact."""
 
     id: str
-    name: ContractName
+    name: NameSet
     required: bool = True
     nullable: bool = False
     type: ApiFieldType = field(default_factory=ApiFieldType)
@@ -140,7 +140,7 @@ class ApiEnumValue:
     """Language-neutral enum value fact."""
 
     value: str
-    name: ContractName
+    name: NameSet
     description: str = "-"
     meta: MetaMap = field(default_factory=dict)
 
@@ -159,7 +159,7 @@ class ApiSchema:
     """Language-neutral schema fact."""
 
     id: str
-    name: ContractName
+    name: NameSet
     ref: str
     kind: ApiSchemaKind
     resource: str | None = None
@@ -221,7 +221,7 @@ class ApiParameter:
     """Language-neutral operation parameter fact."""
 
     id: str
-    name: ContractName
+    name: NameSet
     location: str
     required: bool = False
     ref: str | None = None
@@ -274,7 +274,7 @@ class ApiOperation:
     """Language-neutral operation fact."""
 
     id: str
-    name: ContractName
+    name: NameSet
     method: ApiHttpMethod
     path: str
     resource: str | None = None

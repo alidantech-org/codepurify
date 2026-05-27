@@ -95,7 +95,7 @@ def _schema_ref_type(
         return _primitive_schema_type(schema, schema_by_ref), schema.nullable
 
     if schema.kind in {ApiSchemaKind.ENUM, ApiSchemaKind.MODEL, ApiSchemaKind.DTO}:
-        return str(schema.name.pascal), schema.nullable
+        return str(schema.name.pascal.o), schema.nullable
 
     return None, False
 

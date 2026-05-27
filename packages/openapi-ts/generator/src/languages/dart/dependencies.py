@@ -23,7 +23,7 @@ def schema_dependencies(
             dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.INHERITANCE,
-                reason=f"{schema.name.pascal} inherits from {ref}",
+                reason=f"{schema.name.pascal.o} inherits from {ref}",
                 schema_by_ref=schema_by_ref,
                 owner_ref=schema.ref,
                 is_inheritance=True,
@@ -38,7 +38,7 @@ def schema_dependencies(
             dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.FIELD_TYPE,
-                reason=f"{schema.name.pascal} references {ref}",
+                reason=f"{schema.name.pascal.o} references {ref}",
                 schema_by_ref=schema_by_ref,
                 owner_ref=schema.ref,
             )
@@ -59,7 +59,7 @@ def field_dependencies(
             dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.FIELD_TYPE,
-                reason=f"Field {field.name.camel} uses schema ref {ref}",
+                reason=f"Field {field.name.camel.o} uses schema ref {ref}",
                 schema_by_ref=schema_by_ref,
             )
         )
@@ -69,7 +69,7 @@ def field_dependencies(
             dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.ARRAY_ITEM,
-                reason=f"Field {field.name.camel} uses array item ref {ref}",
+                reason=f"Field {field.name.camel.o} uses array item ref {ref}",
                 schema_by_ref=schema_by_ref,
             )
         )

@@ -1,5 +1,5 @@
-class {{ resource.name.pascal | string }}Endpoints {
-  const {{ resource.name.pascal | string }}Endpoints();
+class {{ resource.name.pascal.o | string }}Endpoints {
+  const {{ resource.name.pascal.o | string }}Endpoints();
 
 {%- for operation in resource.operations %}
 {%- if operation.meta.has_path_params %}

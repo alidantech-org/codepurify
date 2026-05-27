@@ -1,11 +1,11 @@
 {%- for resource in resources %}
-import 'constants/{{ resource.name.path | string }}_endpoints.dart';
+import 'constants/{{ resource.name.path.o | string }}_endpoints.dart';
 {%- endfor %}
 
 class V1Routes {
   const V1Routes._();
 
 {%- for resource in resources %}
-  static const {{ resource.name.camel | string }} = {{ resource.name.pascal | string }}Endpoints();
+  static const {{ resource.name.camel.o | string }} = {{ resource.name.pascal.o | string }}Endpoints();
 {%- endfor %}
 }

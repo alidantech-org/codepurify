@@ -159,20 +159,62 @@ def _schema_groups(
 ) -> TemplateSchemaGroups:
     """Build typed schema groups for debug templates."""
     return TemplateSchemaGroups(
-        all=tuple(_schema(schema, group=TemplateGroup.SCHEMAS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.all),
-        models=tuple(_schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.models),
-        dtos=tuple(_schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.dtos),
-        enums=tuple(_schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.enums),
-        primitives=tuple(_schema(schema, group=TemplateGroup.PRIMITIVES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.primitives),
-        aliases=tuple(_schema(schema, group=TemplateGroup.ALIASES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.aliases),
-        unknown=tuple(_schema(schema, group=TemplateGroup.UNKNOWN, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.unknown),
-        queries=tuple(_schema(schema, group=TemplateGroup.QUERIES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.queries),
-        params=tuple(_schema(schema, group=TemplateGroup.PARAMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.params),
-        bodies=tuple(_schema(schema, group=TemplateGroup.BODIES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.bodies),
-        responses=tuple(_schema(schema, group=TemplateGroup.RESPONSES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.responses),
-        emit_models=tuple(_schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.emit_models),
-        emit_dtos=tuple(_schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.emit_dtos),
-        emit_enums=tuple(_schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.emit_enums),
+        all=tuple(
+            _schema(schema, group=TemplateGroup.SCHEMAS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.all
+        ),
+        models=tuple(
+            _schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.models
+        ),
+        dtos=tuple(
+            _schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.dtos
+        ),
+        enums=tuple(
+            _schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.enums
+        ),
+        primitives=tuple(
+            _schema(schema, group=TemplateGroup.PRIMITIVES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.primitives
+        ),
+        aliases=tuple(
+            _schema(schema, group=TemplateGroup.ALIASES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.aliases
+        ),
+        unknown=tuple(
+            _schema(schema, group=TemplateGroup.UNKNOWN, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.unknown
+        ),
+        queries=tuple(
+            _schema(schema, group=TemplateGroup.QUERIES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.queries
+        ),
+        params=tuple(
+            _schema(schema, group=TemplateGroup.PARAMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.params
+        ),
+        bodies=tuple(
+            _schema(schema, group=TemplateGroup.BODIES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.bodies
+        ),
+        responses=tuple(
+            _schema(schema, group=TemplateGroup.RESPONSES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.responses
+        ),
+        emit_models=tuple(
+            _schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.emit_models
+        ),
+        emit_dtos=tuple(
+            _schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.emit_dtos
+        ),
+        emit_enums=tuple(
+            _schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths)
+            for schema in api.schemas.emit_enums
+        ),
     )
 
 
@@ -203,14 +245,14 @@ def _resource(
         schemas=resource_schemas,
         lang=TemplateResourceLang(
             kind="debug_resource",
-            display_name=resource.name.pascal,
+            display_name=resource.name.pascal.o,
         ),
         emit=TemplateItemEmit(
             group=TemplateGroup.RESOURCES,
             item_key=TemplateItemKey.RESOURCE,
             key=resource.id,
             ref=None,
-            path_parts=(TemplateGroup.RESOURCES.value, resource.name.path),
+            path_parts=(TemplateGroup.RESOURCES.value, resource.name.path.o),
             path=relative_doc_path,
             resource_path=resource_path,
             folder_path=resource_path,
@@ -237,7 +279,7 @@ def _schema(
     dependencies = _schema_dependencies(schema, schema_by_ref)
     resource_path = schema_resource_paths.get(schema.ref, safe_path_parts(schema.resource))
     kind = _schema_kind_value(schema)
-    file_name = safe_file_name(schema.name.path, fallback=schema.id)
+    file_name = safe_file_name(schema.name.path.o, fallback=schema.id)
     folder_path = (*resource_path, "schemas", kind)
     relative_doc_path = (*folder_path, f"{file_name}.md")
 
@@ -248,8 +290,8 @@ def _schema(
         lang=TemplateSchemaLang(
             kind=f"debug_{schema.kind.value if hasattr(schema.kind, 'value') else schema.kind}",
             type=_schema_debug_type(schema),
-            display_name=schema.name.pascal,
-            symbol_name=schema.name.pascal,
+            display_name=schema.name.pascal.o,
+            symbol_name=schema.name.pascal.o,
             field_count=len(fields),
             dependency_count=len(schema.dependencies),
             query_enabled=schema.query.enabled,
@@ -259,7 +301,7 @@ def _schema(
             item_key=_item_key_for_schema_group(group),
             key=schema.ref,
             ref=schema.ref,
-            path_parts=(group.value, schema.name.path),
+            path_parts=(group.value, schema.name.path.o),
             path=relative_doc_path,
             resource_path=resource_path,
             folder_path=folder_path,
@@ -296,7 +338,7 @@ def _field(field: ApiField, schema_by_ref: dict[str, ApiSchema]) -> TemplateFiel
         lang=TemplateFieldLang(
             kind="debug_field",
             type=_field_debug_type(field),
-            display_name=field.name.camel,
+            display_name=field.name.camel.o,
             required=field.required,
             nullable=field.nullable,
             query_enabled=field.query.enabled,
@@ -311,7 +353,7 @@ def _field(field: ApiField, schema_by_ref: dict[str, ApiSchema]) -> TemplateFiel
             item_key=TemplateItemKey.FIELD,
             key=field.id,
             ref=field.schema_ref,
-            path_parts=(TemplateGroup.FIELDS.value, field.name.path),
+            path_parts=(TemplateGroup.FIELDS.value, field.name.path.o),
             dependency_refs=_field_dependency_refs(field),
             dependencies=dependencies,
         ),
@@ -334,7 +376,7 @@ def _operation(
     """Build typed operation template variables."""
     resource_path = _operation_resource_path(operation, resource_paths)
     method = _operation_method(operation)
-    file_name = f"{method}_{safe_file_name(operation.name.path, fallback=operation.id)}"
+    file_name = f"{method}_{safe_file_name(operation.name.path.o, fallback=operation.id)}"
     folder_path = (*resource_path, "operations")
     relative_doc_path = (*folder_path, f"{file_name}.md")
     dependencies = _operation_dependencies(operation, schema_by_ref)
@@ -348,7 +390,7 @@ def _operation(
         lang=TemplateOperationLang(
             kind="debug_operation",
             function_name=operation.name.snake,
-            display_name=operation.name.pascal,
+            display_name=operation.name.pascal.o,
             method=operation.method.upper(),
         ),
         emit=TemplateItemEmit(
@@ -356,7 +398,7 @@ def _operation(
             item_key=TemplateItemKey.OPERATION,
             key=operation.id,
             ref=None,
-            path_parts=(TemplateGroup.OPERATIONS.value, operation.name.path),
+            path_parts=(TemplateGroup.OPERATIONS.value, operation.name.path.o),
             path=relative_doc_path,
             resource_path=resource_path,
             folder_path=folder_path,
@@ -385,7 +427,7 @@ def _parameter(parameter: ApiParameter, schema_by_ref: dict[str, ApiSchema]) -> 
         name=parameter.name,
         lang=TemplateParameterLang(
             kind="debug_parameter",
-            display_name=parameter.name.camel,
+            display_name=parameter.name.camel.o,
             location=parameter.location,
             required=parameter.required,
         ),
@@ -394,7 +436,7 @@ def _parameter(parameter: ApiParameter, schema_by_ref: dict[str, ApiSchema]) -> 
             item_key=TemplateItemKey.PARAMETER,
             key=parameter.id,
             ref=parameter.schema_ref,
-            path_parts=(TemplateGroup.PARAMS.value, parameter.name.path),
+            path_parts=(TemplateGroup.PARAMS.value, parameter.name.path.o),
             dependency_refs=_parameter_dependency_refs(parameter),
         ),
         docs=TemplateDocs(),
@@ -508,11 +550,7 @@ def _schema_resource_paths(
     schemas: tuple[ApiSchema, ...],
     resource_paths: dict[str, tuple[str, ...]],
 ) -> dict[str, tuple[str, ...]]:
-    explicit = {
-        schema.ref: resource_paths[schema.resource]
-        for schema in schemas
-        if schema.resource and schema.resource in resource_paths
-    }
+    explicit = {schema.ref: resource_paths[schema.resource] for schema in schemas if schema.resource and schema.resource in resource_paths}
     resolved = dict(explicit)
 
     for schema in schemas:
@@ -552,7 +590,7 @@ def _dependent_resource_path(
 
 def _resource_path(resource: ApiResource) -> tuple[str, ...]:
     base_path = safe_path_parts(resource.path, fallback="")
-    name_path = safe_path_parts(resource.name.path, fallback=resource.id)
+    name_path = safe_path_parts(resource.name.path.o, fallback=resource.id)
 
     if base_path == ("",):
         return safe_path_parts(None)
@@ -595,7 +633,7 @@ def _schema_dependencies(
             _dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.INHERITANCE,
-                reason=f"{schema.name.pascal} inherits from {ref}",
+                reason=f"{schema.name.pascal.o} inherits from {ref}",
                 schema_by_ref=schema_by_ref,
                 is_inheritance=True,
                 owner_ref=schema.ref,
@@ -610,7 +648,7 @@ def _schema_dependencies(
             _dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.FIELD_TYPE,
-                reason=f"{schema.name.pascal} references {ref}",
+                reason=f"{schema.name.pascal.o} references {ref}",
                 schema_by_ref=schema_by_ref,
                 owner_ref=schema.ref,
             )
@@ -631,7 +669,7 @@ def _field_dependencies(
             _dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.FIELD_TYPE,
-                reason=f"Field {field.name.camel} uses schema ref {ref}",
+                reason=f"Field {field.name.camel.o} uses schema ref {ref}",
                 schema_by_ref=schema_by_ref,
             )
         )
@@ -641,7 +679,7 @@ def _field_dependencies(
             _dependency(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.ARRAY_ITEM,
-                reason=f"Field {field.name.camel} uses array item ref {ref}",
+                reason=f"Field {field.name.camel.o} uses array item ref {ref}",
                 schema_by_ref=schema_by_ref,
             )
         )
@@ -661,7 +699,7 @@ def _operation_dependencies(
                 _dependency(
                     ref=ref,
                     purpose=TemplateDependencyPurpose.OPERATION_PARAMETER,
-                    reason=f"Parameter {parameter.name.camel} uses schema ref {ref}",
+                    reason=f"Parameter {parameter.name.camel.o} uses schema ref {ref}",
                     schema_by_ref=schema_by_ref,
                 )
             )

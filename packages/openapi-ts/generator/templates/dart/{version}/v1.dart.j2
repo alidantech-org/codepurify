@@ -1,9 +1,9 @@
 {%- for model in schemas.emit_models %}
-export 'schemas/{{ model.emit.resource_path | join("/") }}/models/{{ model.name.path }}/index.dart';
+export 'schemas/{{ model.emit.resource_path | join("/") }}/models/{{ model.name.path.o }}/index.dart';
 {%- endfor %}
 
 {%- for enum in schemas.emit_enums %}
-export 'schemas/{{ enum.emit.resource_path | join("/") }}/enums/{{ enum.name.path }}/index.dart';
+export 'schemas/{{ enum.emit.resource_path | join("/") }}/enums/{{ enum.name.path.o }}/index.dart';
 {%- endfor %}
 
 {%- for dto in schemas.emit_dtos %}
@@ -13,5 +13,5 @@ export 'schemas/{{ dto.emit.resource_path | join("/") }}/dtos/{{ dto.emit.folder
 export 'routes/routes.dart';
 
 {%- for resource in resources %}
-export 'features/{{ resource.name.path }}_feature.dart';
+export 'features/{{ resource.name.path.o }}_feature.dart';
 {%- endfor %}

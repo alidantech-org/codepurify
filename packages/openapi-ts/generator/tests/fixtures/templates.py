@@ -44,7 +44,7 @@ folders:
         encoding="utf-8",
     )
     (template_root / "{resource}" / "index.md.j2").write_text(
-        "Resource: {{ resource.name.pascal }}\n",
+        "Resource: {{ resource.name.pascal.o }}\n",
         encoding="utf-8",
     )
     (template_root / "{resource}" / "operations.md.j2").write_text(
@@ -55,8 +55,8 @@ folders:
         "Schemas: {{ resource.schemas | length }}\n",
         encoding="utf-8",
     )
-    (template_root / "{model}" / "[model.name.path].md.j2").write_text(
-        "Schema: {{ model.name.pascal }}\nKind: {{ model.api.kind }}\n",
+    (template_root / "{model}" / "[model.name.path.o].md.j2").write_text(
+        "Schema: {{ model.name.pascal.o }}\nKind: {{ model.api.kind }}\n",
         encoding="utf-8",
     )
     (template_root / ".gitignore").write_text(

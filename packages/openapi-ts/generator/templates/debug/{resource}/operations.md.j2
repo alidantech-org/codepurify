@@ -1,8 +1,8 @@
-# {{ resource.name.pascal }} Operations
+# {{ resource.name.pascal.o }} Operations
 
 {% if resource.operations %}
 {% for operation in resource.operations %}
-## {{ operation.name.pascal }}
+## {{ operation.name.pascal.o }}
 
 {{ operation.docs.description }}
 
@@ -16,7 +16,7 @@
 
 | Field | Value |
 |---|---|
-| Name | `{{ operation.name.path }}` |
+| Name | `{{ operation.name.path.o }}` |
 | Method | `{{ operation.api.method }}` |
 | Path | `{{ operation.api.path }}` |
 | Function Name | `{{ operation.lang.function_name }}` |
@@ -32,7 +32,7 @@
 | Name | Location | Required | Kind | Ref |
 |---|---|---:|---|---|
 {% for parameter in operation.parameters %}
-| `{{ parameter.name.camel }}` | `{{ parameter.lang.location }}` | {{ parameter.lang.required }} | `{{ parameter.lang.kind }}` | `{{ parameter.meta.ref }}` |
+| `{{ parameter.name.camel.o }}` | `{{ parameter.lang.location }}` | {{ parameter.lang.required }} | `{{ parameter.lang.kind }}` | `{{ parameter.meta.ref }}` |
 {% endfor %}
 {% else %}
 No parameters.

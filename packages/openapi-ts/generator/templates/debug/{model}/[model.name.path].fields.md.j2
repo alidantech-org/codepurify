@@ -1,13 +1,13 @@
-# {{ model.name.pascal }} Fields
+# {{ model.name.pascal.o }} Fields
 
 {% for field in model.fields %}
-## {{ field.name.camel }}
+## {{ field.name.camel.o }}
 
 {{ field.docs.description }}
 
 | Field | Value |
 |---|---|
-| Name | `{{ field.name.camel }}` |
+| Name | `{{ field.name.camel.o }}` |
 | Type | `{{ field.lang.type }}` |
 | Kind | `{{ field.lang.kind }}` |
 | Display Name | `{{ field.lang.display_name }}` |

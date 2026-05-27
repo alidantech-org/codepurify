@@ -14,7 +14,7 @@ def test_scan_templates_finds_jinja_and_raw_files(tmp_path) -> None:
 
     assert "summary.txt.j2" in paths
     assert "{resource}/index.md.j2" in paths
-    assert "{model}/[model.name.path].md.j2" in paths
+    assert "{model}/[model.name.path.o].md.j2" in paths
     assert ".gitignore" in paths
     # paths.yaml should be excluded from scanning
     assert "paths.yaml" not in paths

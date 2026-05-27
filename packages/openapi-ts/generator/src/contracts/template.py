@@ -21,7 +21,7 @@ from contracts.api import (
     ApiResponse,
     ApiSchema,
 )
-from contracts.names import ContractName
+from contracts.names import NameSet
 
 MetaMap = dict[str, Any]
 
@@ -102,7 +102,7 @@ class TemplateDependencyTarget:
     """Resolved dependency target API/template facts."""
 
     ref: str
-    name: ContractName | None = None
+    name: NameSet | None = None
     kind: TemplateDependencyTargetKind = TemplateDependencyTargetKind.UNKNOWN
     schema: ApiSchema | None = None
     is_primitive: bool = False
@@ -194,7 +194,7 @@ class TemplateProjectEmit:
 class TemplateProject:
     """Project/package-level template variables."""
 
-    name: ContractName
+    name: NameSet
     version: str = "0.1.0"
     description: str = "-"
     lang: TemplateProjectLang = field(default_factory=TemplateProjectLang)
@@ -438,7 +438,7 @@ class TemplateField:
     """Field template variables."""
 
     api: ApiField
-    name: ContractName
+    name: NameSet
     lang: TemplateFieldLang = field(default_factory=TemplateFieldLang)
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)
@@ -450,7 +450,7 @@ class TemplateSchema:
     """Schema/model/dto/enum/primitive template variables."""
 
     api: ApiSchema
-    name: ContractName
+    name: NameSet
     fields: tuple[TemplateField, ...] = ()
     lang: TemplateSchemaLang = field(default_factory=TemplateSchemaLang)
     emit: TemplateItemEmit | None = None
@@ -483,9 +483,9 @@ class TemplateResource:
     """Resource template variables."""
 
     api: ApiResource
-    name: ContractName
+    name: NameSet
     path: tuple[str, ...] = ()
-    path_name: ContractName | None = None
+    path_name: NameSet | None = None
     operations: tuple["TemplateOperation", ...] = ()
     models: tuple[TemplateSchema, ...] = ()
     dtos: tuple[TemplateSchema, ...] = ()
@@ -502,7 +502,7 @@ class TemplateParameter:
     """Operation parameter template variables."""
 
     api: ApiParameter
-    name: ContractName
+    name: NameSet
     lang: TemplateParameterLang = field(default_factory=TemplateParameterLang)
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)
@@ -536,7 +536,7 @@ class TemplateOperation:
     """Operation template variables."""
 
     api: ApiOperation
-    name: ContractName
+    name: NameSet
     parameters: tuple[TemplateParameter, ...] = ()
     request_body: TemplateRequestBody | None = None
     responses: tuple[TemplateResponse, ...] = ()

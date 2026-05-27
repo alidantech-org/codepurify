@@ -72,8 +72,8 @@ def _operation(
 ) -> TemplateOperation:
     resource_path = _operation_resource_path(operation, resource_paths)
     method = _operation_method(operation)
-    function_name = safe_dart_identifier(operation.name.camel, fallback="request")
-    file_name = f"{method}_{safe_file_name(name_text(operation.name.path), fallback=operation.id)}"
+    function_name = safe_dart_identifier(operation.name.camel.o, fallback="request")
+    file_name = f"{method}_{safe_file_name(name_text(operation.name.path.o), fallback=operation.id)}"
 
     dependencies = _operation_dependencies(operation, schema_by_ref)
     query_ref = _query_ref(operation)
@@ -91,7 +91,7 @@ def _operation(
         lang=TemplateOperationLang(
             kind="dart_operation",
             function_name=function_name,
-            display_name=operation.name.pascal,
+            display_name=operation.name.pascal.o,
             method=method,
         ),
         emit=TemplateItemEmit(
@@ -99,7 +99,7 @@ def _operation(
             item_key=TemplateItemKey.OPERATION,
             key=operation.id,
             ref=None,
-            path_parts=(TemplateGroup.OPERATIONS.value, operation.name.path),
+            path_parts=(TemplateGroup.OPERATIONS.value, operation.name.path.o),
             resource_path=resource_path,
             folder_path=(*resource_path, "operations"),
             file_name=file_name,
@@ -140,7 +140,7 @@ def _parameter(
         name=parameter.name,
         lang=TemplateParameterLang(
             kind="dart_parameter",
-            display_name=parameter.name.camel,
+            display_name=parameter.name.camel.o,
             location=parameter.location,
             required=parameter.required,
         ),
@@ -149,13 +149,13 @@ def _parameter(
             item_key=TemplateItemKey.PARAMETER,
             key=parameter.id,
             ref=parameter.schema_ref,
-            path_parts=(TemplateGroup.PARAMS.value, parameter.name.path),
+            path_parts=(TemplateGroup.PARAMS.value, parameter.name.path.o),
             dependency_refs=refs,
             dependencies=tuple(
                 dependency(
                     ref=ref,
                     purpose=TemplateDependencyPurpose.OPERATION_PARAMETER,
-                    reason=f"Parameter {parameter.name.camel} uses schema ref {ref}",
+                    reason=f"Parameter {parameter.name.camel.o} uses schema ref {ref}",
                     schema_by_ref=schema_by_ref,
                 )
                 for ref in refs
@@ -255,7 +255,7 @@ def _operation_dependencies(
                 dependency(
                     ref=ref,
                     purpose=TemplateDependencyPurpose.OPERATION_PARAMETER,
-                    reason=f"Parameter {parameter.name.camel} uses schema ref {ref}",
+                    reason=f"Parameter {parameter.name.camel.o} uses schema ref {ref}",
                     schema_by_ref=schema_by_ref,
                 )
             )
@@ -364,7 +364,7 @@ def _schema_type(ref: str | None, schema_by_ref: dict[str, ApiSchema]) -> str | 
     if schema is None:
         return None
 
-    return schema.name.pascal
+    return schema.name.pascal.o
 
 
 def _path_param_names(path: str) -> tuple[str, ...]:

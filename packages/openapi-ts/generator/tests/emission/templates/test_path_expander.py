@@ -11,7 +11,7 @@ from src.emission.templates.path_expander import expand_template_path
 def test_expand_template_path_strips_final_j2(tmp_path) -> None:
     schema_name = make_contract_name("User")
     output = expand_template_path(
-        Path("schemas/[schema.name.path]/schema.txt.j2"),
+        Path("schemas/[schema.name.path.o]/schema.txt.j2"),
         {"schema": {"name": schema_name}},
     )
 
@@ -65,7 +65,7 @@ def test_original_is_default_for_name_case():
     }
 
     result = expand_template_path(
-        Path("[schema.name.path]/model.dart.j2"),
+        Path("[schema.name.path.o]/model.dart.j2"),
         context,
     )
 

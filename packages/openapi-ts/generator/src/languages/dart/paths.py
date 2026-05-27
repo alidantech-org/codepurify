@@ -12,7 +12,7 @@ SHARED_PATH = ("shared",)
 def resource_path_for_resource(resource: ApiResource) -> tuple[str, ...]:
     """Return the Dart resource folder path for a resource."""
     base_path = safe_path_parts(resource.path, fallback="")
-    name_path = safe_path_parts(name_text(resource.name.path), fallback=resource.id)
+    name_path = safe_path_parts(name_text(resource.name.path.o), fallback=resource.id)
 
     if base_path == ("",):
         return name_path or SHARED_PATH
@@ -36,4 +36,4 @@ def resource_path_for_schema(
 
 def safe_schema_file_name(schema: ApiSchema) -> str:
     """Return a safe Dart schema folder/file name."""
-    return safe_file_name(name_text(schema.name.path), fallback=schema.id)
+    return safe_file_name(name_text(schema.name.path.o), fallback=schema.id)

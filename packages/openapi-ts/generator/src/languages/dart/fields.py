@@ -41,7 +41,7 @@ def template_field(
         lang=TemplateFieldLang(
             kind="dart_field",
             type=dart_field_type(field, schema_by_ref),
-            display_name=safe_dart_identifier(field.name.camel, fallback="field"),
+            display_name=safe_dart_identifier(field.name.camel.original, fallback="field"),
             required=field.required,
             nullable=_dart_nullable(field, schema_by_ref),
             query_enabled=field.query.enabled,
@@ -56,7 +56,7 @@ def template_field(
             item_key=TemplateItemKey.FIELD,
             key=field.id,
             ref=field.schema_ref,
-            path_parts=(TemplateGroup.FIELDS.value, field.name.path),
+            path_parts=(TemplateGroup.FIELDS.value, field.name.path.o),
             dependency_refs=_field_dependency_refs(field),
             dependencies=dependencies,
         ),

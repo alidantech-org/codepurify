@@ -168,7 +168,7 @@ def _relative_import_uri(
 def _dependency_symbol(dependency: TemplateDependency) -> str:
     """Return the Dart symbol name for a dependency."""
     if dependency.target is not None and dependency.target.name is not None:
-        return str(dependency.target.name.pascal)
+        return str(dependency.target.name.pascal.o)
 
     fallback = dependency.ref.rsplit("/", 1)[-1].strip()
     if not fallback:

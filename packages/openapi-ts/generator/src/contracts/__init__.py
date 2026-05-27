@@ -19,7 +19,7 @@ from contracts.api import (
 from contracts.emission import EmissionFile, EmissionPlan, EmissionResult, EmissionWriteResult
 from contracts.events import EventLevel, ProgressSink, RuntimeEvent
 from contracts.language import LanguageAdapter, LanguagePostAction, LanguagePostResult
-from contracts.names import ContractName
+from contracts.names import NameSet
 from contracts.template import (
     TemplateContract,
     TemplateContractMeta,
@@ -72,7 +72,7 @@ __all__ = [
     "ApiResource",
     "ApiResponse",
     "ApiSchema",
-    "ContractName",
+    "NameSet",
     "EmissionFile",
     "EmissionPlan",
     "EmissionResult",

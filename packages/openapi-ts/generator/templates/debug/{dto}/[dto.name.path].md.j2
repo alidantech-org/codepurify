@@ -1,4 +1,4 @@
-# {{ dto.name.pascal }}
+# {{ dto.name.pascal.o }}
 
 {{ dto.docs.description }}
 
@@ -6,7 +6,7 @@
 
 | Field | Value |
 |---|---|
-| Name | `{{ dto.name.path }}` |
+| Name | `{{ dto.name.path.o }}` |
 | Kind | `{{ dto.api.kind }}` |
 | Language Kind | `{{ dto.lang.kind }}` |
 | Type | `{{ dto.lang.type }}` |
@@ -31,7 +31,7 @@
 | Field | Type | Required | Nullable | Query | Operators |
 |---|---|---:|---:|---:|---|
 {% for field in dto.fields %}
-| `{{ field.name.camel }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.query_enabled }} | `{{ field.lang.operators | join(", ") }}` |
+| `{{ field.name.camel.o }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.query_enabled }} | `{{ field.lang.operators | join(", ") }}` |
 {% endfor %}
 
 ## Imports / Links
@@ -59,9 +59,9 @@ No dependencies.
 ## Example: Query DTO
 
 ```ts
-const query: {{ dto.name.pascal }} = {
+const query: {{ dto.name.pascal.o }} = {
 {% for field in dto.fields %}
-  {{ field.name.camel }}: undefined,
+  {{ field.name.camel.o }}: undefined,
 {% endfor %}
 };
 ```
@@ -71,7 +71,7 @@ const query: {{ dto.name.pascal }} = {
 ```json
 {
 {% for field in dto.fields %}
-  "{{ field.name.camel }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
+  "{{ field.name.camel.o }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
 {% endfor %}
 }
 ```
@@ -81,7 +81,7 @@ const query: {{ dto.name.pascal }} = {
 ```python
 from typing import TypedDict
 
-class {{ dto.name.pascal }}(TypedDict, total=False):
+class {{ dto.name.pascal.o }}(TypedDict, total=False):
 {% for field in dto.fields %}
     {{ field.name.snake }}: str
 {% endfor %}

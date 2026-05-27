@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-enum {{ enum.name.pascal }} {
+enum {{ enum.name.pascal.o }} {
 {%- for value in enum.meta.enum_values %}
   @JsonValue('{{ value.wire }}')
   {{ value.safe_name }}{%- if not loop.last %},{%- endif %}

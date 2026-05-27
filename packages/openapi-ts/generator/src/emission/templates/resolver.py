@@ -13,7 +13,7 @@ class VariableResolutionError(KeyError):
 
 
 def resolve_variable(context: Mapping[str, Any], expression: str) -> Any:
-    """Resolve dotted expressions like schema.name.path from context."""
+    """Resolve dotted expressions like schema.name.path.o from context."""
     expression = expression.strip()
 
     if not expression:

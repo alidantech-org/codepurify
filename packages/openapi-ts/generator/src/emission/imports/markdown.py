@@ -43,6 +43,6 @@ class MarkdownImportPlanner:
 
 def _dependency_label(dependency: TemplateDependency) -> str:
     if dependency.target and dependency.target.name:
-        return dependency.target.name.pascal
+        return dependency.target.name.pascal.o
 
     return dependency.ref.rsplit("/", 1)[-1] or dependency.ref

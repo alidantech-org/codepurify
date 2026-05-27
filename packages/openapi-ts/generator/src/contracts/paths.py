@@ -99,13 +99,13 @@ def default_path_rules() -> tuple[PathSyntaxRule, ...]:
             syntax="{folder}",
             kind=PathTokenKind.FOLDER,
             description="Select and loop a configured paths.yaml folder recipe. The segment emits configured folder parts.",
-            example="{model}/[model.name.path].md.j2",
+            example="{model}/[model.name.path.o].md.j2",
         ),
         PathSyntaxRule(
             syntax="[expression]",
             kind=PathTokenKind.DYNAMIC,
             description="Resolve an expression and emit it as a path or file-name value.",
-            example="[entity.name.path]/[name.path].txt.j2",
+            example="[entity.name.path.o]/[name.path].txt.j2",
         ),
         PathSyntaxRule(
             syntax="[[value]]",

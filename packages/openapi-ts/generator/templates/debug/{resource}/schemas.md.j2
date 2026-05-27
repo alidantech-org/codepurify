@@ -1,9 +1,9 @@
-# {{ resource.name.pascal }} Schemas
+# {{ resource.name.pascal.o }} Schemas
 
 ## Models
 
 {% for model in resource.models %}
-- {{ model.name.pascal }}
+- {{ model.name.pascal.o }}
 {% else %}
 No models.
 {% endfor %}
@@ -11,7 +11,7 @@ No models.
 ## DTOs
 
 {% for dto in resource.dtos %}
-- {{ dto.name.pascal }}
+- {{ dto.name.pascal.o }}
 {% else %}
 No DTOs.
 {% endfor %}
@@ -19,7 +19,7 @@ No DTOs.
 ## Enums
 
 {% for enum in resource.enums %}
-- {{ enum.name.pascal }}
+- {{ enum.name.pascal.o }}
 {% else %}
 No enums.
 {% endfor %}

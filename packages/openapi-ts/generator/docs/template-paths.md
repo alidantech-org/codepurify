@@ -57,7 +57,7 @@ Each template root can contain a `paths.yaml` file.
 Example:
 
 ```yaml
-template_extension: ".j2"
+template_extension: '.j2'
 strip_template_extension: true
 allow_raw_files: true
 
@@ -238,7 +238,7 @@ Template content:
 
 ```jinja
 {% for model in schemas.emit_models %}
-- {{ model.name.pascal }}
+- {{ model.name.pascal.o }}
 {% endfor %}
 ```
 
@@ -277,10 +277,10 @@ app/[[...slug]]/page.tsx.j2
 ## Bad examples
 
 ```txt
-models/[model.name.path]/model.txt.j2
+models/[model.name.path.o]/model.txt.j2
 ```
 
-Bad because `[model.name.path]` only names a path. It no longer selects models.
+Bad because `[model.name.path.o]` only names a path. It no longer selects models.
 
 Use:
 

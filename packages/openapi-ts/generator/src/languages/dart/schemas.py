@@ -38,8 +38,8 @@ def _own_api_fields(
     if base_schema is None:
         return schema.fields
 
-    inherited = {field.name.camel for field in base_schema.fields}
-    return tuple(field for field in schema.fields if field.name.camel not in inherited)
+    inherited = {field.name.camel.o for field in base_schema.fields}
+    return tuple(field for field in schema.fields if field.name.camel.o not in inherited)
 
 
 def _super_fields(
@@ -100,8 +100,8 @@ def _schema(
         lang=TemplateSchemaLang(
             kind=f"dart_{_schema_kind(schema)}",
             type=_schema_kind(schema),
-            display_name=schema.name.pascal,
-            symbol_name=schema.name.pascal,
+            display_name=schema.name.pascal.o,
+            symbol_name=schema.name.pascal.o,
             field_count=len(fields),
             dependency_count=len(dependencies),
             query_enabled=schema.query.enabled,
@@ -111,7 +111,7 @@ def _schema(
             item_key=_item_key(group),
             key=schema.ref,
             ref=schema.ref,
-            path_parts=(group.value, schema.name.path),
+            path_parts=(group.value, schema.name.path.o),
             path=folder_path,
             resource_path=resource_path,
             folder_path=folder_path,
@@ -131,7 +131,7 @@ def _schema(
             enum_values=tuple(
                 TemplateEnumValue(
                     wire=value.value,
-                    name=value.name.camel,
+                    name=value.name.camel.o,
                     safe_name=safe_enum_key(value.value, reserved_words=DART_RESERVED_WORDS),
                     original_name=value.value,
                 )
@@ -142,7 +142,7 @@ def _schema(
             inherited_refs=schema.inherited_refs,
             query_enabled=schema.query.enabled,
             has_extends=base_schema is not None,
-            extends_type=base_schema.name.pascal if base_schema else None,
+            extends_type=base_schema.name.pascal.o if base_schema else None,
             super_fields=super_fields,
         ),
     )
@@ -155,14 +155,14 @@ def _folder_path(
     resource_path: tuple[str, ...],
 ) -> tuple[str, ...]:
     if group == TemplateGroup.ENUMS:
-        return (schema.name.path,)
+        return (schema.name.path.o,)
 
     if group == TemplateGroup.DTOS:
         role = _dto_role(schema)
         operation = _dto_operation(schema)
         return (operation, role)
 
-    return (schema.name.path,)
+    return (schema.name.path.o,)
 
 
 def _dto_role(schema: ApiSchema) -> str:
@@ -182,7 +182,7 @@ def _dto_operation(schema: ApiSchema) -> str:
     if isinstance(operation, str) and operation:
         return operation
 
-    return schema.name.path
+    return schema.name.path.o
 
 
 def _schema_kind(schema: ApiSchema) -> str:

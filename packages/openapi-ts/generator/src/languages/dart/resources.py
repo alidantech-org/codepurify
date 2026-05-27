@@ -80,7 +80,7 @@ def _resource(
         schemas=(*models, *dtos, *enums),
         lang=TemplateResourceLang(
             kind="dart_resource",
-            display_name=resource.name.pascal,
+            display_name=resource.name.pascal.o,
         ),
         emit=TemplateItemEmit(
             group=TemplateGroup.RESOURCES,
@@ -89,7 +89,7 @@ def _resource(
             resource_path=resource_path,
             folder_path=resource_path,
             file_name="index",
-            path_parts=(TemplateGroup.RESOURCES.value, resource.name.path),
+            path_parts=(TemplateGroup.RESOURCES.value, resource.name.path.o),
             dependencies=_operation_dependencies(resource_operations),
         ),
         docs=TemplateDocs(),

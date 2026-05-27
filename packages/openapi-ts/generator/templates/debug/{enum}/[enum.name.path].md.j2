@@ -1,4 +1,4 @@
-# {{ enum.name.pascal }}
+# {{ enum.name.pascal.o }}
 
 {{ enum.docs.description }}
 
@@ -6,7 +6,7 @@
 
 | Field | Value |
 |---|---|
-| Name | `{{ enum.name.path }}` |
+| Name | `{{ enum.name.path.o }}` |
 | Kind | `{{ enum.api.kind }}` |
 | Language Kind | `{{ enum.lang.kind }}` |
 | Type | `{{ enum.lang.type }}` |
@@ -51,7 +51,7 @@ No dependencies.
 ## Example: TypeScript
 
 ```ts
-export enum {{ enum.name.pascal }} {
+export enum {{ enum.name.pascal.o }} {
 {% for value in enum.meta.enum_values %}
   {{ value | upper }} = "{{ value }}",
 {% endfor %}
@@ -61,7 +61,7 @@ export enum {{ enum.name.pascal }} {
 ## Example: Dart
 
 ```dart
-enum {{ enum.name.pascal }} {
+enum {{ enum.name.pascal.o }} {
 {% for value in enum.meta.enum_values %}
   {{ value }},
 {% endfor %}

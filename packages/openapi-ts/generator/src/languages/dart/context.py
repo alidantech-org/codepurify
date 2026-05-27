@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from contracts.api import ApiContract
-from contracts.names import ContractName
+from contracts.names import NameSet
 from languages.dart.constants import DEFAULT_API_VERSION
 from languages.dart.names import safe_contract_name, safe_dart_package_name
 
@@ -20,7 +20,7 @@ class DartBuildContext:
     template_root: Path | None
     dry_run: bool
     package_name: str
-    project_name: ContractName
+    project_name: NameSet
     version: str
 
 

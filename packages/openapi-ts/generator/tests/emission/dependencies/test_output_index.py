@@ -65,7 +65,7 @@ def _emission_file(output_path: Path, context: dict, item_key: TemplateItemKey =
         item_key=item_key,
     )
     return EmissionFile(
-        template_path=Path("{model}/[model.name.path].md.j2"),
+        template_path=Path("{model}/[model.name.path.o].md.j2"),
         output_path=output_path,
         context=context,
     )

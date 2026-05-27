@@ -6,13 +6,10 @@ stable contract type used by API and template contracts.
 
 from __future__ import annotations
 
-from typing import Any
-
+from src.utils.naming.provider import NameSet
 from utils.naming import build_name
 
-ContractName = Any
 
-
-def make_contract_name(value: str) -> ContractName:
+def make_contract_name(value: str) -> NameSet:
     """Build a contract name using the shared naming provider."""
     return build_name(value)

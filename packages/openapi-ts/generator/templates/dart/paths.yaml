@@ -21,7 +21,7 @@ folders:
       - schemas
       - [model.emit.resource_path]
       - models
-      - [model.name.path]
+      - [model.name.path.o]
 
   dto:
     select: schemas.emit_dtos
@@ -43,7 +43,7 @@ folders:
       - schemas
       - [enum.emit.resource_path]
       - enums
-      - [enum.name.path]
+      - [enum.name.path.o]
 
   route_root:
     mode: once

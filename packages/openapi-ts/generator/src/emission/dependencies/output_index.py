@@ -8,7 +8,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from contracts.emission import EmissionFile
-from contracts.names import ContractName
+from contracts.names import NameSet
 from contracts.template import TemplateFile, TemplateGroup, TemplateItemKey
 from emission.imports.paths import to_posix_path
 
@@ -19,7 +19,7 @@ class EmittedItem:
     key: str
     group: TemplateGroup
     item_key: TemplateItemKey
-    name: ContractName | None
+    name: NameSet | None
     symbol_name: str
     output_path: Path
     relative_path: PurePosixPath

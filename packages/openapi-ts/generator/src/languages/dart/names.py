@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from contracts.names import ContractName, make_contract_name
+from contracts.names import NameSet, make_contract_name
 
 DART_RESERVED_WORDS = {
     "abstract",
@@ -140,7 +140,7 @@ def safe_enum_key(
 
 
 def name_text(value: object, *, fallback: str = "value") -> str:
-    """Return a plain string from ContractName/PluralizedName/string values."""
+    """Return a plain string from NameSet/PluralizedName/string values."""
     if value is None:
         return fallback
 
@@ -188,8 +188,8 @@ def safe_dart_package_name(value: object, *, fallback: str = "generated_api") ->
     return name
 
 
-def safe_contract_name(value: str, *, fallback: str = "value") -> ContractName:
-    """Return a ContractName from a Dart-safe-ish source value."""
+def safe_contract_name(value: str, *, fallback: str = "value") -> NameSet:
+    """Return a NameSet from a Dart-safe-ish source value."""
     cleaned = value or fallback
     return make_contract_name(cleaned)
 
