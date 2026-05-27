@@ -147,6 +147,16 @@ class TemplateImport:
 
 
 @dataclass(frozen=True)
+class TemplateEnumValue:
+    """Enum value with wire value and safe identifier for code generation."""
+
+    wire: str
+    name: str
+    safe_name: str
+    original_name: str = "-"
+
+
+@dataclass(frozen=True)
 class TemplateFile:
     """Current emitted file context injected by emission after path planning."""
 
@@ -383,6 +393,18 @@ class TemplateOperationMeta:
     response_count: int = 0
     has_request_body: bool = False
     target_ref: str | None = None
+
+    query_ref: str | None = None
+    query_type: str | None = None
+    params_ref: str | None = None
+    params_type: str | None = None
+    body_ref: str | None = None
+    body_type: str | None = None
+    response_ref: str | None = None
+    response_type: str | None = None
+    route_getter: str = "-"
+    path_params: tuple[str, ...] = ()
+    has_path_params: bool = False
 
 
 @dataclass(frozen=True)

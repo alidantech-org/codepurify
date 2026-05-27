@@ -1,0 +1,13 @@
+import 'package:flutter_api_bridge/flutter_api_bridge.dart';
+
+class {{ project.name.pascal }} {
+  const {{ project.name.pascal }}._();
+
+  static const String defaultBaseUrl = '{{ project.meta.default_base_url }}';
+
+  static void initialize({
+    String? baseUrl,
+  }) {
+    ApiClient.instance(baseUrl ?? defaultBaseUrl);
+  }
+}

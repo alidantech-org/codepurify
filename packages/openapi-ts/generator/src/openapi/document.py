@@ -11,6 +11,7 @@ from constants.openapi import (
     RESPONSES,
     SCHEMAS,
     DEFAULT_TITLE,
+    DESCRIPTION,
     INFO,
     OPENAPI,
     PATHS,
@@ -38,6 +39,10 @@ class OpenApiDocument:
     @property
     def title(self) -> str:
         return str(self.info.get(TITLE, DEFAULT_TITLE))
+
+    @property
+    def description(self) -> str:
+        return str(self.info.get(DESCRIPTION, ""))
 
     @property
     def api_version(self) -> str:

@@ -22,7 +22,7 @@ from contracts.template import TemplateContract
 from contracts.template import TemplateDependency, TemplateFile, TemplateGroup
 from emission.dependencies.output_index import build_output_index
 from emission.dependencies.resolver import resolve_file_dependencies
-from emission.imports.base import ImportPlanningContext
+from emission.imports.base import ImportPlanningContext, ImportPlanner
 from emission.imports.markdown import MarkdownImportPlanner
 from emission.imports.paths import to_posix_path
 from emission.paths.config_loader import load_path_config
@@ -34,6 +34,16 @@ from emission.templates.scanner import scan_templates
 from emission.writer.file_writer import write_text_if_changed
 
 GROUP_GLOBAL = "global"
+
+
+def import_planner_for_language(language_name: str) -> ImportPlanner:
+    """Return the appropriate import planner for a language."""
+    if language_name == "dart":
+        from languages.dart.imports import DartImportPlanner
+
+        return DartImportPlanner()
+
+    return MarkdownImportPlanner()
 
 
 @dataclass
@@ -151,11 +161,9 @@ def build_emission_plan(
         output_root=output_root,
         path_config=path_config,
         progress=progress,
+        contract=contract,
     )
-    files = [
-        replace(file, content=_resolve_content(file.template_path, template_root, file.context))
-        for file in files
-    ]
+    files = [replace(file, content=_resolve_content(file.template_path, template_root, file.context)) for file in files]
 
     _notify(
         progress,
@@ -317,9 +325,10 @@ def _resolve_file_contexts(
     output_root: Path,
     path_config: Any,
     progress: ProgressSink | None,
+    contract: TemplateContract,
 ) -> list[EmissionFile]:
     output_index = build_output_index(files, output_root)
-    planner = MarkdownImportPlanner()
+    planner = import_planner_for_language(contract.lang.name)
     resolved_files: list[EmissionFile] = []
     stats = _DependencyStats()
 
@@ -340,6 +349,7 @@ def _resolve_file_contexts(
                 dependencies=dependencies,
                 strategy=path_config.imports.strategy,
                 output_root=output_root,
+                package_name=contract.lang.package.name,
             )
         )
         stats.add(dependencies)
@@ -371,14 +381,7 @@ def _item_dependencies(context: TemplateContext, path_config: Any) -> tuple[Temp
 
 def _dependencies_from_item(item: Any) -> tuple[TemplateDependency, ...]:
     emit = getattr(item, "emit", None)
-    dependencies = list(getattr(emit, "dependencies", ()))
-
-    for child_name in ("operations", "models", "dtos", "enums", "schemas"):
-        for child in getattr(item, child_name, ()):
-            child_emit = getattr(child, "emit", None)
-            dependencies.extend(getattr(child_emit, "dependencies", ()))
-
-    return tuple(dependencies)
+    return tuple(getattr(emit, "dependencies", ()))
 
 
 def _unique_dependencies(dependencies: tuple[TemplateDependency, ...]) -> tuple[TemplateDependency, ...]:

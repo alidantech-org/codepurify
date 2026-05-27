@@ -1,0 +1,19 @@
+name: {{ lang.package.name }}
+description: "{{ project.description if project.description and project.description != '-' else '' }}"
+version: "{{ project.version if project.version and project.version != '-' else '0.1.0' }}"
+publish_to: "none"
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_api_bridge: ^0.1.0
+  flutter_riverpod: any
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  build_runner: any
+  flutter_lints: any
+  json_serializable: ^6.9.0

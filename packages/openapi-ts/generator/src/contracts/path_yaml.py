@@ -28,8 +28,14 @@ KEY_META = "meta"
 
 DEFAULT_TEMPLATE_EXTENSION = ".j2"
 IMPORT_STRATEGY_RELATIVE = "relative"
+IMPORT_STRATEGY_PACKAGE = "package"
 IMPORT_STRATEGY_NONE = "none"
-ALLOWED_IMPORT_STRATEGIES = {IMPORT_STRATEGY_RELATIVE, IMPORT_STRATEGY_NONE}
+
+ALLOWED_IMPORT_STRATEGIES = {
+    IMPORT_STRATEGY_RELATIVE,
+    IMPORT_STRATEGY_PACKAGE,
+    IMPORT_STRATEGY_NONE,
+}
 
 
 class PathYamlError(ValueError):
@@ -108,7 +114,8 @@ def _parse_folders(raw: Any) -> tuple[PathFolder, ...]:
 
 
 def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
-    select = _required_string(raw, KEY_SELECT, owner=name)
+    mode = _mode(raw.get(KEY_MODE), folder=name)
+    select = _optional_select(raw, name=name, mode=mode)
     alias = _string(
         raw.get(KEY_AS, raw.get(KEY_ALIAS)),
         default=name,
@@ -120,7 +127,7 @@ def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
         select=select,
         alias=alias,
         parts=_parse_parts(raw.get(KEY_PARTS), folder=name),
-        mode=_mode(raw.get(KEY_MODE), folder=name),
+        mode=mode,
         description=_string(
             raw.get(KEY_DESCRIPTION),
             default="-",
@@ -157,6 +164,18 @@ def _mode(value: Any, *, folder: str) -> PathSelectionMode:
     except ValueError as exc:
         allowed = ", ".join(item.value for item in PathSelectionMode)
         raise PathYamlError(f"Invalid mode for folder '{folder}': {value}. Allowed: {allowed}.") from exc
+
+
+def _optional_select(raw: dict[str, Any], *, name: str, mode: PathSelectionMode) -> str:
+    value = raw.get(KEY_SELECT)
+
+    if value is None and mode == PathSelectionMode.ONCE:
+        return ""
+
+    if not isinstance(value, str) or not value:
+        raise PathYamlError(f"'{name}.{KEY_SELECT}' is required and must be a non-empty string.")
+
+    return value
 
 
 def _required_string(raw: dict[str, Any], key: str, *, owner: str) -> str:

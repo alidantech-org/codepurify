@@ -32,10 +32,14 @@ def _expand_one(
     context: dict[str, Any],
     folder: PathFolder,
 ) -> tuple[dict[str, Any], ...]:
-    selected = resolve_variable(context, folder.select)
-
     if folder.mode == PathSelectionMode.ONCE:
+        selected = resolve_variable(context, folder.select) if folder.select else None
         return (_bind_context(context, folder, selected),)
+
+    if not folder.select:
+        raise ValueError(f"folder '{folder.name}' requires select unless mode is once")
+
+    selected = resolve_variable(context, folder.select)
 
     if not isinstance(selected, (list, tuple)):
         raise TypeError(f"folder '{folder.name}' must resolve to a list/tuple")

@@ -11,9 +11,11 @@ from inference.models.schemas import InferredSchema
 @dataclass(frozen=True)
 class InferenceGraph:
     """Complete inference graph containing all inferred data."""
+
     title: str
     openapi_version: str
     api_version: str
+    description: str
     resources: tuple[InferredResource, ...]
     schemas: tuple[InferredSchema, ...]
     operations: tuple[InferredOperation, ...]

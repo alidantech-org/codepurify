@@ -1,0 +1,165 @@
+"""Dart language adapter."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from contracts.api import ApiContract
+from contracts.emission import EmissionResult
+from contracts.events import ProgressSink, RuntimeEvent
+from contracts.language import LanguagePostResult
+from contracts.template import (
+    TemplateContract,
+    TemplateContractMeta,
+    TemplateDocs,
+    TemplateEmit,
+    TemplateFeatures,
+    TemplateFramework,
+    TemplateLanguage,
+    TemplatePackage,
+    TemplateProject,
+    TemplateProjectEmit,
+    TemplateProjectLang,
+)
+from languages.dart.constants import (
+    DART_LANGUAGE_ALIAS_FLUTTER,
+    DART_LANGUAGE_NAME,
+    DART_TEMPLATE_NAME,
+    FLUTTER_FRAMEWORK_NAME,
+)
+from languages.dart.context import build_dart_context
+from languages.dart.operations import template_operations
+from languages.dart.resources import resource_paths, template_resources
+from languages.dart.schemas import template_schema_groups
+from languages.dart.urls import default_base_url
+from languages.decorators import language_adapter
+
+
+@language_adapter(
+    name=DART_LANGUAGE_NAME,
+    aliases=(DART_LANGUAGE_ALIAS_FLUTTER,),
+    template_name=DART_TEMPLATE_NAME,
+)
+class DartLanguageAdapter:
+    """Build Dart template contracts from the API contract."""
+
+    name: str
+    aliases: tuple[str, ...]
+    template_name: str
+
+    def build_template_contract(
+        self,
+        *,
+        api: ApiContract,
+        output_path: Path,
+        template_root: Path | None = None,
+        dry_run: bool = False,
+        progress: ProgressSink | None = None,
+    ) -> TemplateContract:
+        """Build deterministic Dart template variables."""
+        _notify(progress, "building_dart_contract", "Building Dart template contract")
+
+        context = build_dart_context(
+            api=api,
+            output_path=output_path,
+            template_root=template_root,
+            dry_run=dry_run,
+        )
+
+        resource_path_map = resource_paths(api.resources)
+        schemas = template_schema_groups(api, resource_paths=resource_path_map)
+        schema_by_ref = {schema.ref: schema for schema in api.schemas.all}
+        operations = template_operations(
+            api.operations,
+            resource_paths=resource_path_map,
+            schema_by_ref=schema_by_ref,
+        )
+        resources = template_resources(api.resources, schemas=schemas, operations=operations)
+
+        return TemplateContract(
+            project=TemplateProject(
+                name=context.project_name,
+                version="0.1.0",
+                description=_project_description(api),
+                lang=TemplateProjectLang(
+                    name=DART_LANGUAGE_NAME,
+                    purpose="Flutter API SDK",
+                ),
+                emit=TemplateProjectEmit(
+                    format="dart",
+                    root_path=output_path,
+                ),
+                docs=TemplateDocs(
+                    summary="Generated Flutter API SDK",
+                    description=_project_description(api),
+                ),
+                meta={
+                    "default_base_url": default_base_url(api),
+                    "api_version": context.version,
+                },
+            ),
+            api=api,
+            resources=resources,
+            schemas=schemas,
+            operations=operations,
+            lang=TemplateLanguage(
+                name=self.name,
+                framework=TemplateFramework(name=FLUTTER_FRAMEWORK_NAME),
+                package=TemplatePackage(
+                    name=context.package_name,
+                    version="0.1.0",
+                ),
+                features=TemplateFeatures(),
+                meta={
+                    "api_version": context.version,
+                    "default_base_url": default_base_url(api),
+                },
+            ),
+            emit=TemplateEmit(
+                output_path=output_path,
+                template_root=template_root,
+                dry_run=dry_run,
+                contract_version="1.0",
+            ),
+            meta=TemplateContractMeta(
+                schema_count=len(api.schemas.all),
+                model_count=len(api.schemas.emit_models),
+                dto_count=len(api.schemas.emit_dtos),
+                enum_count=len(api.schemas.emit_enums),
+                primitive_count=len(api.schemas.primitives),
+                operation_count=len(api.operations),
+                resource_count=len(api.resources),
+            ),
+        )
+
+    def after_emit(
+        self,
+        *,
+        result: EmissionResult,
+        progress: ProgressSink | None = None,
+    ) -> LanguagePostResult:
+        """Return Dart post-action hints without running tools yet."""
+        _notify(progress, "dart_post_actions", "Dart post-actions are informational for now")
+        return LanguagePostResult(
+            diagnostics=(
+                "Run `flutter pub get` in the generated package.",
+                "Run `dart format lib` after generation.",
+            )
+        )
+
+
+def _project_description(api: ApiContract) -> str:
+    description = api.info.description.strip()
+
+    if description and description != "-":
+        return description
+
+    return ""
+
+
+def _notify(progress: ProgressSink | None, stage: str, message: str) -> None:
+    """Emit a progress event."""
+    if progress is None:
+        return
+
+    progress(RuntimeEvent(stage=stage, message=message))

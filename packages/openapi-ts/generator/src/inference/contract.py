@@ -127,6 +127,7 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
             title=graph.title,
             openapi_version=graph.openapi_version,
             api_version=graph.api_version,
+            description=graph.description,
         ),
         resources=tuple(_resource(resource, graph) for resource in graph.resources),
         schemas=_schema_groups(schemas),

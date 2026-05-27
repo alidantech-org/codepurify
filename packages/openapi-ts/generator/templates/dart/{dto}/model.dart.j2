@@ -1,0 +1,25 @@
+import 'package:json_annotation/json_annotation.dart';
+
+{%- for import in file.imports %}
+{{ import.statement }}
+{%- endfor %}
+
+part 'model.g.dart';
+
+@JsonSerializable()
+class {{ dto.name.pascal }} {
+  const {{ dto.name.pascal }}({
+{%- for field in dto.fields %}
+    {%- if field.lang.required and not field.lang.nullable %}required {%- endif %}this.{{ field.lang.display_name }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+  });
+
+{%- for field in dto.fields %}
+  final {{ field.lang.type }} {{ field.lang.display_name }};
+{%- endfor %}
+
+  factory {{ dto.name.pascal }}.fromJson(Map<String, dynamic> json) =>
+      _${{ dto.name.pascal }}FromJson(json);
+
+  Map<String, dynamic> toJson() => _${{ dto.name.pascal }}ToJson(this);
+}

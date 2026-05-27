@@ -42,9 +42,9 @@ class PathFolder:
     """Configured folder recipe used by `{folder}` path segments."""
 
     name: str
-    select: str
-    alias: str
     parts: tuple[Any, ...]
+    select: str = ""
+    alias: str = ""
     mode: PathSelectionMode = PathSelectionMode.EACH
     description: str = "-"
 

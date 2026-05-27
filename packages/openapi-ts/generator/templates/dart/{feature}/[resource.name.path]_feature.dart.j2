@@ -1,0 +1,73 @@
+{%- if not resource.operations %}
+// No operations are available for this resource.
+{%- else %}
+import 'package:flutter_api_bridge/flutter_api_bridge.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:{{ lang.package.name }}/{{ project.meta.api_version }}/routes/routes.dart';
+{%- for import in file.imports %}
+{{ import.statement }}
+{%- endfor %}
+class {{ resource.name.pascal | string }}Feature {
+  const {{ resource.name.pascal | string }}Feature(this.ref);
+
+  final Ref ref;
+
+{%- for operation in resource.operations %}
+{{ "\n" }}
+  Future<ApiResult<{{ operation.meta.response_type or 'dynamic' }}>> {{ operation.lang.function_name | string }}({
+{%- if operation.meta.params_type %}
+    required {{ operation.meta.params_type }} params,
+{%- elif operation.meta.has_path_params %}
+{%- for param in operation.meta.path_params %}
+    required String {{ param }},
+{%- endfor %}
+{%- endif %}
+{%- if operation.meta.query_type %}
+    {{ operation.meta.query_type }}? query,
+{%- endif %}
+{%- if operation.meta.body_type %}
+    {%- if operation.request_body and operation.request_body.lang.required %}required {%- endif %} {{ operation.meta.body_type }} body,
+{%- endif %}
+    {%- if operation.lang.method == 'get' %}ApiGetRequestOptions{%- else %}ApiRequestOptions{%- endif %}? options
+  }) {
+    return ref.read(apiProvider.notifier).send(
+          {%- if operation.lang.method == 'get' %}GetRequest{%- elif operation.lang.method == 'post' %}PostRequest{%- elif operation.lang.method == 'put' %}PutRequest{%- elif operation.lang.method == 'patch' %}PatchRequest{%- elif operation.lang.method == 'delete' %}DeleteRequest{%- else %}GetRequest{%- endif %}<{{ operation.meta.response_type or 'dynamic' }}>(
+{%- if operation.meta.has_path_params %}
+            endpoint: V1Routes.{{ resource.name.camel | string }}.{{ operation.meta.route_getter }}(
+{%- if operation.meta.params_type %}
+{%- for param in operation.meta.path_params %}
+              {{ param }}: params.{{ param }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+{%- else %}
+{%- for param in operation.meta.path_params %}
+              {{ param }}: {{ param }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+{%- endif %}
+            ),
+{%- else %}
+            endpoint: V1Routes.{{ resource.name.camel | string }}.{{ operation.meta.route_getter }},
+{%- endif %}
+            options: options{%- if operation.meta.query_type or operation.meta.body_type or operation.meta.response_type %},{%- endif %}
+{%- if operation.meta.query_type %}
+            query: query?.toJson(){%- if operation.meta.body_type or operation.meta.response_type %},{%- endif %}
+{%- endif %}
+{%- if operation.meta.body_type %}
+            body: body.toJson(){%- if operation.meta.response_type %},{%- endif %}
+{%- endif %}
+{%- if operation.meta.response_type %}
+            fromJson: (json) => {{ operation.meta.response_type }}.fromJson(
+              Map<String, dynamic>.from((json as Map?) ?? {})
+            )
+{%- endif %}
+          )
+        );
+  }
+{%- endfor %}
+}
+
+final {{ resource.name.camel | string }}FeatureProvider =
+    Provider<{{ resource.name.pascal | string }}Feature>((ref) {
+  return {{ resource.name.pascal | string }}Feature(ref);
+});
+{%- endif %}

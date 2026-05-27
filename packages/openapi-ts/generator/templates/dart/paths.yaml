@@ -1,0 +1,70 @@
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: true
+
+imports:
+  strategy: package
+
+folders:
+  version:
+    mode: once
+    parts:
+      - lib
+      - [project.meta.api_version]
+
+  model:
+    select: schemas.emit_models
+    as: model
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - schemas
+      - [model.emit.resource_path]
+      - models
+      - [model.name.path]
+
+  dto:
+    select: schemas.emit_dtos
+    as: dto
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - schemas
+      - [dto.emit.resource_path]
+      - dtos
+      # - [dto.emit.folder_path]
+
+  enum:
+    select: schemas.emit_enums
+    as: enum
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - schemas
+      - [enum.emit.resource_path]
+      - enums
+      - [enum.name.path]
+
+  route_root:
+    mode: once
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - routes
+
+  route_group:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - routes
+      - constants
+
+  feature:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - features
