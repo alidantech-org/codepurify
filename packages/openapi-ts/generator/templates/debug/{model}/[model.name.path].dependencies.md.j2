@@ -1,19 +1,23 @@
 # {{ model.name.pascal }} Dependencies
 
-{% if model.emit.dependencies %}
-| Ref | Purpose | Target Kind | Importable | Self | Exists | Import Path |
+## Imports / Links
+
+{% if file.imports %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+{% else %}
+No importable dependencies.
+{% endif %}
+
+## Dependency Graph
+
+{% if file.dependencies %}
+| Ref | Purpose | Target Kind | Importable | Self | Exists | Reason |
 |---|---|---|---:|---:|---:|---|
-{% for dependency in model.emit.dependencies %}
-| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind }}` | {{ dependency.is_importable }} | {{ dependency.is_self }} | {{ dependency.exists }} | `{{ dependency.import_path }}` |
+{% for dependency in file.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind if dependency.target else "-" }}` | {{ dependency.is_importable }} | {{ dependency.is_self }} | {{ dependency.exists }} | `{{ dependency.meta.get("reason", "-") }}` |
 {% endfor %}
 {% else %}
 No dependencies.
 {% endif %}
-
-## Example: Import List
-
-```ts
-{% for dependency in model.emit.imports %}
-import { {{ dependency.target.name.pascal }} } from "{{ dependency.import_path }}";
-{% endfor %}
-```

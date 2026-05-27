@@ -26,6 +26,28 @@
 No enum values exposed.
 {% endif %}
 
+## Imports / Links
+
+{% if file.imports %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+{% else %}
+No importable dependencies.
+{% endif %}
+
+## Dependency Graph
+
+{% if file.dependencies %}
+| Ref | Purpose | Target Kind | Exists | Importable | Self | Reason |
+|---|---|---|---:|---:|---:|---|
+{% for dependency in file.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind if dependency.target else "-" }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | {{ dependency.is_self }} | `{{ dependency.meta.get("reason", "-") }}` |
+{% endfor %}
+{% else %}
+No dependencies.
+{% endif %}
+
 ## Example: TypeScript
 
 ```ts

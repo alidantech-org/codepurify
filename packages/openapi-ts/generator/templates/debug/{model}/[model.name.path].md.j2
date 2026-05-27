@@ -37,16 +37,40 @@
 | `{{ field.name.camel }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.sortable }} | {{ field.lang.selectable }} | {{ field.lang.filterable }} |
 {% endfor %}
 
-## Dependencies
+## Imports / Links
 
-{% if model.emit.dependencies %}
-| Ref | Purpose | Importable | Path |
-|---|---|---:|---|
-{% for dependency in model.emit.dependencies %}
-| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | {{ dependency.is_importable }} | `{{ dependency.import_path }}` |
+{% if file.imports %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+{% else %}
+No importable dependencies.
+{% endif %}
+
+## Dependency Graph
+
+{% if file.dependencies %}
+| Ref | Purpose | Target Kind | Exists | Importable | Self | Primitive | Reason | Link |
+|---|---|---|---:|---:|---:|---:|---|---|
+{% for dependency in file.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind if dependency.target else "-" }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | {{ dependency.is_self }} | {{ dependency.target.is_primitive if dependency.target else false }} | `{{ dependency.meta.get("reason", "-") }}` | `{% if dependency.is_importable %}{% for import in file.imports %}{% if import.ref == dependency.ref %}{{ import.path }}{% endif %}{% endfor %}{% else %}-{% endif %}` |
 {% endfor %}
 {% else %}
 No dependencies.
+{% endif %}
+
+## Inheritance
+
+{% if file.dependencies %}
+| Ref | Exists | Importable | Link |
+|---|---:|---:|---|
+{% for dependency in file.dependencies %}
+{% if dependency.is_inheritance %}
+| `{{ dependency.ref }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | `{% if dependency.is_importable %}{% for import in file.imports %}{% if import.ref == dependency.ref %}{{ import.path }}{% endif %}{% endfor %}{% else %}-{% endif %}` |
+{% endif %}
+{% endfor %}
+{% else %}
+No inheritance dependencies.
 {% endif %}
 
 ## Example: TypeScript

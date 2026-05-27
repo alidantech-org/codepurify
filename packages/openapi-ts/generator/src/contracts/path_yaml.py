@@ -7,11 +7,14 @@ from typing import Any
 from contracts.paths import (
     PathConfig,
     PathFolder,
+    PathImportConfig,
     PathSelectionMode,
     default_path_rules,
 )
 
 KEY_FOLDERS = "folders"
+KEY_IMPORTS = "imports"
+KEY_STRATEGY = "strategy"
 KEY_SELECT = "select"
 KEY_AS = "as"
 KEY_ALIAS = "alias"
@@ -24,6 +27,9 @@ KEY_ALLOW_RAW_FILES = "allow_raw_files"
 KEY_META = "meta"
 
 DEFAULT_TEMPLATE_EXTENSION = ".j2"
+IMPORT_STRATEGY_RELATIVE = "relative"
+IMPORT_STRATEGY_NONE = "none"
+ALLOWED_IMPORT_STRATEGIES = {IMPORT_STRATEGY_RELATIVE, IMPORT_STRATEGY_NONE}
 
 
 class PathYamlError(ValueError):
@@ -40,6 +46,7 @@ def path_config_from_yaml(data: dict[str, Any] | None) -> PathConfig:
 
     return PathConfig(
         folders=_parse_folders(data.get(KEY_FOLDERS, {})),
+        imports=_parse_imports(data.get(KEY_IMPORTS)),
         template_extension=_string(
             data.get(KEY_TEMPLATE_EXTENSION),
             default=DEFAULT_TEMPLATE_EXTENSION,
@@ -58,6 +65,25 @@ def path_config_from_yaml(data: dict[str, Any] | None) -> PathConfig:
         rules=default_path_rules(),
         meta=_dict(data.get(KEY_META), field_name=KEY_META),
     )
+
+
+def _parse_imports(raw: Any) -> PathImportConfig:
+    if raw is None:
+        return PathImportConfig()
+
+    if not isinstance(raw, dict):
+        raise PathYamlError("'imports' must be an object.")
+
+    strategy = _string(
+        raw.get(KEY_STRATEGY),
+        default=IMPORT_STRATEGY_RELATIVE,
+        field_name=f"{KEY_IMPORTS}.{KEY_STRATEGY}",
+    )
+    if strategy not in ALLOWED_IMPORT_STRATEGIES:
+        allowed = ", ".join(sorted(ALLOWED_IMPORT_STRATEGIES))
+        raise PathYamlError(f"Invalid imports.strategy: {strategy}. Allowed: {allowed}.")
+
+    return PathImportConfig(strategy=strategy)
 
 
 def _parse_folders(raw: Any) -> tuple[PathFolder, ...]:

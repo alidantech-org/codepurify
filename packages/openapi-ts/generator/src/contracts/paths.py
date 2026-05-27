@@ -50,6 +50,13 @@ class PathFolder:
 
 
 @dataclass(frozen=True)
+class PathImportConfig:
+    """Configured import/link planning behavior."""
+
+    strategy: str = "relative"
+
+
+@dataclass(frozen=True)
 class PathToken:
     """Parsed token from a template path part."""
 
@@ -73,6 +80,7 @@ class PathConfig:
     """Resolved path authoring configuration."""
 
     folders: tuple[PathFolder, ...] = ()
+    imports: PathImportConfig = field(default_factory=PathImportConfig)
     template_extension: str = ".j2"
     strip_template_extension: bool = True
     allow_raw_files: bool = True

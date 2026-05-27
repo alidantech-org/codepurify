@@ -1,0 +1,45 @@
+# {{ operation.name.pascal }}
+
+{{ operation.docs.description }}
+
+## Endpoint
+
+```http
+{{ operation.api.method }} {{ operation.api.path }}
+```
+
+## Operation Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ operation.name.path }}` |
+| Method | `{{ operation.api.method }}` |
+| Path | `{{ operation.api.path }}` |
+| Function Name | `{{ operation.lang.function_name }}` |
+| Display Name | `{{ operation.lang.display_name }}` |
+| Parameters | {{ operation.meta.parameter_count }} |
+| Responses | {{ operation.meta.response_count }} |
+| Has Request Body | {{ operation.meta.has_request_body }} |
+| Target Ref | `{{ operation.meta.target_ref }}` |
+
+## Operation Imports / Links
+
+{% if file.imports %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+{% else %}
+No importable operation dependencies.
+{% endif %}
+
+## Operation Dependency Graph
+
+{% if file.dependencies %}
+| Ref | Purpose | Target Kind | Exists | Importable | Reason |
+|---|---|---|---:|---:|---|
+{% for dependency in file.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind if dependency.target else "-" }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | `{{ dependency.meta.get("reason", "-") }}` |
+{% endfor %}
+{% else %}
+No operation dependencies.
+{% endif %}

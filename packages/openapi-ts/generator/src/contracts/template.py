@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from contracts.api import (
@@ -133,11 +133,25 @@ class TemplateDependency:
 
 
 @dataclass(frozen=True)
+class TemplateImport:
+    """Prepared language-specific import/link visible to templates."""
+
+    ref: str
+    label: str = "-"
+    path: str = "-"
+    statement: str = "-"
+    style: str = "-"
+    symbols: tuple[str, ...] = ()
+    dependency: TemplateDependency | None = None
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class TemplateFile:
     """Current emitted file context injected by emission after path planning."""
 
     output_path: Path
-    relative_path: Path
+    relative_path: PurePosixPath
     name: str
     stem: str
     suffix: str
@@ -146,7 +160,7 @@ class TemplateFile:
     group: TemplateGroup = TemplateGroup.GLOBAL
     item_key: TemplateItemKey | None = None
     dependencies: tuple[TemplateDependency, ...] = ()
-    imports: tuple[TemplateDependency, ...] = ()
+    imports: tuple[TemplateImport, ...] = ()
     meta: MetaMap = field(default_factory=dict)
 
 

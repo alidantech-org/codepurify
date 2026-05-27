@@ -90,7 +90,7 @@ def test_resource_first_debug_docs_paths_are_planned(project_root, tmp_path, sam
     assert "docs/resources/platform/auth/users/index.md" in planned
     assert "docs/resources/platform/auth/users/operations.md" in planned
     assert "docs/resources/platform/auth/users/schemas.md" in planned
-    assert "docs/resources/platform/auth/users/operations/get_list_users.md" not in planned
+    assert "docs/resources/platform/auth/users/operations/get_list_users.md" in planned
     assert "docs/resources/platform/auth/users/schemas/models/user_model.md" in planned
     assert "docs/resources/platform/auth/users/schemas/dtos/create_user_body.md" in planned
     assert "docs/resources/platform/auth/users/schemas/enums/user_status.md" in planned

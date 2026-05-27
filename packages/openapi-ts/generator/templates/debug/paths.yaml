@@ -2,6 +2,9 @@ template_extension: ".j2"
 strip_template_extension: true
 allow_raw_files: true
 
+imports:
+  strategy: relative
+
 folders:
   resource:
     select: resources
@@ -41,4 +44,11 @@ folders:
       - schemas
       - enums
 
-  
+  operation:
+    select: operations
+    as: operation
+    parts:
+      - docs
+      - resources
+      - [operation.emit.resource_path]
+      - operations

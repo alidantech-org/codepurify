@@ -337,6 +337,7 @@ def _operation(
     file_name = f"{method}_{safe_file_name(operation.name.path, fallback=operation.id)}"
     folder_path = (*resource_path, "operations")
     relative_doc_path = (*folder_path, f"{file_name}.md")
+    dependencies = _operation_dependencies(operation, schema_by_ref)
 
     return TemplateOperation(
         api=operation,
@@ -362,6 +363,8 @@ def _operation(
             file_name=file_name,
             relative_doc_path=relative_doc_path,
             dependency_refs=_operation_dependency_refs(operation),
+            dependencies=dependencies,
+            imports=_imports(dependencies),
         ),
         docs=TemplateDocs(
             description=operation.description,
@@ -639,6 +642,58 @@ def _field_dependencies(
                 ref=ref,
                 purpose=TemplateDependencyPurpose.ARRAY_ITEM,
                 reason=f"Field {field.name.camel} uses array item ref {ref}",
+                schema_by_ref=schema_by_ref,
+            )
+        )
+
+    return tuple(deps)
+
+
+def _operation_dependencies(
+    operation: ApiOperation,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[TemplateDependency, ...]:
+    deps: list[TemplateDependency] = []
+
+    for parameter in operation.parameters:
+        for ref in _parameter_dependency_refs(parameter):
+            deps.append(
+                _dependency(
+                    ref=ref,
+                    purpose=TemplateDependencyPurpose.OPERATION_PARAMETER,
+                    reason=f"Parameter {parameter.name.camel} uses schema ref {ref}",
+                    schema_by_ref=schema_by_ref,
+                )
+            )
+
+    if operation.request_body is not None:
+        for ref in operation.request_body.schema_refs:
+            deps.append(
+                _dependency(
+                    ref=ref,
+                    purpose=TemplateDependencyPurpose.OPERATION_REQUEST_BODY,
+                    reason=f"Request body uses schema ref {ref}",
+                    schema_by_ref=schema_by_ref,
+                )
+            )
+
+    for response in operation.responses:
+        for ref in response.schema_refs:
+            deps.append(
+                _dependency(
+                    ref=ref,
+                    purpose=TemplateDependencyPurpose.OPERATION_RESPONSE,
+                    reason=f"Response {response.status_code} uses schema ref {ref}",
+                    schema_by_ref=schema_by_ref,
+                )
+            )
+
+    if operation.target is not None:
+        deps.append(
+            _dependency(
+                ref=operation.target.ref,
+                purpose=TemplateDependencyPurpose.OPERATION_TARGET,
+                reason=f"Operation target uses schema ref {operation.target.ref}",
                 schema_by_ref=schema_by_ref,
             )
         )

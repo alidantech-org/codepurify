@@ -6,7 +6,7 @@ know about concrete language implementations, OpenAPI documents, or inference.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -19,8 +19,14 @@ from contracts.emission import (
 )
 from contracts.events import ProgressSink, RuntimeEvent
 from contracts.template import TemplateContract
+from contracts.template import TemplateDependency, TemplateFile, TemplateGroup
+from emission.dependencies.output_index import build_output_index
+from emission.dependencies.resolver import resolve_file_dependencies
+from emission.imports.base import ImportPlanningContext
+from emission.imports.markdown import MarkdownImportPlanner
+from emission.imports.paths import to_posix_path
 from emission.paths.config_loader import load_path_config
-from emission.paths.selection import CONTEXT_FOLDER_PARTS, expand_folder_contexts
+from emission.paths.selection import CONTEXT_FOLDER_NAME, CONTEXT_FOLDER_PARTS, expand_folder_contexts
 from emission.templates.descriptor import TemplateDescriptor
 from emission.templates.path_expander import expand_template_path
 from emission.templates.renderer import render_template
@@ -28,6 +34,25 @@ from emission.templates.scanner import scan_templates
 from emission.writer.file_writer import write_text_if_changed
 
 GROUP_GLOBAL = "global"
+
+
+@dataclass
+class _DependencyStats:
+    resolved: int = 0
+    importable: int = 0
+    primitive: int = 0
+    missing: int = 0
+    self_skipped: int = 0
+    inheritance: int = 0
+
+    def add(self, dependencies: tuple[TemplateDependency, ...]) -> None:
+        for dependency in dependencies:
+            self.resolved += 1
+            self.importable += int(dependency.is_importable)
+            self.self_skipped += int(dependency.is_self)
+            self.inheritance += int(dependency.is_inheritance)
+            self.missing += int(not dependency.exists)
+            self.primitive += int(bool(dependency.target and dependency.target.is_primitive))
 
 
 @dataclass(frozen=True)
@@ -98,14 +123,20 @@ def build_emission_plan(
                 output_root=output_root,
                 template_extension=path_config.template_extension,
             )
-            content = _resolve_content(descriptor, template_root, context)
+            context = _context_with_file(
+                descriptor=descriptor,
+                context=context,
+                output_path=output_path,
+                output_root=output_root,
+                path_config=path_config,
+            )
 
             files.append(
                 EmissionFile(
                     template_path=descriptor.relative_path,
                     output_path=output_path,
                     context=context,
-                    content=content,
+                    content=None,
                     group=_descriptor_group(descriptor),
                     is_template=_is_jinja_template(
                         descriptor.relative_path,
@@ -114,6 +145,17 @@ def build_emission_plan(
                     compare_mode=_compare_mode_for_output(output_path),
                 )
             )
+
+    files = _resolve_file_contexts(
+        files=files,
+        output_root=output_root,
+        path_config=path_config,
+        progress=progress,
+    )
+    files = [
+        replace(file, content=_resolve_content(file.template_path, template_root, file.context))
+        for file in files
+    ]
 
     _notify(
         progress,
@@ -231,14 +273,142 @@ def _resolve_output_path(
 
 
 def _resolve_content(
-    descriptor: TemplateDescriptor,
+    template_path: Path,
     template_root: Path,
     context: TemplateContext,
 ) -> str | bytes | None:
-    if _is_jinja_template(descriptor.relative_path):
-        return render_template(template_root, descriptor.relative_path, context)
+    if _is_jinja_template(template_path):
+        return render_template(template_root, template_path, context)
 
     return None
+
+
+def _context_with_file(
+    *,
+    descriptor: TemplateDescriptor,
+    context: TemplateContext,
+    output_path: Path,
+    output_root: Path,
+    path_config: Any,
+) -> TemplateContext:
+    current = _selected_item(context, path_config)
+    emit = getattr(current, "emit", None)
+    relative_path = to_posix_path(output_path.relative_to(output_root))
+    suffix = "".join(relative_path.suffixes[-1:])
+    template_file = TemplateFile(
+        output_path=output_path,
+        relative_path=relative_path,
+        name=relative_path.name,
+        stem=relative_path.stem,
+        suffix=suffix,
+        depth=max(len(relative_path.parts) - 1, 0),
+        root_prefix=_root_prefix(relative_path),
+        group=emit.group if emit is not None else TemplateGroup.GLOBAL,
+        item_key=emit.item_key if emit is not None else None,
+    )
+    bound = dict(context)
+    bound["file"] = template_file
+    return bound
+
+
+def _resolve_file_contexts(
+    *,
+    files: list[EmissionFile],
+    output_root: Path,
+    path_config: Any,
+    progress: ProgressSink | None,
+) -> list[EmissionFile]:
+    output_index = build_output_index(files, output_root)
+    planner = MarkdownImportPlanner()
+    resolved_files: list[EmissionFile] = []
+    stats = _DependencyStats()
+
+    for file in files:
+        template_file = file.context.get("file")
+        if not isinstance(template_file, TemplateFile):
+            resolved_files.append(file)
+            continue
+
+        dependencies = resolve_file_dependencies(
+            current_file=template_file,
+            item_dependencies=_item_dependencies(file.context, path_config),
+            output_index=output_index,
+        )
+        imports = planner.plan_imports(
+            ImportPlanningContext(
+                current_file=template_file,
+                dependencies=dependencies,
+                strategy=path_config.imports.strategy,
+                output_root=output_root,
+            )
+        )
+        stats.add(dependencies)
+        next_file = replace(template_file, dependencies=dependencies, imports=imports)
+        next_context = {**file.context, "file": next_file}
+        resolved_files.append(replace(file, context=next_context))
+
+    _notify_dependency_stats(progress, stats)
+    return resolved_files
+
+
+def _selected_item(context: TemplateContext, path_config: Any) -> Any:
+    folder_name = context.get(CONTEXT_FOLDER_NAME)
+    if not folder_name:
+        return None
+
+    folder = path_config.folder_by_name().get(folder_name)
+    if folder is None:
+        return None
+
+    return context.get(folder.alias)
+
+
+def _item_dependencies(context: TemplateContext, path_config: Any) -> tuple[TemplateDependency, ...]:
+    item = _selected_item(context, path_config)
+    dependencies = _dependencies_from_item(item)
+    return _unique_dependencies(dependencies)
+
+
+def _dependencies_from_item(item: Any) -> tuple[TemplateDependency, ...]:
+    emit = getattr(item, "emit", None)
+    dependencies = list(getattr(emit, "dependencies", ()))
+
+    for child_name in ("operations", "models", "dtos", "enums", "schemas"):
+        for child in getattr(item, child_name, ()):
+            child_emit = getattr(child, "emit", None)
+            dependencies.extend(getattr(child_emit, "dependencies", ()))
+
+    return tuple(dependencies)
+
+
+def _unique_dependencies(dependencies: tuple[TemplateDependency, ...]) -> tuple[TemplateDependency, ...]:
+    seen: set[tuple[str, str]] = set()
+    unique: list[TemplateDependency] = []
+    for dependency in dependencies:
+        key = (dependency.ref, str(dependency.purpose))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(dependency)
+    return tuple(unique)
+
+
+def _root_prefix(relative_path: Any) -> str:
+    depth = max(len(relative_path.parts) - 1, 0)
+    return "." if depth == 0 else "/".join(".." for _ in range(depth))
+
+
+def _notify_dependency_stats(progress: ProgressSink | None, stats: _DependencyStats) -> None:
+    _notify(
+        progress,
+        "dependencies_resolved",
+        "Resolved dependencies: "
+        f"{stats.resolved}; Importable dependencies: {stats.importable}; "
+        f"Primitive dependencies skipped: {stats.primitive}; "
+        f"Missing dependency targets: {stats.missing}; "
+        f"Self dependencies skipped: {stats.self_skipped}; "
+        f"Inheritance dependencies: {stats.inheritance}",
+    )
 
 
 def _write_raw_file(*, source_path: Path, output_path: Path) -> EmissionWriteResult:
