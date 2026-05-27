@@ -1,0 +1,86 @@
+# {{ model.name.pascal }}
+
+{{ model.docs.description }}
+
+## Model Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ model.name.path }}` |
+| Kind | `{{ model.api.kind }}` |
+| Language Kind | `{{ model.lang.kind }}` |
+| Type | `{{ model.lang.type }}` |
+| Display Name | `{{ model.lang.display_name }}` |
+| Symbol Name | `{{ model.lang.symbol_name }}` |
+| Field Count | {{ model.lang.field_count }} |
+| Dependency Count | {{ model.lang.dependency_count }} |
+| Deprecated | {{ model.docs.deprecated }} |
+
+## Emission
+
+| Field | Value |
+|---|---|
+| Group | `{{ model.emit.group }}` |
+| Item Key | `{{ model.emit.item_key }}` |
+| Key | `{{ model.emit.key }}` |
+| Ref | `{{ model.emit.ref }}` |
+| Resource Path | `{{ model.emit.resource_path | join("/") }}` |
+| Folder Path | `{{ model.emit.folder_path | join("/") }}` |
+| File Name | `{{ model.emit.file_name }}` |
+| Relative Doc Path | `{{ model.emit.relative_doc_path | join("/") }}` |
+
+## Fields
+
+| Field | Type | Required | Nullable | Sortable | Selectable | Filterable |
+|---|---|---:|---:|---:|---:|---:|
+{% for field in model.fields %}
+| `{{ field.name.camel }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.sortable }} | {{ field.lang.selectable }} | {{ field.lang.filterable }} |
+{% endfor %}
+
+## Dependencies
+
+{% if model.emit.dependencies %}
+| Ref | Purpose | Importable | Path |
+|---|---|---:|---|
+{% for dependency in model.emit.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | {{ dependency.is_importable }} | `{{ dependency.import_path }}` |
+{% endfor %}
+{% else %}
+No dependencies.
+{% endif %}
+
+## Example: TypeScript
+
+```ts
+interface {{ model.name.pascal }} {
+{% for field in model.fields %}
+  {{ field.name.camel }}{% if not field.lang.required %}?{% endif %}: {{ field.lang.type }};
+{% endfor %}
+}
+```
+
+## Example: Dart
+
+```dart
+class {{ model.name.pascal }} {
+{% for field in model.fields %}
+  final {{ field.lang.type }} {{ field.name.camel }};
+{% endfor %}
+
+  const {{ model.name.pascal }}({
+{% for field in model.fields %}
+    {% if field.lang.required %}required {% endif %}this.{{ field.name.camel }},
+{% endfor %}
+  });
+}
+```
+
+## Example: JSON
+
+```json
+{
+{% for field in model.fields %}
+  "{{ field.name.camel }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+}
+```

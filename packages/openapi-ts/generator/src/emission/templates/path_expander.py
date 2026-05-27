@@ -19,15 +19,23 @@ def expand_template_path(
     template_extension: str = ".j2",
 ) -> Path:
     """Expand a template-relative output path using a render context."""
-    output_parts: list[str] = []
-
-    for raw_part in template_path.parts:
-        output_parts.extend(_expand_part(raw_part, context))
-
-    output_path = Path(*output_parts)
+    output_path = Path(*expand_template_parts(template_path.parts, context))
     output_path = _strip_template_suffix(output_path, template_extension)
     validate_relative_path(output_path)
     return output_path
+
+
+def expand_template_parts(
+    parts: tuple[Any, ...],
+    context: Mapping[str, Any],
+) -> tuple[str, ...]:
+    """Expand dynamic template path parts without stripping template suffixes."""
+    output_parts: list[str] = []
+
+    for raw_part in parts:
+        output_parts.extend(_expand_part(str(raw_part), context))
+
+    return tuple(output_parts)
 
 
 def _expand_part(raw_part: str, context: Mapping[str, Any]) -> list[str]:
@@ -36,14 +44,14 @@ def _expand_part(raw_part: str, context: Mapping[str, Any]) -> list[str]:
     if len(parsed.tokens) == 1:
         token = parsed.tokens[0]
 
-        if token.kind == PathTokenKind.SELECTOR:
-            raise ValueError(f"selector segment was not removed before path expansion: {raw_part}")
+        if token.kind == PathTokenKind.FOLDER:
+            raise ValueError(f"folder recipe segment was not resolved before path expansion: {raw_part}")
 
         if token.kind == PathTokenKind.ESCAPED_DYNAMIC:
             return _validated_parts((f"[{token.expression}]",))
 
-        if token.kind == PathTokenKind.ESCAPED_SELECTOR:
-            return _validated_parts((f"({token.expression})",))
+        if token.kind == PathTokenKind.ESCAPED_FOLDER:
+            return _validated_parts((f"{{{token.expression}}}",))
 
         if token.kind == PathTokenKind.DYNAMIC and token.raw == raw_part:
             value = resolve_variable(context, token.expression)
@@ -80,8 +88,8 @@ def _expand_inline(raw_part: str, context: Mapping[str, Any]) -> str:
         if token.kind == PathTokenKind.ESCAPED_DYNAMIC:
             result = result.replace(token.raw, f"[{token.expression}]")
 
-        if token.kind == PathTokenKind.ESCAPED_SELECTOR:
-            result = result.replace(token.raw, f"({token.expression})")
+        if token.kind == PathTokenKind.ESCAPED_FOLDER:
+            result = result.replace(token.raw, f"{{{token.expression}}}")
 
     return result
 

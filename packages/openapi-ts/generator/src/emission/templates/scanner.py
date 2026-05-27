@@ -25,6 +25,9 @@ def scan_templates(template_root: Path) -> tuple[TemplateDescriptor, ...]:
         if relative_path.as_posix() == PATH_CONFIG_FILE:
             continue
 
+        if any(part.startswith("_") for part in relative_path.parts):
+            continue
+
         descriptors.append(describe_template(template_root, relative_path))
 
     return tuple(descriptors)

@@ -42,8 +42,10 @@ def test_debug_emit_end_to_end(tmp_path) -> None:
     summary_content = summary_path.read_text(encoding="utf-8")
     assert "API:" in summary_content
     assert "Language: debug" in summary_content
-    assert (output_path / "res" / "platform" / "auth" / "users" / "resource.txt").exists()
-    assert (output_path / "res" / "shared" / "resource.txt").exists()
+    assert (output_path / "docs" / "resources" / "platform" / "auth" / "users" / "index.md").exists()
+    assert (output_path / "docs" / "resources" / "platform" / "auth" / "users" / "operations.md").exists()
+    assert (output_path / "docs" / "resources" / "platform" / "auth" / "users" / "schemas.md").exists()
+    assert (output_path / "docs" / "resources" / "shared" / "index.md").exists()
 
 
 def test_debug_emit_dry_run(tmp_path, sample_openapi_path) -> None:
@@ -68,6 +70,31 @@ def test_debug_emit_dry_run(tmp_path, sample_openapi_path) -> None:
 
     # Verify no files were actually written
     assert not output_path.exists()
+
+
+def test_resource_first_debug_docs_paths_are_planned(project_root, tmp_path, sample_openapi_path) -> None:
+    template_root = project_root / "templates" / "debug"
+    output_path = tmp_path / "output"
+
+    app = GeneratorApp()
+    result = app.emit(
+        input_path=sample_openapi_path,
+        language="debug",
+        output_path=output_path,
+        templates_path=template_root,
+        dry_run=True,
+    )
+
+    planned = {path.relative_to(output_path).as_posix() for path in result.planned}
+
+    assert "docs/resources/platform/auth/users/index.md" in planned
+    assert "docs/resources/platform/auth/users/operations.md" in planned
+    assert "docs/resources/platform/auth/users/schemas.md" in planned
+    assert "docs/resources/platform/auth/users/operations/get_list_users.md" not in planned
+    assert "docs/resources/platform/auth/users/schemas/models/user_model.md" in planned
+    assert "docs/resources/platform/auth/users/schemas/dtos/create_user_body.md" in planned
+    assert "docs/resources/platform/auth/users/schemas/enums/user_status.md" in planned
+    assert "docs/resources/shared/schemas/models/base_public_model.md" in planned
 
 
 def _write_resource_path_openapi(path: Path) -> Path:

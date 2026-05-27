@@ -1,0 +1,19 @@
+# {{ model.name.pascal }} Dependencies
+
+{% if model.emit.dependencies %}
+| Ref | Purpose | Target Kind | Importable | Self | Exists | Import Path |
+|---|---|---|---:|---:|---:|---|
+{% for dependency in model.emit.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind }}` | {{ dependency.is_importable }} | {{ dependency.is_self }} | {{ dependency.exists }} | `{{ dependency.import_path }}` |
+{% endfor %}
+{% else %}
+No dependencies.
+{% endif %}
+
+## Example: Import List
+
+```ts
+{% for dependency in model.emit.imports %}
+import { {{ dependency.target.name.pascal }} } from "{{ dependency.import_path }}";
+{% endfor %}
+```

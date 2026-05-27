@@ -1,0 +1,37 @@
+# {{ model.name.pascal }} Fields
+
+{% for field in model.fields %}
+## {{ field.name.camel }}
+
+{{ field.docs.description }}
+
+| Field | Value |
+|---|---|
+| Name | `{{ field.name.camel }}` |
+| Type | `{{ field.lang.type }}` |
+| Kind | `{{ field.lang.kind }}` |
+| Display Name | `{{ field.lang.display_name }}` |
+| Required | {{ field.lang.required }} |
+| Nullable | {{ field.lang.nullable }} |
+| Query Enabled | {{ field.lang.query_enabled }} |
+| Sortable | {{ field.lang.sortable }} |
+| Selectable | {{ field.lang.selectable }} |
+| Filterable | {{ field.lang.filterable }} |
+| Searchable | {{ field.lang.searchable }} |
+| Operators | `{{ field.lang.operators | join(", ") }}` |
+| Default | `{{ field.meta.default }}` |
+| Raw Type | `{{ field.meta.raw_type }}` |
+
+{% if field.meta.enum_values %}
+### Enum Values
+
+```json
+[
+{% for value in field.meta.enum_values %}
+  "{{ value }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+]
+```
+{% endif %}
+
+{% endfor %}

@@ -6,28 +6,35 @@ from pathlib import Path
 
 
 def write_debug_templates(root: Path) -> Path:
-    """Create a minimal debug template tree with selector paths."""
+    """Create a minimal debug template tree with folder recipe paths."""
     template_root = root / "debug"
-    (template_root / "(schemas)" / "schemas" / "[name.path]").mkdir(parents=True)
-    (template_root / "(resources)" / "res" / "[path]" / "[name.path]").mkdir(parents=True)
+    (template_root / "{resource}").mkdir(parents=True)
+    (template_root / "{model}").mkdir(parents=True)
 
     # Write paths.yaml configuration
     (template_root / "paths.yaml").write_text(
-        """variables:
-  schemas:
-    select: schemas.all
-    as: schema
-    expose:
-      name: schema.name
-      kind: schema.api.kind
+        """template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: true
 
-  resources:
+folders:
+  resource:
     select: resources
     as: resource
-    expose:
-      name: resource.name
-      path: resource.path
-      path_name: resource.path_name
+    parts:
+      - docs
+      - resources
+      - [resource.emit.resource_path]
+
+  model:
+    select: schemas.emit_models
+    as: model
+    parts:
+      - docs
+      - resources
+      - [model.emit.resource_path]
+      - schemas
+      - models
 """,
         encoding="utf-8",
     )
@@ -36,12 +43,20 @@ def write_debug_templates(root: Path) -> Path:
         "API: {{ api.info.title }}\nLanguage: {{ lang.name }}\n",
         encoding="utf-8",
     )
-    (template_root / "(schemas)" / "schemas" / "[name.path]" / "schema.txt.j2").write_text(
-        "Schema: {{ name.pascal }}\nKind: {{ kind }}\n",
+    (template_root / "{resource}" / "index.md.j2").write_text(
+        "Resource: {{ resource.name.pascal }}\n",
         encoding="utf-8",
     )
-    (template_root / "(resources)" / "res" / "[path]" / "[name.path]" / "resource.txt.j2").write_text(
-        "Resource: {{ name.pascal }}\n",
+    (template_root / "{resource}" / "operations.md.j2").write_text(
+        "Operations: {{ resource.operations | length }}\n",
+        encoding="utf-8",
+    )
+    (template_root / "{resource}" / "schemas.md.j2").write_text(
+        "Schemas: {{ resource.schemas | length }}\n",
+        encoding="utf-8",
+    )
+    (template_root / "{model}" / "[model.name.path].md.j2").write_text(
+        "Schema: {{ model.name.pascal }}\nKind: {{ model.api.kind }}\n",
         encoding="utf-8",
     )
     (template_root / ".gitignore").write_text(

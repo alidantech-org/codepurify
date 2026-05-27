@@ -1,0 +1,66 @@
+# {{ dto.name.pascal }}
+
+{{ dto.docs.description }}
+
+## DTO Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ dto.name.path }}` |
+| Kind | `{{ dto.api.kind }}` |
+| Language Kind | `{{ dto.lang.kind }}` |
+| Type | `{{ dto.lang.type }}` |
+| Display Name | `{{ dto.lang.display_name }}` |
+| Symbol Name | `{{ dto.lang.symbol_name }}` |
+| Field Count | {{ dto.lang.field_count }} |
+| Query Enabled | {{ dto.lang.query_enabled }} |
+| Deprecated | {{ dto.docs.deprecated }} |
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| Is Alias | {{ dto.meta.is_alias }} |
+| Alias Of | `{{ dto.meta.alias_of }}` |
+| Query Enabled | {{ dto.meta.query_enabled }} |
+| Composition Refs | `{{ dto.meta.composition_refs | join(", ") }}` |
+| Inherited Refs | `{{ dto.meta.inherited_refs | join(", ") }}` |
+
+## Fields
+
+| Field | Type | Required | Nullable | Query | Operators |
+|---|---|---:|---:|---:|---|
+{% for field in dto.fields %}
+| `{{ field.name.camel }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.query_enabled }} | `{{ field.lang.operators | join(", ") }}` |
+{% endfor %}
+
+## Example: Query DTO
+
+```ts
+const query: {{ dto.name.pascal }} = {
+{% for field in dto.fields %}
+  {{ field.name.camel }}: undefined,
+{% endfor %}
+};
+```
+
+## Example: Request Body
+
+```json
+{
+{% for field in dto.fields %}
+  "{{ field.name.camel }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+}
+```
+
+## Example: Python TypedDict
+
+```python
+from typing import TypedDict
+
+class {{ dto.name.pascal }}(TypedDict, total=False):
+{% for field in dto.fields %}
+    {{ field.name.snake }}: str
+{% endfor %}
+```

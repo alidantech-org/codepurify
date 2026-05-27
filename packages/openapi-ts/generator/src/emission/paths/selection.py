@@ -1,64 +1,55 @@
-"""Selector expansion for template paths."""
+"""Folder recipe expansion for template paths."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any
 
-from contracts.paths import PathConfig, PathSelectionMode, PathVariable
+from contracts.paths import PathConfig, PathFolder, PathSelectionMode
+from emission.templates.path_expander import expand_template_parts
 from emission.templates.resolver import resolve_variable
 
+CONTEXT_FOLDER_NAME = "__path_folder_name"
+CONTEXT_FOLDER_PARTS = "__path_folder_parts"
 
-def expand_selector_contexts(
+
+def expand_folder_contexts(
     base_context: Mapping[str, Any],
-    selector_names: tuple[str, ...],
+    folder_name: str,
     path_config: PathConfig,
 ) -> tuple[dict[str, Any], ...]:
-    """Expand selector names into render contexts."""
-    contexts = (dict(base_context),)
-    variables = path_config.variable_by_name()
+    """Expand a folder recipe into render contexts with resolved folder parts."""
+    folders = path_config.folder_by_name()
 
-    for selector_name in selector_names:
-        if selector_name not in variables:
-            raise KeyError(f"path selector not configured in paths.yaml: {selector_name}")
+    if folder_name not in folders:
+        raise KeyError(f"path folder not configured in paths.yaml: {folder_name}")
 
-        variable = variables[selector_name]
-        contexts = _expand_one(contexts, variable)
-
-    return contexts
+    folder = folders[folder_name]
+    return _expand_one(dict(base_context), folder)
 
 
 def _expand_one(
-    contexts: tuple[dict[str, Any], ...],
-    variable: PathVariable,
+    context: dict[str, Any],
+    folder: PathFolder,
 ) -> tuple[dict[str, Any], ...]:
-    expanded: list[dict[str, Any]] = []
+    selected = resolve_variable(context, folder.select)
 
-    for context in contexts:
-        selected = resolve_variable(context, variable.select)
+    if folder.mode == PathSelectionMode.ONCE:
+        return (_bind_context(context, folder, selected),)
 
-        if variable.mode == PathSelectionMode.ONCE:
-            expanded.append(_bind_context(context, variable, selected))
-            continue
+    if not isinstance(selected, (list, tuple)):
+        raise TypeError(f"folder '{folder.name}' must resolve to a list/tuple")
 
-        if not isinstance(selected, (list, tuple)):
-            raise TypeError(f"selector '{variable.name}' must resolve to a list/tuple")
-
-        for item in selected:
-            expanded.append(_bind_context(context, variable, item))
-
-    return tuple(expanded)
+    return tuple(_bind_context(context, folder, item) for item in selected)
 
 
 def _bind_context(
     context: dict[str, Any],
-    variable: PathVariable,
+    folder: PathFolder,
     item: Any,
 ) -> dict[str, Any]:
     bound = dict(context)
-    bound[variable.alias] = item
-
-    for exposed in variable.expose:
-        bound[exposed.name] = resolve_variable(bound, exposed.expression)
-
+    bound[folder.alias] = item
+    bound[CONTEXT_FOLDER_NAME] = folder.name
+    bound[CONTEXT_FOLDER_PARTS] = expand_template_parts(folder.parts, bound)
     return bound

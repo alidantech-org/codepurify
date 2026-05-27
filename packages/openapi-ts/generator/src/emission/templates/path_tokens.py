@@ -1,11 +1,4 @@
-"""Parser for template path tokens.
-
-Path syntax:
-- `(variable)` is a selector segment and is not emitted.
-- `[expression]` is a dynamic emitted path value.
-- `[[value]]` emits literal `[value]`.
-- `((value))` emits literal `(value)`.
-"""
+"""Parser for template path tokens."""
 
 from __future__ import annotations
 
@@ -14,16 +7,15 @@ import re
 
 from contracts.paths import PathToken, PathTokenKind
 
-SELECTOR_PATTERN = r"^\((?!\()(.+?)(?<!\))\)$"
+FOLDER_PATTERN = r"^\{(?!\{)(.+?)(?<!\})\}$"
 DYNAMIC_SEGMENT_PATTERN = r"^\[(?!\[)(.+?)(?<!\])\]$"
-ESCAPED_SELECTOR_PATTERN = r"^\(\((.+?)\)\)$"
+ESCAPED_FOLDER_PATTERN = r"^\{\{(.+?)\}\}$"
 ESCAPED_DYNAMIC_PATTERN = r"^\[\[(.+?)\]\]$"
 INLINE_DYNAMIC_PATTERN = r"\[(?!\[)(.+?)(?<!\])\]"
 
-
-SELECTOR_REGEX = re.compile(SELECTOR_PATTERN)
+FOLDER_REGEX = re.compile(FOLDER_PATTERN)
 DYNAMIC_SEGMENT_REGEX = re.compile(DYNAMIC_SEGMENT_PATTERN)
-ESCAPED_SELECTOR_REGEX = re.compile(ESCAPED_SELECTOR_PATTERN)
+ESCAPED_FOLDER_REGEX = re.compile(ESCAPED_FOLDER_PATTERN)
 ESCAPED_DYNAMIC_REGEX = re.compile(ESCAPED_DYNAMIC_PATTERN)
 INLINE_DYNAMIC_REGEX = re.compile(INLINE_DYNAMIC_PATTERN)
 
@@ -34,22 +26,22 @@ class PathSegment:
 
     raw: str
     tokens: tuple[PathToken, ...] = ()
-    is_selector: bool = False
+    is_folder: bool = False
     is_dynamic: bool = False
     is_static: bool = True
 
 
 def parse_path_segment(segment: str) -> PathSegment:
     """Parse one template path segment."""
-    escaped_selector = ESCAPED_SELECTOR_REGEX.match(segment)
-    if escaped_selector:
+    escaped_folder = ESCAPED_FOLDER_REGEX.match(segment)
+    if escaped_folder:
         return PathSegment(
             raw=segment,
             tokens=(
                 PathToken(
-                    kind=PathTokenKind.ESCAPED_SELECTOR,
+                    kind=PathTokenKind.ESCAPED_FOLDER,
                     raw=segment,
-                    expression=escaped_selector.group(1),
+                    expression=escaped_folder.group(1),
                 ),
             ),
             is_static=False,
@@ -69,18 +61,18 @@ def parse_path_segment(segment: str) -> PathSegment:
             is_static=False,
         )
 
-    selector = SELECTOR_REGEX.match(segment)
-    if selector:
+    folder = FOLDER_REGEX.match(segment)
+    if folder:
         return PathSegment(
             raw=segment,
             tokens=(
                 PathToken(
-                    kind=PathTokenKind.SELECTOR,
+                    kind=PathTokenKind.FOLDER,
                     raw=segment,
-                    expression=selector.group(1).strip(),
+                    expression=folder.group(1).strip(),
                 ),
             ),
-            is_selector=True,
+            is_folder=True,
             is_static=False,
         )
 
@@ -124,21 +116,17 @@ def parse_path_segments(parts: tuple[str, ...]) -> tuple[PathSegment, ...]:
     return tuple(parse_path_segment(part) for part in parts)
 
 
-# Backward-compatible wrappers for old emission modules/tests.
-# Keep temporarily while descriptor/path_expander are migrated.
-
-
 def parse_segment_token(segment: str) -> PathToken | None:
-    """Parse a full dynamic segment token."""
+    """Parse a full dynamic/folder segment token."""
     parsed = parse_path_segment(segment)
 
     if parsed.tokens and len(parsed.tokens) == 1:
         token = parsed.tokens[0]
         if token.kind in {
-            PathTokenKind.SELECTOR,
+            PathTokenKind.FOLDER,
             PathTokenKind.DYNAMIC,
             PathTokenKind.ESCAPED_DYNAMIC,
-            PathTokenKind.ESCAPED_SELECTOR,
+            PathTokenKind.ESCAPED_FOLDER,
         }:
             return token
 

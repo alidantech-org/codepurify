@@ -241,8 +241,14 @@ class TemplateItemEmit:
     key: str
     ref: str | None = None
     path_parts: tuple[str, ...] = ()
+    path: tuple[str, ...] = ()
+    resource_path: tuple[str, ...] = ()
+    folder_path: tuple[str, ...] = ()
+    file_name: str = "-"
+    relative_doc_path: tuple[str, ...] = ()
     dependency_refs: tuple[str, ...] = ()
     dependencies: tuple[TemplateDependency, ...] = ()
+    imports: tuple[TemplateDependency, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -341,6 +347,7 @@ class TemplateSchemaMeta:
     primitive_type: str | None = None
     primitive_format: str | None = None
     enum_type: str | None = None
+    enum_values: tuple[str, ...] = ()
     enum_count: int = 0
     composition_refs: tuple[str, ...] = ()
     inherited_refs: tuple[str, ...] = ()
@@ -440,6 +447,11 @@ class TemplateResource:
     name: ContractName
     path: tuple[str, ...] = ()
     path_name: ContractName | None = None
+    operations: tuple["TemplateOperation", ...] = ()
+    models: tuple[TemplateSchema, ...] = ()
+    dtos: tuple[TemplateSchema, ...] = ()
+    enums: tuple[TemplateSchema, ...] = ()
+    schemas: tuple[TemplateSchema, ...] = ()
     lang: TemplateResourceLang = field(default_factory=TemplateResourceLang)
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)

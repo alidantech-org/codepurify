@@ -50,13 +50,13 @@ def test_expands_escaped_nextjs_segment():
     assert result.as_posix() == "app/[...slug]/page.tsx"
 
 
-def test_expands_escaped_selector_segment():
+def test_expands_escaped_folder_segment():
     result = expand_template_path(
-        Path("docs/((not-a-selector)).txt.j2"),
+        Path("docs/{{not-a-folder}}/page.txt.j2"),
         {},
     )
 
-    # assert result.as_posix() == "docs/(not-a-selector).txt"
+    assert result.as_posix() == "docs/{not-a-folder}/page.txt"
 
 
 def test_original_is_default_for_name_case():

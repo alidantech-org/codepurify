@@ -1,0 +1,60 @@
+# {{ enum.name.pascal }}
+
+{{ enum.docs.description }}
+
+## Enum Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ enum.name.path }}` |
+| Kind | `{{ enum.api.kind }}` |
+| Language Kind | `{{ enum.lang.kind }}` |
+| Type | `{{ enum.lang.type }}` |
+| Symbol Name | `{{ enum.lang.symbol_name }}` |
+| Enum Type | `{{ enum.meta.enum_type }}` |
+| Enum Count | {{ enum.meta.enum_count }} |
+
+## Values
+
+{% if enum.meta.enum_count %}
+| Value |
+|---|
+{% for value in enum.meta.enum_values %}
+| `{{ value }}` |
+{% endfor %}
+{% else %}
+No enum values exposed.
+{% endif %}
+
+## Example: TypeScript
+
+```ts
+export enum {{ enum.name.pascal }} {
+{% for value in enum.meta.enum_values %}
+  {{ value | upper }} = "{{ value }}",
+{% endfor %}
+}
+```
+
+## Example: Dart
+
+```dart
+enum {{ enum.name.pascal }} {
+{% for value in enum.meta.enum_values %}
+  {{ value }},
+{% endfor %}
+}
+```
+
+## Example: JSON Schema
+
+```json
+{
+  "type": "string",
+  "enum": [
+{% for value in enum.meta.enum_values %}
+    "{{ value }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+}
+```

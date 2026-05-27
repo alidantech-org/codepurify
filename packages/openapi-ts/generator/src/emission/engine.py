@@ -20,7 +20,7 @@ from contracts.emission import (
 from contracts.events import ProgressSink, RuntimeEvent
 from contracts.template import TemplateContract
 from emission.paths.config_loader import load_path_config
-from emission.paths.selection import expand_selector_contexts
+from emission.paths.selection import CONTEXT_FOLDER_PARTS, expand_folder_contexts
 from emission.templates.descriptor import TemplateDescriptor
 from emission.templates.path_expander import expand_template_path
 from emission.templates.renderer import render_template
@@ -39,8 +39,8 @@ class EmissionContextBuilder:
     def global_context(self) -> TemplateContext:
         """Build the global template context.
 
-        Selectors from paths.yaml will enrich this context with selected aliases
-        and exposed shortcut variables.
+        Folder recipes from paths.yaml enrich this context with selected aliases
+        and resolved output folder parts.
         """
         return {
             "project": self.contract.project,
@@ -201,15 +201,15 @@ def _contexts_for_descriptor(
     base_context: TemplateContext,
     path_config: Any,
 ) -> tuple[TemplateContext, ...]:
-    """Build render contexts for a descriptor using selector segments."""
-    selector_names = tuple(token.expression for token in descriptor.selectors)
+    """Build render contexts for a descriptor using folder recipe segments."""
+    folder_names = tuple(token.expression for token in descriptor.folders)
 
-    if not selector_names:
+    if not folder_names:
         return (dict(base_context),)
 
-    return expand_selector_contexts(
+    return expand_folder_contexts(
         base_context=base_context,
-        selector_names=selector_names,
+        folder_name=folder_names[0],
         path_config=path_config,
     )
 
@@ -221,7 +221,7 @@ def _resolve_output_path(
     output_root: Path,
     template_extension: str,
 ) -> Path:
-    output_template = Path(*descriptor.output_parts)
+    output_template = Path(*_output_parts_for_context(descriptor, context))
     expanded = expand_template_path(
         output_template,
         context,
@@ -259,10 +259,26 @@ def _write_raw_file(*, source_path: Path, output_path: Path) -> EmissionWriteRes
 
 def _descriptor_group(descriptor: TemplateDescriptor) -> str:
     """Return a display group for the descriptor."""
-    if not descriptor.selectors:
+    if not descriptor.folders:
         return GROUP_GLOBAL
 
-    return descriptor.selectors[-1].expression
+    return descriptor.folders[-1].expression
+
+
+def _output_parts_for_context(
+    descriptor: TemplateDescriptor,
+    context: TemplateContext,
+) -> tuple[str, ...]:
+    output_parts: list[str] = []
+
+    for segment in descriptor.segments:
+        if segment.is_folder:
+            output_parts.extend(str(part) for part in context.get(CONTEXT_FOLDER_PARTS, ()))
+            continue
+
+        output_parts.append(segment.raw)
+
+    return tuple(output_parts)
 
 
 def _is_jinja_template(path: Path, template_extension: str = ".j2") -> bool:

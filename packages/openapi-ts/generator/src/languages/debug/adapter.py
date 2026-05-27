@@ -60,9 +60,10 @@ from contracts.template import (
     TemplateSchemaMeta,
 )
 from languages.decorators import language_adapter
+from languages.debug.context.path_values import safe_file_name, safe_path_parts
 
 
-@language_adapter(name="debug", aliases=("txt",), template_name="debug")
+@language_adapter(name="debug", aliases=("txt", "md"), template_name="debug")
 class DebugLanguageAdapter:
     """Build debug template contracts from the API contract."""
 
@@ -83,6 +84,10 @@ class DebugLanguageAdapter:
         _notify(progress, "building_debug_contract", "Building debug template contract")
 
         schema_by_ref = {schema.ref: schema for schema in api.schemas.all}
+        resource_paths = _resource_paths(api.resources)
+        schema_resource_paths = _schema_resource_paths(api.schemas.all, resource_paths)
+        operations = tuple(_operation(operation, schema_by_ref, resource_paths) for operation in api.operations)
+        schemas = _schema_groups(api, schema_by_ref, schema_resource_paths)
 
         return TemplateContract(
             project=TemplateProject(
@@ -121,9 +126,9 @@ class DebugLanguageAdapter:
                 dry_run=dry_run,
                 contract_version="1.0",
             ),
-            resources=tuple(_resource(resource) for resource in api.resources),
-            schemas=_schema_groups(api, schema_by_ref),
-            operations=tuple(_operation(operation, schema_by_ref) for operation in api.operations),
+            resources=tuple(_resource(resource, schemas=schemas, operations=operations) for resource in api.resources),
+            schemas=schemas,
+            operations=operations,
             meta=TemplateContractMeta(
                 debug=True,
                 schema_count=len(api.schemas.all),
@@ -147,33 +152,55 @@ class DebugLanguageAdapter:
         return LanguagePostResult()
 
 
-def _schema_groups(api: ApiContract, schema_by_ref: dict[str, ApiSchema]) -> TemplateSchemaGroups:
+def _schema_groups(
+    api: ApiContract,
+    schema_by_ref: dict[str, ApiSchema],
+    schema_resource_paths: dict[str, tuple[str, ...]],
+) -> TemplateSchemaGroups:
     """Build typed schema groups for debug templates."""
     return TemplateSchemaGroups(
-        all=tuple(_schema(schema, group=TemplateGroup.SCHEMAS, schema_by_ref=schema_by_ref) for schema in api.schemas.all),
-        models=tuple(_schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref) for schema in api.schemas.models),
-        dtos=tuple(_schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref) for schema in api.schemas.dtos),
-        enums=tuple(_schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref) for schema in api.schemas.enums),
-        primitives=tuple(_schema(schema, group=TemplateGroup.PRIMITIVES, schema_by_ref=schema_by_ref) for schema in api.schemas.primitives),
-        aliases=tuple(_schema(schema, group=TemplateGroup.ALIASES, schema_by_ref=schema_by_ref) for schema in api.schemas.aliases),
-        unknown=tuple(_schema(schema, group=TemplateGroup.UNKNOWN, schema_by_ref=schema_by_ref) for schema in api.schemas.unknown),
-        queries=tuple(_schema(schema, group=TemplateGroup.QUERIES, schema_by_ref=schema_by_ref) for schema in api.schemas.queries),
-        params=tuple(_schema(schema, group=TemplateGroup.PARAMS, schema_by_ref=schema_by_ref) for schema in api.schemas.params),
-        bodies=tuple(_schema(schema, group=TemplateGroup.BODIES, schema_by_ref=schema_by_ref) for schema in api.schemas.bodies),
-        responses=tuple(_schema(schema, group=TemplateGroup.RESPONSES, schema_by_ref=schema_by_ref) for schema in api.schemas.responses),
-        emit_models=tuple(_schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref) for schema in api.schemas.emit_models),
-        emit_dtos=tuple(_schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref) for schema in api.schemas.emit_dtos),
-        emit_enums=tuple(_schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref) for schema in api.schemas.emit_enums),
+        all=tuple(_schema(schema, group=TemplateGroup.SCHEMAS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.all),
+        models=tuple(_schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.models),
+        dtos=tuple(_schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.dtos),
+        enums=tuple(_schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.enums),
+        primitives=tuple(_schema(schema, group=TemplateGroup.PRIMITIVES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.primitives),
+        aliases=tuple(_schema(schema, group=TemplateGroup.ALIASES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.aliases),
+        unknown=tuple(_schema(schema, group=TemplateGroup.UNKNOWN, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.unknown),
+        queries=tuple(_schema(schema, group=TemplateGroup.QUERIES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.queries),
+        params=tuple(_schema(schema, group=TemplateGroup.PARAMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.params),
+        bodies=tuple(_schema(schema, group=TemplateGroup.BODIES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.bodies),
+        responses=tuple(_schema(schema, group=TemplateGroup.RESPONSES, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.responses),
+        emit_models=tuple(_schema(schema, group=TemplateGroup.MODELS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.emit_models),
+        emit_dtos=tuple(_schema(schema, group=TemplateGroup.DTOS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.emit_dtos),
+        emit_enums=tuple(_schema(schema, group=TemplateGroup.ENUMS, schema_by_ref=schema_by_ref, schema_resource_paths=schema_resource_paths) for schema in api.schemas.emit_enums),
     )
 
 
-def _resource(resource: ApiResource) -> TemplateResource:
+def _resource(
+    resource: ApiResource,
+    *,
+    schemas: TemplateSchemaGroups,
+    operations: tuple[TemplateOperation, ...],
+) -> TemplateResource:
     """Build typed resource template variables."""
+    resource_path = _resource_path(resource)
+    relative_doc_path = (*resource_path, "index.md")
+    resource_operations = _items_for_resource(operations, resource_path)
+    resource_models = _items_for_resource(schemas.emit_models, resource_path)
+    resource_dtos = _items_for_resource(schemas.emit_dtos, resource_path)
+    resource_enums = _items_for_resource(schemas.emit_enums, resource_path)
+    resource_schemas = (*resource_models, *resource_dtos, *resource_enums)
+
     return TemplateResource(
         api=resource,
         name=resource.name,
         path=resource.path,
         path_name=resource.path_name,
+        operations=resource_operations,
+        models=resource_models,
+        dtos=resource_dtos,
+        enums=resource_enums,
+        schemas=resource_schemas,
         lang=TemplateResourceLang(
             kind="debug_resource",
             display_name=resource.name.pascal,
@@ -184,6 +211,11 @@ def _resource(resource: ApiResource) -> TemplateResource:
             key=resource.id,
             ref=None,
             path_parts=(TemplateGroup.RESOURCES.value, resource.name.path),
+            path=relative_doc_path,
+            resource_path=resource_path,
+            folder_path=resource_path,
+            file_name="index",
+            relative_doc_path=relative_doc_path,
             dependency_refs=(),
         ),
         docs=TemplateDocs(),
@@ -193,10 +225,21 @@ def _resource(resource: ApiResource) -> TemplateResource:
     )
 
 
-def _schema(schema: ApiSchema, *, group: TemplateGroup, schema_by_ref: dict[str, ApiSchema]) -> TemplateSchema:
+def _schema(
+    schema: ApiSchema,
+    *,
+    group: TemplateGroup,
+    schema_by_ref: dict[str, ApiSchema],
+    schema_resource_paths: dict[str, tuple[str, ...]],
+) -> TemplateSchema:
     """Build typed schema template variables."""
     fields = tuple(_field(field, schema_by_ref) for field in schema.fields)
     dependencies = _schema_dependencies(schema, schema_by_ref)
+    resource_path = schema_resource_paths.get(schema.ref, safe_path_parts(schema.resource))
+    kind = _schema_kind_value(schema)
+    file_name = safe_file_name(schema.name.path, fallback=schema.id)
+    folder_path = (*resource_path, "schemas", kind)
+    relative_doc_path = (*folder_path, f"{file_name}.md")
 
     return TemplateSchema(
         api=schema,
@@ -217,8 +260,14 @@ def _schema(schema: ApiSchema, *, group: TemplateGroup, schema_by_ref: dict[str,
             key=schema.ref,
             ref=schema.ref,
             path_parts=(group.value, schema.name.path),
+            path=relative_doc_path,
+            resource_path=resource_path,
+            folder_path=folder_path,
+            file_name=file_name,
+            relative_doc_path=relative_doc_path,
             dependency_refs=schema.dependencies,
             dependencies=dependencies,
+            imports=_imports(dependencies),
         ),
         docs=TemplateDocs(
             description=schema.description,
@@ -229,6 +278,7 @@ def _schema(schema: ApiSchema, *, group: TemplateGroup, schema_by_ref: dict[str,
             primitive_type=schema.primitive_type,
             primitive_format=schema.primitive_format,
             enum_type=schema.enum_type,
+            enum_values=tuple(value.value for value in schema.enum_values),
             enum_count=len(schema.enum_values),
             composition_refs=schema.composition_refs,
             inherited_refs=schema.inherited_refs,
@@ -276,8 +326,18 @@ def _field(field: ApiField, schema_by_ref: dict[str, ApiSchema]) -> TemplateFiel
     )
 
 
-def _operation(operation: ApiOperation, schema_by_ref: dict[str, ApiSchema]) -> TemplateOperation:
+def _operation(
+    operation: ApiOperation,
+    schema_by_ref: dict[str, ApiSchema],
+    resource_paths: dict[str, tuple[str, ...]],
+) -> TemplateOperation:
     """Build typed operation template variables."""
+    resource_path = _operation_resource_path(operation, resource_paths)
+    method = _operation_method(operation)
+    file_name = f"{method}_{safe_file_name(operation.name.path, fallback=operation.id)}"
+    folder_path = (*resource_path, "operations")
+    relative_doc_path = (*folder_path, f"{file_name}.md")
+
     return TemplateOperation(
         api=operation,
         name=operation.name,
@@ -296,6 +356,11 @@ def _operation(operation: ApiOperation, schema_by_ref: dict[str, ApiSchema]) -> 
             key=operation.id,
             ref=None,
             path_parts=(TemplateGroup.OPERATIONS.value, operation.name.path),
+            path=relative_doc_path,
+            resource_path=resource_path,
+            folder_path=folder_path,
+            file_name=file_name,
+            relative_doc_path=relative_doc_path,
             dependency_refs=_operation_dependency_refs(operation),
         ),
         docs=TemplateDocs(
@@ -428,6 +493,93 @@ def _field_debug_type(field: ApiField) -> str:
     return "unknown"
 
 
+def _resource_paths(resources: tuple[ApiResource, ...]) -> dict[str, tuple[str, ...]]:
+    return {resource.id: _resource_path(resource) for resource in resources}
+
+
+def _items_for_resource(items: tuple, resource_path: tuple[str, ...]) -> tuple:
+    return tuple(item for item in items if item.emit is not None and item.emit.resource_path == resource_path)
+
+
+def _schema_resource_paths(
+    schemas: tuple[ApiSchema, ...],
+    resource_paths: dict[str, tuple[str, ...]],
+) -> dict[str, tuple[str, ...]]:
+    explicit = {
+        schema.ref: resource_paths[schema.resource]
+        for schema in schemas
+        if schema.resource and schema.resource in resource_paths
+    }
+    resolved = dict(explicit)
+
+    for schema in schemas:
+        if schema.ref in resolved:
+            continue
+
+        owner_path = _dependent_resource_path(
+            schema.ref,
+            schemas=schemas,
+            explicit=explicit,
+        )
+        if owner_path is not None:
+            resolved[schema.ref] = owner_path
+            continue
+
+        resolved[schema.ref] = safe_path_parts(schema.resource)
+
+    return resolved
+
+
+def _dependent_resource_path(
+    ref: str,
+    *,
+    schemas: tuple[ApiSchema, ...],
+    explicit: dict[str, tuple[str, ...]],
+) -> tuple[str, ...] | None:
+    for owner in schemas:
+        if ref not in owner.dependencies:
+            continue
+
+        owner_path = explicit.get(owner.ref)
+        if owner_path is not None:
+            return owner_path
+
+    return None
+
+
+def _resource_path(resource: ApiResource) -> tuple[str, ...]:
+    base_path = safe_path_parts(resource.path, fallback="")
+    name_path = safe_path_parts(resource.name.path, fallback=resource.id)
+
+    if base_path == ("",):
+        return safe_path_parts(None)
+
+    if base_path[-len(name_path) :] == name_path:
+        return base_path
+
+    return (*base_path, *name_path)
+
+
+def _operation_resource_path(
+    operation: ApiOperation,
+    resource_paths: dict[str, tuple[str, ...]],
+) -> tuple[str, ...]:
+    if operation.resource and operation.resource in resource_paths:
+        return resource_paths[operation.resource]
+
+    return safe_path_parts(operation.resource)
+
+
+def _schema_kind_value(schema: ApiSchema) -> str:
+    kind = schema.kind.value if hasattr(schema.kind, "value") else str(schema.kind)
+    return kind or "schema"
+
+
+def _operation_method(operation: ApiOperation) -> str:
+    method = operation.method.value if hasattr(operation.method, "value") else str(operation.method)
+    return method.lower()
+
+
 def _schema_dependencies(
     schema: ApiSchema,
     schema_by_ref: dict[str, ApiSchema],
@@ -517,6 +669,10 @@ def _dependency(
         is_self=is_self,
         is_importable=_is_importable(target, is_self=is_self),
     )
+
+
+def _imports(dependencies: tuple[TemplateDependency, ...]) -> tuple[TemplateDependency, ...]:
+    return tuple(dependency for dependency in dependencies if dependency.is_importable)
 
 
 def _dependency_target(

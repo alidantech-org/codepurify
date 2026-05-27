@@ -1,67 +1,61 @@
-"""Tests for template descriptor parsing with selector paths."""
+"""Tests for template descriptor parsing with folder recipe paths."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from src.emission.templates.descriptor import describe_template
 
 
-def test_descriptor_extracts_selector_tokens():
-    """Test that selector tokens are extracted from path segments."""
+def test_descriptor_extracts_folder_token():
     root = Path("/templates")
-    descriptor = describe_template(root, Path("(models)/models/[name.path].txt.j2"))
+    descriptor = describe_template(root, Path("{model}/[model.name.path].txt.j2"))
 
-    assert len(descriptor.selectors) == 1
-    assert descriptor.selectors[0].expression == "models"
+    assert len(descriptor.folders) == 1
+    assert descriptor.folders[0].expression == "model"
 
 
-def test_descriptor_excludes_selector_from_output_parts():
-    """Test that selector segments are removed from output path parts."""
+def test_descriptor_excludes_folder_from_output_parts():
     root = Path("/templates")
-    descriptor = describe_template(root, Path("(models)/models/[name.path].txt.j2"))
+    descriptor = describe_template(root, Path("{model}/[model.name.path].txt.j2"))
 
-    assert descriptor.output_parts == ("models", "[name.path].txt.j2")
-    assert "(models)" not in descriptor.output_parts
+    assert descriptor.output_parts == ("[model.name.path].txt.j2",)
+    assert "{model}" not in descriptor.output_parts
 
 
-def test_descriptor_removes_resource_selector_but_keeps_dynamic_path():
+def test_descriptor_allows_folder_in_middle():
     root = Path("/templates")
-    descriptor = describe_template(root, Path("(resources)/res/[path]/[name.path]/resource.txt.j2"))
+    descriptor = describe_template(root, Path("debug/{model}/[model.name.path].txt.j2"))
 
-    assert tuple(token.expression for token in descriptor.selectors) == ("resources",)
-    assert descriptor.output_parts == ("res", "[path]", "[name.path]", "resource.txt.j2")
+    assert tuple(token.expression for token in descriptor.folders) == ("model",)
+    assert descriptor.output_parts == ("debug", "[model.name.path].txt.j2")
 
 
-def test_descriptor_multiple_selectors():
-    """Test that multiple selectors are extracted in order."""
+def test_descriptor_rejects_multiple_folder_tokens():
     root = Path("/templates")
-    descriptor = describe_template(root, Path("(resources)/(operations)/[method]_[name.path].txt.j2"))
 
-    assert len(descriptor.selectors) == 2
-    assert descriptor.selectors[0].expression == "resources"
-    assert descriptor.selectors[1].expression == "operations"
+    with pytest.raises(ValueError, match="only one folder recipe token"):
+        describe_template(root, Path("{resource}/{model}/[model.name.path].txt.j2"))
 
 
-def test_descriptor_no_selectors_global():
-    """Test that paths without selectors have empty selector tuple."""
+def test_descriptor_no_folder_global():
     root = Path("/templates")
-    descriptor = describe_template(root, Path("summary.txt.j2"))
+    descriptor = describe_template(root, Path("README.md.j2"))
 
-    assert len(descriptor.selectors) == 0
-    assert descriptor.output_parts == ("summary.txt.j2",)
+    assert len(descriptor.folders) == 0
+    assert descriptor.output_parts == ("README.md.j2",)
 
 
 def test_descriptor_identifies_jinja_template():
-    """Test that .j2 files are marked as templates."""
     root = Path("/templates")
-    descriptor = describe_template(root, Path("(models)/models/[name.path].txt.j2"))
+    descriptor = describe_template(root, Path("{model}/[model.name.path].txt.j2"))
 
     assert descriptor.is_template is True
 
 
 def test_descriptor_identifies_raw_file():
-    """Test that non-.j2 files are not marked as templates."""
     root = Path("/templates")
     descriptor = describe_template(root, Path(".gitignore"))
 
@@ -69,29 +63,25 @@ def test_descriptor_identifies_raw_file():
 
 
 def test_descriptor_parses_segments():
-    """Test that path segments are parsed into PathSegment objects."""
     root = Path("/templates")
-    descriptor = describe_template(root, Path("(models)/models/[name.path].txt.j2"))
+    descriptor = describe_template(root, Path("{model}/[model.name.path].txt.j2"))
 
-    assert len(descriptor.segments) == 3
-    assert descriptor.segments[0].is_selector is True
-    assert descriptor.segments[1].is_static is True
-    assert descriptor.segments[2].is_dynamic is True
+    assert len(descriptor.segments) == 2
+    assert descriptor.segments[0].is_folder is True
+    assert descriptor.segments[1].is_dynamic is True
 
 
-def test_descriptor_escaped_segments_not_selectors():
-    """Test that escaped ((...)) segments are not treated as selectors."""
+def test_descriptor_escaped_folder_segment_not_folder():
     root = Path("/templates")
-    descriptor = describe_template(root, Path("docs/((not-selector))/page.txt.j2"))
+    descriptor = describe_template(root, Path("docs/{{not-folder}}/page.txt.j2"))
 
-    assert len(descriptor.selectors) == 0
-    assert descriptor.output_parts == ("docs", "((not-selector))", "page.txt.j2")
+    assert len(descriptor.folders) == 0
+    assert descriptor.output_parts == ("docs", "{{not-folder}}", "page.txt.j2")
 
 
-def test_descriptor_dynamic_segment_not_selector():
-    """Test that [...] dynamic segments are not treated as selectors."""
+def test_descriptor_dynamic_segment_not_folder():
     root = Path("/templates")
     descriptor = describe_template(root, Path("lib/[version]/file.txt.j2"))
 
-    assert len(descriptor.selectors) == 0
+    assert len(descriptor.folders) == 0
     assert descriptor.output_parts == ("lib", "[version]", "file.txt.j2")
