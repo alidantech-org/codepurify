@@ -12,6 +12,49 @@ from openapi.refs import get_ref
 from inference.models.schemas import InferredSchemaComposition
 
 
+def split_nullable_union(schema: dict[str, Any] | None) -> tuple[dict[str, Any], bool]:
+    """Return non-null schema branch and whether null was present.
+
+    Args:
+        schema: An OpenAPI schema object.
+
+    Returns:
+        A tuple of (non_null_schema, nullable) where nullable is True if
+        null was present in the union.
+    """
+    if not isinstance(schema, dict):
+        return schema or {}, False
+
+    schema_type = schema.get("type")
+
+    # Handle type: [string, null]
+    if isinstance(schema_type, list) and "null" in schema_type:
+        non_null_types = [item for item in schema_type if item != "null"]
+
+        if len(non_null_types) == 1:
+            copied = dict(schema)
+            copied["type"] = non_null_types[0]
+            return copied, True
+
+    # Handle anyOf/oneOf with type: null
+    variants = schema.get(ANY_OF) or schema.get(ONE_OF)
+
+    if isinstance(variants, list):
+        nullable = False
+        non_null_variants = []
+
+        for variant in variants:
+            if isinstance(variant, dict) and variant.get("type") == "null":
+                nullable = True
+            else:
+                non_null_variants.append(variant)
+
+        if nullable and len(non_null_variants) == 1:
+            return non_null_variants[0], True
+
+    return schema, False
+
+
 def infer_composition(schema: dict[str, Any] | None) -> InferredSchemaComposition | None:
     """Infer composition from an OpenAPI schema object.
 

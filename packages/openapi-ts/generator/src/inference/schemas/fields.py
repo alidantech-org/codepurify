@@ -95,24 +95,30 @@ def _infer_field(
         An InferredSchemaField object.
     """
     is_required = name in required_fields
-    raw_type = schema.get(TYPE)
-    format_value = schema.get(FORMAT)
+
+    # Unwrap nullable unions at field level
+    from inference.schemas.composition import split_nullable_union
+
+    effective_schema, union_nullable = split_nullable_union(schema)
+
+    raw_type = effective_schema.get(TYPE)
+    format_value = effective_schema.get(FORMAT)
 
     # Check for nullable via type array ["string", "null"]
-    nullable = False
-    if isinstance(raw_type, list):
+    nullable = union_nullable
+    if not nullable and isinstance(raw_type, list):
         nullable = TYPE_NULL in raw_type
         # Get the non-null type
         non_null_types = [t for t in raw_type if t != TYPE_NULL]
         raw_type = non_null_types[0] if non_null_types else None
 
-    ref = get_ref(schema)
+    ref = get_ref(effective_schema)
     schema_ref = ref.raw if ref else None
 
     # Handle array items
     item_ref = None
     item_refs: list[str] = []
-    items = schema.get(ITEMS)
+    items = effective_schema.get(ITEMS)
     if isinstance(items, dict):
         item_ref_obj = get_ref(items)
         if item_ref_obj:
@@ -120,22 +126,22 @@ def _infer_field(
             item_refs.append(item_ref)
 
     # Handle enum values
-    enum_values = schema.get(ENUM)
+    enum_values = effective_schema.get(ENUM)
     if isinstance(enum_values, list):
         enum_values = tuple(str(v) for v in enum_values)
     else:
         enum_values = None
 
-    default = schema.get(DEFAULT)
-    description = schema.get(DESCRIPTION)
+    default = effective_schema.get(DEFAULT)
+    description = effective_schema.get(DESCRIPTION)
 
     # Resolve field type information
     resolved_types: ResolvedFieldType | None = None
     if document:
-        resolved_types = infer_field_type(schema, document)
+        resolved_types = infer_field_type(effective_schema, document)
 
     # Extract query metadata from x-codegen.query
-    query_meta = infer_query_metadata(schema)
+    query_meta = infer_query_metadata(effective_schema)
 
     return InferredSchemaField(
         name=name,

@@ -120,7 +120,7 @@ def _map_http_method(method: str) -> ApiHttpMethod:
 
 def build_api_contract(graph: InferenceGraph) -> ApiContract:
     """Build a stable API contract from an inference graph."""
-    schemas = tuple(_schema(schema) for schema in graph.schemas)
+    schemas = tuple(_schema(schema, graph.schemas) for schema in graph.schemas)
 
     return ApiContract(
         info=ApiDocumentInfo(
@@ -148,7 +148,7 @@ def _resource(resource: InferredResource, graph: InferenceGraph) -> ApiResource:
     )
 
 
-def _schema(schema: InferredSchema) -> ApiSchema:
+def _schema(schema: InferredSchema, schemas: tuple[InferredSchema, ...]) -> ApiSchema:
     return ApiSchema(
         id=schema.name,
         name=make_contract_name(schema.name),
@@ -158,12 +158,13 @@ def _schema(schema: InferredSchema) -> ApiSchema:
         dependencies=_tuple(schema.dependencies),
         is_alias=schema.is_alias,
         alias_of=schema.alias_of,
+        nullable=schema.nullable,
         primitive_type=schema.primitive_type,
         primitive_format=schema.primitive_format,
         query=_query(schema.query),
         enum_type=schema.enum_type,
         enum_values=tuple(_enum_value(value) for value in _tuple(schema.enum_values)),
-        fields=tuple(_field(field) for field in _tuple(schema.fields)),
+        fields=tuple(_field(field, schemas) for field in _tuple(schema.fields)),
         composition_refs=_tuple(schema.composition_refs),
         inherited_refs=_tuple(schema.inherited_refs),
         composition=_composition(schema.composition),
@@ -174,12 +175,21 @@ def _schema(schema: InferredSchema) -> ApiSchema:
     )
 
 
-def _field(field: InferredSchemaField) -> ApiField:
+def _field(field: InferredSchemaField, schemas: tuple[InferredSchema, ...]) -> ApiField:
+    nullable = field.nullable
+
+    # Inherit nullable from referenced schema if not already nullable
+    if not nullable and field.schema_ref:
+        schema_by_ref = {s.ref: s for s in schemas}
+        ref_schema = schema_by_ref.get(field.schema_ref)
+        if ref_schema and ref_schema.nullable:
+            nullable = True
+
     return ApiField(
         id=field.name,
         name=make_contract_name(field.name),
         required=field.required,
-        nullable=field.nullable,
+        nullable=nullable,
         type=ApiFieldType(
             raw_type=field.raw_type,
             format=field.format,

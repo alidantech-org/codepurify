@@ -6,6 +6,7 @@ from contracts.api import ApiContract, ApiSchema
 from contracts.template import (
     TemplateDocs,
     TemplateEnumValue,
+    TemplateField,
     TemplateGroup,
     TemplateItemEmit,
     TemplateItemKey,
@@ -18,6 +19,37 @@ from languages.dart.dependencies import schema_dependencies
 from languages.dart.fields import template_field
 from languages.dart.names import DART_RESERVED_WORDS, safe_enum_key
 from languages.dart.paths import resource_path_for_schema, safe_schema_file_name
+
+
+def _base_schema(
+    schema: ApiSchema,
+    schema_by_ref: dict[str, ApiSchema],
+) -> ApiSchema | None:
+    if not schema.inherited_refs:
+        return None
+
+    return schema_by_ref.get(schema.inherited_refs[0])
+
+
+def _own_api_fields(
+    schema: ApiSchema,
+    base_schema: ApiSchema | None,
+) -> tuple:
+    if base_schema is None:
+        return schema.fields
+
+    inherited = {field.name.camel for field in base_schema.fields}
+    return tuple(field for field in schema.fields if field.name.camel not in inherited)
+
+
+def _super_fields(
+    base_schema: ApiSchema | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[TemplateField, ...]:
+    if base_schema is None:
+        return ()
+
+    return tuple(template_field(field, schema_by_ref) for field in base_schema.fields)
 
 
 def template_schema_groups(
@@ -52,7 +84,10 @@ def _schema(
     schema_by_ref: dict[str, ApiSchema],
     resource_paths: dict[str, tuple[str, ...]],
 ) -> TemplateSchema:
-    fields = tuple(template_field(field, schema_by_ref) for field in schema.fields)
+    base_schema = _base_schema(schema, schema_by_ref)
+    own_api_fields = _own_api_fields(schema, base_schema)
+    fields = tuple(template_field(field, schema_by_ref) for field in own_api_fields)
+    super_fields = _super_fields(base_schema, schema_by_ref)
     dependencies = schema_dependencies(schema, schema_by_ref)
     resource_path = resource_path_for_schema(schema, resource_paths)
     file_name = safe_schema_file_name(schema)
@@ -106,6 +141,9 @@ def _schema(
             composition_refs=schema.composition_refs,
             inherited_refs=schema.inherited_refs,
             query_enabled=schema.query.enabled,
+            has_extends=base_schema is not None,
+            extends_type=base_schema.name.pascal if base_schema else None,
+            super_fields=super_fields,
         ),
     )
 

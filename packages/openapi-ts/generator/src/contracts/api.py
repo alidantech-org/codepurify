@@ -167,6 +167,7 @@ class ApiSchema:
     dependencies: tuple[str, ...] = ()
     is_alias: bool = False
     alias_of: str | None = None
+    nullable: bool = False
 
     primitive_type: str | None = None
     primitive_format: str | None = None

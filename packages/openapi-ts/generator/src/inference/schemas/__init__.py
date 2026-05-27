@@ -16,7 +16,7 @@ from inference.metadata.query import infer_query_metadata
 from inference.models import InferredResource, InferredSchema, InferredSchemaKind
 from inference.models.schemas import InferredSchemaComposition, InferredSchemaField, QueryMetadata
 from inference.resources import extract_resource_from_x_codegen
-from inference.schemas.composition import get_composition_refs, get_inherited_refs, infer_composition
+from inference.schemas.composition import get_composition_refs, get_inherited_refs, infer_composition, split_nullable_union
 from inference.schemas.enums import infer_enum_type, infer_enum_values
 from inference.schemas.fields import infer_schema_fields
 from inference.schemas.primitives import infer_primitive_format, infer_primitive_type
@@ -40,13 +40,18 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
         is_alias = alias_info is not None
         alias_of = alias_info if is_alias else None
 
-        kind_fields = _infer_kind_specific_fields(schema, classify_schema(str(name), schema, document=document), document)
+        # Detect nullable union and extract effective schema
+        effective_schema, nullable = split_nullable_union(schema)
+
+        kind_fields = _infer_kind_specific_fields(
+            effective_schema, classify_schema(str(name), effective_schema, document=document), document, nullable, schema
+        )
         schemas.append(
             InferredSchema(
                 name=str(name),
                 ref=ref,
-                kind=classify_schema(str(name), schema, document=document),
-                resource=extract_resource_from_x_codegen(x_codegen_dict) or _infer_resource_from_alias(schema, document),
+                kind=classify_schema(str(name), effective_schema, document=document),
+                resource=extract_resource_from_x_codegen(x_codegen_dict) or _infer_resource_from_alias(effective_schema, document),
                 x_codegen=x_codegen_dict,
                 raw=schema,
                 dependencies=_dedupe_dependencies(
@@ -54,6 +59,7 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
                 ),
                 alias_of=alias_of,
                 is_alias=is_alias,
+                nullable=nullable,
                 primitive_type=kind_fields.primitive_type,
                 primitive_format=kind_fields.primitive_format,
                 query=kind_fields.query,
@@ -120,19 +126,30 @@ class KindSpecificFields:
     composition: InferredSchemaComposition | None = None
 
 
-def _infer_kind_specific_fields(schema: dict[str, Any], kind: InferredSchemaKind, document: OpenApiDocument) -> KindSpecificFields:
+def _infer_kind_specific_fields(
+    schema: dict[str, Any],
+    kind: InferredSchemaKind,
+    document: OpenApiDocument,
+    nullable: bool = False,
+    original_schema: dict[str, Any] | None = None,
+) -> KindSpecificFields:
     """Infer kind-specific fields based on schema kind.
 
     Args:
         schema: An OpenAPI schema object.
         kind: The inferred schema kind.
         document: The OpenAPI document for alias resolution.
+        nullable: Whether the schema is nullable.
+        original_schema: The original schema before nullable union extraction (for required fields).
 
     Returns:
         A KindSpecificFields object with kind-specific fields.
     """
     # Resolve effective schema for type/format/enum/field details
     effective_schema = resolve_schema_alias(document, schema) or schema
+
+    # Use original schema for required field extraction if provided
+    schema_for_fields = original_schema if original_schema is not None else effective_schema
 
     if kind == InferredSchemaKind.PRIMITIVE:
         return KindSpecificFields(
@@ -158,7 +175,7 @@ def _infer_kind_specific_fields(schema: dict[str, Any], kind: InferredSchemaKind
 
     if kind in (InferredSchemaKind.MODEL, InferredSchemaKind.DTO):
         return KindSpecificFields(
-            fields=infer_schema_fields(effective_schema, document),
+            fields=infer_schema_fields(schema_for_fields, document),
             composition_refs=get_composition_refs(effective_schema),
             inherited_refs=get_inherited_refs(effective_schema),
             composition=infer_composition(effective_schema),

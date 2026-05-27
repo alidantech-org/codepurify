@@ -72,6 +72,7 @@ class InferredSchema:
     dependencies: tuple[str, ...] = field(default_factory=tuple)
     alias_of: str | None = None
     is_alias: bool = False
+    nullable: bool = False
     # Primitive fields
     primitive_type: str | None = None
     primitive_format: str | None = None

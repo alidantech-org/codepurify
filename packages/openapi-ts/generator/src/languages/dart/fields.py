@@ -16,6 +16,18 @@ from languages.dart.names import safe_dart_identifier
 from languages.dart.types import dart_field_type
 
 
+def _dart_nullable(field: ApiField, schema_by_ref: dict[str, ApiSchema]) -> bool:
+    """Return whether the Dart field type must be nullable."""
+    if not field.required:
+        return True
+
+    if field.nullable:
+        return True
+
+    ref_schema = schema_by_ref.get(field.schema_ref or "")
+    return bool(ref_schema and ref_schema.nullable)
+
+
 def template_field(
     field: ApiField,
     schema_by_ref: dict[str, ApiSchema],
@@ -31,7 +43,7 @@ def template_field(
             type=dart_field_type(field, schema_by_ref),
             display_name=safe_dart_identifier(field.name.camel, fallback="field"),
             required=field.required,
-            nullable=field.nullable,
+            nullable=_dart_nullable(field, schema_by_ref),
             query_enabled=field.query.enabled,
             sortable=field.query.sortable,
             selectable=field.query.selectable,

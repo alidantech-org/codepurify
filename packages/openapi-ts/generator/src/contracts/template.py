@@ -376,6 +376,9 @@ class TemplateSchemaMeta:
     composition_refs: tuple[str, ...] = ()
     inherited_refs: tuple[str, ...] = ()
     query_enabled: bool = False
+    has_extends: bool = False
+    extends_type: str | None = None
+    super_fields: tuple[TemplateField, ...] = ()
 
 
 @dataclass(frozen=True)

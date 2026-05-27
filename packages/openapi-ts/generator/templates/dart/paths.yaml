@@ -32,7 +32,7 @@ folders:
       - schemas
       - [dto.emit.resource_path]
       - dtos
-      # - [dto.emit.folder_path]
+      - [dto.emit.folder_path]
 
   enum:
     select: schemas.emit_enums

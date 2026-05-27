@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-
 {%- for import in file.imports %}
 {{ import.statement }}
 {%- endfor %}
@@ -7,12 +6,19 @@ import 'package:json_annotation/json_annotation.dart';
 part 'model.g.dart';
 
 @JsonSerializable()
-class {{ dto.name.pascal }} {
+class {{ dto.name.pascal }}{%- if dto.meta.has_extends %} extends {{ dto.meta.extends_type }}{%- endif %} {
+{%- if dto.fields or dto.meta.super_fields %}
   const {{ dto.name.pascal }}({
+{%- for field in dto.meta.super_fields %}
+    {%- if field.lang.required %}required {%- endif %} super.{{ field.lang.display_name }},
+{%- endfor %}
 {%- for field in dto.fields %}
-    {%- if field.lang.required and not field.lang.nullable %}required {%- endif %}this.{{ field.lang.display_name }}{%- if not loop.last %},{%- endif %}
+    {%- if field.lang.required %}required {%- endif %} this.{{ field.lang.display_name }}{%- if not loop.last %},{%- endif %}
 {%- endfor %}
   });
+{%- else %}
+  const {{ dto.name.pascal }}();
+{%- endif %}
 
 {%- for field in dto.fields %}
   final {{ field.lang.type }} {{ field.lang.display_name }};
@@ -21,5 +27,8 @@ class {{ dto.name.pascal }} {
   factory {{ dto.name.pascal }}.fromJson(Map<String, dynamic> json) =>
       _${{ dto.name.pascal }}FromJson(json);
 
+{%- if dto.meta.has_extends %}
+  @override
+{%- endif %}
   Map<String, dynamic> toJson() => _${{ dto.name.pascal }}ToJson(this);
 }
