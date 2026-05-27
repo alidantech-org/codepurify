@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from enum import Enum
+from pathlib import Path
 from typing import Any
 
 
@@ -11,10 +13,17 @@ class VariableResolutionError(KeyError):
 
 
 def resolve_variable(context: Mapping[str, Any], expression: str) -> Any:
-    """Resolve dotted expressions like schema.name.path.s from context."""
+    """Resolve dotted expressions like schema.name.path from context."""
+    expression = expression.strip()
+
+    if not expression:
+        raise VariableResolutionError(expression)
+
     current: Any = context
 
     for part in expression.split("."):
+        part = part.strip()
+
         if not part:
             raise VariableResolutionError(expression)
 
@@ -24,9 +33,24 @@ def resolve_variable(context: Mapping[str, Any], expression: str) -> Any:
 
 
 def stringify_value(value: Any) -> str:
-    """Convert resolved values into safe path/render strings."""
+    """Convert resolved values into safe path strings."""
     if value is None:
         return ""
+
+    if isinstance(value, Enum):
+        return str(value.value)
+
+    if isinstance(value, Path):
+        return value.as_posix()
+
+    if isinstance(value, bool):
+        return "true" if value else "false"
+
+    if isinstance(value, str):
+        return value
+
+    if isinstance(value, Sequence) and not isinstance(value, bytes | bytearray | str):
+        return "-".join(stringify_value(item) for item in value)
 
     return str(value)
 

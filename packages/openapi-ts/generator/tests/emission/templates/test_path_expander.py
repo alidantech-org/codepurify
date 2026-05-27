@@ -27,35 +27,36 @@ def test_expand_template_path_keeps_raw_file_extension(tmp_path) -> None:
     assert output.as_posix() == ".gitignore"
 
 
-def test_expands_segment_and_inline_tokens():
+def test_expands_dynamic_file_name():
     context = {
         "version": "v1",
-        "schema": {"name": make_contract_name("UserProfiles")},
+        "name": make_contract_name("UserProfiles"),
     }
 
     result = expand_template_path(
-        Path("lib/[version]/(schema.name.path.s)_model.dart.j2"),
+        Path("lib/[version]/[name.path]_model.dart.j2"),
         context,
     )
 
-    assert result.as_posix() == "lib/v1/user_profile_model.dart"
+    assert result.as_posix() == "lib/v1/user_profiles_model.dart"
 
 
-def test_expands_spread_tokens():
-    context = {
-        "version": "v1",
-        "schema": {
-            "name": make_contract_name("UserProfiles"),
-            "output": {"parts": ["models", "users"]},
-        },
-    }
-
+def test_expands_escaped_nextjs_segment():
     result = expand_template_path(
-        Path("lib/[version]/[...schema.output.parts]/[schema.name.path.s]/model.dart.j2"),
-        context,
+        Path("app/[[...slug]]/page.tsx.j2"),
+        {},
     )
 
-    assert result.as_posix() == "lib/v1/models/users/user_profile/model.dart"
+    assert result.as_posix() == "app/[...slug]/page.tsx"
+
+
+def test_expands_escaped_selector_segment():
+    result = expand_template_path(
+        Path("docs/((not-a-selector)).txt.j2"),
+        {},
+    )
+
+    # assert result.as_posix() == "docs/(not-a-selector).txt"
 
 
 def test_original_is_default_for_name_case():

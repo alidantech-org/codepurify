@@ -1,0 +1,1 @@
+"""Emission path selection tests."""

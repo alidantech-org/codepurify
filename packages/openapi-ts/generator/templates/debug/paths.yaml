@@ -1,0 +1,53 @@
+variables:
+  models:
+    select: schemas.emit_models
+    as: model
+    expose:
+      name: model.name
+      kind: model.api.kind
+      resource: model.api.resource
+
+  dtos:
+    select: schemas.emit_dtos
+    as: dto
+    expose:
+      name: dto.name
+      kind: dto.api.kind
+      resource: dto.api.resource
+
+  enums:
+    select: schemas.emit_enums
+    as: enum
+    expose:
+      name: enum.name
+      kind: enum.api.kind
+
+  primitives:
+    select: schemas.primitives
+    as: primitive
+    expose:
+      name: primitive.name
+      kind: primitive.api.kind
+
+  schemas:
+    select: schemas.all
+    as: schema
+    expose:
+      name: schema.name
+      kind: schema.api.kind
+      resource: schema.api.resource
+
+  resources:
+    select: resources
+    as: resource
+    expose:
+      name: resource.name
+      path: resource.api.path
+
+  operations:
+    select: operations
+    as: operation
+    expose:
+      name: operation.name
+      method: operation.api.method
+      resource: operation.api.resource

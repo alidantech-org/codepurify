@@ -1,0 +1,8 @@
+Enums Barrel
+============
+
+{% for enum in schemas.emit_enums %}
+- {{ enum.name.pascal }}
+{% else %}
+- none
+{% endfor %}

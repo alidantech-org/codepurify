@@ -6,7 +6,6 @@ know about concrete language implementations, OpenAPI documents, or inference.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -20,68 +19,30 @@ from contracts.emission import (
 )
 from contracts.events import ProgressSink, RuntimeEvent
 from contracts.template import TemplateContract
-from emission.templates.descriptor import GROUP_GLOBAL, TemplateDescriptor
+from emission.paths.config_loader import load_path_config
+from emission.paths.selection import expand_selector_contexts
+from emission.templates.descriptor import TemplateDescriptor
 from emission.templates.path_expander import expand_template_path
 from emission.templates.renderer import render_template
 from emission.templates.scanner import scan_templates
 from emission.writer.file_writer import write_text_if_changed
 
+GROUP_GLOBAL = "global"
+
 
 @dataclass(frozen=True)
 class EmissionContextBuilder:
-    """Builds template contexts from a TemplateContract."""
+    """Builds base template contexts from a TemplateContract."""
 
     contract: TemplateContract
 
     def global_context(self) -> TemplateContext:
-        """Build context for global templates."""
-        return self._build_context()
+        """Build the global template context.
 
-    def schema_context(self, schema: Any) -> TemplateContext:
-        """Build context for a schema template."""
-        return self._build_context(schema=schema)
-
-    def model_context(self, model: Any) -> TemplateContext:
-        """Build context for a model template."""
-        return self._build_context(model=model)
-
-    def dto_context(self, dto: Any) -> TemplateContext:
-        """Build context for a DTO template."""
-        return self._build_context(dto=dto)
-
-    def enum_context(self, enum: Any) -> TemplateContext:
-        """Build context for an enum template."""
-        return self._build_context(enum=enum)
-
-    def primitive_context(self, primitive: Any) -> TemplateContext:
-        """Build context for a primitive template."""
-        return self._build_context(primitive=primitive)
-
-    def resource_context(self, resource: Any) -> TemplateContext:
-        """Build context for a resource template."""
-        return self._build_context(resource=resource)
-
-    def operation_context(self, operation: Any) -> TemplateContext:
-        """Build context for an operation template."""
-        return self._build_context(operation=operation)
-
-    def _build_context(
-        self,
-        *,
-        schema: Any = None,
-        model: Any = None,
-        dto: Any = None,
-        enum: Any = None,
-        primitive: Any = None,
-        resource: Any = None,
-        operation: Any = None,
-        field: Any = None,
-        parameter: Any = None,
-        response: Any = None,
-        request: Any = None,
-        file: Any = None,
-    ) -> TemplateContext:
-        context: dict[str, Any] = {
+        Selectors from paths.yaml will enrich this context with selected aliases
+        and exposed shortcut variables.
+        """
+        return {
             "project": self.contract.project,
             "api": self.contract.api,
             "lang": self.contract.lang,
@@ -90,33 +51,8 @@ class EmissionContextBuilder:
             "resources": self.contract.resources,
             "schemas": self.contract.schemas,
             "operations": self.contract.operations,
-            "file": file or self.contract.file,
+            "file": self.contract.file,
         }
-
-        if schema is not None:
-            context["schema"] = schema
-        if model is not None:
-            context["model"] = model
-        if dto is not None:
-            context["dto"] = dto
-        if enum is not None:
-            context["enum"] = enum
-        if primitive is not None:
-            context["primitive"] = primitive
-        if resource is not None:
-            context["resource"] = resource
-        if operation is not None:
-            context["operation"] = operation
-        if field is not None:
-            context["field"] = field
-        if parameter is not None:
-            context["parameter"] = parameter
-        if response is not None:
-            context["response"] = response
-        if request is not None:
-            context["request"] = request
-
-        return context
 
 
 def emit(
@@ -145,15 +81,23 @@ def build_emission_plan(
     template_root = contract.emit.template_root
     output_root = contract.emit.output_path
 
+    _notify(progress, "loading_path_config", f"Loading path config from {template_root}")
+    path_config = load_path_config(template_root)
+
     _notify(progress, "scanning_templates", f"Scanning templates in {template_root}")
     descriptors = scan_templates(template_root)
 
-    context_builder = EmissionContextBuilder(contract)
+    base_context = EmissionContextBuilder(contract).global_context()
     files: list[EmissionFile] = []
 
     for descriptor in descriptors:
-        for context in _contexts_for_descriptor(descriptor, context_builder):
-            output_path = _resolve_output_path(descriptor, context, output_root)
+        for context in _contexts_for_descriptor(descriptor, base_context, path_config):
+            output_path = _resolve_output_path(
+                descriptor=descriptor,
+                context=context,
+                output_root=output_root,
+                template_extension=path_config.template_extension,
+            )
             content = _resolve_content(descriptor, template_root, context)
 
             files.append(
@@ -162,8 +106,11 @@ def build_emission_plan(
                     output_path=output_path,
                     context=context,
                     content=content,
-                    group=descriptor.group,
-                    is_template=_is_jinja_template(descriptor.relative_path),
+                    group=_descriptor_group(descriptor),
+                    is_template=_is_jinja_template(
+                        descriptor.relative_path,
+                        template_extension=path_config.template_extension,
+                    ),
                     compare_mode=_compare_mode_for_output(output_path),
                 )
             )
@@ -227,16 +174,12 @@ def execute_emission(
                 file.content,
                 compare_mode=file.compare_mode,
             )
-            created.extend(result.created)
-            updated.extend(result.updated)
-            unchanged.extend(result.unchanged)
-            skipped.extend(result.skipped)
-            continue
+        else:
+            result = _write_raw_file(
+                source_path=plan.template_root / file.template_path,
+                output_path=file.output_path,
+            )
 
-        result = _write_raw_file(
-            source_path=plan.template_root / file.template_path,
-            output_path=file.output_path,
-        )
         created.extend(result.created)
         updated.extend(result.updated)
         unchanged.extend(result.unchanged)
@@ -255,59 +198,35 @@ def execute_emission(
 
 def _contexts_for_descriptor(
     descriptor: TemplateDescriptor,
-    context_builder: EmissionContextBuilder,
-) -> Iterable[TemplateContext]:
-    """Yield all contexts needed by a descriptor group."""
-    contract = context_builder.contract
+    base_context: TemplateContext,
+    path_config: Any,
+) -> tuple[TemplateContext, ...]:
+    """Build render contexts for a descriptor using selector segments."""
+    selector_names = tuple(token.expression for token in descriptor.selectors)
 
-    if descriptor.group == GROUP_GLOBAL:
-        yield context_builder.global_context()
-        return
+    if not selector_names:
+        return (dict(base_context),)
 
-    if descriptor.item_key == "model":
-        for model in contract.schemas.emit_models:
-            yield context_builder.model_context(model)
-        return
-
-    if descriptor.item_key == "dto":
-        for dto in contract.schemas.emit_dtos:
-            yield context_builder.dto_context(dto)
-        return
-
-    if descriptor.item_key == "enum":
-        for enum in contract.schemas.emit_enums:
-            yield context_builder.enum_context(enum)
-        return
-
-    if descriptor.item_key == "primitive":
-        for primitive in contract.schemas.primitives:
-            yield context_builder.primitive_context(primitive)
-        return
-
-    if descriptor.item_key == "schema":
-        for schema in contract.schemas.all:
-            yield context_builder.schema_context(schema)
-        return
-
-    if descriptor.item_key == "resource":
-        for resource in contract.resources:
-            yield context_builder.resource_context(resource)
-        return
-
-    if descriptor.item_key == "operation":
-        for operation in contract.operations:
-            yield context_builder.operation_context(operation)
-        return
-
-    yield context_builder.global_context()
+    return expand_selector_contexts(
+        base_context=base_context,
+        selector_names=selector_names,
+        path_config=path_config,
+    )
 
 
 def _resolve_output_path(
+    *,
     descriptor: TemplateDescriptor,
     context: TemplateContext,
     output_root: Path,
+    template_extension: str,
 ) -> Path:
-    expanded = expand_template_path(descriptor.relative_path, context)
+    output_template = Path(*descriptor.output_parts)
+    expanded = expand_template_path(
+        output_template,
+        context,
+        template_extension=template_extension,
+    )
     return output_root / expanded
 
 
@@ -338,8 +257,16 @@ def _write_raw_file(*, source_path: Path, output_path: Path) -> EmissionWriteRes
     return EmissionWriteResult(created=(output_path,))
 
 
-def _is_jinja_template(path: Path) -> bool:
-    return path.as_posix().endswith(".j2")
+def _descriptor_group(descriptor: TemplateDescriptor) -> str:
+    """Return a display group for the descriptor."""
+    if not descriptor.selectors:
+        return GROUP_GLOBAL
+
+    return descriptor.selectors[-1].expression
+
+
+def _is_jinja_template(path: Path, template_extension: str = ".j2") -> bool:
+    return path.as_posix().endswith(template_extension)
 
 
 def _compare_mode_for_output(output_path: Path) -> str:
@@ -360,6 +287,7 @@ def _notify(
     current: int | None = None,
     total: int | None = None,
 ) -> None:
+    """Emit a progress event."""
     if progress is None:
         return
 

@@ -6,21 +6,40 @@ from pathlib import Path
 
 
 def write_debug_templates(root: Path) -> Path:
-    """Create a minimal debug template tree."""
+    """Create a minimal debug template tree with selector paths."""
     template_root = root / "debug"
-    (template_root / "schemas" / "[schema.name.path]").mkdir(parents=True)
-    (template_root / "resources" / "[resource.name.path]").mkdir(parents=True)
+    (template_root / "(schemas)" / "schemas" / "[name.path]").mkdir(parents=True)
+    (template_root / "(resources)" / "resources" / "[name.path]").mkdir(parents=True)
+
+    # Write paths.yaml configuration
+    (template_root / "paths.yaml").write_text(
+        """variables:
+  schemas:
+    select: schemas.all
+    as: schema
+    expose:
+      name: schema.name
+      kind: schema.api.kind
+
+  resources:
+    select: resources
+    as: resource
+    expose:
+      name: resource.name
+""",
+        encoding="utf-8",
+    )
 
     (template_root / "summary.txt.j2").write_text(
         "API: {{ api.info.title }}\nLanguage: {{ lang.name }}\n",
         encoding="utf-8",
     )
-    (template_root / "schemas" / "[schema.name.path]" / "schema.txt.j2").write_text(
-        "Schema: {{ schema.name.pascal }}\nKind: {{ schema.api.kind }}\n",
+    (template_root / "(schemas)" / "schemas" / "[name.path]" / "schema.txt.j2").write_text(
+        "Schema: {{ name.pascal }}\nKind: {{ kind }}\n",
         encoding="utf-8",
     )
-    (template_root / "resources" / "[resource.name.path]" / "resource.txt.j2").write_text(
-        "Resource: {{ resource.name.pascal }}\n",
+    (template_root / "(resources)" / "resources" / "[name.path]" / "resource.txt.j2").write_text(
+        "Resource: {{ name.pascal }}\n",
         encoding="utf-8",
     )
     (template_root / ".gitignore").write_text(
