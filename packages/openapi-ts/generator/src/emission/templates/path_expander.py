@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -18,15 +18,11 @@ def expand_template_path(
     *,
     template_extension: str = ".j2",
 ) -> Path:
-    """Expand a template-relative output path using a render context.
-
-    Selector segments must already be removed before calling this function.
-    """
+    """Expand a template-relative output path using a render context."""
     output_parts: list[str] = []
 
     for raw_part in template_path.parts:
-        expanded = _expand_part(raw_part, context)
-        output_parts.append(expanded)
+        output_parts.extend(_expand_part(raw_part, context))
 
     output_path = Path(*output_parts)
     output_path = _strip_template_suffix(output_path, template_extension)
@@ -34,7 +30,7 @@ def expand_template_path(
     return output_path
 
 
-def _expand_part(raw_part: str, context: Mapping[str, Any]) -> str:
+def _expand_part(raw_part: str, context: Mapping[str, Any]) -> list[str]:
     parsed = parse_path_segment(raw_part)
 
     if len(parsed.tokens) == 1:
@@ -44,23 +40,32 @@ def _expand_part(raw_part: str, context: Mapping[str, Any]) -> str:
             raise ValueError(f"selector segment was not removed before path expansion: {raw_part}")
 
         if token.kind == PathTokenKind.ESCAPED_DYNAMIC:
-            value = f"[{token.expression}]"
-            validate_path_part(value)
-            return value
+            return _validated_parts((f"[{token.expression}]",))
 
         if token.kind == PathTokenKind.ESCAPED_SELECTOR:
-            value = f"({token.expression})"
-            validate_path_part(value)
-            return value
+            return _validated_parts((f"({token.expression})",))
 
         if token.kind == PathTokenKind.DYNAMIC and token.raw == raw_part:
-            value = stringify_value(resolve_variable(context, token.expression))
-            validate_path_part(value)
-            return value
+            value = resolve_variable(context, token.expression)
+            return _value_to_path_parts(value)
 
     value = _expand_inline(raw_part, context)
-    validate_path_part(value)
-    return value
+    return _validated_parts((value,))
+
+
+def _value_to_path_parts(value: Any) -> list[str]:
+    """Convert a resolved path value into one or more path parts."""
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
+        return _validated_parts(tuple(stringify_value(item) for item in value))
+
+    return _validated_parts((stringify_value(value),))
+
+
+def _validated_parts(parts: tuple[str, ...]) -> list[str]:
+    for part in parts:
+        validate_path_part(part)
+
+    return list(parts)
 
 
 def _expand_inline(raw_part: str, context: Mapping[str, Any]) -> str:

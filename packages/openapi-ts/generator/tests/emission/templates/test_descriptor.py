@@ -25,6 +25,14 @@ def test_descriptor_excludes_selector_from_output_parts():
     assert "(models)" not in descriptor.output_parts
 
 
+def test_descriptor_removes_resource_selector_but_keeps_dynamic_path():
+    root = Path("/templates")
+    descriptor = describe_template(root, Path("(resources)/res/[path]/[name.path]/resource.txt.j2"))
+
+    assert tuple(token.expression for token in descriptor.selectors) == ("resources",)
+    assert descriptor.output_parts == ("res", "[path]", "[name.path]", "resource.txt.j2")
+
+
 def test_descriptor_multiple_selectors():
     """Test that multiple selectors are extracted in order."""
     root = Path("/templates")

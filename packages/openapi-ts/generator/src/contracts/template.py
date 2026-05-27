@@ -438,6 +438,8 @@ class TemplateResource:
 
     api: ApiResource
     name: ContractName
+    path: tuple[str, ...] = ()
+    path_name: ContractName | None = None
     lang: TemplateResourceLang = field(default_factory=TemplateResourceLang)
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)

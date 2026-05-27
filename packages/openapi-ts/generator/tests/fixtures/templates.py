@@ -9,7 +9,7 @@ def write_debug_templates(root: Path) -> Path:
     """Create a minimal debug template tree with selector paths."""
     template_root = root / "debug"
     (template_root / "(schemas)" / "schemas" / "[name.path]").mkdir(parents=True)
-    (template_root / "(resources)" / "resources" / "[name.path]").mkdir(parents=True)
+    (template_root / "(resources)" / "res" / "[path]" / "[name.path]").mkdir(parents=True)
 
     # Write paths.yaml configuration
     (template_root / "paths.yaml").write_text(
@@ -26,6 +26,8 @@ def write_debug_templates(root: Path) -> Path:
     as: resource
     expose:
       name: resource.name
+      path: resource.path
+      path_name: resource.path_name
 """,
         encoding="utf-8",
     )
@@ -38,7 +40,7 @@ def write_debug_templates(root: Path) -> Path:
         "Schema: {{ name.pascal }}\nKind: {{ kind }}\n",
         encoding="utf-8",
     )
-    (template_root / "(resources)" / "resources" / "[name.path]" / "resource.txt.j2").write_text(
+    (template_root / "(resources)" / "res" / "[path]" / "[name.path]" / "resource.txt.j2").write_text(
         "Resource: {{ name.pascal }}\n",
         encoding="utf-8",
     )

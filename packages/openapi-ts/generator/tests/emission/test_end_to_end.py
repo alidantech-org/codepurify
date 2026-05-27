@@ -2,20 +2,23 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from src.app.app import GeneratorApp
 from tests.fixtures.templates import write_debug_templates
 
 
-def test_debug_emit_end_to_end(tmp_path, sample_openapi_path) -> None:
+def test_debug_emit_end_to_end(tmp_path) -> None:
     """Test full emission pipeline with debug language and templates."""
     # Setup debug templates
     template_root = write_debug_templates(tmp_path / "templates")
+    input_path = _write_resource_path_openapi(tmp_path / "openapi.yaml")
     output_path = tmp_path / "output"
 
     # Run emission
     app = GeneratorApp()
     result = app.emit(
-        input_path=sample_openapi_path,
+        input_path=input_path,
         language="debug",
         output_path=output_path,
         templates_path=template_root,
@@ -39,6 +42,8 @@ def test_debug_emit_end_to_end(tmp_path, sample_openapi_path) -> None:
     summary_content = summary_path.read_text(encoding="utf-8")
     assert "API:" in summary_content
     assert "Language: debug" in summary_content
+    assert (output_path / "res" / "platform" / "auth" / "users" / "resource.txt").exists()
+    assert (output_path / "res" / "shared" / "resource.txt").exists()
 
 
 def test_debug_emit_dry_run(tmp_path, sample_openapi_path) -> None:
@@ -63,3 +68,37 @@ def test_debug_emit_dry_run(tmp_path, sample_openapi_path) -> None:
 
     # Verify no files were actually written
     assert not output_path.exists()
+
+
+def _write_resource_path_openapi(path: Path) -> Path:
+    path.write_text(
+        """openapi: 3.1.0
+info:
+  title: Resource Path API
+  version: v1
+paths:
+  /users:
+    x-codegen:
+      resource:
+        name: users
+        path:
+          - platform
+          - auth
+    get:
+      operationId: listUsers
+      responses:
+        "200":
+          description: OK
+  /shared:
+    x-codegen:
+      resource:
+        name: shared
+    get:
+      operationId: getShared
+      responses:
+        "200":
+          description: OK
+""",
+        encoding="utf-8",
+    )
+    return path

@@ -96,6 +96,7 @@ class ApiResource:
     id: str
     name: ContractName
     path: tuple[str, ...] = ()
+    path_name: ContractName | None = None
     operations_count: int = 0
     meta: MetaMap = field(default_factory=dict)
 

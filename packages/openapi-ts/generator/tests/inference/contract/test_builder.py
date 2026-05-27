@@ -25,3 +25,14 @@ def test_api_contract_preserves_operation_facts(sample_openapi_path) -> None:
     assert operation.id
     assert operation.method
     assert operation.path
+
+
+def test_api_contract_preserves_resource_path(sample_openapi_path) -> None:
+    graph = load_sample_graph(sample_openapi_path)
+    api = build_api_contract(graph)
+
+    resource = next(resource for resource in api.resources if resource.id == "users")
+
+    assert resource.path == ("platform", "auth")
+    assert resource.path_name is not None
+    assert resource.path_name.path.original == "platform_auth"

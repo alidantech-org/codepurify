@@ -33,11 +33,16 @@ def extract_resource_from_x_codegen(x_codegen: dict[str, Any]) -> InferredResour
     if not isinstance(name, str) or not name.strip():
         return None
 
-    if isinstance(raw_path, list):
-        path = tuple(str(part) for part in raw_path)
-    elif isinstance(raw_path, str):
-        path = (raw_path,)
-    else:
-        path = ()
+    path = _resource_path(raw_path)
 
     return make_resource(name=name, path=path)
+
+
+def _resource_path(raw_path: Any) -> tuple[str, ...]:
+    if not isinstance(raw_path, list | tuple):
+        return ()
+
+    if not all(isinstance(part, str) and part.strip() for part in raw_path):
+        return ()
+
+    return tuple(part.strip() for part in raw_path)

@@ -22,3 +22,8 @@ def test_debug_adapter_builds_template_contract(tmp_path) -> None:
     assert contract.emit.dry_run is True
     assert len(contract.resources) == 1
     assert len(contract.schemas.all) == 1
+
+    resource = contract.resources[0]
+    assert resource.path == ("platform", "auth")
+    assert resource.path_name is not None
+    assert resource.path_name.path.original == "platform_auth"

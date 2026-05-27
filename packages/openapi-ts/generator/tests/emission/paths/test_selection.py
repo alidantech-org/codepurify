@@ -84,6 +84,42 @@ def test_expose_makes_dynamic_path_work():
     assert contexts[0]["resource"] == "users"
 
 
+def test_resource_selector_exposes_path_tuple():
+    base_context = {
+        "resources": [
+            {
+                "name": "users",
+                "path": ("platform", "auth"),
+            },
+        ]
+    }
+
+    path_config = PathConfig(
+        variables=(
+            PathVariable(
+                name="resources",
+                select="resources",
+                alias="resource",
+                mode=PathSelectionMode.EACH,
+                expose=(
+                    PathExpose(name="name", expression="resource.name"),
+                    PathExpose(name="path", expression="resource.path"),
+                ),
+            ),
+        )
+    )
+
+    contexts = expand_selector_contexts(
+        base_context=base_context,
+        selector_names=("resources",),
+        path_config=path_config,
+    )
+
+    assert contexts[0]["resource"] == {"name": "users", "path": ("platform", "auth")}
+    assert contexts[0]["name"] == "users"
+    assert contexts[0]["path"] == ("platform", "auth")
+
+
 def test_missing_selector_raises_error():
     """Test that referencing an undefined selector raises a clear error."""
     base_context = {"schemas": {"emit_models": []}}

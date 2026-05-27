@@ -1,3 +1,7 @@
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: true
+
 variables:
   models:
     select: schemas.emit_models
@@ -6,6 +10,7 @@ variables:
       name: model.name
       kind: model.api.kind
       resource: model.api.resource
+      dependencies: model.emit.dependencies
 
   dtos:
     select: schemas.emit_dtos
@@ -14,6 +19,7 @@ variables:
       name: dto.name
       kind: dto.api.kind
       resource: dto.api.resource
+      dependencies: dto.emit.dependencies
 
   enums:
     select: schemas.emit_enums
@@ -21,6 +27,8 @@ variables:
     expose:
       name: enum.name
       kind: enum.api.kind
+      resource: enum.api.resource
+      dependencies: enum.emit.dependencies
 
   primitives:
     select: schemas.primitives
@@ -28,6 +36,8 @@ variables:
     expose:
       name: primitive.name
       kind: primitive.api.kind
+      resource: primitive.api.resource
+      dependencies: primitive.emit.dependencies
 
   schemas:
     select: schemas.all
@@ -36,13 +46,16 @@ variables:
       name: schema.name
       kind: schema.api.kind
       resource: schema.api.resource
+      dependencies: schema.emit.dependencies
 
   resources:
     select: resources
     as: resource
     expose:
       name: resource.name
-      path: resource.api.path
+      path: resource.path
+      path_name: resource.path_name
+      operations_count: resource.meta.operations_count
 
   operations:
     select: operations
@@ -51,3 +64,7 @@ variables:
       name: operation.name
       method: operation.api.method
       resource: operation.api.resource
+      dependencies: operation.emit.dependencies
+
+meta:
+  description: "Debug template path variables for selector-driven emission."

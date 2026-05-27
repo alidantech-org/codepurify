@@ -70,3 +70,15 @@ def test_original_is_default_for_name_case():
     )
 
     assert result.as_posix() == "user_profiles/model.dart"
+
+
+def test_dynamic_sequence_expands_to_nested_path():
+    result = expand_template_path(
+        Path("res/[path]/[name.path]/resource.txt.j2"),
+        {
+            "path": ("platform", "auth"),
+            "name": make_contract_name("users"),
+        },
+    )
+
+    assert result.as_posix() == "res/platform/auth/users/resource.txt"

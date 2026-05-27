@@ -142,6 +142,7 @@ def _resource(resource: InferredResource, graph: InferenceGraph) -> ApiResource:
         id=resource.name,
         name=make_contract_name(resource.name),
         path=resource.path,
+        path_name=make_contract_name("_".join(resource.path) if resource.path else resource.name),
         operations_count=operations_count,
     )
 

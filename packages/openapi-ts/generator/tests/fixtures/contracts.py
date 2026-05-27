@@ -37,7 +37,8 @@ def make_api_contract() -> ApiContract:
             ApiResource(
                 id="users",
                 name=make_contract_name("users"),
-                path="users",
+                path=("platform", "auth"),
+                path_name=make_contract_name("platform_auth"),
                 operations_count=1,
             ),
         ),
@@ -69,7 +70,14 @@ def make_template_contract(output_path: Path, template_root: Path | None = None)
         api=api,
         lang=TemplateLanguage(name="debug"),
         emit=TemplateEmit(output_path=output_path, template_root=template_root, dry_run=False),
-        resources=(TemplateResource(api=api.resources[0], name=api.resources[0].name),),
+        resources=(
+            TemplateResource(
+                api=api.resources[0],
+                name=api.resources[0].name,
+                path=api.resources[0].path,
+                path_name=api.resources[0].path_name,
+            ),
+        ),
         schemas=TemplateSchemaGroups(
             all=(template_schema,),
             models=(template_schema,),

@@ -172,6 +172,8 @@ def _resource(resource: ApiResource) -> TemplateResource:
     return TemplateResource(
         api=resource,
         name=resource.name,
+        path=resource.path,
+        path_name=resource.path_name,
         lang=TemplateResourceLang(
             kind="debug_resource",
             display_name=resource.name.pascal,
