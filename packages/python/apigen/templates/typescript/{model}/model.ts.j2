@@ -1,0 +1,9 @@
+{%- for import in file.imports %}
+{{ import.statement }}
+{%- endfor %}
+
+export interface {{ model.name.pascal.o }}{%- if model.meta.has_extends %} extends {{ model.meta.extends_type }}{%- endif %} {
+{%- for field in model.fields %}
+  {{ field.lang.display_name }}{{ "?" if not field.api.required else "" }}: {{ field.lang.type }};
+{%- endfor %}
+}

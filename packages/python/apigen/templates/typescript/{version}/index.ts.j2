@@ -1,0 +1,12 @@
+{%- for model in schemas.emit_models %}
+export * from './schemas/{{ model.emit.resource_path | csv | replace(", ", "/") }}/models/{{ model.name.path.o }}/model';
+{%- endfor %}
+{%- for dto in schemas.emit_dtos %}
+export * from './schemas/{{ dto.emit.resource_path | csv | replace(", ", "/") }}/dtos/{{ dto.emit.folder_path | csv | replace(", ", "/") }}/dto';
+{%- endfor %}
+{%- for enum in schemas.emit_enums %}
+export * from './schemas/{{ enum.emit.resource_path | csv | replace(", ", "/") }}/enums/{{ enum.name.path.o }}/enum';
+{%- endfor %}
+{%- for operation in operations %}
+export * from './operations/{{ operation.emit.resource_path | csv | replace(", ", "/") }}/{{ operation.name.path.o }}/operation';
+{%- endfor %}

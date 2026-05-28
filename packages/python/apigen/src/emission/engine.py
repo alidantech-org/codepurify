@@ -42,6 +42,11 @@ def import_planner_for_language(language_name: str) -> ImportPlanner:
         from languages.dart.imports import DartImportPlanner
 
         return DartImportPlanner()
+        
+    if language_name in {"typescript", "ts"}:
+        from languages.typescript.imports import TypeScriptImportPlanner
+
+        return TypeScriptImportPlanner()
 
     return MarkdownImportPlanner()
 
