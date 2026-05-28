@@ -12,7 +12,7 @@ from cli.constants.constants import (
     HELP_LANGUAGE,
     HELP_OUTPUT,
     HELP_QUIET,
-    HELP_TEMPLATES,
+    HELP_TEMPLATES_PATH,
     HELP_VERBOSE,
     OPT_DEBUG,
     OPT_DRY_RUN,
@@ -60,10 +60,11 @@ def emit_command(
         "-o",
         help=HELP_OUTPUT,
     ),
-    templates: Path | None = typer.Option(
+    templates_path: Path | None = typer.Option(
         None,
         f"--{OPT_TEMPLATES}",
-        help=HELP_TEMPLATES,
+        "-t",
+        help=HELP_TEMPLATES_PATH,
     ),
     dry_run: bool = typer.Option(False, f"--{OPT_DRY_RUN}", help=HELP_DRY_RUN),
     interactive: bool = typer.Option(
@@ -83,7 +84,7 @@ def emit_command(
         resolved_input = input_file
         resolved_language = language
         resolved_output = output
-        resolved_templates = templates
+        resolved_templates_path = templates_path
         resolved_dry_run = dry_run
 
         prompt = should_prompt(interactive)
@@ -97,8 +98,8 @@ def emit_command(
         if resolved_output is None and prompt:
             resolved_output = ask_output_path()
 
-        if resolved_templates is None and interactive:
-            resolved_templates = ask_templates_path()
+        if resolved_templates_path is None and interactive:
+            resolved_templates_path = ask_templates_path()
 
         if not dry_run and interactive:
             resolved_dry_run = ask_dry_run()
@@ -119,7 +120,7 @@ def emit_command(
             language=resolved_language,
             output_path=resolved_output,
             dry_run=resolved_dry_run,
-            templates_path=resolved_templates,
+            templates_path=resolved_templates_path,
         )
 
         if not quiet:

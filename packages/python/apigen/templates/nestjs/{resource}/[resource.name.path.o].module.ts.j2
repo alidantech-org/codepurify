@@ -1,0 +1,18 @@
+import { Module } from '@nestjs/common';
+import { {{ resource.name.pascal }}Controller } from './{{ resource.name.path.o }}.controller';
+import { {{ resource.name.pascal }}Service } from './{{ resource.name.path.o }}.service';
+{%- for operation in resource.operations %}
+import { {{ operation.name.pascal }}UseCase } from './use-cases/{{ operation.name.path.o }}.use-case';
+{%- endfor %}
+
+@Module({
+  controllers: [{{ resource.name.pascal }}Controller],
+  providers: [
+    {{ resource.name.pascal }}Service,
+{%- for operation in resource.operations %}
+    {{ operation.name.pascal }}UseCase,
+{%- endfor %}
+  ],
+  exports: [{{ resource.name.pascal }}Service],
+})
+export class {{ resource.name.pascal }}Module {}

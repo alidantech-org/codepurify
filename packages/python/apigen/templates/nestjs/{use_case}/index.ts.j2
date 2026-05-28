@@ -1,0 +1,3 @@
+{%- for operation in operations %}
+export * from './{{ operation.name.path.o }}.use-case';
+{%- endfor %}

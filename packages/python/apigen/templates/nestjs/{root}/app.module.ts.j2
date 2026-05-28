@@ -1,0 +1,13 @@
+import { Module } from '@nestjs/common';
+{%- for resource in resources %}
+import { {{ resource.name.pascal }}Module } from './modules/{{ resource.path | csv | replace(", ", "/") }}/{{ resource.name.path.o }}';
+{%- endfor %}
+
+@Module({
+  imports: [
+{%- for resource in resources %}
+    {{ resource.name.pascal }}Module,
+{%- endfor %}
+  ],
+})
+export class AppModule {}

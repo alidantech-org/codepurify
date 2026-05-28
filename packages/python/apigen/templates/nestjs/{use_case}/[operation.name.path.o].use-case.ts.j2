@@ -1,0 +1,8 @@
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class {{ operation.name.pascal }}UseCase {
+  async execute(input: unknown): Promise<unknown> {
+    throw new Error('{{ operation.name.pascal }}UseCase.execute is not implemented yet.');
+  }
+}
