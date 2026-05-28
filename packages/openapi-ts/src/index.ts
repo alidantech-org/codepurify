@@ -90,9 +90,9 @@ export type { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef,
  * Codegen metadata
  * ========================================================= */
 
-export { CODEGEN_EXTENSION_KEY, CodegenExtensionKey } from './sdk/codegen-extension.keys.js';
+export { CODEGEN_EXTENSION_KEY, CodegenExtensionKey } from './codegen/codegen-extension.keys.js';
 
-export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind } from './sdk/codegen-extension.types.js';
+export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind } from './codegen/codegen-extension.types.js';
 
 export type {
   CodegenKind,
@@ -110,7 +110,7 @@ export type {
   XCodegenQueryMeta,
   XCodegenRefPointer,
   XCodegenResourceMeta,
-} from './sdk/codegen-extension.types.js';
+} from './codegen/codegen-extension.types.js';
 
 export {
   isDtoSchema,
@@ -121,11 +121,11 @@ export {
   resolveCodegenKind,
   stripEnumInheritanceMetadata,
   stripNonObjectInheritanceMetadata,
-} from './sdk/resolve-codegen-kind.js';
+} from './codegen/resolve-codegen-kind.js';
 
-export { applyCodegenMetadata } from './sdk/apply-codegen-extensions.js';
+export { applyCodegenMetadata } from './codegen/apply-codegen-extensions.js';
 
-export type { CodegenExtensionTarget } from './sdk/apply-codegen-extensions.js';
+export type { CodegenExtensionTarget } from './codegen/apply-codegen-extensions.js';
 
 /* =========================================================
  * OpenAPI types and constants
