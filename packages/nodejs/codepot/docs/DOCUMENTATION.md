@@ -1,10 +1,10 @@
 # documentation.md
 
-# @codepot
+# codepot
 
 TypeScript-first OpenAPI contract engine for building clean OpenAPI 3.1 specs and SDK-friendly metadata from code.
 
-`@codepot` lets you define your API contract using typed builders instead of manually writing YAML. It supports version contracts, resources, reusable properties, schemas, parameters, request bodies, responses, routes, default responses, shared primitives, enum detection, nullable/optional refs, and entity inheritance.
+`codepot` lets you define your API contract using typed builders instead of manually writing YAML. It supports version contracts, resources, reusable properties, schemas, parameters, request bodies, responses, routes, default responses, shared primitives, enum detection, nullable/optional refs, and entity inheritance.
 
 ---
 
@@ -96,19 +96,19 @@ paths:
 Assuming the package is published to npm:
 
 ```bash
-pnpm add -D @codepot
+pnpm add -D codepot
 ```
 
 or:
 
 ```bash
-npm install -D @codepot
+npm install -D codepot
 ```
 
 or:
 
 ```bash
-yarn add -D @codepot
+yarn add -D codepot
 ```
 
 You also need `zod`:
@@ -190,7 +190,7 @@ The package expects a `package.config.ts` file at your project root.
 Basic shape:
 
 ```ts
-import { definePackageConfig } from '@codepot';
+import { definePackageConfig } from 'codepot';
 
 export default definePackageConfig({
   contracts: [],
@@ -1205,7 +1205,7 @@ x-codegen-operation: list_users
 
 ```ts
 import { z } from 'zod';
-import { definePackageConfig, defineVersionContract, schema, HttpMethod, SchemaAccess, QueryBehavior, ParameterLocation } from '@codepot';
+import { definePackageConfig, defineVersionContract, schema, HttpMethod, SchemaAccess, QueryBehavior, ParameterLocation } from 'codepot';
 
 const v1 = defineVersionContract({
   info: {

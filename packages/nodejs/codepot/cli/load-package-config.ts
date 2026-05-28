@@ -51,7 +51,7 @@ async function bundlePackageConfig(configPath: string, cwd: string): Promise<str
     absWorkingDir: cwd,
     tsconfig: await resolveTsConfig(cwd),
     packages: 'external',
-    external: ['@codepot', 'zod'],
+    external: ['codepot', 'zod'],
   });
 
   return outfile;

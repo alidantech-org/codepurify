@@ -1,4 +1,4 @@
-# @codepot
+# codepot
 
 TypeScript-first OpenAPI contract engine for building strongly typed, SDK-ready API contracts.
 
@@ -45,7 +45,7 @@ OpenAPI + SDK metadata output
 # Installation
 
 ```bash
-pnpm add -D @codepot
+pnpm add -D codepot
 ```
 
 Peer dependency:
@@ -61,7 +61,7 @@ pnpm add zod
 ## 1. Create config
 
 ```ts
-import { definePackageConfig } from '@codepot';
+import { definePackageConfig } from 'codepot';
 
 export default definePackageConfig({
   contracts: [],
@@ -77,7 +77,7 @@ export default definePackageConfig({
 ## 2. Define a version contract
 
 ```ts
-import { defineVersionContract } from '@codepot';
+import { defineVersionContract } from 'codepot';
 
 const v1 = defineVersionContract({
   info: {

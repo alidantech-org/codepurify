@@ -8,7 +8,9 @@ import { definePackageConfig } from './contract/config/define-package-config';
 import { PackageOutputFormat, PackageConfig, PackageOutputConfig, PackageServerConfig } from './contract/config/package-config.types';
 import { resolveCompileOptions } from './contract/config/resolve-compile-options';
 import { resolvePackageConfig } from './contract/config/resolve-package-config';
-import { EntityPropertyRefs, PropertyRefGroup } from './contract/properties/property.types';
+import { EntityPropertyRefs, EntityRegistryResult, PropertyRefGroup, PropertyRegistry } from './contract/properties/property.types';
+import { RefUsage } from './contract/refs/ref-usage.types';
+import { ArrayRef, ExtendedRef } from './contract/refs/ref-wrapper.types';
 import { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef } from './contract/refs/ref.types';
 import { defineResource, ResourceBuilder } from './contract/resource/define-resource';
 import { HttpMethod } from './contract/routes/http-method';
@@ -41,9 +43,10 @@ import {
   isSensitiveAccess,
   isSystemManagedAccess,
 } from './contract/schema/schema-access';
+import { CompositeSchemaField, PrimitiveSchemaField, RefSchemaField } from './contract/schema/schema.types';
 import { defineSchemas } from './contract/schema/schemas/define-schemas';
 import { SchemaComponentDefinition, SchemaComponentRegistry } from './contract/schema/schemas/schema-component.types';
-import { defineVersionContract } from './contract/version/define-version-contract';
+import { defineVersionContract, VersionBuilder } from './contract/version/define-version-contract';
 import { VersionContract } from './contract/version/version-contract.types';
 import { compileOpenApi } from './pipeline/compiler/compile-openapi';
 import { CompileOptions } from './pipeline/compiler/compile-options.types';
@@ -283,3 +286,14 @@ export { componentRefToSchemaName, modelRefToSchemaName };
  * ========================================================= */
 
 export { CompilerLogger, LogLevel };
+export type {
+  EntityRegistryResult,
+  ExtendedRef,
+  PropertyRegistry,
+  RefSchemaField,
+  RefUsage,
+  ArrayRef,
+  VersionBuilder,
+  PrimitiveSchemaField,
+  CompositeSchemaField,
+};

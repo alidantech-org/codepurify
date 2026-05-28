@@ -40,12 +40,7 @@ export class CodePot implements CodePotApi {
 }
 
 function createDefaultConfig(): string {
-  return [
-    "import { definePackageConfig } from '@codepot';",
-    '',
-    'export default definePackageConfig({',
-    '  contracts: [],',
-    '});',
-    '',
-  ].join('\n');
+  return ["import { definePackageConfig } from 'codepot';", '', 'export default definePackageConfig({', '  contracts: [],', '});', ''].join(
+    '\n',
+  );
 }

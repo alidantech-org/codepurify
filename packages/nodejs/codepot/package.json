@@ -16,28 +16,26 @@
     "url": "https://alidantech.org"
   },
   "bin": {
-    "codepot": "dist/cli/index.js"
+    "codepot": "./dist/cli.js"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
-    "dist",
-    "code",
-    "README.md",
-    "LICENSE",
-    "package.json"
+    "dist"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "dev": "tsx src/cli/index.ts",
+    "dev": "tsup --watch",
     "clean": "shx rm -rf dist",
     "copy:examples": "shx mkdir -p dist && shx rm -rf dist/examples && shx cp -r examples dist/",
     "build": "npm run clean && tsup && npm run copy:examples",
@@ -63,7 +61,12 @@
     "ora": "^9.4.0",
     "picocolors": "^1.1.1",
     "ts-morph": "^23.0.0",
-    "zod": "^3.23.8"
+    "@apidevtools/swagger-parser": "^10.1.1",
+    "@redocly/cli": "^2.31.3",
+    "chalk": "^5.4.1",
+    "tsx": "^4.22.3",
+    "yaml": "^2.7.0",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

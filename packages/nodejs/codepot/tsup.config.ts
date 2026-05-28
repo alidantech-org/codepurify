@@ -1,11 +1,15 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'cli/index.ts'],
-  format: ['esm'],
-  dts: true,
+  entry: {
+    index: 'src/index.ts',
+    cli: 'cli/index.ts',
+  },
+  format: ['esm', 'cjs'], // 👈 Compiles both .js (ESM) and .cjs (CommonJS)
+  dts: true, // 👈 Generates .d.ts files for both formats
+  shims: true, // 👈 Adds missing CJS/ESM compatibility shims
   sourcemap: true,
-  clean: false,
+  clean: true,
   splitting: false,
   bundle: true,
   target: 'node18',
