@@ -1,0 +1,90 @@
+{
+  "name": "codepot",
+  "version": "0.1.2-beta",
+  "description": "Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs",
+  "type": "module",
+  "homepage": "https://code.alidantech.org/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alidantech-org/codepurify.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alidantech-org/codepurify/issues"
+  },
+  "author": {
+    "name": "AlidanTech",
+    "url": "https://alidantech.org"
+  },
+  "bin": {
+    "codepot": "dist/cli/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "code",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "clean": "shx rm -rf dist",
+    "copy:examples": "shx mkdir -p dist && shx rm -rf dist/examples && shx cp -r examples dist/",
+    "build": "npm run clean && tsup && npm run copy:examples",
+    "build:bundle": "tsup",
+    "watch": "npm run copy:examples && tsup --watch --onSuccess \"npm run copy:examples\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build && npm run typecheck"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "consola": "^3.4.2",
+    "eta": "^3.5.0",
+    "execa": "^9.3.0",
+    "fast-glob": "^3.3.2",
+    "fs-extra": "^11.2.0",
+    "jiti": "^2.6.1",
+    "ora": "^9.4.0",
+    "picocolors": "^1.1.1",
+    "ts-morph": "^23.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "eslint": "^9.6.0",
+    "prettier": "^3.3.2",
+    "shx": "^0.4.0",
+    "tsc-alias": "^1.8.8",
+    "tsup": "^8.1.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "nestjs",
+    "generator",
+    "codegen",
+    "typescript",
+    "cli"
+  ],
+  "license": "MIT"
+}
