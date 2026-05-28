@@ -1,4 +1,4 @@
-import type { PackageConfig } from '../config/package-config.types.js';
+import type { PackageConfig } from '../../contract/config/package-config.types.js';
 import type { Logger } from '../logging/logger.types.js';
 import type { GenerateOpenApiResult } from '../generator/generate-openapi.js';
 
