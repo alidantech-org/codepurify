@@ -2,13 +2,13 @@ openapi: 3.1.0
 info:
   title: Riderescue API
   version: v1
-  description: RideRescue backend API
+  description: Riderescue backend API
   license:
     name: MIT
     identifier: MIT
 servers:
   - url: https://api.riderescueautolink.com
-    description: RideRescue API
+    description: Riderescue API
 security:
   - bearerAuth: []
 paths:
@@ -22,7 +22,7 @@ paths:
     get:
       operationId: listUsers
       tags:
-        - User
+        - users
       summary: List users
       responses:
         '200':
@@ -56,7 +56,7 @@ paths:
     post:
       operationId: createUser
       tags:
-        - User
+        - users
       summary: Create user
       responses:
         '201':
@@ -87,7 +87,7 @@ paths:
     get:
       operationId: getCurrentUser
       tags:
-        - User
+        - users
       summary: Get current user
       responses:
         '200':
@@ -124,7 +124,7 @@ paths:
     get:
       operationId: getUserById
       tags:
-        - User
+        - users
       summary: Get user by ID
       responses:
         '200':
@@ -152,7 +152,7 @@ paths:
     patch:
       operationId: updateUser
       tags:
-        - User
+        - users
       summary: Update user
       responses:
         '200':
@@ -174,7 +174,7 @@ paths:
     delete:
       operationId: deleteUser
       tags:
-        - User
+        - users
       summary: Delete user
       responses:
         '200':
@@ -376,7 +376,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -400,7 +400,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -426,7 +426,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -447,7 +447,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -466,7 +466,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -487,7 +487,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -501,7 +501,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -514,7 +514,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:

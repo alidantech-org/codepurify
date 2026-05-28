@@ -170,6 +170,18 @@ export type { EntityPropertyRefs, PropertyRefGroup };
 
 export type { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef };
 
+export type {
+  EntityRegistryResult,
+  ExtendedRef,
+  PropertyRegistry,
+  RefSchemaField,
+  RefUsage,
+  ArrayRef,
+  VersionBuilder,
+  PrimitiveSchemaField,
+  CompositeSchemaField,
+};
+
 /* =========================================================
  * Codegen metadata
  * ========================================================= */
@@ -286,14 +298,3 @@ export { componentRefToSchemaName, modelRefToSchemaName };
  * ========================================================= */
 
 export { CompilerLogger, LogLevel };
-export type {
-  EntityRegistryResult,
-  ExtendedRef,
-  PropertyRegistry,
-  RefSchemaField,
-  RefUsage,
-  ArrayRef,
-  VersionBuilder,
-  PrimitiveSchemaField,
-  CompositeSchemaField,
-};

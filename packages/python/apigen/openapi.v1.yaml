@@ -1,28 +1,28 @@
 openapi: 3.1.0
 info:
-  title: RideRescue API
+  title: Riderescue API
   version: v1
-  description: RideRescue backend API
+  description: Riderescue backend API
   license:
     name: MIT
     identifier: MIT
 servers:
   - url: https://api.riderescueautolink.com
-    description: RideRescue API
+    description: Riderescue API
 security:
   - bearerAuth: []
 paths:
   /users:
     x-codegen:
       resource:
-        name: User
+        name: users
         path:
           - platform
           - auth
     get:
       operationId: listUsers
       tags:
-        - User
+        - users
       summary: List users
       responses:
         '200':
@@ -56,7 +56,7 @@ paths:
     post:
       operationId: createUser
       tags:
-        - User
+        - users
       summary: Create user
       responses:
         '201':
@@ -80,14 +80,14 @@ paths:
   /users/me:
     x-codegen:
       resource:
-        name: User
+        name: users
         path:
           - platform
           - auth
     get:
       operationId: getCurrentUser
       tags:
-        - User
+        - users
       summary: Get current user
       responses:
         '200':
@@ -115,7 +115,7 @@ paths:
   /users/{userId}:
     x-codegen:
       resource:
-        name: User
+        name: users
         path:
           - platform
           - auth
@@ -124,7 +124,7 @@ paths:
     get:
       operationId: getUserById
       tags:
-        - User
+        - users
       summary: Get user by ID
       responses:
         '200':
@@ -152,7 +152,7 @@ paths:
     patch:
       operationId: updateUser
       tags:
-        - User
+        - users
       summary: Update user
       responses:
         '200':
@@ -174,7 +174,7 @@ paths:
     delete:
       operationId: deleteUser
       tags:
-        - User
+        - users
       summary: Delete user
       responses:
         '200':
@@ -248,7 +248,7 @@ paths:
           - platform
           - users
     parameters:
-      - $ref: '#/components/parameters/UserSettingsCategoryPathParam'
+      - $ref: '#/components/parameters/UsersettingsCategoryPathParam'
     patch:
       operationId: updateNotificationCategory
       tags:
@@ -332,8 +332,8 @@ paths:
         - $ref: '#/components/parameters/FieldsQueryParam'
         - $ref: '#/components/parameters/PopulateQueryParam'
         - $ref: '#/components/parameters/SearchQueryParam'
-        - $ref: '#/components/parameters/VehiclesMakeQueryParam'
-        - $ref: '#/components/parameters/VehiclesStatusQueryParam'
+        - $ref: '#/components/parameters/VehicleMakeQueryParam'
+        - $ref: '#/components/parameters/VehicleStatusQueryParam'
       x-codegen:
         parameters:
           target:
@@ -368,7 +368,7 @@ paths:
           - platform
           - vehicles
     parameters:
-      - $ref: '#/components/parameters/VehiclesVehicleIdPathParam'
+      - $ref: '#/components/parameters/VehicleVehicleIdPathParam'
     get:
       operationId: getVehicleById
       tags:
@@ -390,8 +390,8 @@ paths:
         '500':
           $ref: '#/components/responses/Default500Response'
       parameters:
-        - $ref: '#/components/parameters/VehiclesFieldsQueryParam'
-        - $ref: '#/components/parameters/VehiclesPopulateQueryParam'
+        - $ref: '#/components/parameters/VehicleFieldsQueryParam'
+        - $ref: '#/components/parameters/VehiclePopulateQueryParam'
       x-codegen:
         parameters:
           target:
@@ -783,15 +783,15 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/NotificationIsRead'
-        - $ref: '#/components/parameters/NotificationsPageQueryParam'
-        - $ref: '#/components/parameters/NotificationsLimitQueryParam'
-        - $ref: '#/components/parameters/NotificationsSortQueryParam'
-        - $ref: '#/components/parameters/NotificationsFieldsQueryParam'
-        - $ref: '#/components/parameters/NotificationsPopulateQueryParam'
-        - $ref: '#/components/parameters/NotificationsCategoryQueryParam'
-        - $ref: '#/components/parameters/NotificationsTypeQueryParam'
-        - $ref: '#/components/parameters/NotificationsPriorityQueryParam'
-        - $ref: '#/components/parameters/NotificationsIsReadQueryParam'
+        - $ref: '#/components/parameters/NotificationPageQueryParam'
+        - $ref: '#/components/parameters/NotificationLimitQueryParam'
+        - $ref: '#/components/parameters/NotificationSortQueryParam'
+        - $ref: '#/components/parameters/NotificationFieldsQueryParam'
+        - $ref: '#/components/parameters/NotificationPopulateQueryParam'
+        - $ref: '#/components/parameters/NotificationCategoryQueryParam'
+        - $ref: '#/components/parameters/NotificationTypeQueryParam'
+        - $ref: '#/components/parameters/NotificationPriorityQueryParam'
+        - $ref: '#/components/parameters/NotificationIsReadQueryParam'
   /notifications/me/unread-count:
     x-codegen:
       resource:
@@ -827,7 +827,7 @@ paths:
           - platform
           - notifications
     parameters:
-      - $ref: '#/components/parameters/NotificationsNotificationIdPathParam'
+      - $ref: '#/components/parameters/NotificationNotificationIdPathParam'
     get:
       operationId: getNotificationById
       tags:
@@ -876,7 +876,7 @@ paths:
           - platform
           - notifications
     parameters:
-      - $ref: '#/components/parameters/NotificationsNotificationIdPathParam'
+      - $ref: '#/components/parameters/NotificationNotificationIdPathParam'
     patch:
       operationId: markNotificationAsRead
       tags:
@@ -990,7 +990,7 @@ paths:
           - platform
           - uploads
     parameters:
-      - $ref: '#/components/parameters/UploadsUploadIdPathParam'
+      - $ref: '#/components/parameters/UploadUploadIdPathParam'
     patch:
       operationId: claimUpload
       tags:
@@ -1021,7 +1021,7 @@ paths:
           - platform
           - uploads
     parameters:
-      - $ref: '#/components/parameters/UploadsUploadIdPathParam'
+      - $ref: '#/components/parameters/UploadUploadIdPathParam'
     delete:
       operationId: deleteUpload
       tags:
@@ -1130,18 +1130,18 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/DocumentIsMandatory'
-        - $ref: '#/components/parameters/DocumentsPageQueryParam'
-        - $ref: '#/components/parameters/DocumentsLimitQueryParam'
-        - $ref: '#/components/parameters/DocumentsSortQueryParam'
-        - $ref: '#/components/parameters/DocumentsFieldsQueryParam'
-        - $ref: '#/components/parameters/DocumentsPopulateQueryParam'
-        - $ref: '#/components/parameters/DocumentsSearchQueryParam'
-        - $ref: '#/components/parameters/DocumentsDocumentTypeQueryParam'
-        - $ref: '#/components/parameters/DocumentsCategoryQueryParam'
-        - $ref: '#/components/parameters/DocumentsStatusQueryParam'
-        - $ref: '#/components/parameters/DocumentsFormatQueryParam'
-        - $ref: '#/components/parameters/DocumentsIsActiveQueryParam'
-        - $ref: '#/components/parameters/DocumentsIsMandatoryQueryParam'
+        - $ref: '#/components/parameters/DocumentPageQueryParam'
+        - $ref: '#/components/parameters/DocumentLimitQueryParam'
+        - $ref: '#/components/parameters/DocumentSortQueryParam'
+        - $ref: '#/components/parameters/DocumentFieldsQueryParam'
+        - $ref: '#/components/parameters/DocumentPopulateQueryParam'
+        - $ref: '#/components/parameters/DocumentSearchQueryParam'
+        - $ref: '#/components/parameters/DocumentDocumentTypeQueryParam'
+        - $ref: '#/components/parameters/DocumentCategoryQueryParam'
+        - $ref: '#/components/parameters/DocumentStatusQueryParam'
+        - $ref: '#/components/parameters/DocumentFormatQueryParam'
+        - $ref: '#/components/parameters/DocumentIsActiveQueryParam'
+        - $ref: '#/components/parameters/DocumentIsMandatoryQueryParam'
     post:
       operationId: createDocument
       tags:
@@ -1172,7 +1172,7 @@ paths:
           - references
           - documents
     parameters:
-      - $ref: '#/components/parameters/DocumentsDocumentIdPathParam'
+      - $ref: '#/components/parameters/DocumentDocumentIdPathParam'
     get:
       operationId: getDocumentById
       tags:
@@ -1201,7 +1201,7 @@ paths:
           - references
           - documents
     parameters:
-      - $ref: '#/components/parameters/DocumentsDocumentTypePathParam'
+      - $ref: '#/components/parameters/DocumentDocumentTypePathParam'
     get:
       operationId: getDocumentsByType
       tags:
@@ -1230,7 +1230,7 @@ paths:
           - references
           - documents
     parameters:
-      - $ref: '#/components/parameters/DocumentsDocumentIdPathParam'
+      - $ref: '#/components/parameters/DocumentDocumentIdPathParam'
     put:
       operationId: updateDocument
       tags:
@@ -1346,15 +1346,15 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/RequiredDocumentIsActive'
-        - $ref: '#/components/parameters/RequiredDocumentsPageQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsLimitQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsSortQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsFieldsQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsPopulateQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsSearchQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsServiceTypeQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsRequiredQueryParam'
-        - $ref: '#/components/parameters/RequiredDocumentsIsActiveQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentPageQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentLimitQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentSortQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentFieldsQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentPopulateQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentSearchQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentServiceTypeQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentRequiredQueryParam'
+        - $ref: '#/components/parameters/RequireddocumentIsActiveQueryParam'
     post:
       operationId: createRequiredDocument
       tags:
@@ -1385,7 +1385,7 @@ paths:
           - references
           - documents
     parameters:
-      - $ref: '#/components/parameters/RequiredDocumentsRequiredDocumentIdPathParam'
+      - $ref: '#/components/parameters/RequireddocumentRequiredDocumentIdPathParam'
     get:
       operationId: getRequiredDocumentById
       tags:
@@ -1456,7 +1456,7 @@ paths:
           - references
           - documents
     parameters:
-      - $ref: '#/components/parameters/RequiredDocumentsServiceTypePathParam'
+      - $ref: '#/components/parameters/RequireddocumentServiceTypePathParam'
     get:
       operationId: getRequiredDocumentsByServiceType
       tags:
@@ -1540,13 +1540,13 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/VehicleBrandIsActive'
-        - $ref: '#/components/parameters/VehicleBrandsPageQueryParam'
-        - $ref: '#/components/parameters/VehicleBrandsLimitQueryParam'
-        - $ref: '#/components/parameters/VehicleBrandsSortQueryParam'
-        - $ref: '#/components/parameters/VehicleBrandsFieldsQueryParam'
-        - $ref: '#/components/parameters/VehicleBrandsPopulateQueryParam'
-        - $ref: '#/components/parameters/VehicleBrandsSearchQueryParam'
-        - $ref: '#/components/parameters/VehicleBrandsIsActiveQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandPageQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandLimitQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandSortQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandFieldsQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandPopulateQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandSearchQueryParam'
+        - $ref: '#/components/parameters/VehiclebrandIsActiveQueryParam'
     post:
       operationId: createBrand
       tags:
@@ -1577,7 +1577,7 @@ paths:
           - references
           - vehicles
     parameters:
-      - $ref: '#/components/parameters/VehicleBrandsBrandIdPathParam'
+      - $ref: '#/components/parameters/VehiclebrandBrandIdPathParam'
     get:
       operationId: getBrandById
       tags:
@@ -1648,7 +1648,7 @@ paths:
           - references
           - vehicles
     parameters:
-      - $ref: '#/components/parameters/VehicleBrandsBrandIdPathParam'
+      - $ref: '#/components/parameters/VehiclebrandBrandIdPathParam'
     patch:
       operationId: toggleBrandStatus
       tags:
@@ -1737,14 +1737,14 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/VehicleServiceIsActive'
-        - $ref: '#/components/parameters/VehicleServicesPageQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesLimitQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesSortQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesFieldsQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesPopulateQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesSearchQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesCategoryQueryParam'
-        - $ref: '#/components/parameters/VehicleServicesIsActiveQueryParam'
+        - $ref: '#/components/parameters/VehicleservicePageQueryParam'
+        - $ref: '#/components/parameters/VehicleserviceLimitQueryParam'
+        - $ref: '#/components/parameters/VehicleserviceSortQueryParam'
+        - $ref: '#/components/parameters/VehicleserviceFieldsQueryParam'
+        - $ref: '#/components/parameters/VehicleservicePopulateQueryParam'
+        - $ref: '#/components/parameters/VehicleserviceSearchQueryParam'
+        - $ref: '#/components/parameters/VehicleserviceCategoryQueryParam'
+        - $ref: '#/components/parameters/VehicleserviceIsActiveQueryParam'
     post:
       operationId: createService
       tags:
@@ -1775,7 +1775,7 @@ paths:
           - references
           - vehicles
     parameters:
-      - $ref: '#/components/parameters/VehicleServicesServiceIdPathParam'
+      - $ref: '#/components/parameters/VehicleserviceServiceIdPathParam'
     get:
       operationId: getServiceById
       tags:
@@ -1846,7 +1846,7 @@ paths:
           - references
           - vehicles
     parameters:
-      - $ref: '#/components/parameters/VehicleServicesServiceIdPathParam'
+      - $ref: '#/components/parameters/VehicleserviceServiceIdPathParam'
     patch:
       operationId: toggleServiceStatus
       tags:
@@ -2049,16 +2049,16 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/CompanyIsVerified'
-        - $ref: '#/components/parameters/CompaniesPageQueryParam'
-        - $ref: '#/components/parameters/CompaniesLimitQueryParam'
-        - $ref: '#/components/parameters/CompaniesSortQueryParam'
-        - $ref: '#/components/parameters/CompaniesSearchQueryParam'
-        - $ref: '#/components/parameters/CompaniesTypeQueryParam'
-        - $ref: '#/components/parameters/CompaniesStatusQueryParam'
-        - $ref: '#/components/parameters/CompaniesCityQueryParam'
-        - $ref: '#/components/parameters/CompaniesCountryQueryParam'
-        - $ref: '#/components/parameters/CompaniesIsActiveQueryParam'
-        - $ref: '#/components/parameters/CompaniesIsVerifiedQueryParam'
+        - $ref: '#/components/parameters/CompanyPageQueryParam'
+        - $ref: '#/components/parameters/CompanyLimitQueryParam'
+        - $ref: '#/components/parameters/CompanySortQueryParam'
+        - $ref: '#/components/parameters/CompanySearchQueryParam'
+        - $ref: '#/components/parameters/CompanyTypeQueryParam'
+        - $ref: '#/components/parameters/CompanyStatusQueryParam'
+        - $ref: '#/components/parameters/CompanyCityQueryParam'
+        - $ref: '#/components/parameters/CompanyCountryQueryParam'
+        - $ref: '#/components/parameters/CompanyIsActiveQueryParam'
+        - $ref: '#/components/parameters/CompanyIsVerifiedQueryParam'
   /companies/nearby:
     x-codegen:
       resource:
@@ -2112,11 +2112,11 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/SharedLimit'
-        - $ref: '#/components/parameters/CompaniesLatitudeQueryParam'
-        - $ref: '#/components/parameters/CompaniesLongitudeQueryParam'
-        - $ref: '#/components/parameters/CompaniesRadiusQueryParam'
-        - $ref: '#/components/parameters/CompaniesTypeQueryParam'
-        - $ref: '#/components/parameters/CompaniesLimitQueryParam'
+        - $ref: '#/components/parameters/CompanyLatitudeQueryParam'
+        - $ref: '#/components/parameters/CompanyLongitudeQueryParam'
+        - $ref: '#/components/parameters/CompanyRadiusQueryParam'
+        - $ref: '#/components/parameters/CompanyTypeQueryParam'
+        - $ref: '#/components/parameters/CompanyLimitQueryParam'
   /companies/me:
     x-codegen:
       resource:
@@ -2152,7 +2152,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     get:
       operationId: getCompanyById
       tags:
@@ -2223,7 +2223,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     get:
       operationId: listMembers
       tags:
@@ -2265,10 +2265,10 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/CompanyMemberStatus'
-        - $ref: '#/components/parameters/CompaniesPageQueryParam'
-        - $ref: '#/components/parameters/CompaniesLimitQueryParam'
-        - $ref: '#/components/parameters/CompaniesRoleQueryParam'
-        - $ref: '#/components/parameters/CompaniesStatusQueryParam'
+        - $ref: '#/components/parameters/CompanyPageQueryParam'
+        - $ref: '#/components/parameters/CompanyLimitQueryParam'
+        - $ref: '#/components/parameters/CompanyRoleQueryParam'
+        - $ref: '#/components/parameters/CompanyStatusQueryParam'
   /companies/{companyId}/members/invite:
     x-codegen:
       resource:
@@ -2277,7 +2277,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     post:
       operationId: inviteMember
       tags:
@@ -2308,7 +2308,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     post:
       operationId: acceptInvite
       tags:
@@ -2339,8 +2339,8 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
-      - $ref: '#/components/parameters/CompaniesMemberIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyMemberIdPathParam'
     get:
       operationId: getMember
       tags:
@@ -2411,7 +2411,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     get:
       operationId: listCompanyDocuments
       tags:
@@ -2438,7 +2438,7 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/CompanyDocumentStatus'
-        - $ref: '#/components/parameters/CompaniesStatusQueryParam'
+        - $ref: '#/components/parameters/CompanyStatusQueryParam'
     post:
       operationId: submitCompanyDocument
       tags:
@@ -2471,8 +2471,8 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
-      - $ref: '#/components/parameters/CompaniesDocumentIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyDocumentIdPathParam'
     get:
       operationId: getCompanyDocument
       tags:
@@ -2543,7 +2543,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     get:
       operationId: listCompanyServices
       tags:
@@ -2570,7 +2570,7 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/CompanyServiceIsActive'
-        - $ref: '#/components/parameters/CompaniesIsActiveQueryParam'
+        - $ref: '#/components/parameters/CompanyIsActiveQueryParam'
     post:
       operationId: addCompanyService
       tags:
@@ -2603,8 +2603,8 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
-      - $ref: '#/components/parameters/CompaniesServiceIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyServiceIdPathParam'
     get:
       operationId: getCompanyService
       tags:
@@ -2675,7 +2675,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     get:
       operationId: getAvailability
       tags:
@@ -2726,8 +2726,8 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
-      - $ref: '#/components/parameters/CompaniesDayPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyDayPathParam'
     patch:
       operationId: updateDayAvailability
       tags:
@@ -2758,7 +2758,7 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
     get:
       operationId: listReviews
       tags:
@@ -2795,9 +2795,9 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/CompanyReviewRating'
-        - $ref: '#/components/parameters/CompaniesPageQueryParam'
-        - $ref: '#/components/parameters/CompaniesLimitQueryParam'
-        - $ref: '#/components/parameters/CompaniesRatingQueryParam'
+        - $ref: '#/components/parameters/CompanyPageQueryParam'
+        - $ref: '#/components/parameters/CompanyLimitQueryParam'
+        - $ref: '#/components/parameters/CompanyRatingQueryParam'
     post:
       operationId: createReview
       tags:
@@ -2830,8 +2830,8 @@ paths:
           - platform
           - companies
     parameters:
-      - $ref: '#/components/parameters/CompaniesCompanyIdPathParam'
-      - $ref: '#/components/parameters/CompaniesReviewIdPathParam'
+      - $ref: '#/components/parameters/CompanyCompanyIdPathParam'
+      - $ref: '#/components/parameters/CompanyReviewIdPathParam'
     get:
       operationId: getReview
       tags:
@@ -2969,15 +2969,15 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/BookingPaymentStatus'
-        - $ref: '#/components/parameters/BookingsPageQueryParam'
-        - $ref: '#/components/parameters/BookingsLimitQueryParam'
-        - $ref: '#/components/parameters/BookingsSortQueryParam'
-        - $ref: '#/components/parameters/BookingsStatusQueryParam'
-        - $ref: '#/components/parameters/BookingsTypeQueryParam'
-        - $ref: '#/components/parameters/BookingsUserIdQueryParam'
-        - $ref: '#/components/parameters/BookingsCompanyIdQueryParam'
-        - $ref: '#/components/parameters/BookingsUrgencyQueryParam'
-        - $ref: '#/components/parameters/BookingsPaymentStatusQueryParam'
+        - $ref: '#/components/parameters/BookingPageQueryParam'
+        - $ref: '#/components/parameters/BookingLimitQueryParam'
+        - $ref: '#/components/parameters/BookingSortQueryParam'
+        - $ref: '#/components/parameters/BookingStatusQueryParam'
+        - $ref: '#/components/parameters/BookingTypeQueryParam'
+        - $ref: '#/components/parameters/BookingUserIdQueryParam'
+        - $ref: '#/components/parameters/BookingCompanyIdQueryParam'
+        - $ref: '#/components/parameters/BookingUrgencyQueryParam'
+        - $ref: '#/components/parameters/BookingPaymentStatusQueryParam'
   /bookings/{bookingId}:
     x-codegen:
       resource:
@@ -2986,7 +2986,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     get:
       operationId: getBookingById
       tags:
@@ -3015,7 +3015,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: cancelBooking
       tags:
@@ -3044,7 +3044,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: sendQuote
       tags:
@@ -3075,7 +3075,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: acceptQuote
       tags:
@@ -3104,7 +3104,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: rejectQuote
       tags:
@@ -3133,7 +3133,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: assignMember
       tags:
@@ -3164,7 +3164,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: startBooking
       tags:
@@ -3193,7 +3193,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: completeBooking
       tags:
@@ -3222,7 +3222,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: disputeBooking
       tags:
@@ -3253,7 +3253,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     post:
       operationId: resolveDispute
       tags:
@@ -3282,7 +3282,7 @@ paths:
           - platform
           - bookings
     parameters:
-      - $ref: '#/components/parameters/BookingsBookingIdPathParam'
+      - $ref: '#/components/parameters/BookingBookingIdPathParam'
     get:
       operationId: getStatusEvents
       tags:
@@ -3488,7 +3488,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3512,7 +3512,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3538,7 +3538,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3559,7 +3559,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3578,7 +3578,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3599,7 +3599,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3613,7 +3613,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -3626,7 +3626,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: shared
+          name: Shared
           path:
             - shared
         entity:
@@ -4416,7 +4416,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4456,7 +4456,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4496,7 +4496,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4528,7 +4528,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4560,7 +4560,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4592,7 +4592,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4611,7 +4611,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4629,7 +4629,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4656,7 +4656,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4674,7 +4674,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4691,7 +4691,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: userSettings
+          name: UserSettings
           path:
             - platform
             - users
@@ -4899,7 +4899,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -4960,7 +4960,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5021,7 +5021,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5067,7 +5067,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5113,7 +5113,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5159,7 +5159,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5184,7 +5184,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5206,7 +5206,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5227,7 +5227,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5242,7 +5242,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5264,7 +5264,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5281,7 +5281,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5306,7 +5306,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5327,7 +5327,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicles
+          name: Vehicle
           path:
             - platform
             - vehicles
@@ -5389,7 +5389,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5421,7 +5421,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5439,7 +5439,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5457,7 +5457,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5472,7 +5472,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5490,7 +5490,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5505,7 +5505,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5520,7 +5520,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5544,7 +5544,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5565,7 +5565,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5585,7 +5585,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5605,7 +5605,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5625,7 +5625,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: auth
+          name: Auth
           path:
             - platform
             - auth
@@ -5635,7 +5635,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -5872,7 +5872,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -5942,7 +5942,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6012,7 +6012,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6064,7 +6064,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6116,7 +6116,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6168,7 +6168,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6195,7 +6195,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6215,7 +6215,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6323,7 +6323,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6381,7 +6381,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6398,7 +6398,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6420,7 +6420,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6433,7 +6433,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: notifications
+          name: Notification
           path:
             - platform
             - notifications
@@ -6609,7 +6609,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6667,7 +6667,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6725,7 +6725,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6769,7 +6769,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6813,7 +6813,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6857,7 +6857,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6882,7 +6882,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6900,7 +6900,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6919,7 +6919,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6937,7 +6937,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -6954,7 +6954,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: uploads
+          name: Upload
           path:
             - platform
             - uploads
@@ -7231,7 +7231,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7298,7 +7298,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7365,7 +7365,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7415,7 +7415,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7465,7 +7465,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7515,7 +7515,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7554,7 +7554,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7576,7 +7576,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7629,7 +7629,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7674,7 +7674,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7691,7 +7691,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7713,7 +7713,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7732,7 +7732,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: documents
+          name: Document
           path:
             - references
             - documents
@@ -7827,7 +7827,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -7883,7 +7883,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -7923,7 +7923,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -7963,7 +7963,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -7995,7 +7995,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8027,7 +8027,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8059,7 +8059,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8086,7 +8086,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8104,7 +8104,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8125,7 +8125,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8152,7 +8152,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8175,7 +8175,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8192,7 +8192,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8214,7 +8214,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8236,7 +8236,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: requiredDocuments
+          name: RequiredDocument
           path:
             - references
             - documents
@@ -8347,7 +8347,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8384,7 +8384,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8421,7 +8421,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8451,7 +8451,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8481,7 +8481,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8511,7 +8511,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8536,7 +8536,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8556,7 +8556,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8590,7 +8590,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8619,7 +8619,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8636,7 +8636,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8658,7 +8658,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleBrands
+          name: VehicleBrand
           path:
             - references
             - vehicles
@@ -8817,7 +8817,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -8866,7 +8866,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -8915,7 +8915,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -8953,7 +8953,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -8991,7 +8991,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9029,7 +9029,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9056,7 +9056,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9076,7 +9076,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9124,7 +9124,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9165,7 +9165,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9182,7 +9182,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9204,7 +9204,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: vehicleServices
+          name: VehicleService
           path:
             - references
             - vehicles
@@ -9361,7 +9361,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9410,7 +9410,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9459,7 +9459,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9497,7 +9497,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9535,7 +9535,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9573,7 +9573,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9600,7 +9600,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9618,7 +9618,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9651,7 +9651,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9682,7 +9682,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -9699,7 +9699,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: driverProfiles
+          name: DriverProfile
           path:
             - platform
             - users
@@ -10143,7 +10143,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10234,7 +10234,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10325,7 +10325,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10391,7 +10391,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10457,7 +10457,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10523,7 +10523,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10562,7 +10562,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10584,7 +10584,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10695,7 +10695,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10732,7 +10732,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10769,7 +10769,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10799,7 +10799,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10829,7 +10829,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10859,7 +10859,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10882,7 +10882,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -10900,7 +10900,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11027,7 +11027,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11070,7 +11070,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11113,7 +11113,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11147,7 +11147,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11181,7 +11181,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11215,7 +11215,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11236,7 +11236,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11254,7 +11254,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11368,7 +11368,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11411,7 +11411,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11454,7 +11454,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11488,7 +11488,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11522,7 +11522,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11556,7 +11556,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11577,7 +11577,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11595,7 +11595,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11713,7 +11713,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11756,7 +11756,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11799,7 +11799,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11833,7 +11833,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11867,7 +11867,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11901,7 +11901,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11922,7 +11922,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -11940,7 +11940,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12055,7 +12055,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12095,7 +12095,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12135,7 +12135,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12167,7 +12167,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12199,7 +12199,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12231,7 +12231,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12252,7 +12252,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12270,7 +12270,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12371,7 +12371,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12408,7 +12408,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12445,7 +12445,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12475,7 +12475,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12505,7 +12505,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12535,7 +12535,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12558,7 +12558,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12576,7 +12576,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12635,7 +12635,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12678,7 +12678,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12695,7 +12695,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12717,7 +12717,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12739,7 +12739,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12761,7 +12761,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12780,7 +12780,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12795,7 +12795,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12812,7 +12812,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12834,7 +12834,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12856,7 +12856,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12873,7 +12873,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12890,7 +12890,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12912,7 +12912,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12938,7 +12938,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12961,7 +12961,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -12978,7 +12978,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13000,7 +13000,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13017,7 +13017,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13044,7 +13044,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13063,7 +13063,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13085,7 +13085,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13102,7 +13102,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13124,7 +13124,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: companies
+          name: Company
           path:
             - platform
             - companies
@@ -13473,7 +13473,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13582,7 +13582,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13691,7 +13691,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13769,7 +13769,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13847,7 +13847,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13925,7 +13925,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13950,7 +13950,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -13968,7 +13968,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14076,7 +14076,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14113,7 +14113,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14150,7 +14150,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14180,7 +14180,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14210,7 +14210,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14240,7 +14240,7 @@ components:
       x-codegen:
         kind: model
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14259,7 +14259,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14277,7 +14277,7 @@ components:
         kind: dto
         role: query
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14349,7 +14349,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14370,7 +14370,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14385,7 +14385,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14400,7 +14400,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14417,7 +14417,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14439,7 +14439,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14458,7 +14458,7 @@ components:
       x-codegen:
         kind: dto
         resource:
-          name: bookings
+          name: Booking
           path:
             - platform
             - bookings
@@ -14526,541 +14526,541 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserId'
-    UserSettingsCategoryPathParam:
+    UsersettingsCategoryPathParam:
       name: category
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/SettingsFieldsCategory'
-    VehiclesMakeQueryParam:
+    VehicleMakeQueryParam:
       name: make
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/VehicleMake'
-    VehiclesStatusQueryParam:
+    VehicleStatusQueryParam:
       name: status
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/VehicleStatus'
-    VehiclesVehicleIdPathParam:
+    VehicleVehicleIdPathParam:
       name: vehicleId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/VehicleId'
-    VehiclesFieldsQueryParam:
+    VehicleFieldsQueryParam:
       name: fields
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedFields'
-    VehiclesPopulateQueryParam:
+    VehiclePopulateQueryParam:
       name: populate
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPopulate'
-    NotificationsPageQueryParam:
+    NotificationPageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    NotificationsLimitQueryParam:
+    NotificationLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    NotificationsSortQueryParam:
+    NotificationSortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    NotificationsFieldsQueryParam:
+    NotificationFieldsQueryParam:
       name: fields
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedFields'
-    NotificationsPopulateQueryParam:
+    NotificationPopulateQueryParam:
       name: populate
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPopulate'
-    NotificationsCategoryQueryParam:
+    NotificationCategoryQueryParam:
       name: category
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/NotificationCategory'
-    NotificationsTypeQueryParam:
+    NotificationTypeQueryParam:
       name: type
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/NotificationType'
-    NotificationsPriorityQueryParam:
+    NotificationPriorityQueryParam:
       name: priority
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/NotificationPriority'
-    NotificationsIsReadQueryParam:
+    NotificationIsReadQueryParam:
       name: isRead
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/NotificationIsRead'
-    NotificationsNotificationIdPathParam:
+    NotificationNotificationIdPathParam:
       name: notificationId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/NotificationId'
-    UploadsUploadIdPathParam:
+    UploadUploadIdPathParam:
       name: uploadId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/UploadId'
-    DocumentsPageQueryParam:
+    DocumentPageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    DocumentsLimitQueryParam:
+    DocumentLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    DocumentsSortQueryParam:
+    DocumentSortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    DocumentsFieldsQueryParam:
+    DocumentFieldsQueryParam:
       name: fields
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedFields'
-    DocumentsPopulateQueryParam:
+    DocumentPopulateQueryParam:
       name: populate
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPopulate'
-    DocumentsSearchQueryParam:
+    DocumentSearchQueryParam:
       name: search
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSearch'
-    DocumentsDocumentTypeQueryParam:
+    DocumentDocumentTypeQueryParam:
       name: documentType
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/DocumentDocumentType'
-    DocumentsCategoryQueryParam:
+    DocumentCategoryQueryParam:
       name: category
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/DocumentCategory'
-    DocumentsStatusQueryParam:
+    DocumentStatusQueryParam:
       name: status
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/DocumentStatus'
-    DocumentsFormatQueryParam:
+    DocumentFormatQueryParam:
       name: format
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/DocumentFormat'
-    DocumentsIsActiveQueryParam:
+    DocumentIsActiveQueryParam:
       name: isActive
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/DocumentIsActive'
-    DocumentsIsMandatoryQueryParam:
+    DocumentIsMandatoryQueryParam:
       name: isMandatory
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/DocumentIsMandatory'
-    DocumentsDocumentIdPathParam:
+    DocumentDocumentIdPathParam:
       name: documentId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/DocumentId'
-    DocumentsDocumentTypePathParam:
+    DocumentDocumentTypePathParam:
       name: documentType
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/DocumentDocumentType'
-    RequiredDocumentsPageQueryParam:
+    RequireddocumentPageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    RequiredDocumentsLimitQueryParam:
+    RequireddocumentLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    RequiredDocumentsSortQueryParam:
+    RequireddocumentSortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    RequiredDocumentsFieldsQueryParam:
+    RequireddocumentFieldsQueryParam:
       name: fields
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedFields'
-    RequiredDocumentsPopulateQueryParam:
+    RequireddocumentPopulateQueryParam:
       name: populate
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPopulate'
-    RequiredDocumentsSearchQueryParam:
+    RequireddocumentSearchQueryParam:
       name: search
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSearch'
-    RequiredDocumentsServiceTypeQueryParam:
+    RequireddocumentServiceTypeQueryParam:
       name: serviceType
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/RequiredDocumentServiceType'
-    RequiredDocumentsRequiredQueryParam:
+    RequireddocumentRequiredQueryParam:
       name: required
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/RequiredDocumentRequired'
-    RequiredDocumentsIsActiveQueryParam:
+    RequireddocumentIsActiveQueryParam:
       name: isActive
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/RequiredDocumentIsActive'
-    RequiredDocumentsRequiredDocumentIdPathParam:
+    RequireddocumentRequiredDocumentIdPathParam:
       name: requiredDocumentId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/RequiredDocumentId'
-    RequiredDocumentsServiceTypePathParam:
+    RequireddocumentServiceTypePathParam:
       name: serviceType
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/RequiredDocumentServiceType'
-    VehicleBrandsPageQueryParam:
+    VehiclebrandPageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    VehicleBrandsLimitQueryParam:
+    VehiclebrandLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    VehicleBrandsSortQueryParam:
+    VehiclebrandSortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    VehicleBrandsFieldsQueryParam:
+    VehiclebrandFieldsQueryParam:
       name: fields
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedFields'
-    VehicleBrandsPopulateQueryParam:
+    VehiclebrandPopulateQueryParam:
       name: populate
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPopulate'
-    VehicleBrandsSearchQueryParam:
+    VehiclebrandSearchQueryParam:
       name: search
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSearch'
-    VehicleBrandsIsActiveQueryParam:
+    VehiclebrandIsActiveQueryParam:
       name: isActive
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/VehicleBrandIsActive'
-    VehicleBrandsBrandIdPathParam:
+    VehiclebrandBrandIdPathParam:
       name: brandId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/VehicleBrandId'
-    VehicleServicesPageQueryParam:
+    VehicleservicePageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    VehicleServicesLimitQueryParam:
+    VehicleserviceLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    VehicleServicesSortQueryParam:
+    VehicleserviceSortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    VehicleServicesFieldsQueryParam:
+    VehicleserviceFieldsQueryParam:
       name: fields
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedFields'
-    VehicleServicesPopulateQueryParam:
+    VehicleservicePopulateQueryParam:
       name: populate
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPopulate'
-    VehicleServicesSearchQueryParam:
+    VehicleserviceSearchQueryParam:
       name: search
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSearch'
-    VehicleServicesCategoryQueryParam:
+    VehicleserviceCategoryQueryParam:
       name: category
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/VehicleServiceCategory'
-    VehicleServicesIsActiveQueryParam:
+    VehicleserviceIsActiveQueryParam:
       name: isActive
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/VehicleServiceIsActive'
-    VehicleServicesServiceIdPathParam:
+    VehicleserviceServiceIdPathParam:
       name: serviceId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/VehicleServiceId'
-    CompaniesPageQueryParam:
+    CompanyPageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    CompaniesLimitQueryParam:
+    CompanyLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    CompaniesSortQueryParam:
+    CompanySortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    CompaniesSearchQueryParam:
+    CompanySearchQueryParam:
       name: search
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSearch'
-    CompaniesTypeQueryParam:
+    CompanyTypeQueryParam:
       name: type
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyType'
-    CompaniesStatusQueryParam:
+    CompanyStatusQueryParam:
       name: status
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyDocumentStatus'
-    CompaniesCityQueryParam:
+    CompanyCityQueryParam:
       name: city
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyCity'
-    CompaniesCountryQueryParam:
+    CompanyCountryQueryParam:
       name: country
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyCountry'
-    CompaniesIsActiveQueryParam:
+    CompanyIsActiveQueryParam:
       name: isActive
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyServiceIsActive'
-    CompaniesIsVerifiedQueryParam:
+    CompanyIsVerifiedQueryParam:
       name: isVerified
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyIsVerified'
-    CompaniesLatitudeQueryParam:
+    CompanyLatitudeQueryParam:
       name: latitude
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyLatitude'
-    CompaniesLongitudeQueryParam:
+    CompanyLongitudeQueryParam:
       name: longitude
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyLongitude'
-    CompaniesRadiusQueryParam:
+    CompanyRadiusQueryParam:
       name: radius
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyServiceRadius'
-    CompaniesCompanyIdPathParam:
+    CompanyCompanyIdPathParam:
       name: companyId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/CompanyId'
-    CompaniesRoleQueryParam:
+    CompanyRoleQueryParam:
       name: role
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyMemberRole'
-    CompaniesMemberIdPathParam:
+    CompanyMemberIdPathParam:
       name: memberId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/CompanyMemberId'
-    CompaniesDocumentIdPathParam:
+    CompanyDocumentIdPathParam:
       name: documentId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/CompanyDocumentId'
-    CompaniesServiceIdPathParam:
+    CompanyServiceIdPathParam:
       name: serviceId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/CompanyServiceId'
-    CompaniesDayPathParam:
+    CompanyDayPathParam:
       name: day
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/CompanyAvailabilityDay'
-    CompaniesRatingQueryParam:
+    CompanyRatingQueryParam:
       name: rating
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/CompanyReviewRating'
-    CompaniesReviewIdPathParam:
+    CompanyReviewIdPathParam:
       name: reviewId
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/CompanyReviewId'
-    BookingsPageQueryParam:
+    BookingPageQueryParam:
       name: page
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedPage'
-    BookingsLimitQueryParam:
+    BookingLimitQueryParam:
       name: limit
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedLimit'
-    BookingsSortQueryParam:
+    BookingSortQueryParam:
       name: sort
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/SharedSort'
-    BookingsStatusQueryParam:
+    BookingStatusQueryParam:
       name: status
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/BookingStatus'
-    BookingsTypeQueryParam:
+    BookingTypeQueryParam:
       name: type
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/BookingType'
-    BookingsUserIdQueryParam:
+    BookingUserIdQueryParam:
       name: userId
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/BookingUserId'
-    BookingsCompanyIdQueryParam:
+    BookingCompanyIdQueryParam:
       name: companyId
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/BookingCompanyId'
-    BookingsUrgencyQueryParam:
+    BookingUrgencyQueryParam:
       name: urgency
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/BookingUrgency'
-    BookingsPaymentStatusQueryParam:
+    BookingPaymentStatusQueryParam:
       name: paymentStatus
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/BookingPaymentStatus'
-    BookingsBookingIdPathParam:
+    BookingBookingIdPathParam:
       name: bookingId
       in: path
       required: true
