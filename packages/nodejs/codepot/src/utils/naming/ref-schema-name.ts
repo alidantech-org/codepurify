@@ -1,5 +1,5 @@
-import type { ComponentRef, ModelRef } from '../refs/ref.types.js';
-import { toSchemaName } from './schema-name.js';
+import { ComponentRef, ModelRef } from '@/contract/refs/ref.types';
+import { toSchemaName } from './schema-name';
 
 export function modelRefToSchemaName(ref: ModelRef): string {
   return toSchemaName(ref.name);

@@ -1,7 +1,7 @@
-import { RefKind } from '../refs/ref-kind.js';
-import type { PropertyRef } from '../refs/ref.types.js';
+import { RefKind } from '../refs/ref-kind';
+import type { PropertyRef } from '../refs/ref.types';
 
-import type { EntityPropertyRefs, PropertyRefGroup } from './property.types.js';
+import type { EntityPropertyRefs, PropertyRefGroup } from './property.types';
 
 export function isPropertyRef(value: unknown): value is PropertyRef {
   return !!value && typeof value === 'object' && 'kind' in value && value.kind === RefKind.property && 'propertyKey' in value;

@@ -1,10 +1,10 @@
-import type { ExtendWithInput } from '../../refs/ref-usage.types.js';
-import type { SchemaCompositionFieldMap } from '../../schema/schema.types.js';
-import type { ModelRef, ComponentRef, PropertyRef } from '../../refs/ref.types.js';
-import type { FieldSourceMetadata } from '../../refs/ref-usage.types.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { getSourceMetadataFromRef } from '../../refs/ref-source-metadata.js';
+import { RefKind } from "@/contract/refs/ref-kind";
+import { getSourceMetadataFromRef } from "@/contract/refs/ref-source-metadata";
+import { FieldSourceMetadata, ExtendWithInput } from "@/contract/refs/ref-usage.types";
+import { ModelRef, ComponentRef, PropertyRef } from "@/contract/refs/ref.types";
+import { SchemaCompositionFieldMap } from "@/contract/schema/schema.types";
+import { isRefUsage } from "@/pipeline/validation/ref-usage-guards";
+
 
 export interface NormalizedExtendWithForQuery {
   readonly fields: SchemaCompositionFieldMap;

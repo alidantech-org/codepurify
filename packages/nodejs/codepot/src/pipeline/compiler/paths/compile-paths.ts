@@ -1,19 +1,16 @@
-import type { OpenApiPaths, OpenApiOperation } from '../../openapi/openapi.types.js';
-import type { VersionContract } from '../../version/version-contract.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { expressPathToOpenApi } from './express-path-to-openapi.js';
-import type { RouteDefinition, RouteParameterMap, RouteParameterRegistry } from '../../routes/route.types.js';
 import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types.js';
 import { inferRouteComponents } from './infer-route-components.js';
 import { compileRouteOperation } from './compile-route-operation.js';
-import { extractPathParamNames } from '../../routes/route.types.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
-import type { ComponentRef } from '../../refs/ref.types.js';
-import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { isComponentRef } from '../../validation/ref-guards.js';
+import type { ComponentRef } from '@/contract/refs/ref.types.js';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
+import { isComponentRef } from '@/pipeline/validation/ref-guards.js';
 import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
+import { RouteParameterRegistry, RouteParameterMap, extractPathParamNames, RouteDefinition } from '@/contract/routes/route.types.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
+import { OpenApiPaths, OpenApiOperation } from '@/pipeline/targets/openapi/options/openapi.types.js';
 
 export function compilePaths(
   contract: VersionContract,

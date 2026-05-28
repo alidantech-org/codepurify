@@ -1,9 +1,6 @@
-import { RefKind } from "../refs/ref-kind.js";
-import type {
-  ComponentRef,
-  EngineRef,
-  PropertyRef,
-} from "../refs/ref.types.js";
+import { RefKind } from "@/contract/refs/ref-kind";
+import { EngineRef, PropertyRef, ComponentRef } from "@/contract/refs/ref.types";
+
 
 export function isEngineRef(value: unknown): value is EngineRef {
   if (!value || typeof value !== "object") return false;

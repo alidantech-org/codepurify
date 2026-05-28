@@ -1,29 +1,20 @@
-import type {
-  RouteDefinition,
-  RouteParameterMap,
-  RouteSchemaInput,
-  RouteResponseInput,
-  RouteBodyInput,
-  RouteParameterFieldValue,
-} from '../../routes/route.types.js';
-import type { ModelRef } from '../../refs/ref.types.js';
-import type { RefUsage } from '../../refs/ref-usage.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import type {
   InferredParameterComponent,
   InferredQueryParameterSchema,
-  InferredRequestBodyComponent,
-  InferredResponseComponent,
   InferredRouteComponents,
 } from './inferred-route-components.types.js';
-import type { VersionContract, VersionDefaults } from '../../version/version-contract.types.js';
+import type { VersionContract, VersionDefaults } from '@/contract/version/version-contract.types.js';
 
-import { ContentType, ContentTypeInput } from '../../openapi/content-type.js';
-import { getDefaultResponseName, getParameterName, getRequestBodyName, getResponseName } from '../../naming/component-name.js';
-import { getRefRequired, isRefUsage } from '../../validation/ref-usage-guards.js';
-import { isEngineRef, isPropertyRef } from '../../validation/ref-guards.js';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
+import { isEngineRef, isPropertyRef } from '@/pipeline/validation/ref-guards.js';
 import { collectQueryFieldsFromSchemaComponentValue, isRequiredForQuery } from './compile-route-parameters.js';
-import { RefKind } from '../../refs/ref-kind.js';
+import { ContentType } from '@/app/runtime/output/output.constants.js';
+import { RefKind } from '@/contract/refs/ref-kind.js';
+import { ModelRef } from '@/contract/refs/ref.types.js';
+import { RouteParameterMap, RouteDefinition, RouteResponseInput, RouteBodyInput, RouteSchemaInput } from '@/contract/routes/route.types.js';
+import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type.js';
+import { getParameterName, getRequestBodyName, getResponseName, getDefaultResponseName } from '@/utils/naming/component-name.js';
 
 function getParameterIdentityKey(param: {
   readonly name: string;

@@ -20,31 +20,8 @@
     }
   },
   "include": [
-    ".",
+    "cli",
     "src",
-    "src/app",
-    "src/codegen",
-    "src/compiler",
-    "src/components",
-    "src/config",
-    "src/debug",
-    "src/generator",
-    "src/ids",
-    "src/logger",
-    "src/logging",
-    "src/naming",
-    "src/openapi",
-    "src/output",
-    "src/properties",
-    "src/refs",
-    "src/resource",
-    "src/routes",
-    "src/schema",
-    "src/validation",
-    "src/validator",
-    "src/version",
-    "src/writer",
-    "src/zod",
-    "src/index.ts"
+    "tests"
   ]
 }

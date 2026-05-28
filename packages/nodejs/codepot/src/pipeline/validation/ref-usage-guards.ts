@@ -1,5 +1,6 @@
-import type { EngineRef } from '../refs/ref.types.js';
-import type { RefUsage, ExtendWithInput } from '../refs/ref-usage.types.js';
+
+import { RefUsage, ExtendWithInput } from '@/contract/refs/ref-usage.types.js';
+import { EngineRef } from '@/contract/refs/ref.types.js';
 import { isEngineRef } from './ref-guards.js';
 
 export function isRefUsage(value: unknown): value is RefUsage<EngineRef> {

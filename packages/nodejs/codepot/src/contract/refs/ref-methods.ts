@@ -2,8 +2,8 @@ import type { z } from 'zod';
 import type { EngineRef } from './ref.types.js';
 import type { ExtendWithInput, RefUsage, RefUsageOptions, RefWithUsageMethods } from './ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
-import type { ComponentFieldMap } from '../components/component.types.js';
 import { getSourceMetadataFromRef, getSourceMetadataFromExtendWithInput } from './ref-source-metadata.js';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
 
 export interface RefMethodOptions {
   readonly toZod?: (value: unknown) => z.ZodTypeAny;

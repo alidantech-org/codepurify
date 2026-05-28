@@ -1,4 +1,4 @@
-import type { XCodegenParameterTargetMeta } from '../../codegen/codegen-extension.types.js';
+import { XCodegenParameterTargetMeta } from '@/pipeline/targets/codegen/codegen-extension.types';
 
 export interface ParameterTargetInput {
   readonly querySchemaRef?: string;

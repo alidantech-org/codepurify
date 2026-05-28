@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import { SchemaKind } from './schema-kind.js';
 import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
+import type { RefUsage } from '../refs/ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from '../refs/ref-wrapper.types.js';
 import type { SchemaAccess } from './schema-access.js';
 import type { PrimitiveQueryOptions } from './query-behavior.js';

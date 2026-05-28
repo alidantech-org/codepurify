@@ -1,25 +1,28 @@
-import { defineSchemas } from '../components/schemas/define-schemas.js';
-import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
+import type { PropertyRegistry } from '../properties/property.types';
 
-import { defineParameters } from '../components/parameters/define-parameters.js';
-import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
+import { defineRoutes } from '../routes/define-routes';
+import type { RouteRegistry } from '../routes/route.types';
 
-import { defineRequestBodies } from '../components/request-bodies/define-request-bodies.js';
-import type {
+import type { ResourceContext } from './resource-context.types';
+import { defineProperties } from '../properties/define-properties';
+
+import { SchemaComponentRegistry, SchemaComponentValue } from '@/contract/schema/schemas/schema-component.types';
+import { defineParameters } from '@/pipeline/targets/openapi/components/parameters/define-parameters';
+import {
+  ParameterComponentRegistry,
+  ParameterComponentDefinition,
+} from '@/pipeline/targets/openapi/components/parameters/parameter-component.types';
+import { defineRequestBodies } from '@/pipeline/targets/openapi/components/request-bodies/define-request-bodies';
+import {
   RequestBodyComponentRegistry,
   RequestBodyComponentDefinition,
-} from '../components/request-bodies/request-body-component.types.js';
-
-import { defineResponses } from '../components/responses/define-responses.js';
-import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
-
-import type { PropertyRegistry } from '../properties/property.types.js';
-
-import { defineRoutes } from '../routes/define-routes.js';
-import type { RouteRegistry } from '../routes/route.types.js';
-
-import type { ResourceContext } from './resource-context.types.js';
-import { defineProperties } from '../properties/define-properties.js';
+} from '@/pipeline/targets/openapi/components/request-bodies/request-body-component.types';
+import { defineResponses } from '@/pipeline/targets/openapi/components/responses/define-responses';
+import {
+  ResponseComponentRegistry,
+  ResponseComponentDefinition,
+} from '@/pipeline/targets/openapi/components/responses/response-component.types';
+import { defineSchemas } from '@/contract/schema/schemas/define-schemas';
 
 export interface DefineResourceOptions {
   /**

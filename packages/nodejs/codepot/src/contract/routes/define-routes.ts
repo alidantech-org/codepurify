@@ -1,7 +1,7 @@
-import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
-import type { OptionalResourceContext } from '../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../codegen/codegen-extension.types.js';
-import type { DefineRoutesInput, RouteDefinition, RouteParameterRegistry, RouteRegistry } from './route.types.js';
+import { XCodegenDtoRole, XCodegenKind } from '@/pipeline/targets/codegen/codegen-extension.types';
+import type { OptionalResourceContext } from '../resource/resource-context.types';
+import type { DefineRoutesInput, RouteDefinition, RouteParameterRegistry, RouteRegistry } from './route.types';
+import { createEngineId, EngineIdPart } from '@/utils/ids/engine-id';
 
 export interface DefineRoutesOptions extends OptionalResourceContext {
   name: string;

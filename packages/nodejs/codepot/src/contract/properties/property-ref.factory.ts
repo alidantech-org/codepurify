@@ -1,18 +1,19 @@
 import type { z } from 'zod';
 
-import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
-import { toSchemaName } from '../naming/schema-name.js';
-import { RefKind } from '../refs/ref-kind.js';
-import { withRefMethods } from '../refs/ref-methods.js';
-import type { GeneratedPropertySchema, PropertyRef } from '../refs/ref.types.js';
-import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
-import type { SchemaField, SchemaFieldMap } from '../schema/schema.types.js';
-import { XCodegenKind } from '../codegen/codegen-extension.types.js';
-import { isRefUsage } from '../validation/ref-usage-guards.js';
 
-import type { DefinePropertiesOptions } from './define-properties.js';
-import { PropertyKind } from './property-kind.js';
-import type { PropertyFieldRefMap, PropertyRefGroup } from './property.types.js';
+import { RefKind } from '../refs/ref-kind';
+import { withRefMethods } from '../refs/ref-methods';
+import type { GeneratedPropertySchema, PropertyRef } from '../refs/ref.types';
+import type { RefWithUsageMethods } from '../refs/ref-usage.types';
+import type { SchemaField, SchemaFieldMap } from '../schema/schema.types';
+
+
+import type { DefinePropertiesOptions } from './define-properties';
+import { PropertyKind } from './property-kind';
+import type { PropertyFieldRefMap, PropertyRefGroup } from './property.types';
+import { XCodegenKind, toSchemaName } from '@/index';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards';
+import { EngineIdPart, createEngineId } from '@/utils/ids/engine-id';
 
 export function createPropertyRefs<TFields extends SchemaFieldMap>(
   options: DefinePropertiesOptions,

@@ -1,5 +1,5 @@
+import { ContentType, defineVersionContract, HttpMethod, QueryOperator, schema, SchemaAccess } from '@/index';
 import { z } from 'zod';
-import { ContentType, HttpMethod, QueryOperator, SchemaAccess, defineVersionContract, schema } from '../index.js';
 
 interface IUser {
   id: string;

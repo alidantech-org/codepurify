@@ -1,4 +1,4 @@
-import type { LoggerConfig } from '../logger/logger.types.js';
+import { LoggerConfig } from "@/utils/logger";
 
 export interface ParsedCliArgs {
   readonly command: string;

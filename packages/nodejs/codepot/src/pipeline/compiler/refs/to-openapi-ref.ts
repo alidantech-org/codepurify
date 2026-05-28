@@ -1,6 +1,6 @@
-import { OpenApiRefPattern } from "../../openapi/ref-patterns.js";
-import type { EngineRef } from "../../refs/ref.types.js";
-import type { OpenApiRef, RefResolver } from "./ref-resolver.types.js";
+import { EngineRef } from '@/contract/refs/ref.types.js';
+import { OpenApiRefPattern } from '@/pipeline/targets/openapi/options/ref-patterns.js';
+import type { OpenApiRef, RefResolver } from './ref-resolver.types.js';
 
 export function toOpenApiSchemaRef(
   ref: EngineRef,

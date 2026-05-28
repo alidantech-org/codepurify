@@ -1,14 +1,8 @@
-import type { OpenApiComponents } from '../openapi/openapi.types.js';
-import type { VersionContract } from '../version/version-contract.types.js';
+
 import type { CompilerContext } from './compiler-context.js';
 
-import type { EntityPropertyRefs, PropertyRefGroup } from '../properties/property.types.js';
-import type { ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
-import type { SchemaFieldMap } from '../schema/schema.types.js';
 import type { CompileQueryModelContext } from './schemas/compile-query-model-schema.js';
 
-import { toSchemaName } from '../naming/schema-name.js';
 import { buildSchemaResolver } from './schemas/build-schema-resolver.js';
 import { compileComponentSchema } from './schemas/compile-component-schema.js';
 import { compileModelSchema } from './schemas/compile-model-schema.js';
@@ -18,8 +12,15 @@ import { compileParameterComponent } from './components/compile-parameter-compon
 import { compileRequestBodyComponent } from './components/compile-request-body-component.js';
 import { compileResponseComponent } from './components/compile-response-component.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
-import { applyCodegenMetadata } from '../codegen/apply-codegen-extensions.js';
-import { XCodegenKind } from '../codegen/codegen-extension.types.js';
+import { PropertyRefGroup, EntityPropertyRefs } from '@/contract/properties/property.types.js';
+import { RefWithUsageMethods } from '@/contract/refs/ref-usage.types.js';
+import { PropertyRef } from '@/contract/refs/ref.types.js';
+import { SchemaFieldMap } from '@/contract/schema/schema.types.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
+import { toSchemaName } from '@/utils/naming/schema-name.js';
+import { applyCodegenMetadata } from '../targets/codegen/apply-codegen-extensions.js';
+import { XCodegenKind } from '../targets/codegen/codegen-extension.types.js';
+import { OpenApiComponents } from '../targets/openapi/options/openapi.types.js';
 
 type SchemaResolver = ReturnType<typeof buildSchemaResolver>;
 type CompilableModelRef = Parameters<typeof compileModelSchema>[0];

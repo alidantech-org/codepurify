@@ -1,4 +1,4 @@
-import type { VersionContract } from "../version/version-contract.types.js";
+import { VersionContract } from "@/contract/version/version-contract.types.js";
 import { validateVersionContract } from "./validate-version-contract.js";
 import {
   invalidResult,

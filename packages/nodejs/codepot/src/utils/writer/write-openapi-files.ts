@@ -1,12 +1,12 @@
 import path from 'path';
-import type { CompilerLogger } from '../logger/compiler-logger.js';
-import { PackageOutputFormat } from '../config/package-config.types.js';
-import type { OpenApiDocument } from '../openapi/openapi.types.js';
-import { createDebugFileName, createOpenApiFileName } from '../output/openapi-file-name.js';
-import type { ResolvedOutputConfig } from '../output/output.types.js';
-import { sanitizeDebugContract } from '../debug/sanitize-debug-contract.js';
-import { writeJsonFile } from './write-json-file.js';
-import { writeYamlFile } from './write-yaml-file.js';
+import type { CompilerLogger } from '@/utils/logger/compiler-logger';
+import { PackageOutputFormat } from '@/contract/config/package-config.types';
+import { writeJsonFile } from './write-json-file';
+import { writeYamlFile } from './write-yaml-file';
+import { sanitizeDebugContract } from '@/app/debug/sanitize-debug-contract.js';
+import { createDebugFileName, createOpenApiFileName } from '@/app/runtime/output/openapi-file-name';
+import { ResolvedOutputConfig } from '@/app/runtime/output/output.types';
+import { OpenApiDocument } from '@/pipeline/targets/openapi/options/openapi.types';
 
 export interface WriteOpenApiFilesInput {
   readonly document: OpenApiDocument;

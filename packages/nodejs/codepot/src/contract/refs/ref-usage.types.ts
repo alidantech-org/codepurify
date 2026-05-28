@@ -1,7 +1,6 @@
 import type { z } from 'zod';
-import type { ComponentRef, EngineRef, ModelRef, PropertyRef } from './ref.types.js';
-import type { SchemaCompositionFieldMap } from '../schema/schema.types.js';
-import type { ComponentFieldMap } from '../components/component.types.js';
+import type { EngineRef, ModelRef } from './ref.types';
+import type { SchemaCompositionFieldMap } from '../schema/schema.types';
 
 export type FieldSourceOrigin = 'base' | 'extension' | 'inline' | 'inherited' | 'path';
 

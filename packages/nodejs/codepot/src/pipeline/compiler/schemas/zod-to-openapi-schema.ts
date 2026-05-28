@@ -1,11 +1,22 @@
-import { toJSONSchema, z } from 'zod';
+import { z } from 'zod';
 import { fixOpenApiSchema } from './fix-openapi-schema.js';
 
 export type ZodSchemaMode = 'input' | 'output';
 
+type toJSONSchema = (
+  schema: z.ZodTypeAny,
+  options: {
+    target: 'openapi-3.1';
+    io: ZodSchemaMode;
+    unrepresentable: 'any';
+    cycles: 'ref';
+    reused: 'inline';
+  },
+) => unknown;
+
 export function zodToOpenApiSchema(schema: z.ZodTypeAny, mode: ZodSchemaMode = 'output'): unknown {
   const zodWithJsonSchema = z as typeof z & {
-    toJSONSchema?: typeof toJSONSchema;
+    toJSONSchema?: toJSONSchema;
   };
 
   if (typeof zodWithJsonSchema.toJSONSchema !== 'function') {
@@ -22,14 +33,3 @@ export function zodToOpenApiSchema(schema: z.ZodTypeAny, mode: ZodSchemaMode = '
 
   return fixOpenApiSchema(openapiSchema);
 }
-
-type toJSONSchema = (
-  schema: z.ZodTypeAny,
-  options: {
-    target: 'openapi-3.1';
-    io: ZodSchemaMode;
-    unrepresentable: 'any';
-    cycles: 'ref';
-    reused: 'inline';
-  },
-) => unknown;

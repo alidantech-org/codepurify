@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
-import { withRefMethods } from '../refs/ref-methods.js';
-import type { GeneratedBooleanPropertySchema, GeneratedEnumPropertySchema, ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
-import { QueryOperator } from '../schema/query-behavior.js';
-import { SchemaKind } from '../schema/schema-kind.js';
-import type { SchemaFieldMap } from '../schema/schema.types.js';
+import { withRefMethods } from '../refs/ref-methods';
+import type { GeneratedBooleanPropertySchema, GeneratedEnumPropertySchema, ModelRef, PropertyRef } from '../refs/ref.types';
+import type { RefWithUsageMethods } from '../refs/ref-usage.types';
+import { QueryOperator } from '../schema/query-behavior';
+import { SchemaKind } from '../schema/schema-kind';
+import type { SchemaFieldMap } from '../schema/schema.types';
 
-import type { DefinePropertiesOptions } from './define-properties.js';
-import { createModelRef } from './model-ref.factory.js';
-import { createPropertyRef } from './property-ref.factory.js';
-import { PropertyKind } from './property-kind.js';
-import { hasFieldOptions, isSelectableField } from './entity-field-filters.js';
-import type { EntityPropertyRefs, EntityValueRefs, PropertyRefGroup } from './property.types.js';
+import type { DefinePropertiesOptions } from './define-properties';
+import { createModelRef } from './model-ref.factory';
+import { createPropertyRef } from './property-ref.factory';
+import { PropertyKind } from './property-kind';
+import { hasFieldOptions, isSelectableField } from './entity-field-filters';
+import type { EntityPropertyRefs, EntityValueRefs, PropertyRefGroup } from './property.types';
 
 export function createEntityQueryHelpers(
   options: DefinePropertiesOptions,

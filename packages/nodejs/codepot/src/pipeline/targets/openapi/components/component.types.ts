@@ -1,6 +1,7 @@
-import type { ComponentRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
-import type { SchemaCompositionFieldValue, SchemaCompositionFieldMap } from '../schema/schema.types.js';
+import { RefWithUsageMethods } from "@/contract/refs/ref-usage.types";
+import { ComponentRef } from "@/contract/refs/ref.types";
+import { SchemaCompositionFieldValue, SchemaCompositionFieldMap } from "@/contract/schema/schema.types";
+
 
 export type ComponentFieldValue = SchemaCompositionFieldValue;
 

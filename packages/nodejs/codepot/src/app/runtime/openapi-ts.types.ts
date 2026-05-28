@@ -1,6 +1,6 @@
-import type { PackageConfig } from '../../contract/config/package-config.types.js';
-import type { Logger } from '../logging/logger.types.js';
-import type { GenerateOpenApiResult } from '../generator/generate-openapi.js';
+import type { PackageConfig } from '@/contract/config/package-config.types';
+import { GenerateOpenApiResult } from '@/pipeline/targets/openapi/generator/generate-openapi';
+import { Logger } from '@/utils/logger/logging/logger.types';
 
 export interface InitConfigInput {
   readonly cwd?: string;
@@ -22,7 +22,7 @@ export interface GenerateInput {
 
 export type GenerateResult = GenerateOpenApiResult;
 
-export interface OpenApiTsApi {
+export interface CodePotApi {
   initConfig(input?: InitConfigInput): Promise<InitConfigResult>;
   generate(input: GenerateInput): Promise<GenerateResult>;
 }

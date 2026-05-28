@@ -1,20 +1,26 @@
-import { defineResource } from '../resource/define-resource.js';
-import type { DefineResourceOptions, ResourceBuilder } from '../resource/define-resource.js';
-import { defineSchemas } from '../components/schemas/define-schemas.js';
-import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
-import { defineParameters } from '../components/parameters/define-parameters.js';
-import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
-import { defineRequestBodies } from '../components/request-bodies/define-request-bodies.js';
-import type {
+import { defineResource } from '../resource/define-resource';
+import type { DefineResourceOptions, ResourceBuilder } from '../resource/define-resource';
+import type { RouteResponseInput } from '../routes/route.types';
+import type { PropertyRegistry } from '../properties/property.types';
+import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types';
+import { ContentType } from '@/app/runtime/output/output.constants';
+import { defineParameters } from '@/pipeline/targets/openapi/components/parameters/define-parameters';
+import {
+  ParameterComponentRegistry,
+  ParameterComponentDefinition,
+} from '@/pipeline/targets/openapi/components/parameters/parameter-component.types';
+import { defineRequestBodies } from '@/pipeline/targets/openapi/components/request-bodies/define-request-bodies';
+import {
   RequestBodyComponentRegistry,
   RequestBodyComponentDefinition,
-} from '../components/request-bodies/request-body-component.types.js';
-import { defineResponses } from '../components/responses/define-responses.js';
-import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
-import type { RouteResponseInput } from '../routes/route.types.js';
-import type { PropertyRegistry } from '../properties/property.types.js';
-import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types.js';
-import { ContentType } from '../openapi/content-type.js';
+} from '@/pipeline/targets/openapi/components/request-bodies/request-body-component.types';
+import { defineResponses } from '@/pipeline/targets/openapi/components/responses/define-responses';
+import {
+  ResponseComponentRegistry,
+  ResponseComponentDefinition,
+} from '@/pipeline/targets/openapi/components/responses/response-component.types';
+import { defineSchemas } from '@/contract/schema/schemas/define-schemas';
+import { SchemaComponentRegistry, SchemaComponentValue } from '@/contract/schema/schemas/schema-component.types';
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;

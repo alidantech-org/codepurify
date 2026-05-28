@@ -1,10 +1,10 @@
+import { withRefMethods } from '@/contract/refs/ref-methods';
+import { PropertyRef, ModelRef } from '@/index';
+import { compileZodField } from '@/utils/zod/compile-zod-field';
+import { compileZodRef } from '@/utils/zod/compile-zod-ref';
+import { createZodSourceRegistry } from '@/utils/zod/zod-source-registry';
 import { z } from 'zod';
-import { createZodSourceRegistry } from '../zod/zod-source-registry.js';
-import { compileZodField } from '../zod/compile-zod-field.js';
-import { compileZodRef } from '../zod/compile-zod-ref.js';
-import { withRefMethods } from '../refs/ref-methods.js';
-import type { PropertyRef, ModelRef, ComponentRef } from '../refs/ref.types.js';
-import type { RefUsage } from '../refs/ref-usage.types.js';
+
 
 // Test 1: Compile a primitive field
 const primitiveField = {

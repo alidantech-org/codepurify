@@ -1,10 +1,10 @@
-import type { PropertyKind } from './property-kind.js';
-import type { ModelRef, PropertyRef, ComponentRef } from '../refs/ref.types.js';
-import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
-import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types.js';
-import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
-import type { DeepPartial, ModelEmissionInput, ModelEmissionOptions } from '../config/model-emission-defaults.js';
-import type { QueryModelOptions } from '../config/query-model-defaults.js';
+import type { PropertyKind } from './property-kind';
+import type { ModelRef, PropertyRef, ComponentRef } from '../refs/ref.types';
+import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types';
+import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types';
+import type { DeepPartial, ModelEmissionInput, ModelEmissionOptions } from '../config/model-emission-defaults';
+import type { QueryModelOptions } from '../config/query-model-defaults';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
 
 export interface EntityValueRefs {
   /**

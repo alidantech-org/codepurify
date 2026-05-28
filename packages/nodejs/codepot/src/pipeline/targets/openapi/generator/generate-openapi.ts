@@ -1,8 +1,9 @@
-import type { PackageConfig } from '../config/package-config.types.js';
-import type { Logger } from '../logging/logger.types.js';
-import { resolvePackageConfig } from '../config/resolve-package-config.js';
-import { compileOpenApi } from '../compiler/compile-openapi.js';
-import { writeOpenApiFiles } from '../writer/write-openapi-files.js';
+import { PackageConfig } from "@/contract/config/package-config.types";
+import { resolvePackageConfig } from "@/contract/config/resolve-package-config";
+import { compileOpenApi } from "@/pipeline/compiler/compile-openapi";
+import { Logger } from "@/utils/logger/logging/logger.types";
+import { writeOpenApiFiles } from "@/utils/writer/write-openapi-files";
+
 
 export interface GenerateOpenApiResult {
   readonly success: boolean;

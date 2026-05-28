@@ -1,4 +1,4 @@
-import type { VersionContract } from '../version/version-contract.types.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
 import type { ValidationIssue } from './validation-result.types.js';
 
 export function validateDuplicates(contract: VersionContract): ValidationIssue[] {

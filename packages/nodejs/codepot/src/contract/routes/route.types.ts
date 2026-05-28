@@ -1,10 +1,10 @@
-import type { ComponentRef, ModelRef, ParameterRef, RequestBodyRef, ResponseRef, PropertyRef } from '../refs/ref.types.js';
-import type { ComponentFieldMap } from '../components/component.types.js';
-import type { RefWithUsageMethods, RefUsage } from '../refs/ref-usage.types.js';
-import type { SchemaField } from '../schema/schema.types.js';
-import type { HttpMethod } from './http-method.js';
-import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
-import type { ContentTypeInput } from '../openapi/content-type.js';
+import type { ComponentRef, ModelRef, ParameterRef, RequestBodyRef, ResponseRef, PropertyRef } from '../refs/ref.types';
+import type { RefWithUsageMethods, RefUsage } from '../refs/ref-usage.types';
+import type { SchemaField } from '../schema/schema.types';
+import type { HttpMethod } from './http-method';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
+import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type';
 
 // Legacy types - kept for backward compatibility
 export type RouteSchemaRef = ComponentRef | ModelRef | ComponentFieldMap;

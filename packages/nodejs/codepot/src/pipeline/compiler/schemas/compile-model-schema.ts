@@ -1,20 +1,19 @@
-import type { ModelRef, PropertyRef } from '../../refs/ref.types.js';
-import type { SchemaField } from '../../schema/schema.types.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
-import {
-  XCodegenAccess,
-  XCodegenDtoRole,
-  XCodegenEntityVariant,
-  XCodegenKind,
-  type CodegenMetadata,
-  type XCodegenEntityMeta,
-} from '../../codegen/codegen-extension.types.js';
 import { compilePropertySchema } from './compile-property-schema.js';
-import { toOpenApiSchemaRef } from '../refs/to-openapi-ref.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isPropertyRef } from '../../validation/ref-guards.js';
-import { SchemaKind } from '../../schema/schema-kind.js';
 import { compileQueryModelSchema, type CompileQueryModelContext, type EnumComponentExtraction } from './compile-query-model-schema.js';
+import { ModelRef } from '@/contract/refs/ref.types.js';
+import { SchemaKind } from '@/contract/schema/schema-kind.js';
+import { SchemaField } from '@/contract/schema/schema.types.js';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
+import {
+  CodegenMetadata,
+  XCodegenEntityMeta,
+  XCodegenEntityVariant,
+  XCodegenAccess,
+  XCodegenKind,
+  XCodegenDtoRole,
+} from '@/pipeline/targets/codegen/codegen-extension.types.js';
 
 function isQueryModel(ref: ModelRef): boolean {
   return ref.modelKey === 'query-filter' || ref.modelKey === 'advanced-query-filter';

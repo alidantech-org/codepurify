@@ -1,5 +1,5 @@
-import { OpenApiRefPattern } from '../../openapi/ref-patterns.js';
-import type { ParameterRef, RequestBodyRef, ResponseRef } from '../../refs/ref.types.js';
+import { ParameterRef, RequestBodyRef, ResponseRef } from '@/contract/refs/ref.types.js';
+import { OpenApiRefPattern } from '@/pipeline/targets/openapi/options/ref-patterns.js';
 import type { RefResolver } from './ref-resolver.types.js';
 
 export function toParameterOpenApiRef(ref: ParameterRef, resolver: RefResolver) {

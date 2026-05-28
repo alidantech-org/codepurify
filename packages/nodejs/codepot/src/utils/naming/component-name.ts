@@ -1,4 +1,4 @@
-import type { FieldSourceMetadata } from '../refs/ref-usage.types.js';
+import { FieldSourceMetadata } from '@/contract/refs/ref-usage.types';
 
 const COMMON_QUERY_PARAMS = new Set(['page', 'limit', 'sort', 'fields', 'populate', 'search']);
 

@@ -1,4 +1,4 @@
-import type { OpenApiDocument } from "../openapi/openapi.types.js";
+import type { OpenApiDocument } from "../targets/openapi/options/openapi.types.js";
 import type { ValidationIssue } from "../validation/validation-result.types.js";
 
 export interface CompileSuccessResult {

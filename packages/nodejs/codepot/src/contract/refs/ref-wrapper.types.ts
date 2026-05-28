@@ -1,6 +1,6 @@
 import type { z } from 'zod';
-import type { ComponentFieldMap } from '../components/component.types.js';
-import type { EngineRef } from './ref.types.js';
+import type { EngineRef } from './ref.types';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
 
 export interface ArrayRef<TRef extends EngineRef = EngineRef> {
   readonly kind: 'array-ref';

@@ -1,4 +1,4 @@
-import { OpenApiRefPattern } from '../../openapi/ref-patterns.js';
+import { OpenApiRefPattern } from '@/pipeline/targets/openapi/options/ref-patterns.js';
 import type { CompilerContext } from '../compiler-context.js';
 import type { RefResolver } from './ref-resolver.types.js';
 

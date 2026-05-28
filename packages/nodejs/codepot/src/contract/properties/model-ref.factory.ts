@@ -1,13 +1,14 @@
-import { EngineIdPart } from '../ids/engine-id.js';
-import { toSchemaName } from '../naming/schema-name.js';
-import { RefKind } from '../refs/ref-kind.js';
-import type { ModelRef } from '../refs/ref.types.js';
-import { SchemaFieldMap } from '../schema/schema.types.js';
-import { XCodegenAccess, XCodegenEntityVariant, XCodegenKind } from '../codegen/codegen-extension.types.js';
+import { XCodegenAccess, XCodegenEntityVariant, XCodegenKind } from '@/pipeline/targets/codegen/codegen-extension.types';
 
-import type { DefinePropertiesOptions } from './define-properties.js';
-import { createScopedId } from './property-ref.factory.js';
-import type { EntityPropertyRefs, PropertyRefGroup } from './property.types.js';
+import { RefKind } from '../refs/ref-kind';
+import type { ModelRef } from '../refs/ref.types';
+import { SchemaFieldMap } from '../schema/schema.types';
+
+import type { DefinePropertiesOptions } from './define-properties';
+import { createScopedId } from './property-ref.factory';
+import type { EntityPropertyRefs, PropertyRefGroup } from './property.types';
+import { toSchemaName } from '@/index';
+import { EngineIdPart } from '@/utils/ids/engine-id';
 
 export type EntityModelKey =
   | 'abstract-model'

@@ -1,5 +1,6 @@
-import type { OpenApiVersion } from "../openapi/openapi-version.js";
-import type { OpenApiServer } from "../openapi/openapi.types.js";
+import { OpenApiVersion } from "../targets/openapi/options/openapi-version";
+import { OpenApiServer } from "../targets/openapi/options/openapi.types";
+
 
 export interface CompileOptions {
   readonly openapi?: OpenApiVersion;

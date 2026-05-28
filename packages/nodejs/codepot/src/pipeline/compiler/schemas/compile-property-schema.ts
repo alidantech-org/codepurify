@@ -1,20 +1,9 @@
-import type { SchemaCompositionFieldValue } from '../../schema/schema.types.js';
-import { SchemaKind } from '../../schema/schema-kind.js';
-import type {
-  AnyOfSchemaField,
-  CompositeSchemaField,
-  FileSchemaField,
-  LiteralSchemaField,
-  NoContentSchemaField,
-  OneOfSchemaField,
-  PrimitiveSchemaField,
-  RecordSchemaField,
-  RefSchemaField,
-  SchemaField,
-} from '../../schema/schema.types.js';
+
 import { isRefUsage, getRefRequired, getRefNullable, getRefArray, getRefExtendWith } from '../../validation/ref-usage-guards.js';
 import { zodToOpenApiSchema, type ZodSchemaMode } from './zod-to-openapi-schema.js';
 import { normalizeExtendWithInput } from './normalize-extend-with.js';
+import { SchemaKind } from '@/contract/schema/schema-kind.js';
+import { SchemaField, PrimitiveSchemaField, CompositeSchemaField, RefSchemaField, SchemaCompositionFieldValue, RecordSchemaField, LiteralSchemaField, OneOfSchemaField, AnyOfSchemaField, FileSchemaField, NoContentSchemaField } from '@/contract/schema/schema.types.js';
 
 export function compilePropertySchema(field: SchemaField, mode: ZodSchemaMode = 'output'): unknown {
   if (field.kind === SchemaKind.primitive) {

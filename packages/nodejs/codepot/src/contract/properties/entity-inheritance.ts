@@ -1,6 +1,6 @@
-import type { SchemaField, SchemaFieldMap } from '../schema/schema.types.js';
+import type { SchemaField } from '../schema/schema.types';
 
-import type { EntityInheritanceInput, EntityPropertyRefs, EntityRegistryResult } from './property.types.js';
+import type { EntityInheritanceInput, EntityPropertyRefs, EntityRegistryResult } from './property.types';
 
 export function normalizeExtends(inherited: EntityInheritanceInput | readonly EntityInheritanceInput[] | undefined): EntityPropertyRefs[] {
   if (!inherited) return [];

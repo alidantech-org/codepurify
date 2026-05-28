@@ -1,4 +1,4 @@
-import type { QueryOperator } from '../schema/query-behavior.js';
+import { QueryOperator } from "@/contract/schema/query-behavior";
 
 export const XCodegenKind = {
   primitive: 'primitive',

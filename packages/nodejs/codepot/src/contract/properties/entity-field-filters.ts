@@ -1,7 +1,7 @@
-import { isHiddenByDefault } from '../schema/schema-access.js';
-import type { SchemaField, SchemaFieldMap } from '../schema/schema.types.js';
+import { isHiddenByDefault } from '../schema/schema-access';
+import type { SchemaField, SchemaFieldMap } from '../schema/schema.types';
 
-import type { PropertyRefGroup } from './property.types.js';
+import type { PropertyRefGroup } from './property.types';
 
 export function hasFieldOptions(value: unknown): value is SchemaField & {
   access?: Parameters<typeof isHiddenByDefault>[0];

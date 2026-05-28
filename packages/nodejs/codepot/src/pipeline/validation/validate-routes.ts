@@ -1,8 +1,8 @@
-import type { RouteRegistry, RouteParameterRegistry, RouteParameterFieldValue } from '../routes/route.types.js';
 import { validateRouteSchema } from './validate-route-schema.js';
 import type { ValidationIssue } from './validation-result.types.js';
 import { isPropertyRef } from './ref-guards.js';
 import { isRefUsage } from './ref-usage-guards.js';
+import { RouteRegistry } from '@/contract/routes/route.types.js';
 
 export function validateRoutes(registry: RouteRegistry): ValidationIssue[] {
   const issues: ValidationIssue[] = [];

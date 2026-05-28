@@ -1,13 +1,12 @@
-import type { ComponentFieldMap } from '../components/component.types.js';
-import type { SchemaComponentValue } from '../components/schemas/schema-component.types.js';
-import type { EngineRef } from '../refs/ref.types.js';
-import { SchemaKind } from '../schema/schema-kind.js';
-import { RefKind } from '../refs/ref-kind.js';
 import { isComponentRef, isPropertyRef } from './ref-guards.js';
 import { isRefUsage } from './ref-usage-guards.js';
 import { isEngineRef } from './ref-guards.js';
 import type { ValidationIssue } from './validation-result.types.js';
 import { normalizeExtendWithInput } from '../compiler/schemas/normalize-extend-with.js';
+import { RefKind } from '@/contract/refs/ref-kind.js';
+import { SchemaKind } from '@/contract/schema/schema-kind.js';
+import { ComponentFieldMap } from '../targets/openapi/components/component.types.js';
+import { SchemaComponentValue } from '../../contract/schema/schemas/schema-component.types.js';
 
 export function validateComponentFields(fields: ComponentFieldMap, path = 'component.fields'): ValidationIssue[] {
   const issues: ValidationIssue[] = [];

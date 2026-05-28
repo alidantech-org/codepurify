@@ -1,98 +1,179 @@
-/* =========================================================
- * Core contract builders
- * ========================================================= */
-
-export { defineVersionContract } from './version/define-version-contract.js';
-export { defineResource } from './resource/define-resource.js';
-
-export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
-export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
-
-/* =========================================================
- * Public API facade
- * ========================================================= */
-
-export { OpenApiTs } from './api/openapi-ts.js';
-
-export type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './api/openapi-ts.types.js';
-
-/* =========================================================
- * Schema DSL
- * ========================================================= */
-
-export { schema } from './schema/schema.js';
-
-export {
+import { CodePot } from './app/runtime/codepot.js';
+import { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, CodePotApi } from './app/runtime/codepot.types.js';
+import { createDebugFileName, createOpenApiFileName } from './app/runtime/output/openapi-file-name';
+import { ContentType, DefaultOutputConfig } from './app/runtime/output/output.constants';
+import { OutputFileResult, ResolvedOutputConfig } from './app/runtime/output/output.types';
+import { resolveOutputConfig } from './app/runtime/output/resolve-output-config';
+import { definePackageConfig } from './contract/config/define-package-config';
+import { PackageOutputFormat, PackageConfig, PackageOutputConfig, PackageServerConfig } from './contract/config/package-config.types';
+import { resolveCompileOptions } from './contract/config/resolve-compile-options';
+import { resolvePackageConfig } from './contract/config/resolve-package-config';
+import { EntityPropertyRefs, PropertyRefGroup } from './contract/properties/property.types';
+import { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef } from './contract/refs/ref.types';
+import { defineResource, ResourceBuilder } from './contract/resource/define-resource.js';
+import { HttpMethod } from './contract/routes/http-method';
+import { defineParameters } from './contract/schema/parameters/define-parameters';
+import {
+  ParameterComponentDefinition,
+  ParameterComponentRegistry,
+  ParameterSchemaRef,
+} from './contract/schema/parameters/parameter-component.types';
+import { ParameterLocation } from './contract/schema/parameters/parameter-location';
+import { QueryOperator, PrimitiveQueryOptions } from './contract/schema/query-behavior';
+import { defineRequestBodies } from './contract/schema/request-bodies/define-request-bodies';
+import {
+  RequestBodyComponentDefinition,
+  RequestBodyComponentRegistry,
+  RequestBodySchemaRef,
+} from './contract/schema/request-bodies/request-body-component.types';
+import { defineResponses } from './contract/schema/responses/define-responses';
+import {
+  ResponseComponentDefinition,
+  ResponseComponentRegistry,
+  ResponseSchemaRef,
+} from './contract/schema/responses/response-component.types';
+import { schema } from './contract/schema/schema';
+import {
   SchemaAccess,
   isClientWritableAccess,
   isHiddenByDefault,
   isInternalAccess,
   isSensitiveAccess,
   isSystemManagedAccess,
-} from './schema/schema-access.js';
+} from './contract/schema/schema-access';
+import { defineSchemas } from './contract/schema/schemas/define-schemas';
+import { SchemaComponentDefinition, SchemaComponentRegistry } from './contract/schema/schemas/schema-component.types';
+import { defineVersionContract } from './contract/version/define-version-contract.js';
+import { VersionContract } from './contract/version/version-contract.types.js';
+import { compileOpenApi } from './pipeline/compiler/compile-openapi';
+import { CompileOptions } from './pipeline/compiler/compile-options.types';
+import { CompileFailureResult, CompileResult, CompileSuccessResult } from './pipeline/compiler/compile-result.types';
+import { applyCodegenMetadata, CodegenExtensionTarget } from './pipeline/targets/codegen/apply-codegen-extensions';
+import { CODEGEN_EXTENSION_KEY, CodegenExtensionKey } from './pipeline/targets/codegen/codegen-extension.keys';
+import {
+  XCodegenAccess,
+  XCodegenDtoRole,
+  XCodegenEntityVariant,
+  XCodegenKind,
+  CodegenKind,
+  CodegenMetadata,
+  XCodegenBaseMeta,
+  XCodegenDtoMeta,
+  XCodegenEntityMeta,
+  XCodegenEnumMeta,
+  XCodegenModelMeta,
+  XCodegenPrimitiveMeta,
+  XCodegenQueryMeta,
+  XCodegenRefPointer,
+  XCodegenResourceMeta,
+} from './pipeline/targets/codegen/codegen-extension.types';
+import {
+  isDtoSchema,
+  isEnumSchema,
+  isModelSchema,
+  isObjectSchema,
+  isPrimitiveSchema,
+  resolveCodegenKind,
+  stripEnumInheritanceMetadata,
+  stripNonObjectInheritanceMetadata,
+} from './pipeline/targets/codegen/resolve-codegen-kind';
+import { ComponentBucket } from './pipeline/targets/openapi/components/component-bucket';
+import { ComponentFieldMap } from './pipeline/targets/openapi/components/component.types';
+import { generateOpenApi, GenerateOpenApiResult } from './pipeline/targets/openapi/generator/generate-openapi';
+import { ContentTypeInput } from './pipeline/targets/openapi/options/content-type';
+import { OpenApiVersion } from './pipeline/targets/openapi/options/openapi-version';
+import {
+  OpenApiComponents,
+  OpenApiDocument,
+  OpenApiInfo,
+  OpenApiOperation,
+  OpenApiPaths,
+  OpenApiServer,
+} from './pipeline/targets/openapi/options/openapi.types';
+import { OpenApiRefPattern } from './pipeline/targets/openapi/options/ref-patterns';
+import { validateOpenApiDocument, OpenApiValidationResult } from './pipeline/targets/openapi/validator/validate-openapi-document';
+import { validateContract } from './pipeline/validation/validate-contract';
+import { ValidationIssue, ValidationResult } from './pipeline/validation/validation-result.types';
+import { CompilerLogger, LogLevel } from './utils/logger';
+import { componentRefToSchemaName, modelRefToSchemaName } from './utils/naming/ref-schema-name';
+import { toSchemaName } from './utils/naming/schema-name';
+import { writeOpenApiFiles, WriteOpenApiFilesInput } from './utils/writer/write-openapi-files';
 
-export { QueryOperator } from './schema/query-behavior.js';
+/* =========================================================
+ * Core contract builders
+ * ========================================================= */
+export { defineVersionContract };
+export { defineResource };
 
-export type { PrimitiveQueryOptions } from './schema/query-behavior.js';
+export type { VersionContract as OpenApiVersionContract };
+export type { ResourceBuilder as OpenApiResourceContract };
+
+/* =========================================================
+ * Public API facade
+ * ========================================================= */
+
+export { CodePot };
+
+export type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, CodePotApi };
+
+/* =========================================================
+ * Schema DSL
+ * ========================================================= */
+
+export { schema };
+
+export { SchemaAccess, isClientWritableAccess, isHiddenByDefault, isInternalAccess, isSensitiveAccess, isSystemManagedAccess };
+
+export { QueryOperator };
+
+export type { PrimitiveQueryOptions };
 
 /* =========================================================
  * Routes
  * ========================================================= */
 
-export { HttpMethod } from './routes/http-method.js';
+export { HttpMethod };
 
 /* =========================================================
  * Components
  * ========================================================= */
 
-export { ComponentBucket } from './components/component-bucket.js';
+export { ComponentBucket };
 
-export type { ComponentFieldMap } from './components/component.types.js';
+export type { ComponentFieldMap };
 
-export { defineSchemas } from './components/schemas/define-schemas.js';
+export { defineSchemas };
 
-export type { SchemaComponentDefinition, SchemaComponentRegistry } from './components/schemas/schema-component.types.js';
+export type { SchemaComponentDefinition, SchemaComponentRegistry };
 
-export { ParameterLocation } from './components/parameters/parameter-location.js';
-export { defineParameters } from './components/parameters/define-parameters.js';
+export { ParameterLocation };
+export { defineParameters };
 
-export type {
-  ParameterComponentDefinition,
-  ParameterComponentRegistry,
-  ParameterSchemaRef,
-} from './components/parameters/parameter-component.types.js';
+export type { ParameterComponentDefinition, ParameterComponentRegistry, ParameterSchemaRef };
 
-export { defineRequestBodies } from './components/request-bodies/define-request-bodies.js';
+export { defineRequestBodies };
 
-export type {
-  RequestBodyComponentDefinition,
-  RequestBodyComponentRegistry,
-  RequestBodySchemaRef,
-} from './components/request-bodies/request-body-component.types.js';
+export type { RequestBodyComponentDefinition, RequestBodyComponentRegistry, RequestBodySchemaRef };
 
-export { defineResponses } from './components/responses/define-responses.js';
+export { defineResponses };
 
-export type {
-  ResponseComponentDefinition,
-  ResponseComponentRegistry,
-  ResponseSchemaRef,
-} from './components/responses/response-component.types.js';
+export type { ResponseComponentDefinition, ResponseComponentRegistry, ResponseSchemaRef };
 
 /* =========================================================
  * Properties and refs
  * ========================================================= */
 
-export type { EntityPropertyRefs, PropertyRefGroup } from './properties/property.types.js';
+export type { EntityPropertyRefs, PropertyRefGroup };
 
-export type { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef } from './refs/ref.types.js';
+export type { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef };
 
 /* =========================================================
  * Codegen metadata
  * ========================================================= */
 
-export { CODEGEN_EXTENSION_KEY, CodegenExtensionKey } from './codegen/codegen-extension.keys.js';
+export { CODEGEN_EXTENSION_KEY, CodegenExtensionKey };
 
-export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind } from './codegen/codegen-extension.types.js';
+export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind };
 
 export type {
   CodegenKind,
@@ -104,13 +185,12 @@ export type {
   XCodegenEntityMeta,
   XCodegenEntityVariant as XCodegenEntityVariantType,
   XCodegenEnumMeta,
-  // XCodegenMeta,
   XCodegenModelMeta,
   XCodegenPrimitiveMeta,
   XCodegenQueryMeta,
   XCodegenRefPointer,
   XCodegenResourceMeta,
-} from './codegen/codegen-extension.types.js';
+};
 
 export {
   isDtoSchema,
@@ -121,92 +201,85 @@ export {
   resolveCodegenKind,
   stripEnumInheritanceMetadata,
   stripNonObjectInheritanceMetadata,
-} from './codegen/resolve-codegen-kind.js';
+};
 
-export { applyCodegenMetadata } from './codegen/apply-codegen-extensions.js';
+export { applyCodegenMetadata };
 
-export type { CodegenExtensionTarget } from './codegen/apply-codegen-extensions.js';
+export type { CodegenExtensionTarget };
 
 /* =========================================================
  * OpenAPI types and constants
  * ========================================================= */
 
-export { OpenApiVersion } from './openapi/openapi-version.js';
-export { ContentType as OpenApiContentType } from './openapi/content-type.js';
-export { OpenApiRefPattern } from './openapi/ref-patterns.js';
+export { OpenApiVersion };
+export { ContentType as OpenApiContentType };
+export { OpenApiRefPattern };
 
-export type { ContentTypeInput } from './openapi/content-type.js';
+export type { ContentTypeInput };
 
-export type {
-  OpenApiComponents,
-  OpenApiDocument,
-  OpenApiInfo,
-  OpenApiOperation,
-  OpenApiPaths,
-  OpenApiServer,
-} from './openapi/openapi.types.js';
+export type { OpenApiComponents, OpenApiDocument, OpenApiInfo, OpenApiOperation, OpenApiPaths, OpenApiServer };
 
 /* =========================================================
  * Compiler
  * ========================================================= */
 
-export { compileOpenApi } from './compiler/compile-openapi.js';
+export { compileOpenApi };
 
-export type { CompileOptions } from './compiler/compile-options.types.js';
+export type { CompileOptions };
 
-export type { CompileFailureResult, CompileResult, CompileSuccessResult } from './compiler/compile-result.types.js';
+export type { CompileFailureResult, CompileResult, CompileSuccessResult };
 
 /* =========================================================
  * Validation
  * ========================================================= */
 
-export { validateContract } from './validation/validate-contract.js';
+export { validateContract };
 
-export type { ValidationIssue, ValidationResult } from './validation/validation-result.types.js';
+export type { ValidationIssue, ValidationResult };
 
-export { validateOpenApiDocument, type OpenApiValidationResult } from './validator/validate-openapi-document.js';
+export { validateOpenApiDocument, type OpenApiValidationResult };
 
 /* =========================================================
  * Config
  * ========================================================= */
 
-export { definePackageConfig } from './config/define-package-config.js';
-export { PackageOutputFormat } from './config/package-config.types.js';
-export { resolveCompileOptions } from './config/resolve-compile-options.js';
-export { resolvePackageConfig } from './config/resolve-package-config.js';
+export { definePackageConfig };
+export { PackageOutputFormat };
+export { resolveCompileOptions };
+export { resolvePackageConfig };
 
-export type { PackageConfig, PackageOutputConfig, PackageServerConfig } from './config/package-config.types.js';
+export type { PackageConfig, PackageOutputConfig, PackageServerConfig };
 
 /* =========================================================
  * Output and writer
  * ========================================================= */
 
-export { ContentType, DefaultOutputConfig } from './output/output.constants.js';
-export { createDebugFileName, createOpenApiFileName } from './output/openapi-file-name.js';
-export { resolveOutputConfig } from './output/resolve-output-config.js';
+export { ContentType, DefaultOutputConfig };
+export { createDebugFileName, createOpenApiFileName };
+export { resolveOutputConfig };
 
-export type { OutputFileResult, ResolvedOutputConfig } from './output/output.types.js';
+export type { OutputFileResult, ResolvedOutputConfig };
 
-export { writeOpenApiFiles } from './writer/write-openapi-files.js';
+export { writeOpenApiFiles };
 
-export type { WriteOpenApiFilesInput } from './writer/write-openapi-files.js';
+export type { WriteOpenApiFilesInput };
 
 /* =========================================================
  * Generator
  * ========================================================= */
 
-export { generateOpenApi, type GenerateOpenApiResult } from './generator/generate-openapi.js';
+export { generateOpenApi, type GenerateOpenApiResult };
 
 /* =========================================================
  * Naming helpers
  * ========================================================= */
 
-export { toSchemaName } from './naming/schema-name.js';
+export { toSchemaName };
 
-export { componentRefToSchemaName, modelRefToSchemaName } from './naming/ref-schema-name.js';
+export { componentRefToSchemaName, modelRefToSchemaName };
 
 /* =========================================================
  * Logger
  * ========================================================= */
 
-export { CompilerLogger, LogLevel } from './logger/index.js';
+export { CompilerLogger, LogLevel };

@@ -1,5 +1,5 @@
-import type { CompileOptions } from "../compiler/compile-options.types.js";
-import type { PackageConfig } from "./package-config.types.js";
+import { CompileOptions } from '@/pipeline/compiler/compile-options.types';
+import type { PackageConfig } from './package-config.types';
 
 export function resolveCompileOptions(config: PackageConfig): CompileOptions {
   return {

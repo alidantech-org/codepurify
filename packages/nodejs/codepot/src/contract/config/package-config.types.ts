@@ -1,6 +1,6 @@
-import type { CompileOptions } from '../compiler/compile-options.types.js';
-import type { LoggerConfig } from '../logger/logger.types.js';
-import type { VersionBuilder } from '../version/define-version-contract.js';
+import type { CompileOptions } from '@/pipeline/compiler/compile-options.types';
+import type { VersionBuilder } from '@/contract/version/define-version-contract';
+import { LoggerConfig } from '@/utils/logger';
 
 export const PackageOutputFormat = {
   json: 'json',

@@ -1,25 +1,19 @@
-import type { OpenApiOperation } from '../../openapi/openapi.types.js';
-import type {
-  RouteDefinition,
-  RouteBodyInput,
-  RouteResponseInput,
-  RouteResponseObjectInput,
-  RouteBodyObjectInput,
-} from '../../routes/route.types.js';
-import type { VersionContract } from '../../version/version-contract.types.js';
+
+import { ContentType } from '@/app/runtime/output/output.constants.js';
+import { RefKind } from '@/contract/refs/ref-kind.js';
+import { ResponseRef, RequestBodyRef } from '@/contract/refs/ref.types.js';
+import { RouteDefinition, RouteResponseInput, RouteBodyInput, RouteBodyObjectInput, RouteResponseObjectInput } from '@/contract/routes/route.types.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types.js';
+import { OpenApiOperation } from '@/pipeline/targets/openapi/options/openapi.types.js';
 import type { CompilerContext } from '../compiler-context.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
-import { ContentType } from '../../output/output.constants.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import type { RequestBodyRef, ResponseRef, ComponentRef } from '../../refs/ref.types.js';
+
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { toParameterOpenApiRef, toRequestBodyOpenApiRef, toResponseOpenApiRef } from '../refs/to-component-bucket-ref.js';
 import { compileRouteParameters } from './compile-route-parameters.js';
 import { compileRouteSchema } from './compile-route-schema.js';
-import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { isComponentRef } from '../../validation/ref-guards.js';
-import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
+
 
 export function compileRouteOperation(
   route: RouteDefinition,

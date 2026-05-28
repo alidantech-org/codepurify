@@ -1,14 +1,13 @@
 import type { z } from 'zod';
 
-import type { ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { OptionalResourceContext } from '../resource/resource-context.types.js';
-import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types.js';
-import { compileZodRef } from '../zod/compile-zod-ref.js';
+import type { ModelRef, PropertyRef } from '../refs/ref.types';
+import type { OptionalResourceContext } from '../resource/resource-context.types';
+import type { PropertyDefinitionFieldMap, SchemaField } from '../schema/schema.types';
 
-import { createEntityRefs } from './entity-ref.factory.js';
-import { mergeInheritedFields, normalizeExtends } from './entity-inheritance.js';
-import { createPropertyRefs } from './property-ref.factory.js';
-import { PropertyKind } from './property-kind.js';
+import { createEntityRefs } from './entity-ref.factory';
+import { mergeInheritedFields, normalizeExtends } from './entity-inheritance';
+import { createPropertyRefs } from './property-ref.factory';
+import { PropertyKind } from './property-kind';
 import type {
   EntityFieldRefs,
   EntityInheritanceInput,
@@ -23,10 +22,11 @@ import type {
   PropertyGroupOptions,
   PropertyGroupRegistry,
   PropertyRegistry,
-} from './property.types.js';
+} from './property.types';
 
-import type { DeepPartial, ModelEmissionInput } from '../config/model-emission-defaults.js';
-import type { QueryModelOptions } from '../config/query-model-defaults.js';
+import type { DeepPartial, ModelEmissionInput } from '../config/model-emission-defaults';
+import type { QueryModelOptions } from '../config/query-model-defaults';
+import { compileZodRef } from '@/utils/zod/compile-zod-ref';
 
 export interface DefinePropertiesOptions extends OptionalResourceContext {
   readonly name: string;

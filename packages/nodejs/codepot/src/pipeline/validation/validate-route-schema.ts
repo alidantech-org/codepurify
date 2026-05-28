@@ -1,20 +1,19 @@
-import type {
+import {
+  RouteSchemaRef,
   RouteParameterRef,
   RouteRequestBodyRef,
   RouteResponseRef,
-  RouteSchemaRef,
   RouteSchemaInput,
   RouteBodyInput,
   RouteResponseInput,
   RouteParameterMap,
-} from '../routes/route.types.js';
-import { RefKind } from '../refs/ref-kind.js';
-import type { CompositeSchemaField, RecordSchemaField, OneOfSchemaField, AnyOfSchemaField } from '../schema/schema.types.js';
+} from '@/contract/routes/route.types.js';
+import { SchemaKind } from '@/contract/schema/schema-kind.js';
+import { RecordSchemaField, OneOfSchemaField, AnyOfSchemaField } from '@/contract/schema/schema.types.js';
 import { isEngineRef, isPropertyRef, isComponentRef } from './ref-guards.js';
 import { isRefUsage } from './ref-usage-guards.js';
 import { validateComponentFields } from './validate-component-fields.js';
 import type { ValidationIssue } from './validation-result.types.js';
-import { SchemaKind } from '../schema/schema-kind.js';
 
 export type ValidatableRouteSchema =
   | RouteSchemaRef

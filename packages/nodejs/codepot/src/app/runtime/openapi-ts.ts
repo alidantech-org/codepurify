@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { generateOpenApi } from '../generator/generate-openapi.js';
-import type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './openapi-ts.types.js';
+import { generateOpenApi } from '@/pipeline/targets/openapi/generator/generate-openapi';
+import type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, CodePotApi } from './codepot.types';
 
 const DefaultConfigFileName = 'package.config.ts';
 
-export class OpenApiTs implements OpenApiTsApi {
+export class CodePot implements CodePotApi {
   async initConfig(input: InitConfigInput = {}): Promise<InitConfigResult> {
     const cwd = input.cwd ?? process.cwd();
     const fileName = input.fileName ?? DefaultConfigFileName;
@@ -41,7 +41,7 @@ export class OpenApiTs implements OpenApiTsApi {
 
 function createDefaultConfig(): string {
   return [
-    "import { definePackageConfig } from '@codepurify/openapi-ts';",
+    "import { definePackageConfig } from '@codepot';",
     '',
     'export default definePackageConfig({',
     '  contracts: [],',

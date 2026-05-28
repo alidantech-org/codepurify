@@ -1,4 +1,4 @@
-import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
+import type { ArrayRef, ExtendedRef } from './ref-wrapper.types';
 
 export function isArrayRef(value: unknown): value is ArrayRef {
   return !!value && typeof value === 'object' && 'kind' in value && value.kind === 'array-ref';

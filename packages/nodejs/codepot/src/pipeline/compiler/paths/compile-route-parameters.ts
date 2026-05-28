@@ -1,18 +1,19 @@
-import type { ComponentFieldMap } from '../../components/component.types.js';
-import type { SchemaComponentValue } from '../../components/schemas/schema-component.types.js';
-import type { ModelRef, ComponentRef, PropertyRef } from '../../refs/ref.types.js';
-import type { ExtendWithInput, FieldSourceMetadata, RefUsage } from '../../refs/ref-usage.types.js';
-import type { RouteParameterRef, RouteParameterMap, RouteParameterFieldValue, RouteQueryInput } from '../../routes/route.types.js';
-import type { XCodegenResourceMeta } from '../../codegen/codegen-extension.types.js';
-import type { VersionContract } from '../../version/version-contract.types.js';
+
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 
-import { RefKind } from '../../refs/ref-kind.js';
-import { getSourceMetadataFromRef } from '../../refs/ref-source-metadata.js';
 import { getRefRequired, isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef, isEngineRef, isPropertyRef } from '../../validation/ref-guards.js';
 import { normalizeExtendWithInputWithSource } from '../schemas/normalize-extend-with.js';
 import { compileRouteSchema } from './compile-route-schema.js';
+import { RouteParameterFieldValue, RouteParameterMap, RouteParameterRef, RouteQueryInput } from '@/contract/routes/route.types.js';
+import { RefKind } from '@/contract/refs/ref-kind.js';
+import { getSourceMetadataFromRef } from '@/contract/refs/ref-source-metadata.js';
+import { RefUsage, FieldSourceMetadata, ExtendWithInput } from '@/contract/refs/ref-usage.types.js';
+import { ModelRef, ComponentRef, PropertyRef } from '@/contract/refs/ref.types.js';
+import { SchemaComponentValue } from '@/contract/schema/schemas/schema-component.types.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
+import { XCodegenResourceMeta } from '@/pipeline/targets/codegen/codegen-extension.types.js';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
 
 export type QueryParameterFieldValue = RouteParameterFieldValue | ModelRef | RefUsage<ModelRef>;
 

@@ -35,7 +35,7 @@ async function findPackageConfig(cwd: string): Promise<string> {
 }
 
 async function bundlePackageConfig(configPath: string, cwd: string): Promise<string> {
-  const cacheDir = path.resolve(cwd, 'node_modules/.cache/openapi-ts');
+  const cacheDir = path.resolve(cwd, 'node_modules/.cache/codepot');
   const outfile = path.join(cacheDir, 'package.config.mjs');
 
   await fs.mkdir(cacheDir, { recursive: true });
@@ -51,7 +51,7 @@ async function bundlePackageConfig(configPath: string, cwd: string): Promise<str
     absWorkingDir: cwd,
     tsconfig: await resolveTsConfig(cwd),
     packages: 'external',
-    external: ['@codepurify/openapi-ts', 'zod'],
+    external: ['@codepot', 'zod'],
   });
 
   return outfile;

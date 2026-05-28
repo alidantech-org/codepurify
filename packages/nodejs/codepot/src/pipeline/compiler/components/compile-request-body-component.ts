@@ -1,14 +1,13 @@
-import type { RequestBodyComponentDefinition } from '../../components/request-bodies/request-body-component.types.js';
-import type { ComponentFieldMap } from '../../components/component.types.js';
-import type { ComponentRef, ModelRef, RequestBodyRef } from '../../refs/ref.types.js';
-import { ContentType } from '../../output/output.constants.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
-import { XCodegenDtoRole, XCodegenKind, type CodegenMetadata } from '../../codegen/codegen-extension.types.js';
+import type { RequestBodyComponentDefinition } from '@/contract/schema/request-bodies/request-body-component.types.js';
+import type { ComponentRef, ModelRef, RequestBodyRef } from '@/contract/refs/ref.types.js';
+import { RefKind } from '@/contract/refs/ref-kind.js';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
 import { compileComponentSchema } from '../schemas/compile-component-schema.js';
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
+import { ContentType } from '@/app/runtime/output/output.constants.js';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
 
 export function compileRequestBodyComponent(definition: RequestBodyComponentDefinition, resolver: RefResolver): Record<string, unknown> {
   const body: Record<string, unknown> = {

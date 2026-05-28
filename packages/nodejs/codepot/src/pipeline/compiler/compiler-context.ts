@@ -1,6 +1,7 @@
-import { createLogger } from '../logging/create-logger.js';
-import type { Logger } from '../logging/logger.types.js';
-import type { XCodegenDtoRole } from '../codegen/codegen-extension.types.js';
+import { createLogger } from "@/utils/logger/logging/create-logger";
+import { Logger } from "@/utils/logger/logging/logger.types";
+import { XCodegenDtoRole } from "../targets/codegen/codegen-extension.types";
+
 
 export interface CompilerContext {
   readonly logger?: Logger;

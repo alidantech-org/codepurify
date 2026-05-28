@@ -1,14 +1,13 @@
-import { EngineIdPart, createEngineId } from '../../ids/engine-id.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import type { ComponentRef } from '../../refs/ref.types.js';
-import { withRefMethods } from '../../refs/ref-methods.js';
-import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
-import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../../codegen/codegen-extension.types.js';
-import type { ComponentFieldMap, ComponentRefMap } from '../component.types.js';
-import type { SchemaComponentDefinition, SchemaComponentRegistry, SchemaComponentValue } from './schema-component.types.js';
-import { compileZodRef } from '../../zod/compile-zod-ref.js';
+import { XCodegenKind } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { EngineIdPart, createEngineId } from '@/utils/ids/engine-id';
+import { compileZodRef } from '@/utils/zod/compile-zod-ref';
 import type { z } from 'zod';
+import { RefKind } from '../../refs/ref-kind';
+import { withRefMethods } from '../../refs/ref-methods';
+import { RefWithUsageMethods } from '../../refs/ref-usage.types';
+import { ComponentRef } from '../../refs/ref.types';
+import { OptionalResourceContext } from '../../resource/resource-context.types';
+import { SchemaComponentValue, SchemaComponentRegistry } from './schema-component.types';
 
 export interface DefineSchemasOptions extends OptionalResourceContext {
   readonly name: string;

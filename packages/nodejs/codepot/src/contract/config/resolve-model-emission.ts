@@ -1,5 +1,5 @@
-import type { ModelEmissionInput, ModelEmissionOptions } from './model-emission-defaults.js';
-import { DEFAULT_MODEL_EMISSION } from './model-emission-defaults.js';
+import type { ModelEmissionInput, ModelEmissionOptions } from './model-emission-defaults';
+import { DEFAULT_MODEL_EMISSION } from './model-emission-defaults';
 
 export function resolveModelEmission(versionInput?: ModelEmissionInput, entityInput?: ModelEmissionInput): ModelEmissionOptions {
   const base = DEFAULT_MODEL_EMISSION;

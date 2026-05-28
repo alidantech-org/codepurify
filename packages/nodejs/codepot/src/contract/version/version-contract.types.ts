@@ -1,13 +1,13 @@
-import type { SchemaComponentRegistry } from '../components/schemas/schema-component.types.js';
-import type { ParameterComponentRegistry } from '../components/parameters/parameter-component.types.js';
-import type { RequestBodyComponentRegistry } from '../components/request-bodies/request-body-component.types.js';
-import type { ResponseComponentRegistry } from '../components/responses/response-component.types.js';
-import type { PropertyRegistry } from '../properties/property.types.js';
-import type { ResourceBuilder } from '../resource/define-resource.js';
-import type { RouteResponseInput } from '../routes/route.types.js';
-import type { ContentTypeInput } from '../openapi/content-type.js';
-import type { DeepPartial, ModelEmissionInput } from '../config/model-emission-defaults.js';
-import type { QueryModelOptions } from '../config/query-model-defaults.js';
+import type { PropertyRegistry } from '../properties/property.types';
+import type { ResourceBuilder } from '../resource/define-resource';
+import type { RouteResponseInput } from '../routes/route.types';
+import type { DeepPartial, ModelEmissionInput } from '../config/model-emission-defaults';
+import type { QueryModelOptions } from '../config/query-model-defaults';
+import { ParameterComponentRegistry } from '@/pipeline/targets/openapi/components/parameters/parameter-component.types';
+import { RequestBodyComponentRegistry } from '@/pipeline/targets/openapi/components/request-bodies/request-body-component.types';
+import { ResponseComponentRegistry } from '@/pipeline/targets/openapi/components/responses/response-component.types';
+import { SchemaComponentRegistry } from '@/contract/schema/schemas/schema-component.types';
+import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type';
 
 export interface VersionLicense {
   readonly name: string;

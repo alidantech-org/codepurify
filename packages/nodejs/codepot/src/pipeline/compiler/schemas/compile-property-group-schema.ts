@@ -1,8 +1,8 @@
-import type { PropertyDefinition, PropertyRefGroup } from '../../properties/property.types.js';
-import type { RefResolver } from '../refs/ref-resolver.types.js';
-import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
+import type { PropertyDefinition, PropertyRefGroup } from '@/contract/properties/property.types.js';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
+import type { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types.js';
+import { RefResolver } from '../refs/ref-resolver.types';
+import { resolvePendingRefs } from '../refs/resolve-pending-refs';
 
 export function compilePropertyGroupSchema(
   definition: PropertyDefinition,

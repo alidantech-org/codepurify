@@ -1,4 +1,4 @@
-import type { LogLevel } from './log-level.js';
+import type { LogLevel } from './log-level';
 
 export interface LogContext {
   readonly scope?: string;

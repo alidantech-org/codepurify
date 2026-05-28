@@ -1,7 +1,7 @@
-import { RefKind } from './ref-kind.js';
-import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
-import type { RefUsage, RefWithUsageMethods } from './ref-usage.types.js';
-import type { SchemaFieldMap } from '../schema/schema.types.js';
+import { RefKind } from './ref-kind';
+import type { RefUsage, RefWithUsageMethods } from './ref-usage.types';
+import type { SchemaFieldMap } from '../schema/schema.types';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
 
 export interface GeneratedEnumPropertySchema {
   readonly kind: 'enum';

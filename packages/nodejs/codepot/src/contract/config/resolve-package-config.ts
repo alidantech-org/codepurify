@@ -1,6 +1,6 @@
-import type { PackageConfig, OpenApiValidationConfig } from './package-config.types.js';
-import { resolveOutputConfig } from '../output/resolve-output-config.js';
-import { resolveCompileOptions } from './resolve-compile-options.js';
+import { resolveOutputConfig } from '@/app/runtime/output/resolve-output-config';
+import type { PackageConfig, OpenApiValidationConfig } from './package-config.types';
+import { resolveCompileOptions } from './resolve-compile-options';
 
 const defaultValidationConfig: OpenApiValidationConfig = {
   enabled: true,

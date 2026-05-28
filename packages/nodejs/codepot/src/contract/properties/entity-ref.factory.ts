@@ -1,21 +1,16 @@
 import type { z } from 'zod';
-
-import type { ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { SchemaField, SchemaFieldMap } from '../schema/schema.types.js';
-import { toSchemaName } from '../naming/schema-name.js';
-
-import type { DefinePropertiesOptions } from './define-properties.js';
-import { filterInternalFields, filterPublicFields } from './entity-field-filters.js';
-import { createEntityQueryHelpers } from './entity-query-ref.factory.js';
-import { createModelRef } from './model-ref.factory.js';
-import { createPropertyRefs } from './property-ref.factory.js';
-import { PropertyKind } from './property-kind.js';
-import type { EntityFieldRefs, EntityOptions, EntityPropertyRefs, PropertyRefGroup } from './property.types.js';
-
-import { withRefMethods } from '../refs/ref-methods.js';
-
-import { resolveModelEmission } from '../config/resolve-model-emission.js';
-import { resolveQueryModelOptions } from '../config/resolve-query-model-options.js';
+import type { SchemaField, SchemaFieldMap } from '../schema/schema.types';
+import type { DefinePropertiesOptions } from './define-properties';
+import { filterInternalFields, filterPublicFields } from './entity-field-filters';
+import { createEntityQueryHelpers } from './entity-query-ref.factory';
+import { createModelRef } from './model-ref.factory';
+import { createPropertyRefs } from './property-ref.factory';
+import { PropertyKind } from './property-kind';
+import type { EntityFieldRefs, EntityOptions, EntityPropertyRefs, PropertyRefGroup } from './property.types';
+import { withRefMethods } from '../refs/ref-methods';
+import { resolveModelEmission } from '../config/resolve-model-emission';
+import { resolveQueryModelOptions } from '../config/resolve-query-model-options';
+import { toSchemaName } from '@/utils/naming/schema-name';
 
 export function createEntityRefs<TFields extends Record<string, SchemaField>>(
   options: DefinePropertiesOptions,

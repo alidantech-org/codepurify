@@ -1,6 +1,6 @@
-import type { DeepPartial } from './model-emission-defaults.js';
-import type { QueryModelOptions } from './query-model-defaults.js';
-import { DEFAULT_QUERY_MODEL_OPTIONS } from './query-model-defaults.js';
+import type { DeepPartial } from './model-emission-defaults';
+import type { QueryModelOptions } from './query-model-defaults';
+import { DEFAULT_QUERY_MODEL_OPTIONS } from './query-model-defaults';
 
 export function resolveQueryModelOptions(
   versionInput?: DeepPartial<QueryModelOptions>,

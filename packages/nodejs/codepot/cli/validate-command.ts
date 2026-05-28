@@ -1,12 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { loggerConfigFromCliArgs, type ParsedCliArgs } from './cli-args.js';
-import { createLogger } from '../logging/create-logger.js';
-import { LogLevel } from '../logging/log-level.js';
-import { validateOpenApiFile } from '../validator/validate-openapi-document.js';
+import { resolvePackageConfig } from '@/index.js';
+import { validateOpenApiFile } from '@/pipeline/targets/openapi/validator/validate-openapi-document.js';
+import { createLogger } from '@/utils/logger/logging/create-logger.js';
+import { LogLevel } from '@/utils/logger/logging/log-level.js';
 import { loadPackageConfig } from './load-package-config.js';
-import { resolvePackageConfig } from '../config/resolve-package-config.js';
-import { CliMessage } from './cli.constants.js';
 
 export async function runValidateCommand(args: ParsedCliArgs): Promise<number> {
   const cliLoggerConfig = loggerConfigFromCliArgs(args);
@@ -28,7 +27,7 @@ export async function runValidateCommand(args: ParsedCliArgs): Promise<number> {
     if (!fs.existsSync(jsonPath)) {
       logger.error('OpenAPI file not found');
       console.error(`OpenAPI file not found: ${jsonPath}`);
-      console.error('Run "openapi-ts generate" first.');
+      console.error('Run "codepot generate" first.');
       return 1;
     }
 

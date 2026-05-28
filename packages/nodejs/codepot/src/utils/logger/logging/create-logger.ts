@@ -1,8 +1,21 @@
 import ora, { type Ora } from 'ora';
-import chalk from 'chalk';
 
-import type { LogTask, Logger, LoggerOptions, LogContext } from './logger.types.js';
-import { LogLevel } from './log-level.js';
+import type { LogTask, Logger, LoggerOptions, LogContext } from './logger.types';
+import { LogLevel } from './log-level';
+
+// Custom ANSI color codes
+const colors = {
+  reset: '\x1b[0m',
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m',
+  dim: '\x1b[2m',
+};
+
+function colorize(color: keyof typeof colors, text: string): string {
+  return `${colors[color]}${text}${colors.reset}`;
+}
 
 class ConsoleLogTask implements LogTask {
   private message: string;
@@ -51,15 +64,15 @@ class ConsoleLogTask implements LogTask {
   }
 
   private logStart(message: string): void {
-    console.log(chalk.cyan('◼'), message);
+    console.log(colorize('cyan', '◼'), message);
   }
 
   private logSuccess(message: string): void {
-    console.log(chalk.green('✓'), message);
+    console.log(colorize('green', '✓'), message);
   }
 
   private logError(message: string): void {
-    console.log(chalk.red('✗'), message);
+    console.log(colorize('red', '✗'), message);
   }
 }
 
@@ -84,16 +97,16 @@ class ConsoleLogger implements Logger {
 
   info(message: string): void {
     if (this.level === 'silent') return;
-    console.log(chalk.cyan('•'), message);
+    console.log(colorize('cyan', '•'), message);
   }
 
   warn(message: string): void {
     if (this.level === 'silent') return;
-    console.log(chalk.yellow('⚠'), message);
+    console.log(colorize('yellow', '⚠'), message);
   }
 
   error(message: string, error?: unknown): void {
-    console.log(chalk.red('✗'), message);
+    console.log(colorize('red', '✗'), message);
     if (error && this.level === 'debug') {
       console.error(error);
     }
@@ -101,12 +114,12 @@ class ConsoleLogger implements Logger {
 
   verbose(message: string): void {
     if (this.level !== 'verbose' && this.level !== 'debug') return;
-    console.log(chalk.dim('  '), message);
+    console.log(colorize('dim', '  '), message);
   }
 
   debug(message: string): void {
     if (this.level !== 'debug') return;
-    console.log(chalk.dim('◆'), message);
+    console.log(colorize('dim', '◆'), message);
   }
 }
 

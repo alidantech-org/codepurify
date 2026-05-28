@@ -1,8 +1,9 @@
-import type { ParameterComponentDefinition } from '../../components/parameters/parameter-component.types.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
+
 import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
+import { RefKind } from '@/contract/refs/ref-kind.js';
+import { ParameterComponentDefinition } from '@/contract/schema/parameters/parameter-component.types.js';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
 
 export function compileParameterComponent(definition: ParameterComponentDefinition, resolver: RefResolver): Record<string, unknown> {
   const parameter: Record<string, unknown> = {

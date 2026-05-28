@@ -1,4 +1,4 @@
-import type { PackageOutputFormat } from "../config/package-config.types.js";
+import type { PackageOutputFormat } from '@/contract/config/package-config.types';
 
 export function createOpenApiFileName(
   prefix: string,

@@ -4,11 +4,9 @@ import { spawn } from 'node:child_process';
 import { writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { CompilerLogger } from '../logger/compiler-logger.js';
-import type { OpenApiDocument } from '../openapi/openapi.types.js';
-import type { OpenApiValidationConfig } from '../config/package-config.types.js';
-
+import { OpenApiValidationConfig } from '@/contract/config/package-config.types';
+import { CompilerLogger } from '@/utils/logger';
+import { OpenApiDocument } from '../options/openapi.types';
 const require = createRequire(import.meta.url);
 
 interface RedoclyPackageJson {
@@ -45,7 +43,7 @@ export async function validateOpenApiDocument(
   document: OpenApiDocument,
   config: OpenApiValidationConfig = {},
 ): Promise<OpenApiValidationResult> {
-  const tempDir = await mkdtemp(join(tmpdir(), 'openapi-ts-'));
+  const tempDir = await mkdtemp(join(tmpdir(), 'codepot-'));
 
   try {
     // Write document to temp file
@@ -94,7 +92,7 @@ export async function validateOpenApiFile(
     failOnWarnings: config.failOnWarnings,
   });
 
-  const tempDir = await mkdtemp(join(tmpdir(), 'openapi-ts-'));
+  const tempDir = await mkdtemp(join(tmpdir(), 'codepot-'));
 
   try {
     logger?.verbose('Running Redocly validation', {

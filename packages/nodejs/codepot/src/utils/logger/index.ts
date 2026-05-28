@@ -1,2 +1,2 @@
-export * from './compiler-logger.js';
-export * from './logger.types.js';
+export * from './compiler-logger';
+export * from './logger.types';

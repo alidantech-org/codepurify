@@ -1,8 +1,8 @@
-import type { VersionContract } from '../version/version-contract.types.js';
-import { validateComponentFields, validateSchemaComponentValue } from './validate-component-fields.js';
+import { validateSchemaComponentValue } from './validate-component-fields.js';
 import { validateDuplicates } from './validate-duplicates.js';
 import { validateRoutes } from './validate-routes.js';
 import type { ValidationIssue } from './validation-result.types.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
 
 export function validateVersionContract(contract: VersionContract): ValidationIssue[] {
   const issues: ValidationIssue[] = [];

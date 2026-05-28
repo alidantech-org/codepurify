@@ -1,8 +1,5 @@
-import type { VersionContract } from '../version/version-contract.types.js';
 import type { CompilerContext } from './compiler-context.js';
 import { resolveCompilerContext } from './compiler-context.js';
-import { OpenApiVersion } from '../openapi/openapi-version.js';
-import type { OpenApiDocument } from '../openapi/openapi.types.js';
 import { validateContract } from '../validation/validate-contract.js';
 import { compileComponents } from './compile-components.js';
 import { compilePaths } from './paths/compile-paths.js';
@@ -11,6 +8,9 @@ import type { CompileResult } from './compile-result.types.js';
 import { compileInferredComponents } from './paths/compile-inferred-components.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
 import { collectDtoRoleUsageFromContract } from './dto-role-usage.js';
+import { VersionContract } from '@/contract/version/version-contract.types.js';
+import { OpenApiVersion } from '../targets/openapi/options/openapi-version.js';
+import { OpenApiDocument } from '../targets/openapi/options/openapi.types.js';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {
   const resolvedContext = resolveCompilerContext(context);

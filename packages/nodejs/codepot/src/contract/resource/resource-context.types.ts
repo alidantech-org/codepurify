@@ -1,4 +1,4 @@
-import type { ZodSourceRegistry } from '../zod/zod-source-registry.js';
+import { ZodSourceRegistry } from "@/utils/zod/zod-source-registry";
 
 export interface ResourceContext {
   /**
