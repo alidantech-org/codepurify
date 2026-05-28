@@ -1,14 +1,14 @@
 import { z } from 'zod';
-import type { PropertyRef, ModelRef, ComponentRef, EngineRef } from '@/contract/refs/ref.types.js';
-import type { ArrayRef, ExtendedRef } from '@/contract/refs/ref-wrapper.types.js';
-import type { RefUsage } from '@/contract/refs/ref-usage.types.js';
-import type { ZodSourceRegistry } from './zod-source-registry.js';
-import { compileZodField } from './compile-zod-field.js';
-import { isArrayRef, isExtendedRef } from '@/contract/refs/ref-wrapper-guards.js';
-import { normalizeExtendWithInput } from '@/pipeline/compiler/schemas/normalize-extend-with.js';
-import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
-import { isEngineRef } from '@/pipeline/validation/ref-guards.js';
-import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
+import type { PropertyRef, ModelRef, ComponentRef, EngineRef } from '@/contract/refs/ref.types';
+import type { ArrayRef, ExtendedRef } from '@/contract/refs/ref-wrapper.types';
+import type { RefUsage } from '@/contract/refs/ref-usage.types';
+import type { ZodSourceRegistry } from './zod-source-registry';
+import { compileZodField } from './compile-zod-field';
+import { isArrayRef, isExtendedRef } from '@/contract/refs/ref-wrapper-guards';
+import { normalizeExtendWithInput } from '@/pipeline/compiler/schemas/normalize-extend-with';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
+import { isEngineRef } from '@/pipeline/validation/ref-guards';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards';
 
 export function compileZodRef(
   ref: PropertyRef | ModelRef | ComponentRef | ArrayRef<EngineRef> | ExtendedRef<EngineRef> | RefUsage<EngineRef>,

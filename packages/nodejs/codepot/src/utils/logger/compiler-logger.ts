@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import ora, { type Ora } from 'ora';
 
-import type { LogContext, LoggerConfig, LoggerDataOptions, LogLevel, SpinnerHandle } from './logger.types.js';
+import type { LogContext, LoggerConfig, LoggerDataOptions, LogLevel, SpinnerHandle } from './logger.types';
 
 function resolveLogLevel(config?: LoggerConfig): LogLevel {
   if (config?.silent === true) return 'silent';

@@ -1,16 +1,16 @@
-import type { CompilerContext } from '../compiler-context.js';
-import type { RefResolver } from '../refs/ref-resolver.types.js';
-import { expressPathToOpenApi } from './express-path-to-openapi.js';
-import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types.js';
-import { inferRouteComponents } from './infer-route-components.js';
-import { compileRouteOperation } from './compile-route-operation.js';
-import type { ComponentRef } from '@/contract/refs/ref.types.js';
-import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
-import { isComponentRef } from '@/pipeline/validation/ref-guards.js';
-import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
-import { RouteParameterRegistry, RouteParameterMap, extractPathParamNames, RouteDefinition } from '@/contract/routes/route.types.js';
-import { VersionContract } from '@/contract/version/version-contract.types.js';
-import { OpenApiPaths, OpenApiOperation } from '@/pipeline/targets/openapi/options/openapi.types.js';
+import type { CompilerContext } from '../compiler-context';
+import type { RefResolver } from '../refs/ref-resolver.types';
+import { expressPathToOpenApi } from './express-path-to-openapi';
+import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types';
+import { inferRouteComponents } from './infer-route-components';
+import { compileRouteOperation } from './compile-route-operation';
+import type { ComponentRef } from '@/contract/refs/ref.types';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards';
+import { isComponentRef } from '@/pipeline/validation/ref-guards';
+import { createOperationParameterTargetMeta } from './parameter-target-metadata';
+import { RouteParameterRegistry, RouteParameterMap, extractPathParamNames, RouteDefinition } from '@/contract/routes/route.types';
+import { VersionContract } from '@/contract/version/version-contract.types';
+import { OpenApiPaths, OpenApiOperation } from '@/pipeline/targets/openapi/options/openapi.types';
 
 export function compilePaths(
   contract: VersionContract,

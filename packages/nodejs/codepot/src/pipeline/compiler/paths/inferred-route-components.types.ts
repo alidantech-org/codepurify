@@ -1,6 +1,6 @@
-import type { ModelRef } from '@/contract/refs/ref.types.js';
-import type { FieldSourceMetadata, RefUsage } from '@/contract/refs/ref-usage.types.js';
-import type { RouteBodyInput, RouteParameterFieldValue, RouteResponseInput, RouteSchemaInput } from '@/contract/routes/route.types.js';
+import type { ModelRef } from '@/contract/refs/ref.types';
+import type { FieldSourceMetadata, RefUsage } from '@/contract/refs/ref-usage.types';
+import type { RouteBodyInput, RouteParameterFieldValue, RouteResponseInput, RouteSchemaInput } from '@/contract/routes/route.types';
 import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type';
 
 export type InferredQueryParameterSchema = RouteParameterFieldValue | ModelRef | RefUsage<ModelRef>;

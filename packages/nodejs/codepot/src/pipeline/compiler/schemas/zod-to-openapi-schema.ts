@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { fixOpenApiSchema } from './fix-openapi-schema.js';
+import { fixOpenApiSchema } from './fix-openapi-schema';
 
 export type ZodSchemaMode = 'input' | 'output';
 

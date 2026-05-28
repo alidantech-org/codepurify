@@ -1,26 +1,25 @@
+import type { CompilerContext } from './compiler-context';
 
-import type { CompilerContext } from './compiler-context.js';
+import type { CompileQueryModelContext } from './schemas/compile-query-model-schema';
 
-import type { CompileQueryModelContext } from './schemas/compile-query-model-schema.js';
-
-import { buildSchemaResolver } from './schemas/build-schema-resolver.js';
-import { compileComponentSchema } from './schemas/compile-component-schema.js';
-import { compileModelSchema } from './schemas/compile-model-schema.js';
-import { compileNamedPropertySchema } from './schemas/compile-named-property-schema.js';
-import { compilePropertyGroupSchema } from './schemas/compile-property-group-schema.js';
-import { compileParameterComponent } from './components/compile-parameter-component.js';
-import { compileRequestBodyComponent } from './components/compile-request-body-component.js';
-import { compileResponseComponent } from './components/compile-response-component.js';
-import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
-import { PropertyRefGroup, EntityPropertyRefs } from '@/contract/properties/property.types.js';
-import { RefWithUsageMethods } from '@/contract/refs/ref-usage.types.js';
-import { PropertyRef } from '@/contract/refs/ref.types.js';
-import { SchemaFieldMap } from '@/contract/schema/schema.types.js';
-import { VersionContract } from '@/contract/version/version-contract.types.js';
-import { toSchemaName } from '@/utils/naming/schema-name.js';
-import { applyCodegenMetadata } from '../targets/codegen/apply-codegen-extensions.js';
-import { XCodegenKind } from '../targets/codegen/codegen-extension.types.js';
-import { OpenApiComponents } from '../targets/openapi/options/openapi.types.js';
+import { buildSchemaResolver } from './schemas/build-schema-resolver';
+import { compileComponentSchema } from './schemas/compile-component-schema';
+import { compileModelSchema } from './schemas/compile-model-schema';
+import { compileNamedPropertySchema } from './schemas/compile-named-property-schema';
+import { compilePropertyGroupSchema } from './schemas/compile-property-group-schema';
+import { compileParameterComponent } from './components/compile-parameter-component';
+import { compileRequestBodyComponent } from './components/compile-request-body-component';
+import { compileResponseComponent } from './components/compile-response-component';
+import { resolvePendingRefs } from './refs/resolve-pending-refs';
+import { PropertyRefGroup, EntityPropertyRefs } from '@/contract/properties/property.types';
+import { RefWithUsageMethods } from '@/contract/refs/ref-usage.types';
+import { PropertyRef } from '@/contract/refs/ref.types';
+import { SchemaFieldMap } from '@/contract/schema/schema.types';
+import { VersionContract } from '@/contract/version/version-contract.types';
+import { toSchemaName } from '@/utils/naming/schema-name';
+import { applyCodegenMetadata } from '../targets/codegen/apply-codegen-extensions';
+import { XCodegenKind } from '../targets/codegen/codegen-extension.types';
+import { OpenApiComponents } from '../targets/openapi/options/openapi.types';
 
 type SchemaResolver = ReturnType<typeof buildSchemaResolver>;
 type CompilableModelRef = Parameters<typeof compileModelSchema>[0];

@@ -1,8 +1,8 @@
-import type { ComponentRef, ParameterRef, PropertyRef } from '../../refs/ref.types.js';
-import type { EngineRef } from '../../refs/ref.types.js';
-import type { RefUsage } from '../../refs/ref-usage.types.js';
-import type { ParameterLocation } from './parameter-location.js';
-import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
+import type { ComponentRef, ParameterRef, PropertyRef } from '../../refs/ref.types';
+import type { EngineRef } from '../../refs/ref.types';
+import type { RefUsage } from '../../refs/ref-usage.types';
+import type { ParameterLocation } from './parameter-location';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
 
 export type ParameterSchemaRef = PropertyRef | ComponentRef | RefUsage<EngineRef>;
 

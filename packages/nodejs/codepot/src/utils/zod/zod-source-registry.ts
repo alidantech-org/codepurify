@@ -1,6 +1,6 @@
 import type { z } from 'zod';
-import type { ModelRef } from '@/contract/refs/ref.types.js';
-import type { SchemaField } from '@/contract/schema/schema.types.js';
+import type { ModelRef } from '@/contract/refs/ref.types';
+import type { SchemaField } from '@/contract/schema/schema.types';
 import { SchemaComponentDefinition } from '@/contract/schema/schemas/schema-component.types';
 
 export interface ZodSourceRegistry {

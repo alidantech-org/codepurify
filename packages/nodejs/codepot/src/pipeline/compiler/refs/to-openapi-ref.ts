@@ -1,11 +1,8 @@
-import { EngineRef } from '@/contract/refs/ref.types.js';
-import { OpenApiRefPattern } from '@/pipeline/targets/openapi/options/ref-patterns.js';
-import type { OpenApiRef, RefResolver } from './ref-resolver.types.js';
+import { EngineRef } from '@/contract/refs/ref.types';
+import { OpenApiRefPattern } from '@/pipeline/targets/openapi/options/ref-patterns';
+import type { OpenApiRef, RefResolver } from './ref-resolver.types';
 
-export function toOpenApiSchemaRef(
-  ref: EngineRef,
-  resolver: RefResolver,
-): OpenApiRef {
+export function toOpenApiSchemaRef(ref: EngineRef, resolver: RefResolver): OpenApiRef {
   const schemaName = resolver.schemas.get(ref.id);
 
   if (!schemaName) {

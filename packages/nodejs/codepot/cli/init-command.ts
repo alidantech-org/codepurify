@@ -1,6 +1,6 @@
-import type { ParsedCliArgs } from './cli-args.js';
-import { CodePot } from '../api/codepot.js';
-import { CliMessage } from './cli.constants.js';
+import { CodePot } from '@/index';
+import type { ParsedCliArgs } from './cli-args';
+import { CliMessage } from './cli.constants';
 
 export async function runInitCommand(args: ParsedCliArgs): Promise<number> {
   const api = new CodePot();

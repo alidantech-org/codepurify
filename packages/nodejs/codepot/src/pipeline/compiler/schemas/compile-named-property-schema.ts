@@ -1,10 +1,10 @@
-import type { PropertyRef } from '@/contract/refs/ref.types.js';
-import type { PrimitiveQueryOptions } from '@/contract/schema/query-behavior.js';
-import type { SchemaField } from '@/contract/schema/schema.types.js';
-import { isZodEnum } from '@/contract/schema/is-zod-enum.js';
-import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
-import { XCodegenKind, type CodegenMetadata, type XCodegenQueryMeta } from '@/pipeline/targets/codegen/codegen-extension.types.js';
-import { compilePropertySchema } from './compile-property-schema.js';
+import type { PropertyRef } from '@/contract/refs/ref.types';
+import type { PrimitiveQueryOptions } from '@/contract/schema/query-behavior';
+import type { SchemaField } from '@/contract/schema/schema.types';
+import { isZodEnum } from '@/contract/schema/is-zod-enum';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions';
+import { XCodegenKind, type CodegenMetadata, type XCodegenQueryMeta } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { compilePropertySchema } from './compile-property-schema';
 
 export function compileNamedPropertySchema(field: SchemaField, ref: PropertyRef): unknown {
   const schema = compilePropertySchema(field);

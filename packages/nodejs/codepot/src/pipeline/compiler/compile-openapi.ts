@@ -1,16 +1,16 @@
-import type { CompilerContext } from './compiler-context.js';
-import { resolveCompilerContext } from './compiler-context.js';
-import { validateContract } from '../validation/validate-contract.js';
-import { compileComponents } from './compile-components.js';
-import { compilePaths } from './paths/compile-paths.js';
-import type { CompileOptions } from './compile-options.types.js';
-import type { CompileResult } from './compile-result.types.js';
-import { compileInferredComponents } from './paths/compile-inferred-components.js';
-import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
-import { collectDtoRoleUsageFromContract } from './dto-role-usage.js';
-import { VersionContract } from '@/contract/version/version-contract.types.js';
-import { OpenApiVersion } from '../targets/openapi/options/openapi-version.js';
-import { OpenApiDocument } from '../targets/openapi/options/openapi.types.js';
+import type { CompilerContext } from './compiler-context';
+import { resolveCompilerContext } from './compiler-context';
+import { validateContract } from '../validation/validate-contract';
+import { compileComponents } from './compile-components';
+import { compilePaths } from './paths/compile-paths';
+import type { CompileOptions } from './compile-options.types';
+import type { CompileResult } from './compile-result.types';
+import { compileInferredComponents } from './paths/compile-inferred-components';
+import { resolvePendingRefs } from './refs/resolve-pending-refs';
+import { collectDtoRoleUsageFromContract } from './dto-role-usage';
+import { VersionContract } from '@/contract/version/version-contract.types';
+import { OpenApiVersion } from '../targets/openapi/options/openapi-version';
+import { OpenApiDocument } from '../targets/openapi/options/openapi.types';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {
   const resolvedContext = resolveCompilerContext(context);

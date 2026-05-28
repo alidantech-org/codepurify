@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { SchemaKind } from './schema-kind.js';
+import { SchemaKind } from './schema-kind';
 import type {
   AnyOfSchemaField,
   CompositeSchemaField,
@@ -13,10 +13,10 @@ import type {
   SchemaBehaviorOptions,
   SchemaField,
   SchemaFieldMap,
-} from './schema.types.js';
-import type { PrimitiveQueryOptions } from './query-behavior.js';
-import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefUsage } from '../refs/ref-usage.types.js';
+} from './schema.types';
+import type { PrimitiveQueryOptions } from './query-behavior';
+import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types';
+import type { RefUsage } from '../refs/ref-usage.types';
 
 export interface PrimitiveOptions extends SchemaBehaviorOptions {
   query?: false | PrimitiveQueryOptions;

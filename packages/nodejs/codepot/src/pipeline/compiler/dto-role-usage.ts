@@ -1,8 +1,8 @@
-import type { CompilerContext } from './compiler-context.js';
-import { VersionContract } from '@/contract/version/version-contract.types.js';
-import { XCodegenDtoRole } from '@/pipeline/targets/codegen/codegen-extension.types.js';
-import { isComponentRef, isPropertyRef } from '../validation/ref-guards.js';
-import { isRefUsage } from '../validation/ref-usage-guards.js';
+import type { CompilerContext } from './compiler-context';
+import { VersionContract } from '@/contract/version/version-contract.types';
+import { XCodegenDtoRole } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { isComponentRef, isPropertyRef } from '../validation/ref-guards';
+import { isRefUsage } from '../validation/ref-usage-guards';
 
 /**
  * Collects DTO role usage from all routes in the contract.

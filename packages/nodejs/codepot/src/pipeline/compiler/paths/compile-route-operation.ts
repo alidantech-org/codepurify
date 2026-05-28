@@ -1,19 +1,23 @@
+import { ContentType } from '@/app/runtime/output/output.constants';
+import { RefKind } from '@/contract/refs/ref-kind';
+import { ResponseRef, RequestBodyRef } from '@/contract/refs/ref.types';
+import {
+  RouteDefinition,
+  RouteResponseInput,
+  RouteBodyInput,
+  RouteBodyObjectInput,
+  RouteResponseObjectInput,
+} from '@/contract/routes/route.types';
+import { VersionContract } from '@/contract/version/version-contract.types';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { OpenApiOperation } from '@/pipeline/targets/openapi/options/openapi.types';
+import type { CompilerContext } from '../compiler-context';
 
-import { ContentType } from '@/app/runtime/output/output.constants.js';
-import { RefKind } from '@/contract/refs/ref-kind.js';
-import { ResponseRef, RequestBodyRef } from '@/contract/refs/ref.types.js';
-import { RouteDefinition, RouteResponseInput, RouteBodyInput, RouteBodyObjectInput, RouteResponseObjectInput } from '@/contract/routes/route.types.js';
-import { VersionContract } from '@/contract/version/version-contract.types.js';
-import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
-import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types.js';
-import { OpenApiOperation } from '@/pipeline/targets/openapi/options/openapi.types.js';
-import type { CompilerContext } from '../compiler-context.js';
-
-import type { RefResolver } from '../refs/ref-resolver.types.js';
-import { toParameterOpenApiRef, toRequestBodyOpenApiRef, toResponseOpenApiRef } from '../refs/to-component-bucket-ref.js';
-import { compileRouteParameters } from './compile-route-parameters.js';
-import { compileRouteSchema } from './compile-route-schema.js';
-
+import type { RefResolver } from '../refs/ref-resolver.types';
+import { toParameterOpenApiRef, toRequestBodyOpenApiRef, toResponseOpenApiRef } from '../refs/to-component-bucket-ref';
+import { compileRouteParameters } from './compile-route-parameters';
+import { compileRouteSchema } from './compile-route-schema';
 
 export function compileRouteOperation(
   route: RouteDefinition,

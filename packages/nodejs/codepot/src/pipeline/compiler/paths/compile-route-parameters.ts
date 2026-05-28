@@ -1,19 +1,18 @@
+import type { RefResolver } from '../refs/ref-resolver.types';
 
-import type { RefResolver } from '../refs/ref-resolver.types.js';
-
-import { getRefRequired, isRefUsage } from '../../validation/ref-usage-guards.js';
-import { isComponentRef, isEngineRef, isPropertyRef } from '../../validation/ref-guards.js';
-import { normalizeExtendWithInputWithSource } from '../schemas/normalize-extend-with.js';
-import { compileRouteSchema } from './compile-route-schema.js';
-import { RouteParameterFieldValue, RouteParameterMap, RouteParameterRef, RouteQueryInput } from '@/contract/routes/route.types.js';
-import { RefKind } from '@/contract/refs/ref-kind.js';
-import { getSourceMetadataFromRef } from '@/contract/refs/ref-source-metadata.js';
-import { RefUsage, FieldSourceMetadata, ExtendWithInput } from '@/contract/refs/ref-usage.types.js';
-import { ModelRef, ComponentRef, PropertyRef } from '@/contract/refs/ref.types.js';
-import { SchemaComponentValue } from '@/contract/schema/schemas/schema-component.types.js';
-import { VersionContract } from '@/contract/version/version-contract.types.js';
-import { XCodegenResourceMeta } from '@/pipeline/targets/codegen/codegen-extension.types.js';
-import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
+import { getRefRequired, isRefUsage } from '../../validation/ref-usage-guards';
+import { isComponentRef, isEngineRef, isPropertyRef } from '../../validation/ref-guards';
+import { normalizeExtendWithInputWithSource } from '../schemas/normalize-extend-with';
+import { compileRouteSchema } from './compile-route-schema';
+import { RouteParameterFieldValue, RouteParameterMap, RouteParameterRef, RouteQueryInput } from '@/contract/routes/route.types';
+import { RefKind } from '@/contract/refs/ref-kind';
+import { getSourceMetadataFromRef } from '@/contract/refs/ref-source-metadata';
+import { RefUsage, FieldSourceMetadata, ExtendWithInput } from '@/contract/refs/ref-usage.types';
+import { ModelRef, ComponentRef, PropertyRef } from '@/contract/refs/ref.types';
+import { SchemaComponentValue } from '@/contract/schema/schemas/schema-component.types';
+import { VersionContract } from '@/contract/version/version-contract.types';
+import { XCodegenResourceMeta } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
 
 export type QueryParameterFieldValue = RouteParameterFieldValue | ModelRef | RefUsage<ModelRef>;
 

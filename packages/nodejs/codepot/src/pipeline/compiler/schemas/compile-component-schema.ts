@@ -1,15 +1,14 @@
-
-import type { CompilerContext } from '../compiler-context.js';
-import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { normalizeExtendWithInput, normalizeExtendWithInputWithSource } from './normalize-extend-with.js';
-import { RefUsage } from '@/contract/refs/ref-usage.types.js';
-import { ArrayRef, ExtendedRef } from '@/contract/refs/ref-wrapper.types.js';
-import { ComponentRef, EngineRef, PropertyRef, ModelRef } from '@/contract/refs/ref.types.js';
-import { SchemaCompositionFieldValue } from '@/contract/schema/schema.types.js';
-import { SchemaComponentDefinition } from '@/contract/schema/schemas/schema-component.types.js';
-import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
-import { CodegenMetadata, XCodegenKind } from '@/pipeline/targets/codegen/codegen-extension.types.js';
-import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
+import type { CompilerContext } from '../compiler-context';
+import { isRefUsage } from '../../validation/ref-usage-guards';
+import { normalizeExtendWithInput, normalizeExtendWithInputWithSource } from './normalize-extend-with';
+import { RefUsage } from '@/contract/refs/ref-usage.types';
+import { ArrayRef, ExtendedRef } from '@/contract/refs/ref-wrapper.types';
+import { ComponentRef, EngineRef, PropertyRef, ModelRef } from '@/contract/refs/ref.types';
+import { SchemaCompositionFieldValue } from '@/contract/schema/schema.types';
+import { SchemaComponentDefinition } from '@/contract/schema/schemas/schema-component.types';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions';
+import { CodegenMetadata, XCodegenKind } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
 
 export function compileComponentSchema(
   definition: SchemaComponentDefinition,

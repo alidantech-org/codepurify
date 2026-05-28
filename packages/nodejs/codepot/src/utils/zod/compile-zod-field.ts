@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import type { ZodSourceRegistry } from './zod-source-registry.js';
-import { compileZodRef } from './compile-zod-ref.js';
-import { RefUsage } from '@/contract/refs/ref-usage.types.js';
-import { isArrayRef, isExtendedRef } from '@/contract/refs/ref-wrapper-guards.js';
-import { PropertyRef, ModelRef, ComponentRef } from '@/contract/refs/ref.types.js';
-import { SchemaField } from '@/contract/schema/schema.types.js';
+import type { ZodSourceRegistry } from './zod-source-registry';
+import { compileZodRef } from './compile-zod-ref';
+import { RefUsage } from '@/contract/refs/ref-usage.types';
+import { isArrayRef, isExtendedRef } from '@/contract/refs/ref-wrapper-guards';
+import { PropertyRef, ModelRef, ComponentRef } from '@/contract/refs/ref.types';
+import { SchemaField } from '@/contract/schema/schema.types';
 
 export function compileZodField(field: SchemaField, registry: ZodSourceRegistry): z.ZodTypeAny {
   // Handle wrapper refs

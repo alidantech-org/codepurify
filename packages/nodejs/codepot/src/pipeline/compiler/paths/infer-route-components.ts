@@ -1,20 +1,16 @@
-import type { CompilerContext } from '../compiler-context.js';
-import type {
-  InferredParameterComponent,
-  InferredQueryParameterSchema,
-  InferredRouteComponents,
-} from './inferred-route-components.types.js';
-import type { VersionContract, VersionDefaults } from '@/contract/version/version-contract.types.js';
+import type { CompilerContext } from '../compiler-context';
+import type { InferredParameterComponent, InferredQueryParameterSchema, InferredRouteComponents } from './inferred-route-components.types';
+import type { VersionContract, VersionDefaults } from '@/contract/version/version-contract.types';
 
-import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
-import { isEngineRef, isPropertyRef } from '@/pipeline/validation/ref-guards.js';
-import { collectQueryFieldsFromSchemaComponentValue, isRequiredForQuery } from './compile-route-parameters.js';
-import { ContentType } from '@/app/runtime/output/output.constants.js';
-import { RefKind } from '@/contract/refs/ref-kind.js';
-import { ModelRef } from '@/contract/refs/ref.types.js';
-import { RouteParameterMap, RouteDefinition, RouteResponseInput, RouteBodyInput, RouteSchemaInput } from '@/contract/routes/route.types.js';
-import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type.js';
-import { getParameterName, getRequestBodyName, getResponseName, getDefaultResponseName } from '@/utils/naming/component-name.js';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards';
+import { isEngineRef, isPropertyRef } from '@/pipeline/validation/ref-guards';
+import { collectQueryFieldsFromSchemaComponentValue, isRequiredForQuery } from './compile-route-parameters';
+import { ContentType } from '@/app/runtime/output/output.constants';
+import { RefKind } from '@/contract/refs/ref-kind';
+import { ModelRef } from '@/contract/refs/ref.types';
+import { RouteParameterMap, RouteDefinition, RouteResponseInput, RouteBodyInput, RouteSchemaInput } from '@/contract/routes/route.types';
+import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type';
+import { getParameterName, getRequestBodyName, getResponseName, getDefaultResponseName } from '@/utils/naming/component-name';
 
 function getParameterIdentityKey(param: {
   readonly name: string;

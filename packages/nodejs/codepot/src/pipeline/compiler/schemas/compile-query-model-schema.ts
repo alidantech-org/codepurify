@@ -1,14 +1,19 @@
-
-import { compilePropertySchema } from './compile-property-schema.js';
-import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
-import { isPropertyRef } from '@/pipeline/validation/ref-guards.js';
-import { SchemaKind } from '@/contract/schema/schema-kind.js';
-import type { QueryModelOptions } from '@/contract/config/query-model-defaults.js';
-import { DEFAULT_QUERY_MODEL_OPTIONS } from '@/contract/config/query-model-defaults.js';
-import { ModelRef } from '@/contract/refs/ref.types.js';
-import { SchemaField } from '@/contract/schema/schema.types.js';
-import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
-import { CodegenMetadata, XCodegenEntityMeta, XCodegenEntityVariant, XCodegenKind, XCodegenDtoRole } from '@/pipeline/targets/codegen/codegen-extension.types.js';
+import { compilePropertySchema } from './compile-property-schema';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards';
+import { isPropertyRef } from '@/pipeline/validation/ref-guards';
+import { SchemaKind } from '@/contract/schema/schema-kind';
+import type { QueryModelOptions } from '@/contract/config/query-model-defaults';
+import { DEFAULT_QUERY_MODEL_OPTIONS } from '@/contract/config/query-model-defaults';
+import { ModelRef } from '@/contract/refs/ref.types';
+import { SchemaField } from '@/contract/schema/schema.types';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions';
+import {
+  CodegenMetadata,
+  XCodegenEntityMeta,
+  XCodegenEntityVariant,
+  XCodegenKind,
+  XCodegenDtoRole,
+} from '@/pipeline/targets/codegen/codegen-extension.types';
 
 export type QueryModelBehavior = 'filter' | 'advanced-filter';
 

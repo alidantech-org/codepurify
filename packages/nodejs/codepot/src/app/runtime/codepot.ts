@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateOpenApi } from '@/pipeline/targets/openapi/generator/generate-openapi';
-import type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, CodePotApi } from './codepot.types';
+import { CodePotApi, GenerateInput, GenerateResult, InitConfigInput, InitConfigResult } from './codepot.types';
 
 const DefaultConfigFileName = 'package.config.ts';
 

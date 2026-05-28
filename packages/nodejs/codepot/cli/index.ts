@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { CliCommand } from './cli.constants.js';
-import { parseCliArgs } from './cli-args.js';
-import { runGenerateCommand } from './generate-command.js';
-import { runInitCommand } from './init-command.js';
-import { runValidateCommand } from './validate-command.js';
+import { CliCommand } from './cli.constants';
+import { parseCliArgs } from './cli-args';
+import { runGenerateCommand } from './generate-command';
+import { runInitCommand } from './init-command';
+import { runValidateCommand } from './validate-command';
 
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));

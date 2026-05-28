@@ -1,10 +1,10 @@
-import { EngineIdPart, createEngineId } from '../../ids/engine-id.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import type { ParameterRef } from '../../refs/ref.types.js';
-import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../../codegen/codegen-extension.types.js';
-import type { ComponentRefMap } from '../component.types.js';
-import type { ParameterComponentDefinition, ParameterComponentRegistry } from './parameter-component.types.js';
+import { XCodegenKind, XCodegenDtoRole } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { ComponentRefMap } from '@/pipeline/targets/openapi/components/component.types';
+import { EngineIdPart, createEngineId } from '@/utils/ids/engine-id';
+import { RefKind } from '../../refs/ref-kind';
+import type { ParameterRef } from '../../refs/ref.types';
+import type { OptionalResourceContext } from '../../resource/resource-context.types';
+import type { ParameterComponentDefinition, ParameterComponentRegistry } from './parameter-component.types';
 
 export interface DefineParametersOptions extends OptionalResourceContext {
   readonly name: string;

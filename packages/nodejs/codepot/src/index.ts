@@ -1,5 +1,5 @@
-import { CodePot } from './app/runtime/codepot.js';
-import { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, CodePotApi } from './app/runtime/codepot.types.js';
+import { CodePot } from './app/runtime/codepot';
+import { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, CodePotApi } from './app/runtime/codepot.types';
 import { createDebugFileName, createOpenApiFileName } from './app/runtime/output/openapi-file-name';
 import { ContentType, DefaultOutputConfig } from './app/runtime/output/output.constants';
 import { OutputFileResult, ResolvedOutputConfig } from './app/runtime/output/output.types';
@@ -10,7 +10,7 @@ import { resolveCompileOptions } from './contract/config/resolve-compile-options
 import { resolvePackageConfig } from './contract/config/resolve-package-config';
 import { EntityPropertyRefs, PropertyRefGroup } from './contract/properties/property.types';
 import { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef } from './contract/refs/ref.types';
-import { defineResource, ResourceBuilder } from './contract/resource/define-resource.js';
+import { defineResource, ResourceBuilder } from './contract/resource/define-resource';
 import { HttpMethod } from './contract/routes/http-method';
 import { defineParameters } from './contract/schema/parameters/define-parameters';
 import {
@@ -43,8 +43,8 @@ import {
 } from './contract/schema/schema-access';
 import { defineSchemas } from './contract/schema/schemas/define-schemas';
 import { SchemaComponentDefinition, SchemaComponentRegistry } from './contract/schema/schemas/schema-component.types';
-import { defineVersionContract } from './contract/version/define-version-contract.js';
-import { VersionContract } from './contract/version/version-contract.types.js';
+import { defineVersionContract } from './contract/version/define-version-contract';
+import { VersionContract } from './contract/version/version-contract.types';
 import { compileOpenApi } from './pipeline/compiler/compile-openapi';
 import { CompileOptions } from './pipeline/compiler/compile-options.types';
 import { CompileFailureResult, CompileResult, CompileSuccessResult } from './pipeline/compiler/compile-result.types';

@@ -1,4 +1,4 @@
-import type { CodegenKind, CodegenMetadata } from './codegen-extension.types.js';
+import type { CodegenKind, CodegenMetadata } from './codegen-extension.types';
 
 /**
  * Resolves the correct x-codegen.kind based on actual schema shape.

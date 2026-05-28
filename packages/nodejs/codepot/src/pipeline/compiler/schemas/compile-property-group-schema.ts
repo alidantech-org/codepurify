@@ -14,7 +14,10 @@ export function compilePropertyGroupSchema(
   const schema: Record<string, unknown> = {
     type: 'object',
     properties: Object.fromEntries(
-      Object.entries(refs).map(([key, ref]) => [key, resolvePendingRefs({ $ref: `#pending/${ref.targetRefId ?? ref.id}` }, resolver)]),
+      Object.entries(refs as Record<string, { targetRefId: string; id: string }>).map(([key, ref]) => [
+        key,
+        resolvePendingRefs({ $ref: `#pending/${ref.targetRefId ?? ref.id}` }, resolver),
+      ]),
     ),
   };
 

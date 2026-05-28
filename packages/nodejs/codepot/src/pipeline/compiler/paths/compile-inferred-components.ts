@@ -1,8 +1,8 @@
-import type { RefResolver } from '../refs/ref-resolver.types.js';
-import type { CompilerContext } from '../compiler-context.js';
-import { compileRouteSchema } from './compile-route-schema.js';
-import { isRefUsage } from '../../validation/ref-usage-guards.js';
-import { isEngineRef } from '../../validation/ref-guards.js';
+import type { RefResolver } from '../refs/ref-resolver.types';
+import type { CompilerContext } from '../compiler-context';
+import { compileRouteSchema } from './compile-route-schema';
+import { isRefUsage } from '../../validation/ref-usage-guards';
+import { isEngineRef } from '../../validation/ref-guards';
 
 import type {
   InferredParameterComponent,
@@ -10,9 +10,9 @@ import type {
   InferredResponseComponent,
   InferredRouteComponents,
   InferredQueryParameterSchema,
-} from './inferred-route-components.types.js';
-import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions.js';
-import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types.js';
+} from './inferred-route-components.types';
+import { applyCodegenMetadata } from '@/pipeline/targets/codegen/apply-codegen-extensions';
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
 
 export function compileInferredComponents(
   inferred: InferredRouteComponents,

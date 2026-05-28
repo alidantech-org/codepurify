@@ -1,7 +1,7 @@
-import { CompilerContext } from '@/pipeline/compiler/compiler-context.js';
-import { CODEGEN_EXTENSION_KEY } from './codegen-extension.keys.js';
-import { XCodegenKind, type CodegenMetadata } from './codegen-extension.types.js';
-import { resolveCodegenKind, stripNonObjectInheritanceMetadata } from './resolve-codegen-kind.js';
+import { CompilerContext } from '@/pipeline/compiler/compiler-context';
+import { CODEGEN_EXTENSION_KEY } from './codegen-extension.keys';
+import { XCodegenKind, type CodegenMetadata } from './codegen-extension.types';
+import { resolveCodegenKind, stripNonObjectInheritanceMetadata } from './resolve-codegen-kind';
 
 export type CodegenExtensionTarget = Record<string, unknown>;
 

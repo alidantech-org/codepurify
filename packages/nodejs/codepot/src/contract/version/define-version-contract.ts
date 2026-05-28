@@ -4,23 +4,15 @@ import type { RouteResponseInput } from '../routes/route.types';
 import type { PropertyRegistry } from '../properties/property.types';
 import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types';
 import { ContentType } from '@/app/runtime/output/output.constants';
-import { defineParameters } from '@/pipeline/targets/openapi/components/parameters/define-parameters';
-import {
-  ParameterComponentRegistry,
-  ParameterComponentDefinition,
-} from '@/pipeline/targets/openapi/components/parameters/parameter-component.types';
-import { defineRequestBodies } from '@/pipeline/targets/openapi/components/request-bodies/define-request-bodies';
-import {
-  RequestBodyComponentRegistry,
-  RequestBodyComponentDefinition,
-} from '@/pipeline/targets/openapi/components/request-bodies/request-body-component.types';
-import { defineResponses } from '@/pipeline/targets/openapi/components/responses/define-responses';
-import {
-  ResponseComponentRegistry,
-  ResponseComponentDefinition,
-} from '@/pipeline/targets/openapi/components/responses/response-component.types';
+
 import { defineSchemas } from '@/contract/schema/schemas/define-schemas';
 import { SchemaComponentRegistry, SchemaComponentValue } from '@/contract/schema/schemas/schema-component.types';
+import { defineParameters } from '../schema/parameters/define-parameters';
+import { ParameterComponentRegistry, ParameterComponentDefinition } from '../schema/parameters/parameter-component.types';
+import { defineRequestBodies } from '../schema/request-bodies/define-request-bodies';
+import { RequestBodyComponentRegistry, RequestBodyComponentDefinition } from '../schema/request-bodies/request-body-component.types';
+import { defineResponses } from '../schema/responses/define-responses';
+import { ResponseComponentRegistry, ResponseComponentDefinition } from '../schema/responses/response-component.types';
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;

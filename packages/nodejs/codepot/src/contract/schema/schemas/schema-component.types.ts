@@ -1,8 +1,7 @@
-import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types.js';
-import type { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
-import { RefUsage, RefWithUsageMethods } from '@/contract/refs/ref-usage.types.js';
-import { EngineRef, ComponentRef } from '@/contract/refs/ref.types.js';
-
+import { CodegenMetadata } from '@/pipeline/targets/codegen/codegen-extension.types';
+import type { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
+import { RefUsage, RefWithUsageMethods } from '@/contract/refs/ref-usage.types';
+import { EngineRef, ComponentRef } from '@/contract/refs/ref.types';
 
 export type SchemaComponentValue = ComponentFieldMap | EngineRef | RefUsage<EngineRef> | RefUsage<ComponentRef>;
 

@@ -1,10 +1,10 @@
 import type { z } from 'zod';
-import { SchemaKind } from './schema-kind.js';
-import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types.js';
-import type { RefUsage } from '../refs/ref-usage.types.js';
-import type { ArrayRef, ExtendedRef } from '../refs/ref-wrapper.types.js';
-import type { SchemaAccess } from './schema-access.js';
-import type { PrimitiveQueryOptions } from './query-behavior.js';
+import { SchemaKind } from './schema-kind';
+import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types';
+import type { RefUsage } from '../refs/ref-usage.types';
+import type { ArrayRef, ExtendedRef } from '../refs/ref-wrapper.types';
+import type { SchemaAccess } from './schema-access';
+import type { PrimitiveQueryOptions } from './query-behavior';
 
 export interface SchemaBehaviorOptions {
   readonly access?: SchemaAccess;

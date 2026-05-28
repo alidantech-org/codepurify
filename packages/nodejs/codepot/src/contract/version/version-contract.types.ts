@@ -3,11 +3,11 @@ import type { ResourceBuilder } from '../resource/define-resource';
 import type { RouteResponseInput } from '../routes/route.types';
 import type { DeepPartial, ModelEmissionInput } from '../config/model-emission-defaults';
 import type { QueryModelOptions } from '../config/query-model-defaults';
-import { ParameterComponentRegistry } from '@/pipeline/targets/openapi/components/parameters/parameter-component.types';
-import { RequestBodyComponentRegistry } from '@/pipeline/targets/openapi/components/request-bodies/request-body-component.types';
-import { ResponseComponentRegistry } from '@/pipeline/targets/openapi/components/responses/response-component.types';
 import { SchemaComponentRegistry } from '@/contract/schema/schemas/schema-component.types';
 import { ContentTypeInput } from '@/pipeline/targets/openapi/options/content-type';
+import { ParameterComponentRegistry } from '../schema/parameters/parameter-component.types';
+import { RequestBodyComponentRegistry } from '../schema/request-bodies/request-body-component.types';
+import { ResponseComponentRegistry } from '../schema/responses/response-component.types';
 
 export interface VersionLicense {
   readonly name: string;

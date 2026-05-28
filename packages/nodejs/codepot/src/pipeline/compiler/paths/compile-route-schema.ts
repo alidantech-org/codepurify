@@ -1,12 +1,12 @@
-import { compileComponentSchema } from '../schemas/compile-component-schema.js';
-import { compilePropertySchema } from '../schemas/compile-property-schema.js';
-import { resolvePendingRefs } from '../refs/resolve-pending-refs.js';
-import type { RefResolver } from '../refs/ref-resolver.types.js';
-import type { RouteSchemaInput, RouteSchemaRef } from '@/contract/routes/route.types.js';
-import type { SchemaField } from '@/contract/schema/schema.types.js';
-import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types.js';
-import { isEngineRef } from '@/pipeline/validation/ref-guards.js';
-import { isRefUsage } from '@/pipeline/validation/ref-usage-guards.js';
+import { compileComponentSchema } from '../schemas/compile-component-schema';
+import { compilePropertySchema } from '../schemas/compile-property-schema';
+import { resolvePendingRefs } from '../refs/resolve-pending-refs';
+import type { RefResolver } from '../refs/ref-resolver.types';
+import type { RouteSchemaInput, RouteSchemaRef } from '@/contract/routes/route.types';
+import type { SchemaField } from '@/contract/schema/schema.types';
+import { ComponentFieldMap } from '@/pipeline/targets/openapi/components/component.types';
+import { isEngineRef } from '@/pipeline/validation/ref-guards';
+import { isRefUsage } from '@/pipeline/validation/ref-usage-guards';
 
 export function compileRouteSchema(schema: RouteSchemaInput | RouteSchemaRef, resolver: RefResolver): unknown {
   // Handle SchemaField types (only if it's a schema helper output, not a ref)

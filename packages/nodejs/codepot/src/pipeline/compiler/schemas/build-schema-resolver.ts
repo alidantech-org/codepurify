@@ -1,17 +1,14 @@
-
-import { PropertyRegistry, PropertyRegistryRef, EntityPropertyRefs, PropertyRefGroup } from '@/contract/properties/property.types.js';
-import { PropertyRef } from '@/contract/refs/ref.types.js';
-import { ResourceBuilder } from '@/contract/resource/define-resource.js';
-import { ParameterComponentRegistry } from '@/contract/schema/parameters/parameter-component.types.js';
-import { RequestBodyComponentRegistry } from '@/contract/schema/request-bodies/request-body-component.types.js';
-import { ResponseComponentRegistry } from '@/contract/schema/responses/response-component.types.js';
-import { SchemaComponentRegistry } from '@/contract/schema/schemas/schema-component.types.js';
-import { componentRefToSchemaName, modelRefToSchemaName } from '@/utils/naming/ref-schema-name.js';
-import { toSchemaName } from '@/utils/naming/schema-name.js';
-import type { CompilerContext } from '../compiler-context.js';
-import { RefResolver } from '../refs/ref-resolver.types.js';
-
-
+import { PropertyRegistry, PropertyRegistryRef, EntityPropertyRefs, PropertyRefGroup } from '@/contract/properties/property.types';
+import { PropertyRef } from '@/contract/refs/ref.types';
+import { ResourceBuilder } from '@/contract/resource/define-resource';
+import { ParameterComponentRegistry } from '@/contract/schema/parameters/parameter-component.types';
+import { RequestBodyComponentRegistry } from '@/contract/schema/request-bodies/request-body-component.types';
+import { ResponseComponentRegistry } from '@/contract/schema/responses/response-component.types';
+import { SchemaComponentRegistry } from '@/contract/schema/schemas/schema-component.types';
+import { componentRefToSchemaName, modelRefToSchemaName } from '@/utils/naming/ref-schema-name';
+import { toSchemaName } from '@/utils/naming/schema-name';
+import type { CompilerContext } from '../compiler-context';
+import { RefResolver } from '../refs/ref-resolver.types';
 
 export function buildSchemaResolver(
   resources: readonly ResourceBuilder[],

@@ -1,9 +1,9 @@
-import { CodePot } from '@/index.js';
-import { createLogger } from '@/utils/logger/logging/create-logger.js';
-import { LogLevel } from '@/utils/logger/logging/log-level.js';
-import { loggerConfigFromCliArgs, type ParsedCliArgs } from './cli-args.js';
-import { CliMessage } from './cli.constants.js';
-import { loadPackageConfig } from './load-package-config.js';
+import { CodePot } from '@/index';
+import { createLogger } from '@/utils/logger/logging/create-logger';
+import { LogLevel } from '@/utils/logger/logging/log-level';
+import { loggerConfigFromCliArgs, type ParsedCliArgs } from './cli-args';
+import { CliMessage } from './cli.constants';
+import { loadPackageConfig } from './load-package-config';
 
 export async function runGenerateCommand(args: ParsedCliArgs): Promise<number> {
   const cliLoggerConfig = loggerConfigFromCliArgs(args);

@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { loggerConfigFromCliArgs, type ParsedCliArgs } from './cli-args.js';
-import { resolvePackageConfig } from '@/index.js';
-import { validateOpenApiFile } from '@/pipeline/targets/openapi/validator/validate-openapi-document.js';
-import { createLogger } from '@/utils/logger/logging/create-logger.js';
-import { LogLevel } from '@/utils/logger/logging/log-level.js';
-import { loadPackageConfig } from './load-package-config.js';
+import { loggerConfigFromCliArgs, type ParsedCliArgs } from './cli-args';
+import { resolvePackageConfig } from '@/index';
+import { validateOpenApiFile } from '@/pipeline/targets/openapi/validator/validate-openapi-document';
+import { createLogger } from '@/utils/logger/logging/create-logger';
+import { LogLevel } from '@/utils/logger/logging/log-level';
+import { loadPackageConfig } from './load-package-config';
 
 export async function runValidateCommand(args: ParsedCliArgs): Promise<number> {
   const cliLoggerConfig = loggerConfigFromCliArgs(args);

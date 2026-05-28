@@ -3,7 +3,7 @@ import type { CompilerLogger } from '@/utils/logger/compiler-logger';
 import { PackageOutputFormat } from '@/contract/config/package-config.types';
 import { writeJsonFile } from './write-json-file';
 import { writeYamlFile } from './write-yaml-file';
-import { sanitizeDebugContract } from '@/app/debug/sanitize-debug-contract.js';
+import { sanitizeDebugContract } from '@/app/debug/sanitize-debug-contract';
 import { createDebugFileName, createOpenApiFileName } from '@/app/runtime/output/openapi-file-name';
 import { ResolvedOutputConfig } from '@/app/runtime/output/output.types';
 import { OpenApiDocument } from '@/pipeline/targets/openapi/options/openapi.types';

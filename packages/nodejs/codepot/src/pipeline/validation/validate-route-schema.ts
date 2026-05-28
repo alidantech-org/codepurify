@@ -7,13 +7,13 @@ import {
   RouteBodyInput,
   RouteResponseInput,
   RouteParameterMap,
-} from '@/contract/routes/route.types.js';
-import { SchemaKind } from '@/contract/schema/schema-kind.js';
-import { RecordSchemaField, OneOfSchemaField, AnyOfSchemaField } from '@/contract/schema/schema.types.js';
-import { isEngineRef, isPropertyRef, isComponentRef } from './ref-guards.js';
-import { isRefUsage } from './ref-usage-guards.js';
-import { validateComponentFields } from './validate-component-fields.js';
-import type { ValidationIssue } from './validation-result.types.js';
+} from '@/contract/routes/route.types';
+import { SchemaKind } from '@/contract/schema/schema-kind';
+import { RecordSchemaField, OneOfSchemaField, AnyOfSchemaField } from '@/contract/schema/schema.types';
+import { isEngineRef, isPropertyRef, isComponentRef } from './ref-guards';
+import { isRefUsage } from './ref-usage-guards';
+import { validateComponentFields } from './validate-component-fields';
+import type { ValidationIssue } from './validation-result.types';
 
 export type ValidatableRouteSchema =
   | RouteSchemaRef

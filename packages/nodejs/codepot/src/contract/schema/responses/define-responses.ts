@@ -1,10 +1,10 @@
-import { EngineIdPart, createEngineId } from '../../ids/engine-id.js';
-import { RefKind } from '../../refs/ref-kind.js';
-import type { ResponseRef } from '../../refs/ref.types.js';
-import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../../codegen/codegen-extension.types.js';
-import type { ComponentRefMap } from '../component.types.js';
-import type { ResponseComponentDefinition, ResponseComponentRegistry } from './response-component.types.js';
+import { XCodegenKind, XCodegenDtoRole } from '@/pipeline/targets/codegen/codegen-extension.types';
+import { ComponentRefMap } from '@/pipeline/targets/openapi/components/component.types';
+import { EngineIdPart, createEngineId } from '@/utils/ids/engine-id';
+import { RefKind } from '../../refs/ref-kind';
+import type { ResponseRef } from '../../refs/ref.types';
+import type { OptionalResourceContext } from '../../resource/resource-context.types';
+import type { ResponseComponentDefinition, ResponseComponentRegistry } from './response-component.types';
 
 export interface DefineResponsesOptions extends OptionalResourceContext {
   readonly name: string;
