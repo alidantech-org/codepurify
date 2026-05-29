@@ -1,4 +1,4 @@
-import { LoggerConfig } from "@/utils/logger";
+import { LoggerConfig } from '@/utils/logger';
 
 export interface ParsedCliArgs {
   readonly command: string;
@@ -49,4 +49,12 @@ export function loggerConfigFromCliArgs(args: ParsedCliArgs): LoggerConfig {
   }
 
   return {};
+}
+
+export function getDryRun(args: ParsedCliArgs): boolean {
+  return args.flags.has('dry-run');
+}
+
+export function getOutDir(args: ParsedCliArgs): string | undefined {
+  return args.values.get('out-dir');
 }

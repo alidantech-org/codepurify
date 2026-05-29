@@ -3,8 +3,8 @@ import type { ParsedCliArgs } from './cli-args';
 import { CliMessage } from './cli.constants';
 
 export async function runInitCommand(args: ParsedCliArgs): Promise<number> {
-  const api = new CodePot();
-  const result = await api.initConfig();
+  const codepot = new CodePot();
+  const result = await codepot.init();
 
   if (!result.success) {
     console.error(CliMessage.failed, result.error);

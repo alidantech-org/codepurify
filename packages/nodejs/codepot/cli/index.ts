@@ -4,7 +4,7 @@ import { CliCommand } from './cli.constants';
 import { parseCliArgs } from './cli-args';
 import { runGenerateCommand } from './generate-command';
 import { runInitCommand } from './init-command';
-import { runValidateCommand } from './validate-command';
+// import { runValidateCommand } from './validate-command';
 
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
@@ -17,9 +17,9 @@ async function main(): Promise<void> {
     process.exit(await runGenerateCommand(args));
   }
 
-  if (args.command === CliCommand.validate) {
-    process.exit(await runValidateCommand(args));
-  }
+  // if (args.command === CliCommand.validate) {
+  //   process.exit(await runValidateCommand(args));
+  // }
 
   printHelp();
   process.exit(0);
@@ -33,7 +33,7 @@ function printHelp(): void {
       'Commands:',
       '  init       Create package.config.ts',
       '  generate   Generate OpenAPI files from package.config.ts',
-      '  validate   Validate generated OpenAPI files',
+      // '  validate   Validate generated OpenAPI files',
       '',
       'Options:',
       '  --silent             Disable normal logs',
