@@ -37,7 +37,7 @@ export interface EntityRelationDefinition<TTargetEntity = unknown, TTargetResour
 
   description?: string;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface EntityDefinition<TParent = unknown, TField = EntityField, TRelation = EntityRelationDefinition> {
@@ -57,5 +57,5 @@ export interface EntityDefinition<TParent = unknown, TField = EntityField, TRela
 
   description?: string;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

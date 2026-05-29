@@ -30,5 +30,5 @@ export interface OperationDefinition<
 
   output?: OperationOutputDefinition<TResult, TError>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

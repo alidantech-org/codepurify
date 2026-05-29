@@ -3,7 +3,7 @@
  * OpenAPI-compatible auth scheme definitions.
  * ========================================================= */
 
-import { Ref } from "../ref/definition";
+import { Ref } from '../ref/definition';
 
 export interface SecuritySchemeHttp {
   type: 'http';
@@ -46,7 +46,7 @@ export interface SecurityAuthDefinition<TScheme = SecuritySchemeDefinition> {
   mode: SecurityAuthMode;
   schemes: SecurityAuthSchemeUse<TScheme>[];
   description?: string;
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 /* =========================================================
@@ -59,14 +59,14 @@ export interface SecurityRoleSourceDefinition<TField = unknown, TEnum = unknown>
   source: Ref<TField>;
   enum: Ref<TEnum>;
   description?: string;
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface SecurityRoleSetDefinition<TRoleSource = SecurityRoleSourceDefinition, TEnumValue = unknown> {
   role: Ref<TRoleSource>;
   values: Ref<TEnumValue>[];
   description?: string;
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 /* =========================================================
@@ -79,7 +79,7 @@ export interface SecurityContextDefinition<TSchema = unknown> {
   target: string;
   schema: Ref<TSchema>;
   description?: string;
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 /* =========================================================
@@ -92,7 +92,7 @@ export interface SecurityGuardDefinition<TContext = SecurityContextDefinition> {
   handler: string;
   outputs?: Ref<TContext>[];
   description?: string;
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 /* =========================================================
@@ -114,7 +114,7 @@ export interface RouteSecurityDefinition<
 
   guards?: Ref<TGuard>[];
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 /* =========================================================
@@ -144,5 +144,5 @@ export interface SecurityDefinition<
 
   guards?: Record<string, TGuard>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

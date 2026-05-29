@@ -10,7 +10,7 @@ export interface ResourceSecurityDefaultsDefinition<TAuth = unknown, TRoleSet = 
 
   guards?: Ref<TGuard>[];
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface ResourceDefaultsDefinition<TAuth = unknown, TRoleSet = unknown, TGuard = unknown, TContentType = unknown> {
@@ -18,7 +18,7 @@ export interface ResourceDefaultsDefinition<TAuth = unknown, TRoleSet = unknown,
 
   requestContentType?: Ref<TContentType>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface ResourceDefinition<
@@ -43,5 +43,5 @@ export interface ResourceDefinition<
 
   routes: Record<string, TRoutePath>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

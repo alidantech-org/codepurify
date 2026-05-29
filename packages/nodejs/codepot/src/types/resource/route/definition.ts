@@ -7,7 +7,7 @@ export interface RouteSecurityDefinition<TAuth = unknown, TRoleSet = unknown, TG
   auth?: Ref<TAuth>;
   roleSets?: Ref<TRoleSet>[];
   guards?: Ref<TGuard>[];
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface RouteBodyDefinition<TSchema = unknown, TContentType = unknown> {
@@ -44,7 +44,7 @@ export interface RouteMethodDefinition<
 
   responses: RouteResponsesDefinition<TResponse>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface RoutePathDefinition<
@@ -74,7 +74,7 @@ export interface RoutePathDefinition<
 
   head?: RouteMethodDefinition<TOperation, TAuth, TRoleSet, TGuard, TQuery, TBody, TContentType, TResponse>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export type RoutesDefinition<

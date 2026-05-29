@@ -9,5 +9,5 @@ export interface DtoDefinition<TParent = unknown, TField = unknown> {
 
   description?: string;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

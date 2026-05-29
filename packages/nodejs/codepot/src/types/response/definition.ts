@@ -4,30 +4,42 @@ export type ContentTypeStrategy = 'json' | 'multipart' | 'form' | 'text' | 'bina
 
 export interface ContentTypeDefinition {
   value: string;
+
   strategy: ContentTypeStrategy;
-  metadata?: Record<string, unknown>;
+
+  meta: Record<string, unknown>;
 }
 
 export interface ResponseHeaderDefinition<TSchema = unknown> {
   description?: string;
+
   schema: Ref<TSchema>;
+
   required?: boolean;
+
   deprecated?: boolean;
-  metadata?: Record<string, unknown>;
+
+  meta: Record<string, unknown>;
 }
 
 export interface ResponseDefinition<TSchema = unknown, TContentType = ContentTypeDefinition> {
   description?: string;
+
   schema: Ref<TSchema>;
+
   contentType: Ref<TContentType>;
-  headers?: Record<string, ResponseHeaderDefinition>;
-  metadata?: Record<string, unknown>;
+
+  headers?: Record<string, ResponseHeaderDefinition<TSchema>>;
+
+  meta: Record<string, unknown>;
 }
 
 export interface ResponsesDefinition<TResponse = ResponseDefinition> {
-  defaults?: Record<number, Ref<TResponse>>;
+  defaults: Record<number, Ref<TResponse>>;
+
   custom: Record<string, TResponse>;
-  metadata?: Record<string, unknown>;
+
+  meta: Record<string, unknown>;
 }
 
 export type RouteResponsesDefinition<TResponse = ResponseDefinition> = Record<number, Ref<TResponse>>;

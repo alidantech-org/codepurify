@@ -59,5 +59,5 @@ export interface PrimitiveDefinition {
 
   deprecated?: boolean;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

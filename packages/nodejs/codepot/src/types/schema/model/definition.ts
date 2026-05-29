@@ -28,5 +28,5 @@ export interface ModelDefinition<TSource = unknown> {
 
   description?: string;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

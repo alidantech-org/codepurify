@@ -2,22 +2,26 @@
 // QUERY
 // ============================================================================
 
+import { RefProperty } from '../../../properties/definition';
 import { Ref } from '../../../ref/definition';
 
-export type QueryOperator =
-  | 'eq'
-  | 'neq'
-  | 'in'
-  | 'notIn'
-  | 'contains'
-  | 'startsWith'
-  | 'endsWith'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'between'
-  | 'exists';
+export const QueryOperator = {
+  eq: 'eq',
+  neq: 'neq',
+  in: 'in',
+  notIn: 'notIn',
+  contains: 'contains',
+  startsWith: 'startsWith',
+  endsWith: 'endsWith',
+  gt: 'gt',
+  gte: 'gte',
+  lt: 'lt',
+  lte: 'lte',
+  between: 'between',
+  exists: 'exists',
+} as const;
+
+export type QueryOperator = (typeof QueryOperator)[keyof typeof QueryOperator];
 
 export interface FieldQueryConfig {
   filter?: boolean;
@@ -28,126 +32,65 @@ export interface FieldQueryConfig {
 
   operators?: QueryOperator[];
 
-  defaultOperator?: QueryOperator;
-
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 // ============================================================================
 // FIELD ACCESS
 // ============================================================================
 
-export type FieldAccessLevel = 'public' | 'internal' | 'secret';
+export const FieldAccessLevel = {
+  public: 'public',
+  internal: 'internal',
+  secret: 'secret',
+  auth: 'auth',
+} as const;
+
+export type FieldAccessLevel = (typeof FieldAccessLevel)[keyof typeof FieldAccessLevel];
 
 export interface FieldAccessConfig {
-  /**
-   * Controls whether this field can be exposed in generated output models.
-   */
   read?: FieldAccessLevel;
 
-  /**
-   * Controls whether this field can appear in generated input/write models.
-   */
   write?: FieldAccessLevel;
 
-  /**
-   * Shortcut for highly sensitive fields like password/token/secret.
-   */
   sensitive?: boolean;
 
-  /**
-   * Whether this field is selected by default from persistence.
-   */
   select?: boolean;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 // ============================================================================
 // PERSISTENCE
 // ============================================================================
 
+export const FieldPersistenceMode = {
+  stored: 'stored',
+  virtual: 'virtual',
+  computed: 'computed',
+} as const;
+
+export type FieldPersistenceMode = (typeof FieldPersistenceMode)[keyof typeof FieldPersistenceMode];
+
 export interface FieldPersistenceConfig {
-  unique?: boolean;
-
-  index?: boolean;
-
-  sparse?: boolean;
-
-  searchable?: boolean;
+  mode: FieldPersistenceMode;
 
   generated?: boolean;
 
   immutable?: boolean;
 
-  metadata?: Record<string, unknown>;
-}
-
-// ============================================================================
-// SERIALIZATION
-// ============================================================================
-
-export interface FieldSerializationConfig {
-  expose?: boolean;
-
-  deprecated?: boolean;
-
-  /**
-   * Serialized field name override.
-   * Example: database field "created_at" -> JSON field "createdAt".
-   */
-  name?: string;
-
-  metadata?: Record<string, unknown>;
-}
-
-// ============================================================================
-// RELATIONS
-// ============================================================================
-
-export type RelationType = 'oneToOne' | 'oneToMany' | 'manyToOne' | 'manyToMany';
-
-export interface FieldRelationConfig<TEntity = unknown, TResource = unknown, TField = unknown> {
-  type: RelationType;
-
-  /**
-   * Target entity this field relates to.
-   */
-  entity: Ref<TEntity>;
-
-  /**
-   * Optional resource owner for the related entity.
-   */
-  resource?: Ref<TResource>;
-
-  /**
-   * Target field on the related entity.
-   * Usually the target entity id field.
-   */
-  targetField?: Ref<TField>;
-
-  /**
-   * Whether this field owns the foreign key.
-   */
-  owner?: boolean;
-
-  /**
-   * Optional inverse relation name on the target entity.
-   */
-  inverse?: string;
-
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 // ============================================================================
 // ENTITY FIELDS
 // ============================================================================
 
-export interface EntityField<TProperty = unknown, TEntity = unknown, TResource = unknown, TRelationField = unknown> {
+export interface EntityField {
   /**
    * Ref to a primitive, enum, or composite property.
    */
-  ref: Ref<TProperty>;
+  ref: Ref<RefProperty>;
 
   description?: string;
 
@@ -163,9 +106,5 @@ export interface EntityField<TProperty = unknown, TEntity = unknown, TResource =
 
   persistence?: FieldPersistenceConfig;
 
-  serialization?: FieldSerializationConfig;
-
-  relation?: FieldRelationConfig<TEntity, TResource, TRelationField>;
-
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

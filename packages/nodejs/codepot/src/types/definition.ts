@@ -2,39 +2,45 @@
 // ROOT
 // ============================================================================
 
+import { InfoDefinition } from './info/definition';
 import { PropertiesDefinition } from './properties/definition';
 import { ResourceDefinition } from './resource/definition';
-import { ResponseDefinition } from './response/definition';
+import { ResponsesDefinition } from './response/definition';
 import { SchemasDefinition } from './schema/definition';
 import { SecurityDefinition } from './security/definition';
-import { InfoDefinition } from './info/definition';
 import { UrlDefinition } from './url/definition';
 
 export interface CodepotDefinition {
-  /** Codepot version */
-  codepot: string; // ✅
+  /** Codepot IR/schema version */
+  codepot: string;
+
+  /** API/project key */
+  key: string;
 
   /** API version */
-  version: number; // ✅
+  version: number;
 
   /** API information */
-  info: InfoDefinition; // ✅
+  info: InfoDefinition;
 
   /** API URLs */
-  urls: UrlDefinition[]; // ✅
+  urls: UrlDefinition[];
 
-  /** API security */
-  security: SecurityDefinition; // ❌ -- inprogress
+  /** API security registry */
+  security: SecurityDefinition;
 
-  /** API properties */
-  properties: PropertiesDefinition; // ❌ -- pending
+  /** Reusable low-level properties */
+  properties: PropertiesDefinition;
 
-  /** API schemas */
-  schemas: SchemasDefinition; // ❌ -- pending
+  /** Reusable schemas */
+  schemas: SchemasDefinition;
 
-  /** API responses */
-  responses: Record<string, ResponseDefinition>; // ❌ -- pending
+  /** Reusable responses and default response map */
+  responses: ResponsesDefinition;
 
   /** API resources */
-  resources: Record<string, ResourceDefinition>; // ❌ -- pending
+  resources: Record<string, ResourceDefinition>;
+
+  /** Extra extension data */
+  meta: Record<string, unknown>;
 }

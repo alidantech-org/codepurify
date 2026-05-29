@@ -14,5 +14,5 @@ export interface CompositeDefinition<TParent = unknown, TProperty = unknown> {
    */
   properties: Record<string, Ref<TProperty>>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

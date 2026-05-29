@@ -9,7 +9,7 @@ export interface ParamFieldDefinition<TField = unknown> {
 
   deprecated?: boolean;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface ParamsDefinition<TField = unknown> {
@@ -17,5 +17,5 @@ export interface ParamsDefinition<TField = unknown> {
 
   description?: string;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

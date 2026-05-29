@@ -11,7 +11,7 @@ export interface EnumValueDefinition {
 
   deprecated?: boolean;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }
 
 export interface EnumDefinition<TResource = unknown, TEntity = unknown> {
@@ -23,5 +23,5 @@ export interface EnumDefinition<TResource = unknown, TEntity = unknown> {
 
   entity?: Ref<TEntity>;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

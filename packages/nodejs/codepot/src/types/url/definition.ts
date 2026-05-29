@@ -7,5 +7,5 @@ export interface UrlDefinition {
 
   description?: string;
 
-  metadata?: Record<string, unknown>;
+  meta: Record<string, unknown>;
 }

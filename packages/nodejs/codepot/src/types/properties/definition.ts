@@ -7,3 +7,5 @@ export interface PropertiesDefinition {
   enums: Record<string, EnumDefinition>;
   composites: Record<string, CompositeDefinition>;
 }
+
+export type RefProperty = PrimitiveDefinition | EnumDefinition | CompositeDefinition;
