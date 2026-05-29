@@ -1,0 +1,428 @@
+codepot: 1.0.0
+
+
+info:
+  title: Riderescue API
+  version: v1
+  description: Riderescue backend API
+  termsOfService: https://riderescue.com/terms
+
+  contact:
+    name: Riderescue Team
+    url: https://riderescue.com
+    email: support@riderescue.com
+
+  license:
+    name: MIT
+    identifier: MIT
+    url: https://opensource.org/licenses/MIT
+
+
+urls:
+
+  - key: dev
+    env: development
+    uri: https://dev.api.riderescue.com
+
+  - key: admin
+    env: production
+    uri: https://admin.riderescue.com
+
+  - key: prod
+    env: production
+    uri: https://api.riderescue.com
+    metadata:
+      region: eu-west-1
+      provider: aws
+
+
+security:
+
+  roles:
+
+    user_role:
+      ref: "#/properties/enums/user_role"
+
+  schemes:
+
+    bearer:
+      type: http
+      scheme: bearer
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  defaults:
+    public: false
+    roles:
+      - $ref: "#/security/roles/user_role"
+
+
+properties:
+
+  primitives:
+
+    email:
+      type: string
+      format: email
+
+    display_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+
+    mongo_id:
+      type: string
+      pattern: "^[a-f0-9]{24}$"
+
+    created_at:
+      type: string
+      format: date-time
+
+    page:
+      type: integer
+      minimum: 1
+
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+
+    total:
+      type: integer
+      minimum: 0
+
+    password:
+      type: string
+      minLength: 8
+      maxLength: 255
+
+
+  enums:
+
+    user_role:
+      values:
+        - admin
+        - user
+        - driver
+
+    user_status:
+      values:
+        - active
+        - suspended
+        - deleted
+
+
+  composites:
+
+    pagination_meta:
+      page:
+        $ref: "#/properties/primitives/page"
+      limit:
+        $ref: "#/properties/primitives/limit"
+      total:
+        $ref: "#/properties/primitives/total"
+
+
+schemas:
+
+  entities:
+
+    base:
+      fields:
+        id:
+          $ref: "#/properties/primitives/mongo_id"
+        created_at:
+          $ref: "#/properties/primitives/created_at"
+
+
+    user:
+
+      resource: users
+      tags: [auth, platform]
+
+      extends:
+        $ref: "#/schemas/entities/base"
+
+      fields:
+
+        email:
+          $ref: "#/properties/primitives/email"
+
+        display_name:
+          $ref: "#/properties/primitives/display_name"
+
+        role:
+          $ref: "#/properties/enums/user_role"
+
+        status:
+          $ref: "#/properties/enums/user_status"
+
+        password:
+          $ref: "#/properties/primitives/password"
+
+
+  models:
+
+    user_public:
+      from:
+        $ref: "#/schemas/entities/user"
+      pick:
+        - id
+        - email
+        - display_name
+        - role
+
+
+    user_safe:
+      from:
+        $ref: "#/schemas/entities/user"
+      omit:
+        - password
+
+
+    user_patch:
+      from:
+        $ref: "#/schemas/entities/user"
+      partial: true
+
+
+  dtos:
+
+    create_user_request:
+      fields:
+        email:
+          $ref: "#/properties/primitives/email"
+        display_name:
+          $ref: "#/properties/primitives/display_name"
+        password:
+          $ref: "#/properties/primitives/password"
+        role:
+          $ref: "#/properties/enums/user_role"
+
+
+    user_list_query:
+      fields:
+        page:
+          $ref: "#/properties/primitives/page"
+        limit:
+          $ref: "#/properties/primitives/limit"
+        role:
+          $ref: "#/properties/enums/user_role"
+        status:
+          $ref: "#/properties/enums/user_status"
+
+
+    user_response:
+      fields:
+        user:
+          $ref: "#/schemas/models/user_safe"
+
+
+    user_list_response:
+      fields:
+        users:
+          type: array
+          items:
+            $ref: "#/schemas/models/user_public"
+
+        pagination:
+          $ref: "#/properties/composites/pagination_meta"
+
+
+    validation_error:
+      fields:
+        message:
+          type: string
+        errors:
+          type: array
+
+
+    error_response:
+      fields:
+        code:
+          type: string
+        message:
+          type: string
+
+
+# =========================
+# RESPONSE REGISTRY (NEW)
+# =========================
+
+responses:
+
+  user_response_200:
+    content:
+      application/json:
+        schema:
+          $ref: "#/schemas/dtos/user_response"
+
+  user_list_response_200:
+    content:
+      application/json:
+        schema:
+          $ref: "#/schemas/dtos/user_list_response"
+
+  validation_error_400:
+    content:
+      application/json:
+        schema:
+          $ref: "#/schemas/dtos/validation_error"
+
+  conflict_error_409:
+    content:
+      application/json:
+        schema:
+          $ref: "#/schemas/dtos/error_response"
+
+  unauthorized_401:
+    content:
+      application/json:
+        schema:
+          $ref: "#/schemas/dtos/error_response"
+
+  not_found_404:
+    content:
+      application/json:
+        schema:
+          $ref: "#/schemas/dtos/error_response"
+
+
+resources:
+
+  users:
+
+    base_path: "/users"
+
+    access:
+      roles:
+        - $ref: "#/security/roles/user_role"
+
+
+    operations:
+
+      list_users:
+
+        input:
+          query:
+            $ref: "#/schemas/dtos/user_list_query"
+
+
+      create_user:
+
+        input:
+          body:
+            $ref: "#/schemas/dtos/create_user_request"
+
+
+      get_user_by_id:
+
+        input:
+          params:
+            userId:
+              $ref: "#/properties/primitives/mongo_id"
+
+
+      update_user_by_id:
+
+        input:
+          params:
+            userId:
+              $ref: "#/properties/primitives/mongo_id"
+
+          body:
+            $ref: "#/schemas/models/user_patch"
+
+
+      delete_user_by_id:
+
+        input:
+          params:
+            userId:
+              $ref: "#/properties/primitives/mongo_id"
+
+
+    routes:
+
+      "/users":
+
+        get:
+          operation:
+            $ref: "#/resources/users/operations/list_users"
+
+          responses:
+            200:
+              $ref: "#/responses/user_list_response_200"
+            400:
+              $ref: "#/responses/validation_error_400"
+            401:
+              $ref: "#/responses/unauthorized_401"
+
+
+        post:
+          operation:
+            $ref: "#/resources/users/operations/create_user"
+
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  $ref: "#/schemas/dtos/create_user_request"
+
+          responses:
+            200:
+              $ref: "#/responses/user_response_200"
+            409:
+              $ref: "#/responses/conflict_error_409"
+
+
+      "/users/{userId}":
+
+        parameters:
+          path:
+            userId:
+              $ref: "#/properties/primitives/mongo_id"
+
+
+        get:
+          operation:
+            $ref: "#/resources/users/operations/get_user_by_id"
+
+          responses:
+            200:
+              $ref: "#/responses/user_response_200"
+            404:
+              $ref: "#/responses/not_found_404"
+
+
+        patch:
+          operation:
+            $ref: "#/resources/users/operations/update_user_by_id"
+
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  $ref: "#/schemas/models/user_patch"
+
+          responses:
+            200:
+              $ref: "#/responses/user_response_200"
+            400:
+              $ref: "#/responses/validation_error_400"
+            404:
+              $ref: "#/responses/not_found_404"
+
+
+        delete:
+          operation:
+            $ref: "#/resources/users/operations/delete_user_by_id"
+
+          responses:
+            200:
+              $ref: "#/responses/user_response_200"
+            404:
+              $ref: "#/responses/not_found_404"

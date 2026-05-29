@@ -1,0 +1,93 @@
+codepot: 1.0      # Codepot specification version
+version: 1        # Document/API contract version
+
+info: {}
+
+urls: []
+
+security: {}
+
+access: {}
+
+properties:
+
+  primitives: {}
+
+  enums: {}
+
+  composites: {}
+
+schemas:
+
+  entities: {}
+
+  dtos: {}
+
+resources: {}
+
+
+properties
+├─ primitives
+├─ enums
+└─ composites
+
+schemas
+├─ entities
+└─ dtos
+
+resources
+├─ operations
+└─ routes
+
+
+security:
+
+  roles: {}
+
+  schemes: {}
+
+  policies: {}
+
+  defaults:
+    public: boolean
+    role?: RoleRef | RoleRef[]
+
+security:
+
+  roles:
+    # identity groups (from enums only)
+
+  schemes:
+    # authentication methods only
+
+  access:
+    # authorization rules only
+
+security:
+
+  roles:
+    # identity groups (from enums only)
+
+  schemes:
+    # authentication methods only
+
+  access:
+    # authorization rules only
+user_filter:
+  email:
+    $ref: "#/properties/primitives/email"
+
+  role:
+    $ref: "#/properties/enums/user_role"
+
+  status:
+    $ref: "#/properties/enums/user_status"
+
+schemas:
+
+  entities:
+
+    user:
+      resource: users
+
+      fields: {}

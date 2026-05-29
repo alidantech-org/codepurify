@@ -1,0 +1,483 @@
+codepot: 1.0.0
+key: riderescue
+
+info:
+  title: Riderescue API
+  version: v1
+  description: Riderescue backend API
+  termsOfService: https://riderescue.com/terms
+
+  contact:
+    name: Riderescue Team
+    url: https://riderescue.com
+    email: support@riderescue.com
+
+  license:
+    name: MIT
+    identifier: MIT
+    url: https://opensource.org/licenses/MIT
+
+urls:
+  - key: dev
+    env: development
+    uri: https://dev.api.riderescue.com
+
+  - key: admin
+    env: production
+    uri: https://admin.riderescue.com
+
+  - key: prod
+    env: production
+    uri: https://api.riderescue.com
+    metadata:
+      region: eu-west-1
+      provider: aws
+
+contentTypes:
+  json:
+    value: application/json
+    strategy: json
+
+  multipart:
+    value: multipart/form-data
+    strategy: multipart
+
+  form:
+    value: application/x-www-form-urlencoded
+    strategy: form
+
+  text:
+    value: text/plain
+    strategy: text
+
+  binary:
+    value: application/octet-stream
+    strategy: binary
+
+security:
+  roles:
+    user_role:
+      ref: '#/properties/enums/user_role'
+
+  schemes:
+    bearer:
+      type: http
+      scheme: bearer
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  defaults:
+    public: false
+    roles:
+      - $ref: '#/security/roles/user_role'
+
+properties:
+  primitives:
+    email:
+      type: string
+      format: email
+
+    display_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+
+    mongo_id:
+      type: string
+      pattern: '^[a-f0-9]{24}$'
+
+    created_at:
+      type: string
+      format: date-time
+
+    page:
+      type: integer
+      minimum: 1
+
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+
+    total:
+      type: integer
+      minimum: 0
+
+    password:
+      type: string
+      minLength: 8
+      maxLength: 255
+
+    success:
+      type: boolean
+
+    message:
+      type: string
+
+    code:
+      type: string
+
+  enums:
+    user_role:
+      values:
+        - admin
+        - user
+        - driver
+
+    user_status:
+      values:
+        - active
+        - suspended
+        - deleted
+
+  composites:
+    pagination_meta:
+      page:
+        $ref: '#/properties/primitives/page'
+      limit:
+        $ref: '#/properties/primitives/limit'
+      total:
+        $ref: '#/properties/primitives/total'
+
+schemas:
+  entities:
+    base:
+      fields:
+        id:
+          $ref: '#/properties/primitives/mongo_id'
+        created_at:
+          $ref: '#/properties/primitives/created_at'
+
+    user:
+      resource: users
+      tags:
+        - auth
+        - platform
+
+      extends:
+        $ref: '#/schemas/entities/base'
+
+      fields:
+        email:
+          $ref: '#/properties/primitives/email'
+
+        display_name:
+          $ref: '#/properties/primitives/display_name'
+
+        role:
+          $ref: '#/properties/enums/user_role'
+
+        status:
+          $ref: '#/properties/enums/user_status'
+
+        password:
+          $ref: '#/properties/primitives/password'
+          sensitive: true
+          writeOnly: true
+
+  models:
+    user_public:
+      from:
+        $ref: '#/schemas/entities/user'
+      pick:
+        - id
+        - email
+        - display_name
+        - role
+
+    user_safe:
+      from:
+        $ref: '#/schemas/entities/user'
+      omit:
+        - password
+
+    user_patch:
+      from:
+        $ref: '#/schemas/entities/user'
+      partial: true
+      omit:
+        - id
+        - created_at
+        - password
+
+  dtos:
+    create_user_request:
+      fields:
+        email:
+          $ref: '#/properties/primitives/email'
+
+        display_name:
+          $ref: '#/properties/primitives/display_name'
+
+        password:
+          $ref: '#/properties/primitives/password'
+
+        role:
+          $ref: '#/properties/enums/user_role'
+
+    user_list_query:
+      fields:
+        page:
+          $ref: '#/properties/primitives/page'
+
+        limit:
+          $ref: '#/properties/primitives/limit'
+
+        role:
+          $ref: '#/properties/enums/user_role'
+
+        status:
+          $ref: '#/properties/enums/user_status'
+
+    user_response:
+      fields:
+        user:
+          $ref: '#/schemas/models/user_safe'
+
+    user_list_response:
+      fields:
+        users:
+          type: array
+          items:
+            $ref: '#/schemas/models/user_public'
+
+        pagination:
+          $ref: '#/properties/composites/pagination_meta'
+
+    validation_error_response:
+      fields:
+        success:
+          $ref: '#/properties/primitives/success'
+
+        message:
+          $ref: '#/properties/primitives/message'
+
+        errors:
+          type: object
+          fields:
+            form:
+              type: array
+              items:
+                $ref: '#/properties/primitives/message'
+
+            fields:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  $ref: '#/properties/primitives/message'
+
+    error_response:
+      fields:
+        success:
+          $ref: '#/properties/primitives/success'
+
+        code:
+          $ref: '#/properties/primitives/code'
+
+        message:
+          $ref: '#/properties/primitives/message'
+
+responses:
+  defaults:
+    400:
+      description: Validation failed
+      schema:
+        $ref: '#/schemas/dtos/validation_error_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    401:
+      description: Unauthorized
+      schema:
+        $ref: '#/schemas/dtos/error_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    403:
+      description: Forbidden
+      schema:
+        $ref: '#/schemas/dtos/error_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    500:
+      description: Internal server error
+      schema:
+        $ref: '#/schemas/dtos/error_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+  custom:
+    user_response:
+      description: User response
+      schema:
+        $ref: '#/schemas/dtos/user_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    user_list_response:
+      description: User list response
+      schema:
+        $ref: '#/schemas/dtos/user_list_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    conflict_error:
+      description: Conflict
+      schema:
+        $ref: '#/schemas/dtos/error_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    not_found:
+      description: Resource not found
+      schema:
+        $ref: '#/schemas/dtos/error_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+    deleted_user_response:
+      description: User deleted
+      schema:
+        $ref: '#/schemas/dtos/user_response'
+      contentType:
+        $ref: '#/contentTypes/json'
+
+resources:
+  users:
+    basePath: '/users'
+
+    access:
+      roles:
+        - $ref: '#/security/roles/user_role'
+
+    operations:
+      list_users:
+        input:
+          query:
+            $ref: '#/schemas/dtos/user_list_query'
+
+        output:
+          result:
+            $ref: '#/schemas/dtos/user_list_response'
+
+      create_user:
+        input:
+          body:
+            $ref: '#/schemas/dtos/create_user_request'
+
+        output:
+          result:
+            $ref: '#/schemas/dtos/user_response'
+
+      get_user_by_id:
+        input:
+          params:
+            userId:
+              $ref: '#/properties/primitives/mongo_id'
+
+        output:
+          result:
+            $ref: '#/schemas/dtos/user_response'
+
+      update_user_by_id:
+        input:
+          params:
+            userId:
+              $ref: '#/properties/primitives/mongo_id'
+
+          body:
+            $ref: '#/schemas/models/user_patch'
+
+        output:
+          result:
+            $ref: '#/schemas/dtos/user_response'
+
+      delete_user_by_id:
+        input:
+          params:
+            userId:
+              $ref: '#/properties/primitives/mongo_id'
+
+        output:
+          result:
+            $ref: '#/schemas/dtos/user_response'
+
+    routes:
+      '/users':
+        get:
+          operation:
+            $ref: '#/resources/users/operations/list_users'
+
+          query:
+            schema:
+              $ref: '#/schemas/dtos/user_list_query'
+
+          responses:
+            200:
+              $ref: '#/responses/custom/user_list_response'
+
+        post:
+          operation:
+            $ref: '#/resources/users/operations/create_user'
+
+          body:
+            schema:
+              $ref: '#/schemas/dtos/create_user_request'
+            contentType:
+              $ref: '#/contentTypes/json'
+
+          responses:
+            201:
+              $ref: '#/responses/custom/user_response'
+
+            409:
+              $ref: '#/responses/custom/conflict_error'
+
+      '/users/{userId}':
+        params:
+          userId:
+            $ref: '#/properties/primitives/mongo_id'
+
+        get:
+          operation:
+            $ref: '#/resources/users/operations/get_user_by_id'
+
+          responses:
+            200:
+              $ref: '#/responses/custom/user_response'
+
+            404:
+              $ref: '#/responses/custom/not_found'
+
+        patch:
+          operation:
+            $ref: '#/resources/users/operations/update_user_by_id'
+
+          body:
+            schema:
+              $ref: '#/schemas/models/user_patch'
+            contentType:
+              $ref: '#/contentTypes/json'
+
+          responses:
+            200:
+              $ref: '#/responses/custom/user_response'
+
+            404:
+              $ref: '#/responses/custom/not_found'
+
+        delete:
+          operation:
+            $ref: '#/resources/users/operations/delete_user_by_id'
+
+          responses:
+            200:
+              $ref: '#/responses/custom/deleted_user_response'
+
+            404:
+              $ref: '#/responses/custom/not_found'

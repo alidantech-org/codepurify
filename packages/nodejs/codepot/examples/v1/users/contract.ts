@@ -6,7 +6,6 @@ import { v1 } from '../version.contract';
 import { IUser } from './type';
 
 const users = v1.defineResource({
-  key: 'users',
   name: 'User',
   route: '/users',
   folders: ['platform', 'auth'],

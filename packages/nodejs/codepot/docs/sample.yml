@@ -1,0 +1,761 @@
+codepotIr: 1.0.0
+key: riderescue
+
+info:
+  title: Riderescue API
+  version: v1
+  description: Riderescue backend API
+
+contentTypes:
+  json:
+    value: application/json
+    strategy: json
+
+  multipart:
+    value: multipart/form-data
+    strategy: multipart
+
+  form:
+    value: application/x-www-form-urlencoded
+    strategy: form
+
+  text:
+    value: text/plain
+    strategy: text
+
+  binary:
+    value: application/octet-stream
+    strategy: binary
+
+properties:
+  primitives:
+    mongo_id:
+      type: string
+      pattern: "^[a-f0-9]{24}$"
+
+    email:
+      type: string
+      format: email
+
+    display_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+
+    password:
+      type: string
+      minLength: 8
+      maxLength: 255
+
+    message:
+      type: string
+
+    error_code:
+      type: string
+
+    created_at:
+      type: string
+      format: date-time
+
+    page:
+      type: integer
+      minimum: 1
+
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+
+    total:
+      type: integer
+      minimum: 0
+
+    boolean:
+      type: boolean
+
+  enums:
+    user_role:
+      values:
+        admin:
+          value: admin
+        user:
+          value: user
+        driver:
+          value: driver
+        service_provider:
+          value: service_provider
+
+    tenant_role:
+      values:
+        member:
+          value: member
+        admin:
+          value: admin
+        owner:
+          value: owner
+
+    user_status:
+      values:
+        active:
+          value: active
+        suspended:
+          value: suspended
+        deleted:
+          value: deleted
+
+  composites:
+    pagination_meta:
+      fields:
+        page:
+          $ref: "#/properties/primitives/page"
+        limit:
+          $ref: "#/properties/primitives/limit"
+        total:
+          $ref: "#/properties/primitives/total"
+
+    validation_errors:
+      fields:
+        form:
+          type: array
+          items:
+            $ref: "#/properties/primitives/message"
+
+        fields:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/properties/primitives/message"
+
+schemas:
+  entities:
+    base:
+      fields:
+        id:
+          $ref: "#/properties/primitives/mongo_id"
+
+        created_at:
+          $ref: "#/properties/primitives/created_at"
+
+    user:
+      extends:
+        $ref: "#/schemas/entities/base"
+
+      fields:
+        email:
+          $ref: "#/properties/primitives/email"
+
+        name:
+          $ref: "#/properties/primitives/display_name"
+
+        password:
+          $ref: "#/properties/primitives/password"
+          access: secret
+          select: false
+
+        roles:
+          $ref: "#/properties/enums/user_role"
+
+        status:
+          $ref: "#/properties/enums/user_status"
+
+    tenant:
+      extends:
+        $ref: "#/schemas/entities/base"
+
+      fields:
+        name:
+          $ref: "#/properties/primitives/display_name"
+
+    tenant_member:
+      extends:
+        $ref: "#/schemas/entities/base"
+
+      fields:
+        tenant_id:
+          $ref: "#/properties/primitives/mongo_id"
+
+        user_id:
+          $ref: "#/properties/primitives/mongo_id"
+
+        role:
+          $ref: "#/properties/enums/tenant_role"
+
+  models:
+    base_public:
+      category: public
+      from:
+        $ref: "#/schemas/entities/base"
+      pick:
+        - id
+        - created_at
+
+    user_public:
+      category: public
+      from:
+        $ref: "#/schemas/entities/user"
+      pick:
+        - id
+        - created_at
+        - email
+        - name
+        - roles
+        - status
+
+      inferredExtends:
+        $ref: "#/schemas/models/base_public"
+
+    user_create:
+      category: create
+      from:
+        $ref: "#/schemas/entities/user"
+      pick:
+        - email
+        - name
+        - password
+        - roles
+
+    user_patch:
+      category: patch
+      from:
+        $ref: "#/schemas/entities/user"
+      partial: true
+      omit:
+        - id
+        - created_at
+        - password
+
+    user_list_query:
+      category: query
+      fields:
+        page:
+          $ref: "#/properties/primitives/page"
+
+        limit:
+          $ref: "#/properties/primitives/limit"
+
+        roles:
+          $ref: "#/properties/enums/user_role"
+
+        status:
+          $ref: "#/properties/enums/user_status"
+
+    auth_user_context:
+      category: context
+      from:
+        $ref: "#/schemas/entities/user"
+      pick:
+        - id
+        - email
+        - roles
+        - status
+
+    tenant_context:
+      category: context
+      from:
+        $ref: "#/schemas/entities/tenant"
+      pick:
+        - id
+        - name
+
+    tenant_membership_context:
+      category: context
+      from:
+        $ref: "#/schemas/entities/tenant_member"
+      pick:
+        - id
+        - tenant_id
+        - user_id
+        - role
+
+  params:
+    user_id_params:
+      fields:
+        userId:
+          $ref: "#/properties/primitives/mongo_id"
+
+    tenant_id_params:
+      fields:
+        tenantId:
+          $ref: "#/properties/primitives/mongo_id"
+
+  dtos:
+    user_response:
+      fields:
+        user:
+          $ref: "#/schemas/models/user_public"
+
+    user_list_response:
+      fields:
+        users:
+          type: array
+          items:
+            $ref: "#/schemas/models/user_public"
+
+        pagination:
+          $ref: "#/properties/composites/pagination_meta"
+
+    validation_error_response:
+      fields:
+        success:
+          $ref: "#/properties/primitives/boolean"
+
+        message:
+          $ref: "#/properties/primitives/message"
+
+        errors:
+          $ref: "#/properties/composites/validation_errors"
+
+    error_response:
+      fields:
+        success:
+          $ref: "#/properties/primitives/boolean"
+
+        code:
+          $ref: "#/properties/primitives/error_code"
+
+        message:
+          $ref: "#/properties/primitives/message"
+
+responses:
+  defaults:
+    400:
+      $ref: "#/responses/custom/validation_error"
+
+    401:
+      $ref: "#/responses/custom/unauthorized"
+
+    403:
+      $ref: "#/responses/custom/forbidden"
+
+    500:
+      $ref: "#/responses/custom/internal_server_error"
+
+  custom:
+    validation_error:
+      description: Validation failed
+      schema:
+        $ref: "#/schemas/dtos/validation_error_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    unauthorized:
+      description: Unauthorized
+      schema:
+        $ref: "#/schemas/dtos/error_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    forbidden:
+      description: Forbidden
+      schema:
+        $ref: "#/schemas/dtos/error_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    internal_server_error:
+      description: Internal server error
+      schema:
+        $ref: "#/schemas/dtos/error_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    user_response:
+      description: User response
+      schema:
+        $ref: "#/schemas/dtos/user_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    user_list_response:
+      description: User list response
+      schema:
+        $ref: "#/schemas/dtos/user_list_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    conflict:
+      description: Conflict
+      schema:
+        $ref: "#/schemas/dtos/error_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+    not_found:
+      description: Resource not found
+      schema:
+        $ref: "#/schemas/dtos/error_response"
+      contentType:
+        $ref: "#/contentTypes/json"
+
+security:
+  defaults:
+    protected: true
+    auth:
+      $ref: "#/security/auth/bearer"
+    roleSets: []
+    guards: []
+
+  schemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+    session_cookie:
+      type: apiKey
+      in: cookie
+      name: sid
+
+    api_key:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  auth:
+    bearer:
+      mode: any
+      schemes:
+        - scheme:
+            $ref: "#/security/schemes/bearer"
+
+    session:
+      mode: any
+      schemes:
+        - scheme:
+            $ref: "#/security/schemes/session_cookie"
+
+    bearer_or_session:
+      mode: any
+      schemes:
+        - scheme:
+            $ref: "#/security/schemes/bearer"
+        - scheme:
+            $ref: "#/security/schemes/session_cookie"
+
+    bearer_and_api_key:
+      mode: all
+      schemes:
+        - scheme:
+            $ref: "#/security/schemes/bearer"
+        - scheme:
+            $ref: "#/security/schemes/api_key"
+
+  roleSources:
+    user_roles:
+      source:
+        $ref: "#/schemas/entities/user/fields/roles"
+      enum:
+        $ref: "#/properties/enums/user_role"
+
+    tenant_role:
+      source:
+        $ref: "#/schemas/entities/tenant_member/fields/role"
+      enum:
+        $ref: "#/properties/enums/tenant_role"
+
+  roleSets:
+    app_admin:
+      role:
+        $ref: "#/security/roleSources/user_roles"
+      values:
+        - $ref: "#/properties/enums/user_role/values/admin"
+
+    tenant_member:
+      role:
+        $ref: "#/security/roleSources/tenant_role"
+      values:
+        - $ref: "#/properties/enums/tenant_role/values/member"
+        - $ref: "#/properties/enums/tenant_role/values/admin"
+        - $ref: "#/properties/enums/tenant_role/values/owner"
+
+    tenant_admin:
+      role:
+        $ref: "#/security/roleSources/tenant_role"
+      values:
+        - $ref: "#/properties/enums/tenant_role/values/admin"
+        - $ref: "#/properties/enums/tenant_role/values/owner"
+
+  contexts:
+    auth_user:
+      target: context.user
+      schema:
+        $ref: "#/schemas/models/auth_user_context"
+
+    tenant:
+      target: context.tenant
+      schema:
+        $ref: "#/schemas/models/tenant_context"
+
+    tenant_membership:
+      target: context.membership
+      schema:
+        $ref: "#/schemas/models/tenant_membership_context"
+
+  guards:
+    auth_user:
+      handler: authUserGuard
+      outputs:
+        - $ref: "#/security/contexts/auth_user"
+
+    tenant:
+      handler: tenantGuard
+      outputs:
+        - $ref: "#/security/contexts/tenant"
+        - $ref: "#/security/contexts/tenant_membership"
+
+    owns_resource:
+      handler: ownsResourceGuard
+      outputs: []
+
+resources:
+  users:
+    key: users
+    name: User
+    route: /users
+    folders:
+      - platform
+      - auth
+
+    defaults:
+      security:
+        protected: true
+        auth:
+          $ref: "#/security/auth/bearer"
+        roleSets:
+          - $ref: "#/security/roleSets/tenant_member"
+        guards:
+          - $ref: "#/security/guards/auth_user"
+          - $ref: "#/security/guards/tenant"
+
+      requestContentType:
+        $ref: "#/contentTypes/json"
+
+    routes:
+      listUsers:
+        method: get
+        path: /
+        summary: List users
+
+        security:
+          protected: true
+          auth:
+            $ref: "#/security/auth/bearer"
+          roleSets:
+            - $ref: "#/security/roleSets/tenant_member"
+          guards:
+            - $ref: "#/security/guards/auth_user"
+            - $ref: "#/security/guards/tenant"
+
+        query:
+          schema:
+            $ref: "#/schemas/models/user_list_query"
+
+        responses:
+          200:
+            $ref: "#/responses/custom/user_list_response"
+
+      createUser:
+        method: post
+        path: /
+        summary: Create user
+
+        security:
+          protected: true
+          auth:
+            $ref: "#/security/auth/bearer"
+          roleSets:
+            - $ref: "#/security/roleSets/tenant_admin"
+          guards:
+            - $ref: "#/security/guards/auth_user"
+            - $ref: "#/security/guards/tenant"
+
+        body:
+          schema:
+            $ref: "#/schemas/models/user_create"
+          contentType:
+            $ref: "#/contentTypes/json"
+
+        responses:
+          201:
+            $ref: "#/responses/custom/user_response"
+          409:
+            $ref: "#/responses/custom/conflict"
+
+      getCurrentUser:
+        method: get
+        path: /me
+        summary: Get current user
+
+        security:
+          protected: true
+          auth:
+            $ref: "#/security/auth/bearer"
+          roleSets:
+            - $ref: "#/security/roleSets/tenant_member"
+          guards:
+            - $ref: "#/security/guards/auth_user"
+            - $ref: "#/security/guards/tenant"
+
+        responses:
+          200:
+            $ref: "#/responses/custom/user_response"
+
+      getUserById:
+        method: get
+        path: /{userId}
+        summary: Get user by ID
+
+        security:
+          protected: true
+          auth:
+            $ref: "#/security/auth/bearer"
+          roleSets:
+            - $ref: "#/security/roleSets/tenant_member"
+          guards:
+            - $ref: "#/security/guards/auth_user"
+            - $ref: "#/security/guards/tenant"
+
+        params:
+          schema:
+            $ref: "#/schemas/params/user_id_params"
+
+        responses:
+          200:
+            $ref: "#/responses/custom/user_response"
+          404:
+            $ref: "#/responses/custom/not_found"
+
+      updateUser:
+        method: patch
+        path: /{userId}
+        summary: Update user
+
+        security:
+          protected: true
+          auth:
+            $ref: "#/security/auth/bearer"
+          roleSets:
+            - $ref: "#/security/roleSets/tenant_admin"
+          guards:
+            - $ref: "#/security/guards/auth_user"
+            - $ref: "#/security/guards/tenant"
+
+        params:
+          schema:
+            $ref: "#/schemas/params/user_id_params"
+
+        body:
+          schema:
+            $ref: "#/schemas/models/user_patch"
+          contentType:
+            $ref: "#/contentTypes/json"
+
+        responses:
+          200:
+            $ref: "#/responses/custom/user_response"
+          404:
+            $ref: "#/responses/custom/not_found"
+
+      deleteUser:
+        method: delete
+        path: /{userId}
+        summary: Delete user
+
+        security:
+          protected: true
+          auth:
+            $ref: "#/security/auth/bearer"
+          roleSets:
+            - $ref: "#/security/roleSets/tenant_admin"
+          guards:
+            - $ref: "#/security/guards/auth_user"
+            - $ref: "#/security/guards/tenant"
+
+        params:
+          schema:
+            $ref: "#/schemas/params/user_id_params"
+
+        responses:
+          200:
+            $ref: "#/responses/custom/user_response"
+          404:
+            $ref: "#/responses/custom/not_found"
+
+operations:
+  listUsers:
+    inferredFrom:
+      resource:
+        $ref: "#/resources/users"
+      route:
+        $ref: "#/resources/users/routes/listUsers"
+
+    method: get
+    path: /users/
+    resource: users
+
+    input:
+      context:
+        - $ref: "#/security/contexts/auth_user"
+        - $ref: "#/security/contexts/tenant"
+        - $ref: "#/security/contexts/tenant_membership"
+
+      query:
+        $ref: "#/schemas/models/user_list_query"
+
+    output:
+      success:
+        status: 200
+        response:
+          $ref: "#/responses/custom/user_list_response"
+
+      errors:
+        400:
+          $ref: "#/responses/custom/validation_error"
+        401:
+          $ref: "#/responses/custom/unauthorized"
+        403:
+          $ref: "#/responses/custom/forbidden"
+        500:
+          $ref: "#/responses/custom/internal_server_error"
+
+  createUser:
+    inferredFrom:
+      resource:
+        $ref: "#/resources/users"
+      route:
+        $ref: "#/resources/users/routes/createUser"
+
+    method: post
+    path: /users/
+    resource: users
+
+    input:
+      context:
+        - $ref: "#/security/contexts/auth_user"
+        - $ref: "#/security/contexts/tenant"
+        - $ref: "#/security/contexts/tenant_membership"
+
+      body:
+        schema:
+          $ref: "#/schemas/models/user_create"
+        contentType:
+          $ref: "#/contentTypes/json"
+
+    output:
+      success:
+        status: 201
+        response:
+          $ref: "#/responses/custom/user_response"
+
+      errors:
+        400:
+          $ref: "#/responses/custom/validation_error"
+        401:
+          $ref: "#/responses/custom/unauthorized"
+        403:
+          $ref: "#/responses/custom/forbidden"
+        409:
+          $ref: "#/responses/custom/conflict"
+        500:
+          $ref: "#/responses/custom/internal_server_error"
