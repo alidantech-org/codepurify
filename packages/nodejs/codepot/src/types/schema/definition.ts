@@ -10,5 +10,7 @@ export interface SchemasDefinition {
 
   dtos: Record<string, DtoDefinition>;
 
-  params?: Record<string, ParamsDefinition>;
+  params: Record<string, ParamsDefinition>;
 }
+
+export type RefSchema = EntityDefinition | ModelDefinition | DtoDefinition | ParamsDefinition;

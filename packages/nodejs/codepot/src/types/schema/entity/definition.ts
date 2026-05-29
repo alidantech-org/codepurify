@@ -1,7 +1,7 @@
-import { Ref } from '../../ref/definition';
+import { Ref } from '../../_shared/ref/definition';
 import { EntityField } from './field/definition';
 
-export interface EntityDefinition<TParent = unknown, TField = EntityField> {
+export interface EntityDefinition {
   /**
    * Optional owning resource key.
    * Example: "users"
@@ -17,13 +17,13 @@ export interface EntityDefinition<TParent = unknown, TField = EntityField> {
    * Real entity inheritance only.
    * One parent max to keep generated classes safe.
    */
-  extends?: Ref<TParent>;
+  extends?: Ref<EntityDefinition>;
 
   /**
    * Entity-owned fields only.
    * Inherited fields come from `extends` and must not be duplicated in output.
    */
-  fields: Record<string, TField>;
+  fields: Record<string, EntityField>;
 
   description?: string;
 

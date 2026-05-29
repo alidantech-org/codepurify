@@ -1,3 +1,5 @@
+import { DefinitionItem } from '../definition';
+
 export interface ContactDefinition {
   name?: string;
   url?: string;
@@ -10,12 +12,10 @@ export interface LicenseDefinition {
   url?: string;
 }
 
-export interface InfoDefinition {
+export interface InfoDefinition extends DefinitionItem {
   title: string;
 
   version: string;
-
-  description?: string;
 
   termsOfService?: string;
 

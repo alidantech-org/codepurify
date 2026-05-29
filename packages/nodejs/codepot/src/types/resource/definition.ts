@@ -1,47 +1,21 @@
-import { Ref } from '../ref/definition';
+import { DefinitionItem } from '../definition';
+import { Ref } from '../_shared/ref/definition';
+import { EntityDefinition } from '../schema/entity/definition';
+import { ResourceSecurityDefaultsDefinition } from '../security/definition';
 import { RoutePathDefinition } from './route/definition';
 
-export interface ResourceSecurityDefaultsDefinition<TAuth = unknown, TRoleSet = unknown, TGuard = unknown> {
-  protected: boolean;
-
-  auth?: Ref<TAuth>;
-
-  roleSets?: Ref<TRoleSet>[];
-
-  guards?: Ref<TGuard>[];
-
-  meta: Record<string, unknown>;
+export interface ResourceDefaultsDefinition extends DefinitionItem {
+  security: ResourceSecurityDefaultsDefinition;
 }
 
-export interface ResourceDefaultsDefinition<TAuth = unknown, TRoleSet = unknown, TGuard = unknown, TContentType = unknown> {
-  security?: ResourceSecurityDefaultsDefinition<TAuth, TRoleSet, TGuard>;
-
-  requestContentType?: Ref<TContentType>;
-
-  meta: Record<string, unknown>;
-}
-
-export interface ResourceDefinition<
-  TEntity = unknown,
-  TRoutePath = RoutePathDefinition,
-  TAuth = unknown,
-  TRoleSet = unknown,
-  TGuard = unknown,
-  TContentType = unknown,
-> {
-  key: string;
-
+export interface ResourceDefinition extends DefinitionItem {
   name: string;
 
-  basePath: string;
+  folders: string[];
 
-  folders?: string[];
+  entities: Ref<EntityDefinition>[];
 
-  entities?: Ref<TEntity>[];
+  defaults: ResourceDefaultsDefinition;
 
-  defaults?: ResourceDefaultsDefinition<TAuth, TRoleSet, TGuard, TContentType>;
-
-  routes: Record<string, TRoutePath>;
-
-  meta: Record<string, unknown>;
+  routes: Record<string, RoutePathDefinition>;
 }

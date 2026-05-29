@@ -1,9 +1,11 @@
-import { Ref } from '../../ref/definition';
+import { RefProperty } from '../../properties/definition';
+import { Ref } from '../../_shared/ref/definition';
+import { RefSchema } from '../../schema/definition';
 
-export interface DtoDefinition<TParent = unknown, TField = unknown> {
-  extends?: Ref<TParent>;
+export interface DtoDefinition {
+  extends?: Ref<RefSchema>;
 
-  fields?: Record<string, Ref<TField>>;
+  fields?: Record<string, Ref<RefProperty>>;
 
   partial?: boolean;
 

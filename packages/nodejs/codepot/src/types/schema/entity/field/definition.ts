@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { RefProperty } from '../../../properties/definition';
-import { Ref } from '../../../ref/definition';
+import { Ref } from '../../../_shared/ref/definition';
 
 export const QueryOperator = {
   eq: 'eq',

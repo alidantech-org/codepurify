@@ -1,27 +1,35 @@
-import { Ref } from '../../ref/definition';
+import { DefinitionItem } from '../../definition';
+import { Ref } from '../../_shared/ref/definition';
+import { ResourceDefinition } from '../../resource/definition';
+import { EntityDefinition } from '../../schema/entity/definition';
 
 export type EnumValuePrimitive = string | number;
 
-export interface EnumValueDefinition {
+export interface EnumValueDefinition extends DefinitionItem {
+  /**
+   * The actual value of the enum
+   */
   value: EnumValuePrimitive;
 
+  /**
+   * Human-readable label for the enum value
+   */
   label?: string;
-
-  description?: string;
-
-  deprecated?: boolean;
-
-  meta: Record<string, unknown>;
 }
 
-export interface EnumDefinition<TResource = unknown, TEntity = unknown> {
+export interface EnumDefinition extends DefinitionItem {
+  /**
+   * Map of enum values
+   */
   values: Record<string, EnumValueDefinition>;
 
-  description?: string;
+  /**
+   * Reference to the resource that owns this enum
+   */
+  resource?: Ref<ResourceDefinition>;
 
-  resource?: Ref<TResource>;
-
-  entity?: Ref<TEntity>;
-
-  meta: Record<string, unknown>;
+  /**
+   * Reference to the entity that owns this enum
+   */
+  entity?: Ref<EntityDefinition>;
 }

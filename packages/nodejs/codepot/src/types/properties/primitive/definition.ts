@@ -2,21 +2,32 @@
 // PRIMITIVES
 // =========================
 
-export type PrimitiveType = 'string' | 'number' | 'boolean';
+import { DefinitionItem } from '../../definition';
 
-export type PrimitiveFormat =
-  | 'date'
-  | 'date-time'
-  | 'time'
-  | 'email'
-  | 'uri'
-  | 'url'
-  | 'uuid'
-  | 'object-id'
-  | 'phone'
-  | 'password'
-  | 'binary'
-  | 'custom';
+export const PrimitiveType = {
+  string: 'string',
+  number: 'number',
+  boolean: 'boolean',
+} as const;
+
+export type PrimitiveType = (typeof PrimitiveType)[keyof typeof PrimitiveType];
+
+export const PrimitiveFormat = {
+  date: 'date',
+  dateTime: 'date-time',
+  time: 'time',
+  email: 'email',
+  uri: 'uri',
+  url: 'url',
+  uuid: 'uuid',
+  objectId: 'object-id',
+  phone: 'phone',
+  password: 'password',
+  binary: 'binary',
+  custom: 'custom',
+} as const;
+
+export type PrimitiveFormat = (typeof PrimitiveFormat)[keyof typeof PrimitiveFormat];
 
 export interface PrimitiveValidationDefinition {
   /**
@@ -46,18 +57,16 @@ export interface PrimitiveValidationDefinition {
   pattern?: string;
 }
 
-export interface PrimitiveDefinition {
+export interface PrimitiveDefinition extends DefinitionItem {
+  /** Primitive type */
   type: PrimitiveType;
 
+  /** Primitive format */
   format?: PrimitiveFormat;
 
-  description?: string;
-
+  /** Example value */
   example?: unknown;
 
+  /** Validation rules */
   validation?: PrimitiveValidationDefinition;
-
-  deprecated?: boolean;
-
-  meta: Record<string, unknown>;
 }

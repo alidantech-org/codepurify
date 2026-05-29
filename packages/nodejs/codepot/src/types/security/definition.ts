@@ -3,7 +3,7 @@
  * OpenAPI-compatible auth scheme definitions.
  * ========================================================= */
 
-import { Ref } from '../ref/definition';
+import { Ref } from '../_shared/ref/definition';
 
 export interface SecuritySchemeHttp {
   type: 'http';
@@ -143,6 +143,18 @@ export interface SecurityDefinition<
   contexts?: Record<string, TContext>;
 
   guards?: Record<string, TGuard>;
+
+  meta: Record<string, unknown>;
+}
+
+export interface ResourceSecurityDefaultsDefinition<TAuth = unknown, TRoleSet = unknown, TGuard = unknown> {
+  protected: boolean;
+
+  auth?: Ref<TAuth>;
+
+  roleSets?: Ref<TRoleSet>[];
+
+  guards?: Ref<TGuard>[];
 
   meta: Record<string, unknown>;
 }

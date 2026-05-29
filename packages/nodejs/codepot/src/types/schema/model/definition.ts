@@ -1,13 +1,24 @@
-import { Ref } from '../../ref/definition';
+import { Ref } from '../../_shared/ref/definition';
+import { EntityDefinition } from '../entity/definition';
 
-export type ModelCategory = 'public' | 'safe' | 'create' | 'patch' | 'query' | 'context' | 'custom';
+export const ModelCategory = {
+  public: 'public',
+  safe: 'safe',
+  create: 'create',
+  patch: 'patch',
+  query: 'query',
+  context: 'context',
+  custom: 'custom',
+} as const;
 
-export interface ModelDefinition<TSource = unknown> {
+export type ModelCategory = (typeof ModelCategory)[keyof typeof ModelCategory];
+
+export interface ModelDefinition {
   /**
    * Derivation source only.
    * This does not mean generated inheritance.
    */
-  from: Ref<TSource>;
+  from: Ref<EntityDefinition>;
 
   /**
    * Derivation family.

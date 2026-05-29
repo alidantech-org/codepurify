@@ -1,6 +1,16 @@
-import { Ref } from '../../ref/definition';
+import { Ref } from '../../_shared/ref/definition';
 
-export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'options' | 'head';
+export const HttpMethod = {
+  get: 'get',
+  post: 'post',
+  put: 'put',
+  patch: 'patch',
+  delete: 'delete',
+  options: 'options',
+  head: 'head',
+} as const;
+
+export type HttpMethod = (typeof HttpMethod)[keyof typeof HttpMethod];
 
 export interface RouteSecurityDefinition<TAuth = unknown, TRoleSet = unknown, TGuard = unknown> {
   protected: boolean;

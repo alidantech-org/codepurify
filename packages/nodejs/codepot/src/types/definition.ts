@@ -5,12 +5,18 @@
 import { InfoDefinition } from './info/definition';
 import { PropertiesDefinition } from './properties/definition';
 import { ResourceDefinition } from './resource/definition';
-import { ResponsesDefinition } from './response/definition';
+import { TransportDefinition } from './transport/definition';
 import { SchemasDefinition } from './schema/definition';
 import { SecurityDefinition } from './security/definition';
 import { UrlDefinition } from './url/definition';
 
-export interface CodepotDefinition {
+export interface DefinitionItem {
+  meta?: Record<string, unknown>;
+  description?: string;
+  deprecated?: boolean;
+}
+
+export interface CodepotDefinition extends DefinitionItem {
   /** Codepot IR/schema version */
   codepot: string;
 
@@ -36,11 +42,8 @@ export interface CodepotDefinition {
   schemas: SchemasDefinition;
 
   /** Reusable responses and default response map */
-  responses: ResponsesDefinition;
+  transport: TransportDefinition;
 
   /** API resources */
   resources: Record<string, ResourceDefinition>;
-
-  /** Extra extension data */
-  meta: Record<string, unknown>;
 }

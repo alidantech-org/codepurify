@@ -1,7 +1,8 @@
-import { Ref } from '../../ref/definition';
+import { PrimitiveDefinition } from '../../properties/primitive/definition';
+import { Ref } from '../../_shared/ref/definition';
 
-export interface ParamFieldDefinition<TField = unknown> {
-  ref: Ref<TField>;
+export interface ParamFieldDefinition {
+  ref: Ref<PrimitiveDefinition>;
 
   description?: string;
 
@@ -12,8 +13,8 @@ export interface ParamFieldDefinition<TField = unknown> {
   meta: Record<string, unknown>;
 }
 
-export interface ParamsDefinition<TField = unknown> {
-  fields: Record<string, ParamFieldDefinition<TField>>;
+export interface ParamsDefinition {
+  fields: Record<string, ParamFieldDefinition>;
 
   description?: string;
 
