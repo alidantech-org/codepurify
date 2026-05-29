@@ -1,19 +1,34 @@
 import { Ref } from '../../ref/definition';
 
-export interface OperationInputDefinition {
-  params?: Record<string, Ref>;
+export interface OperationInputDefinition<TParams = unknown, TQuery = unknown, TBody = unknown, TContext = unknown> {
+  context?: Ref<TContext>[];
 
-  query?: Ref;
+  params?: Ref<TParams>;
 
-  body?: Ref;
+  query?: Ref<TQuery>;
+
+  body?: Ref<TBody>;
 }
 
-export interface OperationDefinition {
+export interface OperationOutputDefinition<TResult = unknown, TError = unknown> {
+  result?: Ref<TResult>;
+
+  error?: Ref<TError>;
+}
+
+export interface OperationDefinition<
+  TParams = unknown,
+  TQuery = unknown,
+  TBody = unknown,
+  TContext = unknown,
+  TResult = unknown,
+  TError = unknown,
+> {
   description?: string;
 
-  input?: OperationInputDefinition;
+  input?: OperationInputDefinition<TParams, TQuery, TBody, TContext>;
 
-  output?: Ref;
+  output?: OperationOutputDefinition<TResult, TError>;
 
   metadata?: Record<string, unknown>;
 }

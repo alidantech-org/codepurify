@@ -2,30 +2,62 @@
 // PRIMITIVES
 // =========================
 
-export type PrimitiveType = 'string' | 'integer' | 'number' | 'boolean';
+export type PrimitiveType = 'string' | 'number' | 'boolean';
+
+export type PrimitiveFormat =
+  | 'date'
+  | 'date-time'
+  | 'time'
+  | 'email'
+  | 'uri'
+  | 'url'
+  | 'uuid'
+  | 'object-id'
+  | 'phone'
+  | 'password'
+  | 'binary'
+  | 'custom';
+
+export interface PrimitiveValidationDefinition {
+  /**
+   * If true, number must be an integer.
+   * Only valid when type is "number".
+   */
+  integer?: boolean;
+
+  minimum?: number;
+
+  maximum?: number;
+
+  exclusiveMinimum?: number;
+
+  exclusiveMaximum?: number;
+
+  /**
+   * Decimal step/scale validation.
+   * Example: 0.01 for two decimal places.
+   */
+  multipleOf?: number;
+
+  minLength?: number;
+
+  maxLength?: number;
+
+  pattern?: string;
+}
 
 export interface PrimitiveDefinition {
   type: PrimitiveType;
 
-  format?: string;
+  format?: PrimitiveFormat;
 
   description?: string;
 
   example?: unknown;
 
-  validation?: {
-    minimum?: number;
-    maximum?: number;
+  validation?: PrimitiveValidationDefinition;
 
-    minLength?: number;
-    maxLength?: number;
-
-    pattern?: string;
-
-    precision?: number;
-
-    integer?: boolean;
-  };
+  deprecated?: boolean;
 
   metadata?: Record<string, unknown>;
 }

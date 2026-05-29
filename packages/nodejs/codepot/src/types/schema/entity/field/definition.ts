@@ -29,30 +29,36 @@ export interface FieldQueryConfig {
   operators?: QueryOperator[];
 
   defaultOperator?: QueryOperator;
-}
-
-// ============================================================================
-// ACCESS
-// ============================================================================
-
-export type AccessLevel = 'public' | 'restricted' | 'secret';
-
-export interface FieldAccessConfig {
-  read?: AccessLevel;
-
-  write?: AccessLevel;
-
-  roles?: Ref[];
 
   metadata?: Record<string, unknown>;
 }
 
-export interface AccessDefinition {
-  public?: boolean;
+// ============================================================================
+// FIELD ACCESS
+// ============================================================================
 
-  roles?: Ref[];
+export type FieldAccessLevel = 'public' | 'internal' | 'secret';
 
-  policies?: Ref[];
+export interface FieldAccessConfig {
+  /**
+   * Controls whether this field can be exposed in generated output models.
+   */
+  read?: FieldAccessLevel;
+
+  /**
+   * Controls whether this field can appear in generated input/write models.
+   */
+  write?: FieldAccessLevel;
+
+  /**
+   * Shortcut for highly sensitive fields like password/token/secret.
+   */
+  sensitive?: boolean;
+
+  /**
+   * Whether this field is selected by default from persistence.
+   */
+  select?: boolean;
 
   metadata?: Record<string, unknown>;
 }
@@ -72,6 +78,8 @@ export interface FieldPersistenceConfig {
 
   generated?: boolean;
 
+  immutable?: boolean;
+
   metadata?: Record<string, unknown>;
 }
 
@@ -84,6 +92,10 @@ export interface FieldSerializationConfig {
 
   deprecated?: boolean;
 
+  /**
+   * Serialized field name override.
+   * Example: database field "created_at" -> JSON field "createdAt".
+   */
   name?: string;
 
   metadata?: Record<string, unknown>;
@@ -95,11 +107,33 @@ export interface FieldSerializationConfig {
 
 export type RelationType = 'oneToOne' | 'oneToMany' | 'manyToOne' | 'manyToMany';
 
-export interface FieldRelationConfig {
+export interface FieldRelationConfig<TEntity = unknown, TResource = unknown, TField = unknown> {
   type: RelationType;
 
-  entity: Ref;
+  /**
+   * Target entity this field relates to.
+   */
+  entity: Ref<TEntity>;
 
+  /**
+   * Optional resource owner for the related entity.
+   */
+  resource?: Ref<TResource>;
+
+  /**
+   * Target field on the related entity.
+   * Usually the target entity id field.
+   */
+  targetField?: Ref<TField>;
+
+  /**
+   * Whether this field owns the foreign key.
+   */
+  owner?: boolean;
+
+  /**
+   * Optional inverse relation name on the target entity.
+   */
   inverse?: string;
 
   metadata?: Record<string, unknown>;
@@ -109,8 +143,11 @@ export interface FieldRelationConfig {
 // ENTITY FIELDS
 // ============================================================================
 
-export interface EntityField {
-  ref: Ref;
+export interface EntityField<TProperty = unknown, TEntity = unknown, TResource = unknown, TRelationField = unknown> {
+  /**
+   * Ref to a primitive, enum, or composite property.
+   */
+  ref: Ref<TProperty>;
 
   description?: string;
 
@@ -128,7 +165,7 @@ export interface EntityField {
 
   serialization?: FieldSerializationConfig;
 
-  relation?: FieldRelationConfig;
+  relation?: FieldRelationConfig<TEntity, TResource, TRelationField>;
 
   metadata?: Record<string, unknown>;
 }

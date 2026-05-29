@@ -1,18 +1,4 @@
-export interface Ref {
+export interface Ref<T> {
   $ref: string;
-}
-
-export type PropertyRef =
-  | {
-      $ref: string; // primitive
-    }
-  | {
-      $ref: string; // enum
-    }
-  | {
-      $ref: string; // composite
-    };
-
-export interface SecurityRoleDefinition {
-  ref: Ref;
+  reference: T;
 }

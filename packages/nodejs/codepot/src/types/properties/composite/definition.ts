@@ -1,9 +1,18 @@
 import { Ref } from '../../ref/definition';
 
-export interface CompositeDefinition {
+export interface CompositeDefinition<TParent = unknown, TProperty = unknown> {
+  /**
+   * Real composite inheritance/extension.
+   * One parent max to keep merging predictable.
+   */
+  extends?: Ref<TParent>;
+
   description?: string;
 
-  properties: Record<string, Ref>;
+  /**
+   * Composite-owned reusable property refs.
+   */
+  properties: Record<string, Ref<TProperty>>;
 
   metadata?: Record<string, unknown>;
 }
