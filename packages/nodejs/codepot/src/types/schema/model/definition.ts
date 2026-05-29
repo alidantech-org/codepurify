@@ -1,19 +1,36 @@
 import { Ref } from '../../_shared/ref/definition';
+import { DefinitionItem } from '../../definition';
 import { EntityDefinition } from '../entity/definition';
 
 export const ModelCategory = {
-  public: 'public',
-  safe: 'safe',
+  // access.read === 'public' → safe to expose externally
+  read: 'read',
+
+  // access.write is set (any level) → accepted in create payloads
   create: 'create',
+
+  // create fields minus persistence.immutable === true → patchable subset
   patch: 'patch',
+
+  // query.filter === true OR query.sort === true OR query.select === true
   query: 'query',
-  context: 'context',
-  custom: 'custom',
+
+  // persistence.mode === 'stored' AND access.read !== 'secret' → DB projection
+  projection: 'projection',
+
+  // access.sensitive === true OR access.read === 'secret' → strip from responses
+  redacted: 'redacted',
+
+  // persistence.mode === 'computed' OR 'virtual' → never written, derived at runtime
+  derived: 'derived',
+
+  // access.read === 'internal' OR access.read === 'auth' → backend/service-layer only
+  internal: 'internal',
 } as const;
 
 export type ModelCategory = (typeof ModelCategory)[keyof typeof ModelCategory];
 
-export interface ModelDefinition {
+export interface ModelDefinition extends DefinitionItem {
   /**
    * Derivation source only.
    * This does not mean generated inheritance.
@@ -26,18 +43,23 @@ export interface ModelDefinition {
    */
   category: ModelCategory;
 
+  /**
+   * Field selection.
+   */
   pick?: string[];
 
+  /**
+   * Field exclusion.
+   */
   omit?: string[];
 
+  /**
+   * Make all fields optional.
+   */
   partial?: boolean;
 
   /**
    * Optional required-field override after pick/omit/partial.
    */
   required?: string[];
-
-  description?: string;
-
-  meta: Record<string, unknown>;
 }

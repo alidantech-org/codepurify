@@ -14,7 +14,7 @@ export interface EnumValueDefinition extends DefinitionItem {
   /**
    * Human-readable label for the enum value
    */
-  label?: string;
+  label: string;
 }
 
 export interface EnumDefinition extends DefinitionItem {

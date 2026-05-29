@@ -17,33 +17,33 @@ export interface DefinitionItem {
 }
 
 export interface CodepotDefinition extends DefinitionItem {
-  /** Codepot IR/schema version */
+  /**1. 🍲 Codepot IR/schema version  */
   codepot: string;
 
-  /** API/project key */
+  /**2. 🗝️ API/project key use snake_case for clean wording */
   key: string;
 
-  /** API version */
+  /**3. 📊 API version */
   version: number;
 
-  /** API information */
+  /**4. 📝 API information */
   info: InfoDefinition;
 
-  /** API URLs */
+  /**5. 🌐 API URLs */
   urls: UrlDefinition[];
 
-  /** API security registry */
-  security: SecurityDefinition;
-
-  /** Reusable low-level properties */
+  /**6. 🧩 Reusable low-level properties */
   properties: PropertiesDefinition;
 
-  /** Reusable schemas */
+  /**7. 🧩 Reusable schemas */
   schemas: SchemasDefinition;
 
-  /** Reusable responses and default response map */
+  /**8. 🔄 Reusable responses and default response map  */
   transport: TransportDefinition;
 
-  /** API resources */
+  /**9. 🔐 API security registry */
+  security: SecurityDefinition;
+
+  /**10. 📦 API resources -- progress 👈 we are here  */
   resources: Record<string, ResourceDefinition>;
 }

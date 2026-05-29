@@ -1,22 +1,15 @@
 import { PrimitiveDefinition } from '../../properties/primitive/definition';
 import { Ref } from '../../_shared/ref/definition';
+import { DefinitionItem } from '../../definition';
 
-export interface ParamFieldDefinition {
+export interface ParamsDefinition extends DefinitionItem {
+  /**
+   * Reference to the primitive definition.
+   */
   ref: Ref<PrimitiveDefinition>;
 
-  description?: string;
-
+  /**
+   * Whether this parameter is required.
+   */
   required?: boolean;
-
-  deprecated?: boolean;
-
-  meta: Record<string, unknown>;
-}
-
-export interface ParamsDefinition {
-  fields: Record<string, ParamFieldDefinition>;
-
-  description?: string;
-
-  meta: Record<string, unknown>;
 }

@@ -1,16 +1,18 @@
-import { Ref } from '../../../ref/definition';
+import { DefinitionItem } from '../../../definition';
+import { Ref } from '../../../_shared/ref/definition';
+import { EntityDefinition } from '../definition';
 import { EntityField } from '../field/definition';
 
 export const EntityRelationKind = {
-  oneToOne: 'oneToOne',
-  oneToMany: 'oneToMany',
-  manyToOne: 'manyToOne',
-  manyToMany: 'manyToMany',
+  oneToOne: 'one_to_one',
+  oneToMany: 'one_to_many',
+  manyToOne: 'many_to_one',
+  manyToMany: 'many_to_many',
 } as const;
 
 export type EntityRelationKind = (typeof EntityRelationKind)[keyof typeof EntityRelationKind];
 
-export interface EntityRelationDefinition {
+export interface EntityRelationDefinition extends DefinitionItem {
   kind: EntityRelationKind;
 
   /**
@@ -40,29 +42,5 @@ export interface EntityRelationDefinition {
    * Optional inverse relation name on the target side.
    * Example: tenant.members
    */
-  inverse?: string;
-
-  description?: string;
-
-  meta: Record<string, unknown>;
-}
-
-export interface EntityDefinition {
-  resource?: string;
-
-  tags?: string[];
-
-  /**
-   * Real entity inheritance only.
-   * One parent max.
-   */
-  extends?: Ref<EntityDefinition>;
-
-  fields: Record<string, EntityField>;
-
-  relations?: Record<string, EntityRelationDefinition>;
-
-  description?: string;
-
-  meta: Record<string, unknown>;
+  inverse?: Ref<EntityField>;
 }

@@ -1,21 +1,13 @@
 import { DefinitionItem } from '../definition';
-import { Ref } from '../_shared/ref/definition';
-import { EntityDefinition } from '../schema/entity/definition';
-import { ResourceSecurityDefaultsDefinition } from '../security/definition';
 import { RoutePathDefinition } from './route/definition';
-
-export interface ResourceDefaultsDefinition extends DefinitionItem {
-  security: ResourceSecurityDefaultsDefinition;
-}
+import { RouteSecurityDefinition } from '../security/definition';
+import { OperationDefinition } from './operation/definition';
 
 export interface ResourceDefinition extends DefinitionItem {
-  name: string;
-
   folders: string[];
-
-  entities: Ref<EntityDefinition>[];
-
-  defaults: ResourceDefaultsDefinition;
-
+  defaults: {
+    security: RouteSecurityDefinition;
+  };
+  operations: Record<string, OperationDefinition>;
   routes: Record<string, RoutePathDefinition>;
 }

@@ -4,6 +4,7 @@
 
 import { RefProperty } from '../../../properties/definition';
 import { Ref } from '../../../_shared/ref/definition';
+import { DefinitionItem } from '../../../definition';
 
 export const QueryOperator = {
   eq: 'eq',
@@ -23,7 +24,7 @@ export const QueryOperator = {
 
 export type QueryOperator = (typeof QueryOperator)[keyof typeof QueryOperator];
 
-export interface FieldQueryConfig {
+export interface FieldQueryConfig extends DefinitionItem {
   filter?: boolean;
 
   sort?: boolean;
@@ -31,8 +32,6 @@ export interface FieldQueryConfig {
   select?: boolean;
 
   operators?: QueryOperator[];
-
-  meta: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -48,16 +47,12 @@ export const FieldAccessLevel = {
 
 export type FieldAccessLevel = (typeof FieldAccessLevel)[keyof typeof FieldAccessLevel];
 
-export interface FieldAccessConfig {
+export interface FieldAccessConfig extends DefinitionItem {
   read?: FieldAccessLevel;
 
   write?: FieldAccessLevel;
 
   sensitive?: boolean;
-
-  select?: boolean;
-
-  meta: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -72,27 +67,23 @@ export const FieldPersistenceMode = {
 
 export type FieldPersistenceMode = (typeof FieldPersistenceMode)[keyof typeof FieldPersistenceMode];
 
-export interface FieldPersistenceConfig {
+export interface FieldPersistenceConfig extends DefinitionItem {
   mode: FieldPersistenceMode;
 
   generated?: boolean;
 
   immutable?: boolean;
-
-  meta: Record<string, unknown>;
 }
 
 // ============================================================================
 // ENTITY FIELDS
 // ============================================================================
 
-export interface EntityField {
+export interface EntityField extends DefinitionItem {
   /**
    * Ref to a primitive, enum, or composite property.
    */
   ref: Ref<RefProperty>;
-
-  description?: string;
 
   required?: boolean;
 
@@ -105,6 +96,4 @@ export interface EntityField {
   access?: FieldAccessConfig;
 
   persistence?: FieldPersistenceConfig;
-
-  meta: Record<string, unknown>;
 }

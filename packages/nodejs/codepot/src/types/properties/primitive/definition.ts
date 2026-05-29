@@ -8,6 +8,7 @@ export const PrimitiveType = {
   string: 'string',
   number: 'number',
   boolean: 'boolean',
+  integer: 'integer',
 } as const;
 
 export type PrimitiveType = (typeof PrimitiveType)[keyof typeof PrimitiveType];
@@ -30,12 +31,6 @@ export const PrimitiveFormat = {
 export type PrimitiveFormat = (typeof PrimitiveFormat)[keyof typeof PrimitiveFormat];
 
 export interface PrimitiveValidationDefinition {
-  /**
-   * If true, number must be an integer.
-   * Only valid when type is "number".
-   */
-  integer?: boolean;
-
   minimum?: number;
 
   maximum?: number;
@@ -46,7 +41,7 @@ export interface PrimitiveValidationDefinition {
 
   /**
    * Decimal step/scale validation.
-   * Example: 0.01 for two decimal places.
+   * Example: 0.01 for two decimal places or 0.5 for half steps.
    */
   multipleOf?: number;
 

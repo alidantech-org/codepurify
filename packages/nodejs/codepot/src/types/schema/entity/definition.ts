@@ -1,12 +1,14 @@
+import { DefinitionItem } from '../../definition';
 import { Ref } from '../../_shared/ref/definition';
 import { EntityField } from './field/definition';
+import { EntityRelationDefinition } from './relation/definition';
+import { ResourceDefinition } from '../../resource/definition';
 
-export interface EntityDefinition {
+export interface EntityDefinition extends DefinitionItem {
   /**
-   * Optional owning resource key.
-   * Example: "users"
+   * Enforced consistency: Use Ref if Resources are first-class definitions.
    */
-  resource?: string;
+  resource?: Ref<ResourceDefinition>;
 
   /**
    * Optional grouping/search/docs tags.
@@ -25,7 +27,10 @@ export interface EntityDefinition {
    */
   fields: Record<string, EntityField>;
 
-  description?: string;
-
-  meta: Record<string, unknown>;
+  /**
+   * Inline definition: Keeps the relation logic tightly coupled to its source entity,
+   * avoiding unnecessary global file fragmentation.
+   */
+  relations?: Record<string, EntityRelationDefinition>;
 }
+

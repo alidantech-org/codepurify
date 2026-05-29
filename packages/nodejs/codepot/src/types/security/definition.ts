@@ -1,160 +1,186 @@
-/* =========================================================
- * SECURITY SCHEMES
- * OpenAPI-compatible auth scheme definitions.
- * ========================================================= */
-
 import { Ref } from '../_shared/ref/definition';
+import { DefinitionItem } from '../definition';
+import { EnumDefinition, EnumValueDefinition } from '../properties/enum/definition';
+import { DtoDefinition } from '../schema/dto/definition';
+import { EntityDefinition } from '../schema/entity/definition';
 
-export interface SecuritySchemeHttp {
-  type: 'http';
-  scheme: string;
+// ============================================================================
+// SCHEMES
+// ============================================================================
+
+export const SecuritySchemeType = {
+  http: 'http',
+  apiKey: 'apiKey',
+  oauth2: 'oauth2',
+  openId: 'openId',
+} as const;
+
+export type SecuritySchemeType = (typeof SecuritySchemeType)[keyof typeof SecuritySchemeType];
+
+export const ApiKeyLocation = {
+  header: 'header',
+  query: 'query',
+  cookie: 'cookie',
+} as const;
+
+export type ApiKeyLocation = (typeof ApiKeyLocation)[keyof typeof ApiKeyLocation];
+
+export interface SecuritySchemeDefinition extends DefinitionItem {
+  type: SecuritySchemeType;
+  // http
+  scheme?: string;
   bearerFormat?: string;
+  // apiKey
+  in?: ApiKeyLocation;
+  keyName?: string;
+  // oauth2
+  flows?: Record<string, unknown>;
+  // openId
+  openIdConnectUrl?: string;
 }
 
-export interface SecuritySchemeApiKey {
-  type: 'apiKey';
-  in: 'header' | 'query' | 'cookie';
-  name: string;
-}
+// ============================================================================
+// AUTH
+// ============================================================================
 
-export interface SecuritySchemeOAuth2 {
-  type: 'oauth2';
-  flows: Record<string, unknown>;
-}
+export const SecurityAuthMode = {
+  any: 'any',
+  all: 'all',
+} as const;
 
-export interface SecuritySchemeOpenId {
-  type: 'openIdConnect';
-  openIdConnectUrl: string;
-}
+export type SecurityAuthMode = (typeof SecurityAuthMode)[keyof typeof SecurityAuthMode];
 
-export type SecuritySchemeDefinition = SecuritySchemeHttp | SecuritySchemeApiKey | SecuritySchemeOAuth2 | SecuritySchemeOpenId;
-
-/* =========================================================
- * AUTH REQUIREMENTS
- * Reusable combinations of auth schemes.
- * Example: bearer, session, bearerOrSession, bearerAndApiKey.
- * ========================================================= */
-
-export type SecurityAuthMode = 'any' | 'all';
-
-export interface SecurityAuthSchemeUse<TScheme = SecuritySchemeDefinition> {
-  scheme: Ref<TScheme>;
-  scopes?: string[];
-}
-
-export interface SecurityAuthDefinition<TScheme = SecuritySchemeDefinition> {
+export interface SecurityAuthDefinition extends DefinitionItem {
+  /**
+   * Authentication mode: 'any' (at least one scheme required) or 'all' (all schemes required)
+   */
   mode: SecurityAuthMode;
-  schemes: SecurityAuthSchemeUse<TScheme>[];
-  description?: string;
-  meta: Record<string, unknown>;
+
+  /**
+   * List of authentication schemes to use
+   */
+  schemes: Array<{
+    /**
+     * Reference to the security scheme definition
+     */
+    scheme: Ref<SecuritySchemeDefinition>;
+    /**
+     * Optional scopes required for this scheme
+     */
+    scopes?: string[];
+  }>;
 }
 
-/* =========================================================
- * ROLE SOURCES / ROLE SETS
- * Roles are not hard-coded on routes.
- * They come from entity fields / enum fields through refs.
- * ========================================================= */
+// ============================================================================
+// ROLES
+// ============================================================================
 
-export interface SecurityRoleSourceDefinition<TField = unknown, TEnum = unknown> {
-  source: Ref<TField>;
-  enum: Ref<TEnum>;
-  description?: string;
-  meta: Record<string, unknown>;
+export interface SecurityRoleSourceDefinition extends DefinitionItem {
+  /**
+   * Reference to the entity field that contains role values
+   */
+  source: Ref<EntityDefinition>; // entity field ref
+  /**
+   * Reference to the enum definition that defines valid role values
+   */
+  enum: Ref<EnumDefinition>; // enum ref
 }
 
-export interface SecurityRoleSetDefinition<TRoleSource = SecurityRoleSourceDefinition, TEnumValue = unknown> {
-  role: Ref<TRoleSource>;
-  values: Ref<TEnumValue>[];
-  description?: string;
-  meta: Record<string, unknown>;
+export interface SecurityRoleSetDefinition extends DefinitionItem {
+  /**
+   * Reference to the role source definition
+   */
+  role: Ref<SecurityRoleSourceDefinition>;
+
+  /**
+   * List of role values
+   */
+  values: Ref<EnumValueDefinition>[];
 }
 
-/* =========================================================
- * CONTEXTS
- * Typed runtime/request values created by guards.
- * Example: context.user, context.tenant, context.membership.
- * ========================================================= */
+// ============================================================================
+// GUARDS & CONTEXTS
+// ============================================================================
 
-export interface SecurityContextDefinition<TSchema = unknown> {
+export interface SecurityContextDefinition extends DefinitionItem {
+  /**
+   * Target context identifier
+   */
   target: string;
-  schema: Ref<TSchema>;
-  description?: string;
-  meta: Record<string, unknown>;
+  /**
+   * Reference to the schema definition
+   */
+  schema: Ref<DtoDefinition>;
 }
 
-/* =========================================================
- * GUARDS
- * Named backend handlers.
- * They may output registered contexts.
- * ========================================================= */
-
-export interface SecurityGuardDefinition<TContext = SecurityContextDefinition> {
+export interface SecurityGuardDefinition extends DefinitionItem {
+  /**
+   * Handler function name
+   */
   handler: string;
-  outputs?: Ref<TContext>[];
-  description?: string;
-  meta: Record<string, unknown>;
+  /**
+   * List of output contexts
+   */
+  outputs?: Ref<SecurityContextDefinition>[];
 }
 
-/* =========================================================
- * ROUTE / RESOURCE SECURITY
- * This is what resources/routes use.
- * Refs only. No inline role values. No inline guards.
- * ========================================================= */
+// ============================================================================
+// ROUTE SECURITY
+// ============================================================================
 
-export interface RouteSecurityDefinition<
-  TAuth = SecurityAuthDefinition,
-  TRoleSet = SecurityRoleSetDefinition,
-  TGuard = SecurityGuardDefinition,
-> {
+export interface RouteSecurityDefinition extends DefinitionItem {
+  /**
+   * Whether the route is protected
+   */
   protected: boolean;
-
-  auth?: Ref<TAuth>;
-
-  roleSets?: Ref<TRoleSet>[];
-
-  guards?: Ref<TGuard>[];
-
-  meta: Record<string, unknown>;
+  /**
+   * Reference to the authentication definition
+   */
+  auth?: Ref<SecurityAuthDefinition>;
+  /**
+   * List of role set references
+   */
+  roleSets?: Ref<SecurityRoleSetDefinition>[];
+  /**
+   * List of guard references
+   */
+  guards?: Ref<SecurityGuardDefinition>[];
 }
 
-/* =========================================================
- * TOP-LEVEL SECURITY REGISTRY
- * Defined at version level.
- * ========================================================= */
+export interface ResourceSecurityDefinition extends RouteSecurityDefinition {}
 
-export interface SecurityDefinition<
-  TScheme = SecuritySchemeDefinition,
-  TAuth = SecurityAuthDefinition<TScheme>,
-  TRoleSource = SecurityRoleSourceDefinition,
-  TRoleSet = SecurityRoleSetDefinition<TRoleSource>,
-  TContext = SecurityContextDefinition,
-  TGuard = SecurityGuardDefinition<TContext>,
-> {
-  defaults?: RouteSecurityDefinition<TAuth, TRoleSet, TGuard>;
+// ============================================================================
+// REGISTRY
+// ============================================================================
 
-  schemes: Record<string, TScheme>;
+export interface SecurityDefinition extends DefinitionItem {
+  /**
+   * Security schemes
+   */
+  schemes: Record<string, SecuritySchemeDefinition>;
+  /**
+   * Authentication definitions
+   */
+  auth: Record<string, SecurityAuthDefinition>;
+  /**
+   * Role source definitions
+   */
+  roleSources?: Record<string, SecurityRoleSourceDefinition>;
+  /**
+   * Role set definitions
+   */
+  roleSets?: Record<string, SecurityRoleSetDefinition>;
+  /**
+   * Context definitions
+   */
+  contexts?: Record<string, SecurityContextDefinition>;
+  /**
+   * Guard definitions
+   */
+  guards?: Record<string, SecurityGuardDefinition>;
 
-  auth: Record<string, TAuth>;
-
-  roleSources?: Record<string, TRoleSource>;
-
-  roleSets?: Record<string, TRoleSet>;
-
-  contexts?: Record<string, TContext>;
-
-  guards?: Record<string, TGuard>;
-
-  meta: Record<string, unknown>;
-}
-
-export interface ResourceSecurityDefaultsDefinition<TAuth = unknown, TRoleSet = unknown, TGuard = unknown> {
-  protected: boolean;
-
-  auth?: Ref<TAuth>;
-
-  roleSets?: Ref<TRoleSet>[];
-
-  guards?: Ref<TGuard>[];
-
-  meta: Record<string, unknown>;
+  /**
+   * Default route security
+   */
+  defaults?: RouteSecurityDefinition;
 }

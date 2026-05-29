@@ -1,34 +1,22 @@
-import { Ref } from '../../ref/definition';
+import { Ref } from '../../_shared/ref/definition';
+import { DefinitionItem } from '../../definition';
+import { DtoDefinition } from '../../schema/dto/definition';
+import { ModelDefinition } from '../../schema/model/definition';
+import { ParamsDefinition } from '../../schema/params/definition';
 
-export interface OperationInputDefinition<TParams = unknown, TQuery = unknown, TBody = unknown, TContext = unknown> {
-  context?: Ref<TContext>[];
-
-  params?: Ref<TParams>;
-
-  query?: Ref<TQuery>;
-
-  body?: Ref<TBody>;
+export interface OperationInputDefinition extends DefinitionItem {
+  context?: Ref<DtoDefinition>[]; // injected request contexts (auth, tenant, etc.)
+  params?: Ref<ParamsDefinition>; // path parameters schema
+  query?: Ref<DtoDefinition | ModelDefinition>; // query string schema
+  body?: Ref<DtoDefinition | ModelDefinition>; // request body schema
 }
 
-export interface OperationOutputDefinition<TResult = unknown, TError = unknown> {
-  result?: Ref<TResult>;
-
-  error?: Ref<TError>;
+export interface OperationOutputDefinition extends DefinitionItem {
+  result?: Ref<DtoDefinition | ModelDefinition>; // success payload schema
+  errors?: Ref<DtoDefinition | ModelDefinition>[]; // typed error schemas (multiple possible)
 }
 
-export interface OperationDefinition<
-  TParams = unknown,
-  TQuery = unknown,
-  TBody = unknown,
-  TContext = unknown,
-  TResult = unknown,
-  TError = unknown,
-> {
-  description?: string;
-
-  input?: OperationInputDefinition<TParams, TQuery, TBody, TContext>;
-
-  output?: OperationOutputDefinition<TResult, TError>;
-
-  meta: Record<string, unknown>;
+export interface OperationDefinition extends DefinitionItem {
+  input?: OperationInputDefinition;
+  output?: OperationOutputDefinition;
 }

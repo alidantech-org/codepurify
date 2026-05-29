@@ -1,11 +1,15 @@
-export interface UrlDefinition {
-  key: string;
+import { DefinitionItem } from '../definition';
 
-  env: string;
+export const UrlEnv = {
+  local: 'local',
+  development: 'development',
+  staging: 'staging',
+  production: 'production',
+} as const;
 
+export type UrlEnv = (typeof UrlEnv)[keyof typeof UrlEnv];
+
+export interface UrlDefinition extends DefinitionItem {
+  env: UrlEnv;
   uri: string;
-
-  description?: string;
-
-  meta: Record<string, unknown>;
 }
