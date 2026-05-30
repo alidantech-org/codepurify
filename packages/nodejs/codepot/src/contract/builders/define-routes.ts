@@ -247,14 +247,6 @@ function writeRoute(options: DefineRoutesOptions, key: string, value: RouteDefin
 
 function createOperationState(value: RouteDefinitionInput, operation: OperationAuthoringRef): OperationDefinition {
   return {
-    input: {
-      params: value.params,
-      query: value.query,
-      body: value.body,
-    },
-    output: {
-      result: value.responses,
-    },
     description: value.description,
     deprecated: value.deprecated,
     meta: {

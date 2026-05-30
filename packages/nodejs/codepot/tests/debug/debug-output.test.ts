@@ -49,10 +49,19 @@ describe('debug authoring output', () => {
     expect(json).toContain('"path":"/:id"');
     expect(json).toContain('"path":"/public/:id"');
 
+    expect(json).toContain('"routes"');
+    expect(json).toContain('"responses"');
+    expect(json).toContain('schema:model:User:read');
+
     expect(json).not.toContain('"$ref"');
     expect(json).not.toContain('#/schemas');
     expect(json).not.toContain('#/transport');
     expect(json).not.toContain('#/security');
+
+    // Verify operations do not contain duplicated input/output
+    const contract = output.contracts[0] as any;
+    expect(contract.resources.users.operations.listUsers.input).toBeUndefined();
+    expect(contract.resources.users.operations.listUsers.output).toBeUndefined();
   });
 
   it('writes debug json string without compiled refs', () => {
