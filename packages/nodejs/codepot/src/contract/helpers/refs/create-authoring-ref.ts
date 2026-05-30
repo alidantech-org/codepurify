@@ -206,5 +206,7 @@ export function createExtendableUsage<TTarget, TKind extends AuthoringRefKind, T
 // ============================================================================
 
 export function refPath<TTarget>(path: string): Ref<TTarget> {
-  return path as Ref<TTarget>;
+  return {
+    $ref: path,
+  } as Ref<TTarget>;
 }

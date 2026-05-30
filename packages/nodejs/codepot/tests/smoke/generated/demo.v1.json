@@ -29,12 +29,104 @@
     "composites": {}
   },
   "schemas": {
-    "entities": {},
-    "models": {},
+    "entities": {
+      "User": {
+        "fields": {
+          "id": {
+            "type": {
+              "$ref": "#/properties/id"
+            },
+            "required": true,
+            "query": {
+              "filter": true,
+              "sort": true,
+              "select": true
+            },
+            "persistence": {
+              "mode": "stored",
+              "generated": true,
+              "immutable": true
+            }
+          },
+          "name": {
+            "type": {
+              "$ref": "#/properties/displayName"
+            },
+            "required": true,
+            "query": {
+              "filter": true,
+              "sort": true
+            }
+          },
+          "email": {
+            "type": {
+              "$ref": "#/properties/email"
+            },
+            "required": true,
+            "access": {
+              "read": "public",
+              "sensitive": true
+            }
+          }
+        }
+      }
+    },
+    "models": {
+      "UserRead": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "read"
+      },
+      "UserCreate": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "create"
+      },
+      "UserPatch": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "patch"
+      },
+      "UserQuery": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "query"
+      },
+      "UserProjection": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "projection"
+      },
+      "UserRedacted": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "redacted"
+      },
+      "UserDerived": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "derived"
+      },
+      "UserInternal": {
+        "from": {
+          "$ref": "#/schemas/entities/User"
+        },
+        "category": "internal"
+      }
+    },
     "dtos": {
       "ErrorResponse": {
         "fields": {
-          "message": "#/schemas/entities/User/fields/name"
+          "message": {
+            "$ref": "#/schemas/entities/User/fields/name"
+          }
         }
       }
     },
@@ -48,7 +140,26 @@
       }
     },
     "requests": {},
-    "responses": {}
+    "responses": {
+      "BadRequest": {
+        "status": 400,
+        "schema": {
+          "$ref": "#/schemas/dtos/ErrorResponse"
+        },
+        "contentType": {
+          "$ref": "application/json"
+        }
+      },
+      "Unauthorized": {
+        "status": 401,
+        "schema": {
+          "$ref": "#/schemas/dtos/ErrorResponse"
+        },
+        "contentType": {
+          "$ref": "application/json"
+        }
+      }
+    }
   },
   "security": {
     "schemes": {
@@ -63,7 +174,9 @@
         "mode": "any",
         "schemes": [
           {
-            "scheme": "#/security/schemes/bearer"
+            "scheme": {
+              "$ref": "#/security/schemes/bearer"
+            }
           }
         ]
       }
@@ -82,7 +195,9 @@
       ],
       "defaults": {
         "security": {
-          "auth": "#/security/auth/jwt",
+          "auth": {
+            "$ref": "#/security/auth/jwt"
+          },
           "protected": true
         }
       },
@@ -102,16 +217,20 @@
         "listUsers": {
           "methods": {
             "get": {
-              "operation": "#/resources/users/operations/listUsers",
+              "operation": {
+                "$ref": "#/resources/users/operations/listUsers"
+              },
               "responses": {
                 "200": {
                   "schema": {
-                    "ref": "#/schemas/models/User/read",
+                    "$ref": "#/schemas/models/UserRead",
                     "array": true
                   },
                   "contentType": "application/json"
                 },
-                "400": "#/transport/responses/BadRequest"
+                "400": {
+                  "$ref": "#/transport/responses/BadRequest"
+                }
               }
             }
           }
@@ -119,15 +238,19 @@
         "getUser": {
           "methods": {
             "get": {
-              "operation": "#/resources/users/operations/getUser",
+              "operation": {
+                "$ref": "#/resources/users/operations/getUser"
+              },
               "responses": {
                 "200": {
                   "schema": {
-                    "ref": "#/schemas/models/User/read"
+                    "$ref": "#/schemas/models/UserRead"
                   },
                   "contentType": "application/json"
                 },
-                "401": "#/transport/responses/Unauthorized"
+                "401": {
+                  "$ref": "#/transport/responses/Unauthorized"
+                }
               }
             }
           }

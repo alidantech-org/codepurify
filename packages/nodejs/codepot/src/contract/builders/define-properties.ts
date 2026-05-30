@@ -7,6 +7,8 @@ import type { CompositeDefinition } from '@/contract/types/properties/composite/
 import type { EntityDefinition } from '@/contract/types/schema/entity/definition';
 import type { EntityField } from '@/contract/types/schema/entity/field/definition';
 import type { Ref } from '@/contract/types/ref';
+import type { SchemasDefinition } from '@/contract/types/schema/definition';
+import type { ModelDefinition } from '@/contract/types/schema/model/definition';
 
 import {
   AuthoringRefKind,
@@ -41,6 +43,7 @@ export interface DefinePropertiesOptions {
   readonly scope: 'version' | 'resource';
   readonly resourceKey?: string;
   readonly state: Partial<PropertiesDefinition>;
+  readonly schemas?: Partial<SchemasDefinition>;
 }
 
 // ============================================================================
@@ -83,8 +86,20 @@ function entityFieldPath(options: DefinePropertiesOptions, entityName: string, f
   return refPath<EntityField>(`${entityBasePath(options)}/${entityName}/fields/${fieldKey}`);
 }
 
-function modelPath(options: DefinePropertiesOptions, entityName: string, category: ModelCategory): Ref<never> {
-  return refPath<never>(`${modelBasePath(options)}/${entityName}/${category}`);
+function toPascalCase(value: string): string {
+  return value
+    .split(/[-_\s]+/g)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join('');
+}
+
+function modelKey(entityName: string, category: ModelCategory): string {
+  return `${entityName}${toPascalCase(category)}`;
+}
+
+function modelPath(options: DefinePropertiesOptions, entityName: string, category: ModelCategory): Ref<ModelDefinition> {
+  return refPath<ModelDefinition>(`${modelBasePath(options)}/${modelKey(entityName, category)}`);
 }
 
 // ============================================================================
@@ -119,11 +134,12 @@ function createEntityFieldRef(options: DefinePropertiesOptions, entityName: stri
 }
 
 function createModelRef(options: DefinePropertiesOptions, entityName: string, category: ModelCategory): ModelAuthoringRef {
+  const key = modelKey(entityName, category);
   return createExtendableAuthoringRef({
     path: modelPath(options, entityName, category),
     kind: AuthoringRefKind.schemaModel,
     key: category,
-    name: `${entityName}.${category}`,
+    name: key,
   }) as ModelAuthoringRef;
 }
 
@@ -242,9 +258,10 @@ function normalizeEnumValues(
 }
 
 function toEntityField(options: DefinePropertiesOptions, entityName: string, key: string, input: EntityFieldInput): EntityField {
+  const ref = sourceToPropertyRef(options, `${entityName}_${key}`, input.source);
   return {
     type: {
-      ref: sourceToPropertyRef(options, `${entityName}_${key}`, input.source),
+      ...ref,
       array: input.options?.array,
       description: input.options?.description,
       deprecated: input.options?.deprecated,
@@ -260,6 +277,23 @@ function toEntityField(options: DefinePropertiesOptions, entityName: string, key
     deprecated: input.options?.deprecated,
     meta: input.options?.meta,
   };
+}
+
+function writeDerivedModels(
+  schemas: Partial<SchemasDefinition>,
+  entityName: string,
+  entityOptions: EntityOptions,
+  options: DefinePropertiesOptions,
+): void {
+  schemas.models ??= {};
+
+  for (const category of Object.values(ModelCategory)) {
+    const key = modelKey(entityName, category);
+    schemas.models[key] = {
+      from: entityPath(options, entityName),
+      category,
+    } as ModelDefinition;
+  }
 }
 
 // ============================================================================
@@ -306,10 +340,27 @@ export function defineProperties(options: DefinePropertiesOptions): PropertiesBu
       entityOptions: EntityOptions = {},
     ): EntityPropertiesResult<TName, TFields> {
       const fieldRefs = {} as Record<keyof TFields & string, EntityFieldAuthoringRef>;
+      const entityFields = {} as Record<string, EntityField>;
 
       for (const [key, value] of Object.entries(fields) as [keyof TFields & string, TFields[keyof TFields & string]][]) {
         fieldRefs[key] = createEntityFieldRef(options, name, key);
-        toEntityField(options, name, key, value);
+        entityFields[key] = toEntityField(options, name, key, value);
+      }
+
+      if (options.schemas) {
+        options.schemas.entities ??= {};
+        options.schemas.models ??= {};
+
+        options.schemas.entities[name] = {
+          extends: entityOptions.extends?.path,
+          tags: entityOptions.tags ? [...entityOptions.tags] : undefined,
+          fields: entityFields,
+          description: entityOptions.description,
+          deprecated: entityOptions.deprecated,
+          meta: entityOptions.meta,
+        };
+
+        writeDerivedModels(options.schemas, name, entityOptions, options);
       }
 
       return {

@@ -57,11 +57,14 @@ import {
 
 import { createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
 
+import { isAuthoringRef, isRefUsage, normalizeRefOrUsagePlain } from '@/pipeline/compiler/refs/normalize-ref-usage';
+
 // ============================================================================
 // OPTIONS
 // ============================================================================
 
 export interface DefineSecurityOptions {
+  readonly state?: Partial<SecurityDefinition>;
   readonly initial?: Partial<SecurityDefinition>;
 }
 
@@ -152,46 +155,100 @@ function createGuardRef(key: string): SecurityGuardAuthoringRef {
 }
 
 // ============================================================================
+// NORMALIZATION
+// ============================================================================
+
+function normalizeSecuritySchemeInput(input: SecuritySchemeInput): unknown {
+  const obj = input as unknown as Record<string, unknown>;
+  return {
+    ...obj,
+  };
+}
+
+function normalizeSecurityAuthInput(input: SecurityAuthInput): unknown {
+  const obj = input as unknown as Record<string, unknown>;
+  const normalized: Record<string, unknown> = {
+    ...obj,
+  };
+
+  if (obj.schemes && Array.isArray(obj.schemes)) {
+    normalized.schemes = obj.schemes.map((scheme: unknown) => {
+      if (isAuthoringRef(scheme) || isRefUsage(scheme)) {
+        return normalizeRefOrUsagePlain(scheme);
+      }
+      return scheme;
+    });
+  }
+
+  return normalized;
+}
+
+function normalizeSecurityRoleSourceInput(input: SecurityRoleSourceInput): unknown {
+  const obj = input as unknown as Record<string, unknown>;
+  return {
+    ...obj,
+  };
+}
+
+function normalizeSecurityRoleSetInput(input: SecurityRoleSetInput): unknown {
+  const obj = input as unknown as Record<string, unknown>;
+  const normalized: Record<string, unknown> = {
+    ...obj,
+  };
+
+  if (obj.roles && Array.isArray(obj.roles)) {
+    normalized.roles = obj.roles.map((role: unknown) => {
+      if (isAuthoringRef(role) || isRefUsage(role)) {
+        return normalizeRefOrUsagePlain(role);
+      }
+      return role;
+    });
+  }
+
+  return normalized;
+}
+
+function normalizeSecurityContextInput(input: SecurityContextInput): unknown {
+  const obj = input as unknown as Record<string, unknown>;
+  return {
+    ...obj,
+  };
+}
+
+function normalizeSecurityGuardInput(input: SecurityGuardInput): unknown {
+  const obj = input as unknown as Record<string, unknown>;
+  return {
+    ...obj,
+  };
+}
+
+// ============================================================================
 // DEFINE SECURITY
 // ============================================================================
 
 export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBuilder {
-  const schemes: Record<string, SecuritySchemeInput> = {
-    ...((options.initial?.schemes ?? {}) as unknown as Record<string, SecuritySchemeInput>),
+  const state = options.state ?? {
+    schemes: options.initial?.schemes ?? {},
+    auth: options.initial?.auth ?? {},
+    roleSources: options.initial?.roleSources ?? {},
+    roleSets: options.initial?.roleSets ?? {},
+    contexts: options.initial?.contexts ?? {},
+    guards: options.initial?.guards ?? {},
+    defaults: options.initial?.defaults,
   };
 
-  const auth: Record<string, SecurityAuthInput> = {
-    ...((options.initial?.auth ?? {}) as unknown as Record<string, SecurityAuthInput>),
-  };
+  state.schemes ??= {};
+  state.auth ??= {};
+  state.roleSources ??= {};
+  state.roleSets ??= {};
+  state.contexts ??= {};
+  state.guards ??= {};
 
-  const roleSources: Record<string, SecurityRoleSourceInput> = {
-    ...((options.initial?.roleSources ?? {}) as unknown as Record<string, SecurityRoleSourceInput>),
-  };
-
-  const roleSets: Record<string, SecurityRoleSetInput> = {
-    ...((options.initial?.roleSets ?? {}) as unknown as Record<string, SecurityRoleSetInput>),
-  };
-
-  const contexts: Record<string, SecurityContextInput> = {
-    ...((options.initial?.contexts ?? {}) as unknown as Record<string, SecurityContextInput>),
-  };
-
-  const guards: Record<string, SecurityGuardInput> = {
-    ...((options.initial?.guards ?? {}) as unknown as Record<string, SecurityGuardInput>),
-  };
-
-  let defaults = options.initial?.defaults as RouteSecurityInput | undefined;
+  let defaults = state.defaults as RouteSecurityInput | undefined;
 
   function snapshot(): Partial<SecurityDefinition> {
-    return {
-      schemes: schemes as unknown as Record<string, SecuritySchemeDefinition>,
-      auth: auth as unknown as Record<string, SecurityAuthDefinition>,
-      roleSources: roleSources as unknown as Record<string, SecurityRoleSourceDefinition>,
-      roleSets: roleSets as unknown as Record<string, SecurityRoleSetDefinition>,
-      contexts: contexts as unknown as Record<string, SecurityContextDefinition>,
-      guards: guards as unknown as Record<string, SecurityGuardDefinition>,
-      defaults: defaults as unknown as SecurityDefinition['defaults'],
-    };
+    state.defaults = defaults as unknown as SecurityDefinition['defaults'];
+    return state;
   }
 
   function defineSchemes<TInput extends SecuritySchemeInputMap>(input: TInput): SecuritySchemesResult<TInput> {
@@ -200,7 +257,7 @@ export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBui
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      schemes[key] = value;
+      state.schemes![key] = normalizeSecuritySchemeInput(value) as SecuritySchemeDefinition;
       refs[key] = createSchemeRef(key);
     }
 
@@ -216,7 +273,7 @@ export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBui
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      auth[key] = value;
+      state.auth![key] = normalizeSecurityAuthInput(value) as SecurityAuthDefinition;
       refs[key] = createAuthRef(key);
     }
 
@@ -232,7 +289,7 @@ export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBui
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      roleSources[key] = value;
+      state.roleSources![key] = normalizeSecurityRoleSourceInput(value) as SecurityRoleSourceDefinition;
       refs[key] = createRoleSourceRef(key);
     }
 
@@ -248,7 +305,7 @@ export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBui
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      roleSets[key] = value;
+      state.roleSets![key] = normalizeSecurityRoleSetInput(value) as SecurityRoleSetDefinition;
       refs[key] = createRoleSetRef(key);
     }
 
@@ -264,7 +321,7 @@ export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBui
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      contexts[key] = value;
+      state.contexts![key] = normalizeSecurityContextInput(value) as SecurityContextDefinition;
       refs[key] = createContextRef(key);
     }
 
@@ -280,7 +337,7 @@ export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBui
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      guards[key] = value;
+      state.guards![key] = normalizeSecurityGuardInput(value) as SecurityGuardDefinition;
       refs[key] = createGuardRef(key);
     }
 

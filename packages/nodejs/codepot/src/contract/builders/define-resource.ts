@@ -45,7 +45,7 @@ function createResourceRef(key: string): ResourceAuthoringRef {
 
 export function defineResource(options: DefineResourceOptions): ResourceBuilder {
   const properties: Partial<PropertiesDefinition> = {};
-  const schemas: Pick<Partial<SchemasDefinition>, 'dtos' | 'params'> = {};
+  const schemas: Partial<SchemasDefinition> = {};
   const operations: Record<string, OperationDefinition> = {};
   const routes: RoutesDefinition = {};
 
@@ -85,6 +85,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
         scope: 'resource',
         resourceKey: options.key,
         state: properties,
+        schemas,
       });
     },
 

@@ -7,6 +7,8 @@ import type {
   TransportDefinition,
 } from '@/contract/types/transport/definition';
 
+import type { RefSchema } from '@/contract/types/schema/definition';
+
 import type { Ref } from '@/contract/types/ref';
 
 import {
@@ -35,13 +37,14 @@ import { contentType, request, response } from '@/contract/helpers/transport/tra
 
 import { createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
 
-import { isAuthoringRef, isRefUsage, normalizeRefOrUsage } from '@/pipeline/compiler/refs/normalize-ref-usage';
+import { isAuthoringRef, isRefUsage, normalizeRefOrUsage, normalizeRefOrUsagePlain } from '@/pipeline/compiler/refs/normalize-ref-usage';
 
 // ============================================================================
 // OPTIONS
 // ============================================================================
 
 export interface DefineTransportOptions {
+  readonly state?: Partial<TransportDefinition>;
   readonly initial?: Partial<TransportDefinition>;
 }
 
@@ -100,16 +103,16 @@ function normalizeMaybeSchema(value: unknown): unknown {
   if (!value) return undefined;
 
   if (isAuthoringRef(value) || isRefUsage(value)) {
-    return normalizeRefOrUsage(value);
+    return normalizeRefOrUsagePlain(value);
   }
 
   return value;
 }
 
-function normalizeContentType(value: unknown): string | undefined {
+function normalizeContentType(value: unknown): Ref<ContentTypeDefinition> | undefined {
   if (!value) return undefined;
-  if (typeof value === 'string') return value;
-  if (isAuthoringRef(value)) return value.path;
+  if (typeof value === 'string') return { $ref: value } as Ref<ContentTypeDefinition>;
+  if (isAuthoringRef(value)) return value.path as Ref<ContentTypeDefinition>;
   return undefined;
 }
 
@@ -123,22 +126,28 @@ function toContentTypeDefinition(input: ContentTypeInput): ContentTypeDefinition
   };
 }
 
-function toResponseDefinition(input: ResponseInput): ResponseDefinition {
+function normalizeRequestInput(input: RequestInput): RequestDefinition {
   const obj = input as unknown as Record<string, unknown>;
   return {
-    ...obj,
-    schema: normalizeMaybeSchema(obj.schema),
+    schema: normalizeMaybeSchema(obj.schema) as Ref<RefSchema>,
     contentType: normalizeContentType(obj.contentType),
-  } as ResponseDefinition;
+    description: obj.description as string | undefined,
+    deprecated: obj.deprecated as boolean | undefined,
+    meta: obj.meta as Record<string, unknown> | undefined,
+  } as RequestDefinition;
 }
 
-function toRequestDefinition(input: RequestInput): RequestDefinition {
+function normalizeResponseInput(input: ResponseInput): ResponseDefinition {
   const obj = input as unknown as Record<string, unknown>;
   return {
-    ...obj,
-    schema: normalizeMaybeSchema(obj.schema),
+    status: obj.status as number,
+    schema: normalizeMaybeSchema(obj.schema) as Ref<RefSchema>,
     contentType: normalizeContentType(obj.contentType),
-  } as RequestDefinition;
+    headers: obj.headers as Record<string, Ref<RefSchema>> | undefined,
+    description: obj.description as string | undefined,
+    deprecated: obj.deprecated as boolean | undefined,
+    meta: obj.meta as Record<string, unknown> | undefined,
+  } as ResponseDefinition;
 }
 
 function toAuthoringState<TValue>(value: TValue): TValue {
@@ -150,33 +159,22 @@ function toAuthoringState<TValue>(value: TValue): TValue {
 // ============================================================================
 
 export function defineTransport(options: DefineTransportOptions = {}): TransportBuilder {
-  const contentTypes: Record<string, ContentTypeDefinition> = {
-    ...(options.initial?.contentTypes ?? {}),
+  const state = options.state ?? {
+    contentTypes: options.initial?.contentTypes ?? {},
+    requests: options.initial?.requests ?? {},
+    responses: options.initial?.responses ?? {},
+    defaults: options.initial?.defaults,
   };
 
-  const requests: Record<string, RequestInput> = {
-    ...((options.initial?.requests ?? {}) as unknown as Record<string, RequestInput>),
-  };
+  state.contentTypes ??= {};
+  state.requests ??= {};
+  state.responses ??= {};
 
-  const responses: Record<string, ResponseInput> = {
-    ...((options.initial?.responses ?? {}) as unknown as Record<string, ResponseInput>),
-  };
-
-  let defaults: TransportDefaultsInput | undefined = options.initial?.defaults as unknown as TransportDefaultsInput | undefined;
+  let defaults: TransportDefaultsInput | undefined = state.defaults as unknown as TransportDefaultsInput | undefined;
 
   function snapshot(): Partial<TransportDefinition> {
-    return {
-      contentTypes,
-      requests: Object.fromEntries(Object.entries(requests).map(([key, value]) => [key, toRequestDefinition(value)])) as Record<
-        string,
-        RequestDefinition
-      >,
-      responses: Object.fromEntries(Object.entries(responses).map(([key, value]) => [key, toResponseDefinition(value)])) as Record<
-        string,
-        ResponseDefinition
-      >,
-      defaults: defaults as unknown as TransportDefinition['defaults'],
-    };
+    state.defaults = defaults as unknown as TransportDefinition['defaults'];
+    return state;
   }
 
   function defineContentTypes<TInput extends ContentTypeInputMap>(input: TInput): ContentTypesResult<TInput> {
@@ -185,7 +183,7 @@ export function defineTransport(options: DefineTransportOptions = {}): Transport
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      contentTypes[key] = toContentTypeDefinition(value);
+      state.contentTypes![key] = toContentTypeDefinition(value);
       refs[key] = createContentTypeRef(key);
     }
 
@@ -201,7 +199,7 @@ export function defineTransport(options: DefineTransportOptions = {}): Transport
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      requests[key] = toAuthoringState(value);
+      state.requests![key] = normalizeRequestInput(value);
       refs[key] = createRequestRef(key);
     }
 
@@ -217,7 +215,7 @@ export function defineTransport(options: DefineTransportOptions = {}): Transport
     };
 
     for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-      responses[key] = toAuthoringState(value);
+      state.responses![key] = normalizeResponseInput(value);
       refs[key] = createResponseRef(key);
     }
 

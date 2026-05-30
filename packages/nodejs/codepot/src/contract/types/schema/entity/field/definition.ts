@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { RefProperty } from '../../../properties/definition';
-import { Ref, RefUsageDefinition } from '../../../ref';
+import { Ref, RefUsageDefinition, ArrayUsageDefinition } from '../../../ref';
 import { DefinitionItem } from '../../../definition';
 
 export const QueryOperator = {
@@ -86,7 +86,13 @@ export interface EntityField extends DefinitionItem {
    * The referenced property definition remains single.
    * This field decides whether it is used as single or array.
    */
-  type: RefUsageDefinition<Ref<RefProperty>>;
+  type: {
+    readonly $ref: string;
+    readonly array?: true | ArrayUsageDefinition;
+    readonly description?: string;
+    readonly deprecated?: boolean;
+    readonly meta?: Record<string, unknown>;
+  };
 
   required?: boolean;
 

@@ -103,6 +103,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
       return defineProperties({
         scope: 'version',
         state: properties,
+        schemas,
       });
     },
 
@@ -114,23 +115,15 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     },
 
     defineTransport() {
-      const transportBuilder = defineTransport({
-        initial: transport,
+      return defineTransport({
+        state: transport,
       });
-
-      transport = transportBuilder.snapshot();
-
-      return transportBuilder;
     },
 
     defineSecurity() {
-      const securityBuilder = defineSecurity({
-        initial: security,
+      return defineSecurity({
+        state: security,
       });
-
-      security = securityBuilder.snapshot();
-
-      return securityBuilder;
     },
 
     defineResource(resourceOptions: DefineResourceOptions) {
