@@ -44,10 +44,20 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write .",
-    "prepublishOnly": "npm run build && npm run typecheck"
+    "prepublishOnly": "npm run build && npm run typecheck",
+    "codepot:build": "tsx cli/index.ts build",
+    "codepot:dry": "tsx cli/index.ts build --dry-run",
+    "codepot:inspect": "tsx cli/index.ts inspect",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:smoke": "vitest run tests/smoke",
+    "test:unit": "vitest run tests/unit"
   },
   "dependencies": {
+    "@apidevtools/swagger-parser": "^10.1.1",
     "@clack/prompts": "^1.3.0",
+    "@redocly/cli": "^2.31.3",
+    "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",
     "commander": "^12.1.0",
     "consola": "^3.4.2",
@@ -61,10 +71,6 @@
     "ora": "^9.4.0",
     "picocolors": "^1.1.1",
     "ts-morph": "^23.0.0",
-    "@apidevtools/swagger-parser": "^10.1.1",
-    "@redocly/cli": "^2.31.3",
-    "chalk": "^5.4.1",
-    "tsx": "^4.22.3",
     "yaml": "^2.7.0",
     "zod": "^4.0.0"
   },
@@ -79,8 +85,10 @@
     "shx": "^0.4.0",
     "tsc-alias": "^1.8.8",
     "tsup": "^8.1.0",
-    "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "tsx": "^4.22.3",
+    "typescript": "^5.5.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.7"
   },
   "engines": {
     "node": ">=20"

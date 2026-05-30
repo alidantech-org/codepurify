@@ -23,6 +23,8 @@ import type {
 
 import { createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
 
+import { isAuthoringRef, isRefUsage, normalizeRefOrUsage } from '@/pipeline/compiler/refs/normalize-ref-usage';
+
 // ============================================================================
 // OPTIONS
 // ============================================================================
@@ -233,13 +235,62 @@ const routeHelper: RouteHelper = {
 // STATE
 // ============================================================================
 
+function normalizeMaybeSchema(value: unknown): unknown {
+  if (!value) return undefined;
+
+  if (isAuthoringRef(value) || isRefUsage(value)) {
+    return normalizeRefOrUsage(value);
+  }
+
+  return value;
+}
+
+function normalizeInlineResponse(value: unknown): unknown {
+  if (!value) return undefined;
+  if (isAuthoringRef(value)) {
+    return value.path;
+  }
+
+  const obj = value as Record<string, unknown>;
+  return {
+    ...obj,
+    schema: normalizeMaybeSchema(obj.schema),
+  };
+}
+
+function normalizeInlineRequest(value: unknown): unknown {
+  if (!value) return undefined;
+  if (isAuthoringRef(value)) {
+    return value.path;
+  }
+
+  const obj = value as Record<string, unknown>;
+  return {
+    ...obj,
+    schema: normalizeMaybeSchema(obj.schema),
+  };
+}
+
+function normalizeSecurity(value: unknown): unknown {
+  if (!value) return undefined;
+  if (isAuthoringRef(value)) {
+    return value.path;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => (isAuthoringRef(item) ? item.path : item));
+  }
+  return value;
+}
+
 function toRoutePathDefinition(input: RouteDefinitionInput, operation: OperationAuthoringRef): RoutePathDefinition {
   const methodDefinition: RouteMethodDefinition = {
     operation: operation.path,
-    security: input.security as unknown as RouteMethodDefinition['security'],
-    query: input.query as unknown as RouteMethodDefinition['query'],
-    body: input.body as unknown as RouteMethodDefinition['body'],
-    responses: input.responses as unknown as RouteMethodDefinition['responses'],
+    security: normalizeSecurity(input.security) as unknown as RouteMethodDefinition['security'],
+    query: normalizeInlineRequest(input.query) as unknown as RouteMethodDefinition['query'],
+    body: normalizeInlineRequest(input.body) as unknown as RouteMethodDefinition['body'],
+    responses: Object.fromEntries(
+      Object.entries(input.responses).map(([status, response]) => [Number(status), normalizeInlineResponse(response)]),
+    ) as RouteMethodDefinition['responses'],
     description: input.description,
     deprecated: input.deprecated,
     meta: input.meta,

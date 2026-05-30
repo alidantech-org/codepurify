@@ -2,20 +2,42 @@
 
 import { CliCommand } from './cli.constants';
 import { parseCliArgs } from './cli-args';
-import { runGenerateCommand } from './generate-command';
-import { runInitCommand } from './init-command';
+import { runBuildCommand } from './commands/build';
+import { runInspectCommand } from './commands/inspect';
+// import { runInitCommand } from './init-command';
 // import { runValidateCommand } from './validate-command';
 
 async function main(): Promise<void> {
   const args = parseCliArgs(process.argv.slice(2));
 
-  if (args.command === CliCommand.init) {
-    process.exit(await runInitCommand(args));
+  if (args.command === CliCommand.build) {
+    try {
+      await runBuildCommand({
+        config: args.values.get('config') || args.values.get('c'),
+        dryRun: args.flags.has('dry-run'),
+      });
+      process.exit(0);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+    }
   }
 
-  if (args.command === CliCommand.generate) {
-    process.exit(await runGenerateCommand(args));
+  if (args.command === CliCommand.inspect) {
+    try {
+      await runInspectCommand({
+        config: args.values.get('config') || args.values.get('c'),
+      });
+      process.exit(0);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+    }
   }
+
+  // if (args.command === CliCommand.init) {
+  //   process.exit(await runInitCommand(args));
+  // }
 
   // if (args.command === CliCommand.validate) {
   //   process.exit(await runValidateCommand(args));
@@ -31,15 +53,14 @@ function printHelp(): void {
       'codepot',
       '',
       'Commands:',
-      '  init       Create package.config.ts',
-      '  generate   Generate OpenAPI files from package.config.ts',
-      // '  validate   Validate generated OpenAPI files',
+      '  build      Compile and write Codepot IR files',
+      '  inspect    Inspect compiled Codepot contracts',
+      // '  init       Create codepot.config.ts',
+      // '  validate   Validate generated files',
       '',
       'Options:',
-      '  --silent             Disable normal logs',
-      '  --verbose            Show detailed compiler progress',
-      '  --debug              Show heavy compiler diagnostics',
-      '  --log-level <level>  silent | normal | verbose | debug',
+      '  -c, --config <path>  Path to config file (default: examples/codepot.config.example.ts)',
+      '  --dry-run             Plan files without writing',
       '',
     ].join('\n'),
   );

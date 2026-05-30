@@ -1,4 +1,6 @@
 export const CliCommand = {
+  build: 'build',
+  inspect: 'inspect',
   init: 'init',
   generate: 'generate',
   validate: 'validate',

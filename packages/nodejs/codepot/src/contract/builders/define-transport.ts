@@ -35,6 +35,8 @@ import { contentType, request, response } from '@/contract/helpers/transport/tra
 
 import { createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
 
+import { isAuthoringRef, isRefUsage, normalizeRefOrUsage } from '@/pipeline/compiler/refs/normalize-ref-usage';
+
 // ============================================================================
 // OPTIONS
 // ============================================================================
@@ -94,6 +96,23 @@ function createResponseRef(key: string): ResponseAuthoringRef {
 // NORMALIZATION
 // ============================================================================
 
+function normalizeMaybeSchema(value: unknown): unknown {
+  if (!value) return undefined;
+
+  if (isAuthoringRef(value) || isRefUsage(value)) {
+    return normalizeRefOrUsage(value);
+  }
+
+  return value;
+}
+
+function normalizeContentType(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (isAuthoringRef(value)) return value.path;
+  return undefined;
+}
+
 function toContentTypeDefinition(input: ContentTypeInput): ContentTypeDefinition {
   return {
     value: input.value,
@@ -102,6 +121,24 @@ function toContentTypeDefinition(input: ContentTypeInput): ContentTypeDefinition
     deprecated: input.deprecated,
     meta: input.meta,
   };
+}
+
+function toResponseDefinition(input: ResponseInput): ResponseDefinition {
+  const obj = input as unknown as Record<string, unknown>;
+  return {
+    ...obj,
+    schema: normalizeMaybeSchema(obj.schema),
+    contentType: normalizeContentType(obj.contentType),
+  } as ResponseDefinition;
+}
+
+function toRequestDefinition(input: RequestInput): RequestDefinition {
+  const obj = input as unknown as Record<string, unknown>;
+  return {
+    ...obj,
+    schema: normalizeMaybeSchema(obj.schema),
+    contentType: normalizeContentType(obj.contentType),
+  } as RequestDefinition;
 }
 
 function toAuthoringState<TValue>(value: TValue): TValue {
@@ -130,8 +167,14 @@ export function defineTransport(options: DefineTransportOptions = {}): Transport
   function snapshot(): Partial<TransportDefinition> {
     return {
       contentTypes,
-      requests: requests as unknown as Record<string, RequestDefinition>,
-      responses: responses as unknown as Record<string, ResponseDefinition>,
+      requests: Object.fromEntries(Object.entries(requests).map(([key, value]) => [key, toRequestDefinition(value)])) as Record<
+        string,
+        RequestDefinition
+      >,
+      responses: Object.fromEntries(Object.entries(responses).map(([key, value]) => [key, toResponseDefinition(value)])) as Record<
+        string,
+        ResponseDefinition
+      >,
       defaults: defaults as unknown as TransportDefinition['defaults'],
     };
   }
