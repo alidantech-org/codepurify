@@ -1,0 +1,93 @@
+codepot: "1.0"
+key: demo_api
+version: 1
+info:
+  title: Demo API
+  version: 1.0.0
+urls: []
+properties:
+  primitives:
+    id:
+      type: string
+      format: uuid
+    displayName:
+      type: string
+      validation:
+        minLength: 2
+        maxLength: 80
+    email:
+      type: string
+      format: email
+  enums: {}
+  composites: {}
+schemas:
+  entities: {}
+  models: {}
+  dtos:
+    ErrorResponse:
+      fields:
+        message: "#/schemas/entities/User/fields/name"
+  params: {}
+transport:
+  contentTypes:
+    json:
+      value: application/json
+      strategy: json
+  requests: {}
+  responses: {}
+security:
+  schemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  auth:
+    jwt:
+      mode: any
+      schemes:
+        - scheme: "#/security/schemes/bearer"
+  roleSources: {}
+  roleSets: {}
+  contexts: {}
+  guards: {}
+resources:
+  users:
+    key: users
+    folders:
+      - platform
+      - auth
+    defaults:
+      security:
+        auth: "#/security/auth/jwt"
+        protected: true
+    properties: {}
+    schemas: {}
+    operations:
+      listUsers:
+        input: {}
+        output: {}
+      getUser:
+        input: {}
+        output: {}
+    routes:
+      listUsers:
+        methods:
+          get:
+            operation: "#/resources/users/operations/listUsers"
+            responses:
+              "200":
+                schema:
+                  ref: "#/schemas/models/User/read"
+                  array: true
+                contentType: application/json
+              "400": "#/transport/responses/BadRequest"
+      getUser:
+        methods:
+          get:
+            operation: "#/resources/users/operations/getUser"
+            responses:
+              "200":
+                schema:
+                  ref: "#/schemas/models/User/read"
+                contentType: application/json
+              "401": "#/transport/responses/Unauthorized"

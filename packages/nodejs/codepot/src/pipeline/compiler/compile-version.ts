@@ -3,10 +3,13 @@
 import type { CodepotDefinition } from '@/contract/types/definition';
 import type { VersionBuilder } from '@/contract/types/core/2.version-builder';
 
+import { toPlainIr } from './serialization/to-plain-ir';
+import { assertSerializable } from './serialization/assert-serializable';
+
 export function compileVersionContract(version: VersionBuilder): CodepotDefinition {
   const state = version.snapshot();
 
-  return {
+  const definition: CodepotDefinition = {
     codepot: state.codepot,
     key: state.key,
     version: state.version,
@@ -49,4 +52,10 @@ export function compileVersionContract(version: VersionBuilder): CodepotDefiniti
     deprecated: state.deprecated,
     meta: state.meta,
   };
+
+  const plainDefinition = toPlainIr(definition);
+
+  assertSerializable(plainDefinition);
+
+  return plainDefinition;
 }

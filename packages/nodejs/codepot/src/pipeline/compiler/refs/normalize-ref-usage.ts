@@ -1,19 +1,18 @@
 import type { Ref } from '@/contract/types/ref';
-import type {
-  AuthoringRef,
-  AuthoringRefKind,
-  RefUsage,
-} from '@/contract/types/core/3.authoring-ref';
+import type { AuthoringRef, AuthoringRefKind, RefUsage } from '@/contract/types/core/3.authoring-ref';
 
 export interface CompiledRefUsage<TTarget> {
   readonly ref: Ref<TTarget>;
-  readonly array?: true | {
-    readonly minItems?: number;
-    readonly maxItems?: number;
-    readonly uniqueItems?: boolean;
-  };
+  readonly array?:
+    | true
+    | {
+        readonly minItems?: number;
+        readonly maxItems?: number;
+        readonly uniqueItems?: boolean;
+      };
   readonly required?: boolean;
   readonly nullable?: boolean;
+  readonly extendWith?: unknown;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -21,20 +20,11 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 export function isAuthoringRef(value: unknown): value is AuthoringRef<unknown, AuthoringRefKind> {
-  return (
-    isObject(value) &&
-    typeof value.path === 'string' &&
-    typeof value.kind === 'string' &&
-    typeof value.key === 'string'
-  );
+  return isObject(value) && typeof value.path === 'string' && typeof value.kind === 'string' && typeof value.key === 'string';
 }
 
 export function isRefUsage(value: unknown): value is RefUsage<unknown, AuthoringRefKind> {
-  return (
-    isObject(value) &&
-    isAuthoringRef(value.ref) &&
-    isObject(value.usage)
-  );
+  return isObject(value) && isAuthoringRef(value.ref) && isObject(value.usage);
 }
 
 export function normalizeRefOrUsage<TTarget>(
@@ -46,10 +36,29 @@ export function normalizeRefOrUsage<TTarget>(
       array: value.usage.array,
       required: value.usage.required,
       nullable: value.usage.nullable,
+      extendWith: value.usage.extendWith,
     };
   }
 
   return {
     ref: value.path as Ref<TTarget>,
   };
+}
+
+export function normalizeRefOrUsagePlain(value: unknown): unknown {
+  if (isRefUsage(value)) {
+    return {
+      ref: value.ref.path,
+      array: value.usage.array,
+      required: value.usage.required,
+      nullable: value.usage.nullable,
+      extendWith: value.usage.extendWith,
+    };
+  }
+
+  if (isAuthoringRef(value)) {
+    return value.path;
+  }
+
+  return value;
 }
