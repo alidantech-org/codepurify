@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { RefProperty } from '../../../properties/definition';
-import { Ref } from '../../../ref';
+import { Ref, RefUsageDefinition } from '../../../ref';
 import { DefinitionItem } from '../../../definition';
 
 export const QueryOperator = {
@@ -81,9 +81,12 @@ export interface FieldPersistenceConfig extends DefinitionItem {
 
 export interface EntityField extends DefinitionItem {
   /**
-   * Ref to a primitive, enum, or composite property.
+   * Usage of a primitive, enum, or composite property.
+   *
+   * The referenced property definition remains single.
+   * This field decides whether it is used as single or array.
    */
-  ref: Ref<RefProperty>;
+  type: RefUsageDefinition<Ref<RefProperty>>;
 
   required?: boolean;
 
