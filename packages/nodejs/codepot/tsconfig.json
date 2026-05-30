@@ -26,5 +26,5 @@
     "cli",
     "src",
     "tests"
-  ]
+, "docs/functions"  ]
 }

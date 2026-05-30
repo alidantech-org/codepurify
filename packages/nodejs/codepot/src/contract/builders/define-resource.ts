@@ -2,42 +2,19 @@
 
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
 import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
-import type { ResourceDefinition } from '@/contract/types/resource/definition';
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { SchemasDefinition } from '@/contract/types/schema/definition';
-import type { Ref } from '@/contract/types/ref';
-
-import { AuthoringRefKind, type ResourceAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
 
 import type { RouteSecurityRefsInput } from '@/contract/types/core/9.security-builder';
 
-import { createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
+import { resourceRef } from '@/contract/helpers/refs/authoring-ref-builder';
 import { securityRoute } from '@/contract/helpers/security/security';
 
-// Temporary imports for next builders.
-// Replace paths if your builder files use different names.
 import { defineProperties } from './define-properties';
 import { defineDtoSchemas } from './define-dto-schemas';
 import { defineRoutes } from './define-routes';
-
-// ============================================================================
-// PATHS / REFS
-// ============================================================================
-
-function resourcePath(key: string): Ref<ResourceDefinition> {
-  return refPath<ResourceDefinition>(`#/resources/${key}`);
-}
-
-function createResourceRef(key: string): ResourceAuthoringRef {
-  return createAuthoringRef({
-    path: resourcePath(key),
-    kind: AuthoringRefKind.resource,
-    key,
-    name: key,
-  });
-}
 
 // ============================================================================
 // DEFINE RESOURCE
@@ -69,14 +46,12 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     };
   }
 
-  const ref = createResourceRef(options.key);
-
   const builder: ResourceBuilder = {
     get state() {
       return snapshot();
     },
 
-    ref,
+    ref: resourceRef(options.key),
 
     security: securityRoute,
 

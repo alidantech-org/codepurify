@@ -1,4 +1,12 @@
-import { defineCodepotConfig, defineVersionContract, property, field, query, access, persistence, security } from '@/index';
+import {
+  access,
+  defineCodepotConfig,
+  defineVersionContract,
+  field,
+  persistence,
+  property,
+  query,
+} from '@/index';
 
 const v1 = defineVersionContract({
   key: 'demo_api',
@@ -17,6 +25,15 @@ const shared = props.shared({
   email: property.email().build(),
 });
 
+const enums = props.shared({
+  UserRole: property
+    .enum({
+      admin: { value: 'admin', label: 'Admin' },
+      member: { value: 'member', label: 'Member' },
+    })
+    .build(),
+});
+
 const user = props.entity('User', {
   id: field.ref(shared.ref.id, {
     required: true,
@@ -27,17 +44,25 @@ const user = props.entity('User', {
   name: field.ref(shared.ref.displayName, {
     required: true,
     query: query.filter().sort().done(),
+    access: access.public().done(),
   }),
 
   email: field.ref(shared.ref.email, {
     required: true,
+    query: query.filter().select(false).done(),
     access: access.public().sensitive().done(),
+  }),
+
+  role: field.ref(enums.ref.UserRole, {
+    required: true,
+    query: query.filter().sort().done(),
+    access: access.public().done(),
   }),
 });
 
-const dto = v1.defineDtoSchemas();
+const dtos = v1.defineDtoSchemas();
 
-const sharedDtos = dto.define({
+const sharedDtos = dtos.define({
   ErrorResponse: {
     fields: {
       message: user.ref.fields.name,
@@ -45,14 +70,27 @@ const sharedDtos = dto.define({
   },
 });
 
-const sec = v1.defineSecurity();
+const security = v1.defineSecurity();
 
-const schemes = sec.defineSchemes({
-  bearer: sec.scheme.bearerJwt(),
+const schemes = security.defineSchemes({
+  bearer: security.scheme.bearerJwt(),
 });
 
-const auth = sec.defineAuth({
-  jwt: sec.auth.any([sec.auth.scheme(schemes.ref.bearer)]),
+const auth = security.defineAuth({
+  jwt: security.auth.any([
+    security.auth.scheme(schemes.ref.bearer),
+  ]),
+});
+
+const roleSources = security.defineRoleSources({
+  userRole: security.roleSource.entityField(
+    user.ref.fields.role,
+    enums.ref.UserRole as any,
+  ),
+});
+
+const roleSets = security.defineRoleSets({
+  admins: security.roleSet.values(roleSources.ref.userRole, ['admin']),
 });
 
 const transport = v1.defineTransport();
@@ -64,6 +102,7 @@ const contentTypes = transport.defineContentTypes({
 const responses = transport.defineResponses({
   BadRequest: transport.response.json(400, sharedDtos.ref.ErrorResponse),
   Unauthorized: transport.response.json(401, sharedDtos.ref.ErrorResponse),
+  NotFound: transport.response.json(404, sharedDtos.ref.ErrorResponse),
 });
 
 transport.setDefaults({
@@ -72,27 +111,47 @@ transport.setDefaults({
   responses: {
     400: responses.ref.BadRequest,
     401: responses.ref.Unauthorized,
+    404: responses.ref.NotFound,
   },
 });
 
 const users = v1.defineResource({
   key: 'users',
   folders: ['platform', 'auth'],
-  security: sec.route.protected({
+  security: security.route.protected({
     auth: auth.ref.jwt,
   }),
 });
 
 users.defineRoutes().define((route) => ({
-  listUsers: route.get('/').responses({
-    200: route.response.json(user.ref.models.read.array()),
-    400: responses.ref.BadRequest,
-  }),
+  listUsers: route
+    .get('/')
+    .security(
+      security.route.roles([roleSets.ref.admins], {
+        auth: auth.ref.jwt,
+      }),
+    )
+    .responses({
+      200: route.response.json(user.ref.models.read.array()),
+      400: responses.ref.BadRequest,
+      401: responses.ref.Unauthorized,
+    }),
 
-  getUser: route.get('/:id').responses({
-    200: route.response.json(user.ref.models.read),
-    401: responses.ref.Unauthorized,
-  }),
+  getUser: route
+    .get('/:id')
+    .responses({
+      200: route.response.json(user.ref.models.read),
+      401: responses.ref.Unauthorized,
+      404: responses.ref.NotFound,
+    }),
+
+  publicProfile: route
+    .get('/public/:id')
+    .security(security.route.public())
+    .responses({
+      200: route.response.json(user.ref.models.read),
+      404: responses.ref.NotFound,
+    }),
 }));
 
 export const demoVersion = v1;
@@ -100,7 +159,7 @@ export const demoVersion = v1;
 export const demoConfig = defineCodepotConfig({
   contracts: [v1],
   output: {
-    folder: 'tests/smoke/generated',
+    folder: 'tests/generated/debug',
     baseName: 'demo',
     formats: ['json', 'yaml'],
   },

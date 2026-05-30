@@ -3,17 +3,14 @@
 import { HttpMethod } from '@/contract/types/resource/route/definition';
 
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
-import type { RouteMethodDefinition, RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
-import type { Ref } from '@/contract/types/ref';
+import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
 
-import { AuthoringRefKind, type OperationAuthoringRef, type RouteAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import type { OperationAuthoringRef, RouteAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 import type {
   DefineRoutesFactoryInput,
   RouteDefinitionInput,
   RouteHelper,
-  RouteInlineRequestInput,
-  RouteInlineResponseInput,
   RouteMethodChain,
   RouteRequestHelper,
   RouteResponseHelper,
@@ -21,9 +18,7 @@ import type {
   RoutesBuilderResult,
 } from '@/contract/types/core/7.routes-builder';
 
-import { createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
-
-import { isAuthoringRef, isRefUsage, normalizeRefOrUsage } from '@/pipeline/compiler/refs/normalize-ref-usage';
+import { operationRef, routeRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
 // ============================================================================
 // OPTIONS
@@ -33,36 +28,6 @@ export interface DefineRoutesOptions {
   readonly resourceKey: string;
   readonly routes: RoutesDefinition;
   readonly operations: Record<string, OperationDefinition>;
-}
-
-// ============================================================================
-// PATHS / REFS
-// ============================================================================
-
-function routePath(resourceKey: string, key: string): Ref<RoutePathDefinition> {
-  return refPath<RoutePathDefinition>(`#/resources/${resourceKey}/routes/${key}`);
-}
-
-function operationPath(resourceKey: string, key: string): Ref<OperationDefinition> {
-  return refPath<OperationDefinition>(`#/resources/${resourceKey}/operations/${key}`);
-}
-
-function createRouteRef(resourceKey: string, key: string): RouteAuthoringRef {
-  return createAuthoringRef({
-    path: routePath(resourceKey, key),
-    kind: AuthoringRefKind.resourceRoute,
-    key,
-    name: key,
-  });
-}
-
-function createOperationRef(resourceKey: string, key: string): OperationAuthoringRef {
-  return createAuthoringRef({
-    path: operationPath(resourceKey, key),
-    kind: AuthoringRefKind.resourceOperation,
-    key,
-    name: key,
-  });
 }
 
 // ============================================================================
@@ -154,13 +119,17 @@ const routeRequest: RouteRequestHelper = {
 // ROUTE CHAIN
 // ============================================================================
 
-function createRouteChain(method: HttpMethod, path: string, input: Partial<RouteDefinitionInput> = {}): RouteMethodChain {
-  const current: RouteDefinitionInput = {
+function createRouteInput(method: HttpMethod, path: string, input: Partial<RouteDefinitionInput> = {}): RouteDefinitionInput {
+  return {
     ...input,
     method,
     path,
     responses: input.responses ?? {},
   };
+}
+
+function createRouteChain(method: HttpMethod, path: string, input: Partial<RouteDefinitionInput> = {}): RouteMethodChain {
+  const current = createRouteInput(method, path, input);
 
   return {
     method,
@@ -170,19 +139,38 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
     meta: current.meta,
 
     params(params) {
-      return createRouteChain(method, path, { ...current, params });
+      return createRouteChain(method, path, {
+        ...current,
+        params,
+      });
     },
 
     query(query) {
-      return createRouteChain(method, path, { ...current, query });
+      return createRouteChain(method, path, {
+        ...current,
+        query,
+      });
     },
 
     body(body) {
-      return createRouteChain(method, path, { ...current, body });
+      return createRouteChain(method, path, {
+        ...current,
+        body,
+      });
     },
 
     security(security) {
-      return createRouteChain(method, path, { ...current, security });
+      return createRouteChain(method, path, {
+        ...current,
+        security,
+      });
+    },
+
+    operation(operation) {
+      return createRouteChain(method, path, {
+        ...current,
+        operation,
+      });
     },
 
     responses(responses) {
@@ -190,10 +178,6 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
         ...current,
         responses,
       };
-    },
-
-    operation(operation) {
-      return createRouteChain(method, path, { ...current, operation });
     },
   };
 }
@@ -232,92 +216,52 @@ const routeHelper: RouteHelper = {
 };
 
 // ============================================================================
-// STATE
+// STATE HELPERS
 // ============================================================================
 
-function normalizeMaybeSchema(value: unknown): unknown {
-  if (!value) return undefined;
+function createRouteRefs<TInput extends DefineRoutesFactoryInput>(
+  resourceKey: string,
+  input: TInput,
+): Record<keyof TInput & string, RouteAuthoringRef> {
+  const refs = {} as Record<keyof TInput & string, RouteAuthoringRef>;
 
-  if (isAuthoringRef(value) || isRefUsage(value)) {
-    return normalizeRefOrUsage(value);
+  for (const key of Object.keys(input) as Array<keyof TInput & string>) {
+    refs[key] = routeRef(resourceKey, key);
   }
 
-  return value;
+  return refs;
 }
 
-function normalizeInlineResponse(value: unknown): unknown {
-  if (!value) return undefined;
-  if (isAuthoringRef(value)) {
-    return value.path;
+function writeRoutes<TInput extends DefineRoutesFactoryInput>(options: DefineRoutesOptions, input: TInput): void {
+  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
+    writeRoute(options, key, value);
   }
-
-  const obj = value as Record<string, unknown>;
-  return {
-    ...obj,
-    schema: normalizeMaybeSchema(obj.schema),
-  };
 }
 
-function normalizeInlineRequest(value: unknown): unknown {
-  if (!value) return undefined;
-  if (isAuthoringRef(value)) {
-    return value.path;
-  }
+function writeRoute(options: DefineRoutesOptions, key: string, value: RouteDefinitionInput): void {
+  const operation = value.operation ?? operationRef(options.resourceKey, key);
 
-  const obj = value as Record<string, unknown>;
-  return {
-    ...obj,
-    schema: normalizeMaybeSchema(obj.schema),
-  };
+  options.operations[key] = createOperationState(value, operation);
+  options.routes[key] = value as unknown as RoutePathDefinition;
 }
 
-function normalizeSecurity(value: unknown): unknown {
-  if (!value) return undefined;
-  if (isAuthoringRef(value)) {
-    return value.path;
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => (isAuthoringRef(item) ? item.path : item));
-  }
-  return value;
-}
-
-function toRoutePathDefinition(input: RouteDefinitionInput, operation: OperationAuthoringRef): RoutePathDefinition {
-  const methodDefinition: RouteMethodDefinition = {
-    operation: operation.path,
-    security: normalizeSecurity(input.security) as unknown as RouteMethodDefinition['security'],
-    query: normalizeInlineRequest(input.query) as unknown as RouteMethodDefinition['query'],
-    body: normalizeInlineRequest(input.body) as unknown as RouteMethodDefinition['body'],
-    responses: Object.fromEntries(
-      Object.entries(input.responses).map(([status, response]) => [Number(status), normalizeInlineResponse(response)]),
-    ) as RouteMethodDefinition['responses'],
-    description: input.description,
-    deprecated: input.deprecated,
-    meta: input.meta,
-  };
-
-  return {
-    methods: {
-      [input.method]: methodDefinition,
-    },
-  };
-}
-
-function toOperationDefinition(input: RouteDefinitionInput): OperationDefinition {
+function createOperationState(value: RouteDefinitionInput, operation: OperationAuthoringRef): OperationDefinition {
   return {
     input: {
-      params: input.params as unknown as NonNullable<OperationDefinition['input']>['params'],
-      query: input.query as unknown as NonNullable<OperationDefinition['input']>['query'],
-      body: input.body as unknown as NonNullable<OperationDefinition['input']>['body'],
+      params: value.params,
+      query: value.query,
+      body: value.body,
     },
     output: {
-      result: undefined,
-      errors: undefined,
+      result: value.responses,
     },
-    description: input.description,
-    deprecated: input.deprecated,
-    meta: input.meta,
-  };
+    description: value.description,
+    deprecated: value.deprecated,
+    meta: {
+      ...(value.meta ?? {}),
+      operationRef: operation,
+    },
+  } as unknown as OperationDefinition;
 }
 
 // ============================================================================
@@ -338,19 +282,11 @@ export function defineRoutes(options: DefineRoutesOptions): RoutesBuilder {
     ): RoutesBuilderResult<TInput> {
       const input = typeof routesOrFactory === 'function' ? routesOrFactory(routeHelper) : routesOrFactory;
 
-      const refs = {} as Record<keyof TInput & string, RouteAuthoringRef>;
-
-      for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-        const operation = value.operation ?? createOperationRef(options.resourceKey, key);
-
-        options.operations[key] = toOperationDefinition(value);
-        options.routes[key] = toRoutePathDefinition(value, operation);
-        refs[key] = createRouteRef(options.resourceKey, key);
-      }
+      writeRoutes(options, input);
 
       return {
         routes: input,
-        ref: refs as RoutesBuilderResult<TInput>['ref'],
+        ref: createRouteRefs(options.resourceKey, input) as RoutesBuilderResult<TInput>['ref'],
       };
     },
 

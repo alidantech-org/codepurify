@@ -1,28 +1,35 @@
-import { DefinitionItem } from './definition';
-
+/**
+ * Final IR ref type for compiler output.
+ * This should NOT be imported or used in contract builders/helpers.
+ * Contract layer uses AuthoringRef with engine ID only.
+ */
 export interface Ref<TTarget> {
   readonly $ref: string;
   readonly __target?: TTarget;
 }
 
-export function ref<TTarget>(path: string): Ref<TTarget> {
+/**
+ * Final IR ref factory for compiler output.
+ * This should NOT be imported or used in contract builders/helpers.
+ */
+export function ref<TTarget>(value: string): Ref<TTarget> {
   return {
-    $ref: path,
+    $ref: value,
   } as Ref<TTarget>;
 }
 
-export interface ArrayUsageDefinition extends DefinitionItem {
-  readonly minItems?: number;
-  readonly maxItems?: number;
-  readonly uniqueItems?: boolean;
+/**
+ * Final IR usage definitions for array and ref usage.
+ * These are used in final IR types (e.g., EntityField).
+ */
+export interface ArrayUsageDefinition {
+  readonly min?: number;
+  readonly max?: number;
+  readonly unique?: boolean;
 }
 
-export interface RefUsageDefinition<TRef> extends DefinitionItem {
-  readonly ref: TRef;
-
-  /**
-   * Usage-level array behavior.
-   * Definition remains single; usage decides array.
-   */
-  readonly array?: true | ArrayUsageDefinition;
+export interface RefUsageDefinition {
+  readonly description?: string;
+  readonly deprecated?: boolean;
+  readonly meta?: Record<string, unknown>;
 }

@@ -1,5 +1,3 @@
-import type { Ref } from '@/contract/types/ref';
-
 import type { PrimitiveDefinition } from '@/contract/types/properties/primitive/definition';
 import type { EnumDefinition } from '@/contract/types/properties/enum/definition';
 import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
@@ -88,22 +86,21 @@ export interface RefUsageOptions<TExtension = never> extends DefinitionItem {
 
 export interface AuthoringRefBase<TTarget, TKind extends AuthoringRefKind> {
   /**
-   * Stable JSON/YAML IR ref path.
-   * Example: "#/schemas/dto/UserPublic"
+   * Runtime/compiler ID.
+   * This is not a final JSON/YAML $ref.
    */
-  readonly path: Ref<TTarget>;
+  readonly id: string;
 
-  /**
-   * Strong authoring ref kind.
-   */
   readonly kind: TKind;
 
-  /**
-   * Stable local key.
-   */
   readonly key: string;
 
   readonly name?: string;
+
+  /**
+   * Type-only marker.
+   */
+  readonly __target?: TTarget;
 }
 
 // ============================================================================
@@ -155,10 +152,10 @@ export type ExtendableAuthoringRef<TTarget, TKind extends AuthoringRefKind, TExt
 // ============================================================================
 
 export type UsageOf<TRef> = TRef extends unknown
-  ? TRef extends AuthoringRef<infer TTarget, infer TKind, infer TExtension>
-    ? RefUsage<TTarget, TKind, TExtension>
-    : TRef extends ExtendableAuthoringRef<infer TTarget, infer TKind, infer TExtension>
-      ? ExtendableRefUsage<TTarget, TKind, TExtension>
+  ? TRef extends ExtendableAuthoringRef<infer TTarget, infer TKind, infer TExtension>
+    ? ExtendableRefUsage<TTarget, TKind, TExtension>
+    : TRef extends AuthoringRef<infer TTarget, infer TKind, infer TExtension>
+      ? RefUsage<TTarget, TKind, TExtension>
       : never
   : never;
 

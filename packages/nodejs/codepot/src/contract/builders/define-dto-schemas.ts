@@ -3,20 +3,18 @@
 import type { DtoDefinition } from '@/contract/types/schema/dto/definition';
 import type { ParamsDefinition } from '@/contract/types/schema/params/definition';
 import type { SchemasDefinition } from '@/contract/types/schema/definition';
-import type { Ref } from '@/contract/types/ref';
 
-import { AuthoringRefKind, type DtoAuthoringRef, type ParamsAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import type { DtoAuthoringRef, ParamsAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 import type {
   DtoSchemasBuilder,
-  DtoSchemaInput,
   DtoSchemaInputMap,
   DtoSchemasResult,
   ParamsSchemaInputMap,
   ParamsSchemasResult,
 } from '@/contract/types/core/5.dto-schemas-builder';
 
-import { createExtendableAuthoringRef, createAuthoringRef, refPath } from '@/contract/helpers/refs/create-authoring-ref';
+import { dtoRef, paramsRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
 // ============================================================================
 // OPTIONS
@@ -29,53 +27,7 @@ export interface DefineDtoSchemasOptions {
 }
 
 // ============================================================================
-// PATHS / REFS
-// ============================================================================
-
-function dtoBasePath(options: DefineDtoSchemasOptions): string {
-  if (options.scope === 'resource' && options.resourceKey) {
-    return `#/resources/${options.resourceKey}/schemas/dtos`;
-  }
-
-  return '#/schemas/dtos';
-}
-
-function paramsBasePath(options: DefineDtoSchemasOptions): string {
-  if (options.scope === 'resource' && options.resourceKey) {
-    return `#/resources/${options.resourceKey}/schemas/params`;
-  }
-
-  return '#/schemas/params';
-}
-
-function dtoPath(options: DefineDtoSchemasOptions, key: string): Ref<DtoDefinition> {
-  return refPath<DtoDefinition>(`${dtoBasePath(options)}/${key}`);
-}
-
-function paramsPath(options: DefineDtoSchemasOptions, key: string): Ref<ParamsDefinition> {
-  return refPath<ParamsDefinition>(`${paramsBasePath(options)}/${key}`);
-}
-
-function createDtoRef(key: string, options: DefineDtoSchemasOptions): DtoAuthoringRef {
-  return createExtendableAuthoringRef({
-    path: dtoPath(options, key),
-    kind: AuthoringRefKind.schemaDto,
-    key,
-    name: key,
-  }) as DtoAuthoringRef;
-}
-
-function createParamsRef(key: string, options: DefineDtoSchemasOptions): ParamsAuthoringRef {
-  return createAuthoringRef({
-    path: paramsPath(options, key),
-    kind: AuthoringRefKind.schemaParams,
-    key,
-    name: key,
-  });
-}
-
-// ============================================================================
-// STATE
+// STATE HELPERS
 // ============================================================================
 
 function ensureState(state: Pick<Partial<SchemasDefinition>, 'dtos' | 'params'>): Pick<SchemasDefinition, 'dtos' | 'params'> {
@@ -85,15 +37,39 @@ function ensureState(state: Pick<Partial<SchemasDefinition>, 'dtos' | 'params'>)
   return state as Pick<SchemasDefinition, 'dtos' | 'params'>;
 }
 
-function toDtoDefinition(input: DtoSchemaInput): DtoDefinition {
-  return {
-    extends: input.extends && 'path' in input.extends ? (input.extends.path as DtoDefinition['extends']) : undefined,
-    fields: input.fields as unknown as DtoDefinition['fields'],
-    partial: input.partial,
-    description: input.description,
-    deprecated: input.deprecated,
-    meta: input.meta,
-  };
+function writeDtoSchemas<TSchemas extends DtoSchemaInputMap>(state: Pick<SchemasDefinition, 'dtos' | 'params'>, schemas: TSchemas): void {
+  for (const [key, value] of Object.entries(schemas) as [keyof TSchemas & string, TSchemas[keyof TSchemas & string]][]) {
+    state.dtos[key] = value as unknown as DtoDefinition;
+  }
+}
+
+function writeParamsSchemas<TParams extends ParamsSchemaInputMap>(
+  state: Pick<SchemasDefinition, 'dtos' | 'params'>,
+  params: TParams,
+): void {
+  for (const [key, value] of Object.entries(params) as [keyof TParams & string, TParams[keyof TParams & string]][]) {
+    state.params[key] = value as unknown as ParamsDefinition;
+  }
+}
+
+function createDtoRefs<TSchemas extends DtoSchemaInputMap>(schemas: TSchemas): Record<keyof TSchemas & string, DtoAuthoringRef> {
+  const refs = {} as Record<keyof TSchemas & string, DtoAuthoringRef>;
+
+  for (const key of Object.keys(schemas) as Array<keyof TSchemas & string>) {
+    refs[key] = dtoRef(key);
+  }
+
+  return refs;
+}
+
+function createParamsRefs<TParams extends ParamsSchemaInputMap>(params: TParams): Record<keyof TParams & string, ParamsAuthoringRef> {
+  const refs = {} as Record<keyof TParams & string, ParamsAuthoringRef>;
+
+  for (const key of Object.keys(params) as Array<keyof TParams & string>) {
+    refs[key] = paramsRef(key);
+  }
+
+  return refs;
 }
 
 // ============================================================================
@@ -108,31 +84,23 @@ export function defineDtoSchemas(options: DefineDtoSchemasOptions): DtoSchemasBu
 
     define<TSchemas extends DtoSchemaInputMap>(schemas: TSchemas): DtoSchemasResult<TSchemas> {
       const state = ensureState(options.state);
-      const refs = {} as Record<keyof TSchemas & string, DtoAuthoringRef>;
 
-      for (const [key, value] of Object.entries(schemas) as [keyof TSchemas & string, TSchemas[keyof TSchemas & string]][]) {
-        state.dtos[key] = toDtoDefinition(value);
-        refs[key] = createDtoRef(key, options);
-      }
+      writeDtoSchemas(state, schemas);
 
       return {
         schemas,
-        ref: refs as DtoSchemasResult<TSchemas>['ref'],
+        ref: createDtoRefs(schemas) as DtoSchemasResult<TSchemas>['ref'],
       };
     },
 
     params<TParams extends ParamsSchemaInputMap>(params: TParams): ParamsSchemasResult<TParams> {
       const state = ensureState(options.state);
-      const refs = {} as Record<keyof TParams & string, ParamsAuthoringRef>;
 
-      for (const [key, value] of Object.entries(params) as [keyof TParams & string, TParams[keyof TParams & string]][]) {
-        state.params[key] = value as unknown as ParamsDefinition;
-        refs[key] = createParamsRef(key, options);
-      }
+      writeParamsSchemas(state, params);
 
       return {
         params,
-        ref: refs as ParamsSchemasResult<TParams>['ref'],
+        ref: createParamsRefs(params) as ParamsSchemasResult<TParams>['ref'],
       };
     },
 

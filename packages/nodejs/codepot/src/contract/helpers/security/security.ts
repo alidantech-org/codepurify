@@ -3,7 +3,6 @@ import { ApiKeyLocation, SecurityAuthMode, SecuritySchemeType } from '@/contract
 import type {
   RouteSecurityRefsInput,
   SecurityAuthHelper,
-  SecurityAuthInput,
   SecurityContextHelper,
   SecurityGuardHelper,
   SecurityRoleSetHelper,

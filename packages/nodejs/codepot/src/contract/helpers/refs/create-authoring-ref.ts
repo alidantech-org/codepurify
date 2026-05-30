@@ -9,20 +9,27 @@ import type {
   RefUsageOptions,
 } from '@/contract/types/core/3.authoring-ref';
 
-import type { Ref } from '@/contract/types/ref';
-
-// ============================================================================
-// CREATE AUTHORING REF INPUTS
-// ============================================================================
-
 export interface CreateAuthoringRefInput<TTarget, TKind extends AuthoringRefKind> {
-  readonly path: Ref<TTarget>;
+  readonly id: string;
   readonly kind: TKind;
   readonly key: string;
   readonly name?: string;
 }
 
-export type CreateExtendableAuthoringRefInput<TTarget, TKind extends AuthoringRefKind> = CreateAuthoringRefInput<TTarget, TKind>;
+// ============================================================================
+// INTERNAL
+// ============================================================================
+
+function createBaseRef<TTarget, TKind extends AuthoringRefKind>(
+  input: CreateAuthoringRefInput<TTarget, TKind>,
+): AuthoringRefBase<TTarget, TKind> {
+  return {
+    id: input.id,
+    kind: input.kind,
+    key: input.key,
+    ...(input.name === undefined ? {} : { name: input.name }),
+  };
+}
 
 // ============================================================================
 // AUTHORING REF FACTORIES
@@ -31,12 +38,7 @@ export type CreateExtendableAuthoringRefInput<TTarget, TKind extends AuthoringRe
 export function createAuthoringRef<TTarget, TKind extends AuthoringRefKind>(
   input: CreateAuthoringRefInput<TTarget, TKind>,
 ): AuthoringRef<TTarget, TKind> {
-  const base: AuthoringRefBase<TTarget, TKind> = {
-    path: input.path,
-    kind: input.kind,
-    key: input.key,
-    name: input.name,
-  };
+  const base = createBaseRef(input);
 
   return {
     ...base,
@@ -64,14 +66,9 @@ export function createAuthoringRef<TTarget, TKind extends AuthoringRefKind>(
 }
 
 export function createExtendableAuthoringRef<TTarget, TKind extends AuthoringRefKind, TExtension>(
-  input: CreateExtendableAuthoringRefInput<TTarget, TKind>,
+  input: CreateAuthoringRefInput<TTarget, TKind>,
 ): ExtendableAuthoringRef<TTarget, TKind, TExtension> {
-  const base: AuthoringRefBase<TTarget, TKind> = {
-    path: input.path,
-    kind: input.kind,
-    key: input.key,
-    name: input.name,
-  };
+  const base = createBaseRef(input);
 
   return {
     ...base,
@@ -120,12 +117,10 @@ export function createExtendableAuthoringRef<TTarget, TKind extends AuthoringRef
 
 export function createUsage<TTarget, TKind extends AuthoringRefKind>(
   ref: AuthoringRefBase<TTarget, TKind>,
-  usage: RefUsageOptions = {},
+  usage: RefUsageOptions<never> = {},
 ): RefUsage<TTarget, TKind> {
-  const authoringRef = createAuthoringRef<TTarget, TKind>(ref);
-
   return {
-    ref: authoringRef,
+    ref: createAuthoringRef(ref),
     usage,
 
     optional() {
@@ -150,7 +145,6 @@ export function createUsage<TTarget, TKind extends AuthoringRefKind>(
 
     single() {
       const { array: _array, ...nextUsage } = usage;
-
       return createUsage(ref, nextUsage);
     },
   };
@@ -160,10 +154,8 @@ export function createExtendableUsage<TTarget, TKind extends AuthoringRefKind, T
   ref: AuthoringRefBase<TTarget, TKind>,
   usage: RefUsageOptions<TExtension> = {},
 ): ExtendableRefUsage<TTarget, TKind, TExtension> {
-  const authoringRef = createExtendableAuthoringRef<TTarget, TKind, TExtension>(ref);
-
   return {
-    ref: authoringRef,
+    ref: createExtendableAuthoringRef<TTarget, TKind, TExtension>(ref),
     usage,
 
     optional() {
@@ -188,7 +180,6 @@ export function createExtendableUsage<TTarget, TKind extends AuthoringRefKind, T
 
     single() {
       const { array: _array, ...nextUsage } = usage;
-
       return createExtendableUsage(ref, nextUsage);
     },
 
@@ -199,14 +190,4 @@ export function createExtendableUsage<TTarget, TKind extends AuthoringRefKind, T
       });
     },
   };
-}
-
-// ============================================================================
-// REF PATH HELPER
-// ============================================================================
-
-export function refPath<TTarget>(path: string): Ref<TTarget> {
-  return {
-    $ref: path,
-  } as Ref<TTarget>;
 }

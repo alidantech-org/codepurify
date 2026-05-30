@@ -49,6 +49,7 @@
     "codepot:dry": "tsx cli/index.ts build --dry-run",
     "codepot:inspect": "tsx cli/index.ts inspect",
     "test": "vitest run",
+    "test:debug": "vitest run tests/debug",
     "test:watch": "vitest",
     "test:smoke": "vitest run tests/smoke",
     "test:unit": "vitest run tests/unit"

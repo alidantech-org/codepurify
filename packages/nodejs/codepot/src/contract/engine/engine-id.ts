@@ -1,9 +1,32 @@
 export const EngineIdPart = {
   version: 'version',
   resource: 'resource',
+
   property: 'property',
-  component: 'component',
+  primitive: 'primitive',
+  enum: 'enum',
+  composite: 'composite',
+
+  schema: 'schema',
+  entity: 'entity',
+  field: 'field',
   model: 'model',
+  dto: 'dto',
+  params: 'params',
+
+  transport: 'transport',
+  contentType: 'content_type',
+  request: 'request',
+  response: 'response',
+
+  security: 'security',
+  scheme: 'scheme',
+  auth: 'auth',
+  roleSource: 'role_source',
+  roleSet: 'role_set',
+  context: 'context',
+  guard: 'guard',
+
   route: 'route',
   operation: 'operation',
 } as const;

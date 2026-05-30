@@ -24,14 +24,10 @@ export {
 
 export { transport, contentType, request, response } from './helpers/transport/transport';
 
-export {
-  createAuthoringRef,
-  createExtendableAuthoringRef,
-  createUsage,
-  createExtendableUsage,
-  refPath,
-} from './helpers/refs/create-authoring-ref';
+export { createAuthoringRef, createExtendableAuthoringRef, createUsage, createExtendableUsage } from './helpers/refs/create-authoring-ref';
 
 export { CodepotOutputFormat } from './types/core/1.codepot-config.types';
 
 export { AuthoringRefKind } from './types/core/3.authoring-ref';
+
+export { toDebugAuthoringJson } from './debug/to-debug-authoring-json';
