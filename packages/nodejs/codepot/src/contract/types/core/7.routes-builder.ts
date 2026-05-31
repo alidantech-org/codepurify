@@ -5,14 +5,18 @@ import type { HttpMethod, RoutePathDefinition, RoutesDefinition } from '@/contra
 
 import type {
   DtoAuthoringRef,
+  EntityFieldAuthoringRef,
   MaybeUsage,
   ModelAuthoringRef,
   OperationAuthoringRef,
   ParamsAuthoringRef,
+  PropertyAuthoringRef,
   RequestAuthoringRef,
   ResponseAuthoringRef,
   RouteAuthoringRef,
 } from './3.authoring-ref';
+
+import type { ParamSourceRef, ParamsInputMap, ParamsResult } from './5.schemas-builder';
 
 import type { RouteSecurityInput } from './9.security-builder';
 
@@ -20,13 +24,17 @@ import type { RouteSecurityInput } from './9.security-builder';
 // SHARED ROUTE SCHEMA INPUTS
 // ============================================================================
 
-export type RouteSchemaInput = MaybeUsage<DtoAuthoringRef | ModelAuthoringRef>;
+export type RouteSchemaInput = MaybeUsage<DtoAuthoringRef>;
 
 export type RouteQueryInput = RouteSchemaInput;
 
 export type RouteBodyInput = RouteSchemaInput | RequestAuthoringRef;
 
-export type RouteParamsInput = MaybeUsage<ParamsAuthoringRef>;
+export type RouteParamValueInput = ParamSourceRef | ParamsAuthoringRef | PropertyAuthoringRef | EntityFieldAuthoringRef;
+
+export type RouteInlineParamsInput = Record<string, RouteParamValueInput>;
+
+export type RouteParamsInput = ParamsInputMap | ParamsResult<ParamsInputMap> | RouteInlineParamsInput;
 
 export type RouteResponseInput = ResponseAuthoringRef | RouteInlineResponseInput;
 

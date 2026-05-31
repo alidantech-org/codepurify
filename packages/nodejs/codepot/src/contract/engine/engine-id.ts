@@ -10,6 +10,7 @@ export const EngineIdPart = {
   schema: 'schema',
   entity: 'entity',
   field: 'field',
+  fieldSet: 'field_set',
   model: 'model',
   dto: 'dto',
   params: 'params',

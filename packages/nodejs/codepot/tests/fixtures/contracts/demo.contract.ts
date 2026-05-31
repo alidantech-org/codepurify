@@ -1,168 +1,287 @@
-import {
-  access,
-  defineCodepotConfig,
-  defineVersionContract,
-  field,
-  persistence,
-  property,
-  query,
-} from '@/index';
+import { defineCodepotConfig, defineVersionContract, field, property } from '@/index';
 
-const v1 = defineVersionContract({
+// ============================================================================
+// VERSION DEFINITION
+// ============================================================================
+
+export const v1 = defineVersionContract({
   key: 'demo_api',
   version: 1,
-  info: {
-    title: 'Demo API',
-    version: '1.0.0',
-  },
+  info: { title: 'Demo API', version: '1.0.0' },
 });
 
-const props = v1.defineProperties();
+export const properties = v1.defineProperties();
+export const schemas = v1.defineSchemas();
 
-const shared = props.shared({
-  id: property.uuid().build(),
-  displayName: property.string().minLength(2).maxLength(80).build(),
-  email: property.email().build(),
+// ============================================================================
+// PRIMITIVES
+// ============================================================================
+
+const primitives = properties.primitives({
+  id: property.uuid(),
+  dateTime: property.dateTime(),
+  displayName: property.string().minLength(2).maxLength(80),
+  email: property.email(),
+  bio: property.string().maxLength(500),
+  integer: property.integer(),
+  text: property.string(),
+  boolean: property.boolean(),
 });
 
-const enums = props.shared({
-  UserRole: property
-    .enum({
-      admin: { value: 'admin', label: 'Admin' },
-      member: { value: 'member', label: 'Member' },
-    })
-    .build(),
-});
+// ============================================================================
+// ENUMS
+// ============================================================================
 
-const user = props.entity('User', {
-  id: field.ref(shared.ref.id, {
-    required: true,
-    query: query.filter().sort().select().done(),
-    persistence: persistence.stored().generated().immutable().done(),
+export const enums = properties.enums({
+  UserRole: property.enum({
+    admin: { value: 'admin', label: 'Admin' },
+    member: { value: 'member', label: 'Member' },
   }),
-
-  name: field.ref(shared.ref.displayName, {
-    required: true,
-    query: query.filter().sort().done(),
-    access: access.public().done(),
-  }),
-
-  email: field.ref(shared.ref.email, {
-    required: true,
-    query: query.filter().select(false).done(),
-    access: access.public().sensitive().done(),
-  }),
-
-  role: field.ref(enums.ref.UserRole, {
-    required: true,
-    query: query.filter().sort().done(),
-    access: access.public().done(),
+  UserStatus: property.enum({
+    active: { value: 'active', label: 'Active' },
+    suspended: { value: 'suspended', label: 'Suspended' },
   }),
 });
 
-const dtos = v1.defineDtoSchemas();
+export const composites = properties.composites({
+  money: property.composite({
+    amount: property.number().min(0),
+    currency: property.string().minLength(3).maxLength(3),
+  }),
+});
 
-const sharedDtos = dtos.define({
-  ErrorResponse: {
-    fields: {
-      message: user.ref.fields.name,
+// ============================================================================
+// BASE ENTITY
+// ============================================================================
+
+export const baseEntity = schemas.entity('BaseEntity', {
+  id: field(primitives.ref.id)
+    .required()
+    .query((q) => q.filter().sort().select())
+    .persistence((p) => p.stored().generated().immutable()),
+
+  createdAt: field(primitives.ref.dateTime)
+    .required()
+    .query((q) => q.filter().sort())
+    .persistence((p) => p.stored().immutable()),
+
+  updatedAt: field(primitives.ref.dateTime)
+    .required()
+    .persistence((p) => p.stored()),
+});
+
+// ============================================================================
+// ENTITIES
+// ============================================================================
+
+export const user = schemas
+  .entity(
+    'User',
+    {
+      name: field(primitives.ref.displayName)
+        .required()
+        .query((q) => q.filter().sort().select())
+        .access((a) => a.public()),
+
+      email: field(primitives.ref.email)
+        .required()
+        .query((q) => q.filter().select(false))
+        .access((a) => a.public().sensitive()),
+
+      bio: field(primitives.ref.text)
+        .optional()
+        .nullable()
+        .access((a) => a.public()),
+
+      role: field(enums.ref.UserRole)
+        .required()
+        .query((q) => q.filter().sort())
+        .access((a) => a.public()),
+
+      roles: field(enums.ref.UserRole).array().required(),
+
+      status: field(enums.ref.UserStatus)
+        .required()
+        .query((q) => q.filter().sort())
+        .access((a) => a.internal()),
+
+      billingLimit: field(composites.ref.money).optional(),
     },
+    {
+      extends: baseEntity,
+      tags: ['auth', 'identity'],
+      description: 'Application user',
+    },
+  )
+  .fieldSets({
+    list_select: (s) => s.only('id', 'name', 'role'),
+    list_sort: (s) => s.only('createdAt', 'role'),
+    list_filter: (s) => s.only('id', 'role', 'status'),
+    public_list_select: (s) => s.only('id', 'name'),
+    admin_list_select: (s) => s.only('id', 'name', 'email', 'role', 'status'),
+  })
+  .models({
+    read: (m) => m.relations('expand'),
+    create: (m) => m.partial(),
+    patch: (m) => m.partial(),
+    public: (m) => m.pick('name', 'bio', 'id'),
+  });
+
+export const profile = schemas
+  .entity('Profile', {
+    user: field
+      .belongsTo(user)
+      .required()
+      .access((a) => a.internal()),
+
+    displayName: field(primitives.ref.displayName)
+      .required()
+      .access((a) => a.public()),
+
+    bio: field(primitives.ref.bio)
+      .optional()
+      .nullable()
+      .access((a) => a.public()),
+  })
+  .models({
+    public: (m) => m.pick('displayName', 'bio'),
+    create: (m) => m.omit('user'),
+    patch: (m) => m.partial(),
+  });
+
+export const post = schemas
+  .entity('Post', {
+    author: field.belongsTo(user).required(),
+
+    title: field(primitives.ref.displayName)
+      .required()
+      .query((q) => q.filter().sort().select()),
+
+    body: field(primitives.ref.bio)
+      .required()
+      .access((a) => a.public()),
+  })
+  .models({
+    read: (m) => m.relations('expand'),
+    public: (m) => m.pick('author', 'title', 'body'),
+    create: (m) => m.omit('author'),
+    patch: (m) => m.partial().omit('author'),
+  });
+
+export const tag = schemas
+  .entity('Tag', {
+    name: field(primitives.ref.displayName)
+      .required()
+      .query((q) => q.filter().sort()),
+
+    posts: field.manyToMany(post),
+  })
+  .models({
+    public: (m) => m.pick('name'),
+    option: (m) => m.pick('name'),
+  });
+
+// ============================================================================
+// DTOS
+// ============================================================================
+
+const commonDtos = schemas.dtos({
+  ErrorResponse: {
+    message: primitives.ref.text.required(),
+    code: primitives.ref.text.optional(),
+  },
+
+  ApiResponse: {
+    success: primitives.ref.boolean.required(),
+    message: primitives.ref.text.optional(),
+  },
+
+  PaginatedResponse: {
+    page: primitives.ref.integer.required(),
+    limit: primitives.ref.integer.required(),
+    total: primitives.ref.integer.required(),
   },
 });
 
-const security = v1.defineSecurity();
+export const dtos = schemas.dtos({
+  // User DTOs - direct model assignment
+  UserPublic: user.ref.models.public,
 
-const schemes = security.defineSchemes({
-  bearer: security.scheme.bearerJwt(),
-});
+  UserPatchBody: user.ref.models.patch,
 
-const auth = security.defineAuth({
-  jwt: security.auth.any([
-    security.auth.scheme(schemes.ref.bearer),
-  ]),
-});
-
-const roleSources = security.defineRoleSources({
-  userRole: security.roleSource.entityField(
-    user.ref.fields.role,
-    enums.ref.UserRole as any,
-  ),
-});
-
-const roleSets = security.defineRoleSets({
-  admins: security.roleSet.values(roleSources.ref.userRole, ['admin']),
-});
-
-const transport = v1.defineTransport();
-
-const contentTypes = transport.defineContentTypes({
-  json: transport.contentType.json(),
-});
-
-const responses = transport.defineResponses({
-  BadRequest: transport.response.json(400, sharedDtos.ref.ErrorResponse),
-  Unauthorized: transport.response.json(401, sharedDtos.ref.ErrorResponse),
-  NotFound: transport.response.json(404, sharedDtos.ref.ErrorResponse),
-});
-
-transport.setDefaults({
-  requestContentType: contentTypes.ref.json,
-  responseContentType: contentTypes.ref.json,
-  responses: {
-    400: responses.ref.BadRequest,
-    401: responses.ref.Unauthorized,
-    404: responses.ref.NotFound,
-  },
-});
-
-const users = v1.defineResource({
-  key: 'users',
-  folders: ['platform', 'auth'],
-  security: security.route.protected({
-    auth: auth.ref.jwt,
+  // User DTOs - composition via extendWith
+  UserResponse: commonDtos.ref.ApiResponse.extendWith({
+    user: user.ref.models.public.required(),
   }),
+
+  UserListResponse: commonDtos.ref.PaginatedResponse.extendWith({
+    items: user.ref.models.public.array().required(),
+  }),
+
+  // User DTOs - flat field map
+  UpdateProfileBody: {
+    name: user.ref.fields.name.optional(),
+    bio: user.ref.fields.bio.optional().nullable(),
+  },
+
+  // Proof DTOs - inheritance from entity field options
+  // UserBioInheritsEntityOptions: bio inherits optional + nullable from User.bio
+  UserBioInheritsEntityOptions: {
+    bio: user.ref.fields.bio,
+  },
+
+  // UserBioRequiredButStillNullable: required overrides entity optional, nullable inherited
+  UserBioRequiredButStillNullable: {
+    bio: user.ref.fields.bio.required(),
+  },
+
+  // UserBioRequiredNonNullable: required + nonNullable override both
+  UserBioRequiredNonNullable: {
+    bio: user.ref.fields.bio.required().nonNullable(),
+  },
+
+  // UserEmailOptionalOverride: optional overrides entity required
+  UserEmailOptionalOverride: {
+    email: user.ref.fields.email.optional(),
+  },
+
+  // Proof DTOs - array/single inheritance from entity field options
+  // UserRolesInheritArray: roles inherits array from entity
+  UserRolesInheritArray: {
+    roles: user.ref.fields.roles,
+  },
+
+  // UserPrimaryRoleSingle: array false override (single from array)
+  UserPrimaryRoleSingle: {
+    role: user.ref.fields.roles.single(),
+  },
+
+  // UserRoleArrayOverride: array true override (array from single)
+  UserRoleArrayOverride: {
+    roles: user.ref.fields.role.array(),
+  },
+
+  // UserPrimaryRoleStrict: required + nonNullable + single override all
+  UserPrimaryRoleStrict: {
+    role: user.ref.fields.roles.required().nonNullable().single(),
+  },
 });
 
-users.defineRoutes().define((route) => ({
-  listUsers: route
-    .get('/')
-    .security(
-      security.route.roles([roleSets.ref.admins], {
-        auth: auth.ref.jwt,
-      }),
-    )
-    .responses({
-      200: route.response.json(user.ref.models.read.array()),
-      400: responses.ref.BadRequest,
-      401: responses.ref.Unauthorized,
-    }),
+// ============================================================================
+// PARAMS
+// ============================================================================
 
-  getUser: route
-    .get('/:id')
-    .responses({
-      200: route.response.json(user.ref.models.read),
-      401: responses.ref.Unauthorized,
-      404: responses.ref.NotFound,
-    }),
+export const params = schemas.params({
+  id: user.ref.fields.id,
+});
 
-  publicProfile: route
-    .get('/public/:id')
-    .security(security.route.public())
-    .responses({
-      200: route.response.json(user.ref.models.read),
-      404: responses.ref.NotFound,
-    }),
-}));
-
-export const demoVersion = v1;
+// ============================================================================
+// EXPORT
+// ============================================================================
 
 export const demoConfig = defineCodepotConfig({
   contracts: [v1],
-  output: {
-    folder: 'tests/generated/debug',
-    baseName: 'demo',
-    formats: ['json', 'yaml'],
-  },
+  output: { folder: 'tests/generated/debug', baseName: 'demo', formats: ['json', 'yaml'] },
 });
 
 export default demoConfig;

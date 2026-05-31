@@ -31,7 +31,7 @@ export interface FieldQueryConfig extends DefinitionItem {
 
   select?: boolean;
 
-  operators?: QueryOperator[];
+  operators?: readonly QueryOperator[];
 }
 
 // ============================================================================

@@ -4,24 +4,32 @@ import type { PropertiesDefinition } from '@/contract/types/properties/definitio
 import type { PrimitiveDefinition } from '@/contract/types/properties/primitive/definition';
 import type { EnumDefinition } from '@/contract/types/properties/enum/definition';
 import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
-import type { EntityDefinition } from '@/contract/types/schema/entity/definition';
-import type { EntityField } from '@/contract/types/schema/entity/field/definition';
-import type { SchemasDefinition } from '@/contract/types/schema/definition';
-
-import type { EntityFieldAuthoringRef, PropertyAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 import type {
-  EntityFieldInputMap,
-  EntityOptions,
-  EntityPropertiesResult,
-  ForRefPropertiesResult,
+  CompositeAuthoringRef,
+  EnumAuthoringRef,
+  PrimitiveAuthoringRef,
+  PropertyAuthoringRef,
+} from '@/contract/types/core/3.authoring-ref';
+
+import type {
+  CompositePropertiesResult,
+  CompositePropertySourceInput,
+  CompositePropertySourceMap,
+  EnumPropertiesResult,
+  EnumPropertySourceInput,
+  EnumPropertySourceMap,
+  PrimitivePropertiesResult,
+  PrimitivePropertySourceInput,
+  PrimitivePropertySourceMap,
   PropertiesBuilder,
+  PropertyRefsResult,
   PropertySourceInput,
+  PropertySourceInputLike,
   PropertySourceMap,
-  SharedPropertiesResult,
 } from '@/contract/types/core/4.properties-builder';
 
-import { entityFieldRef, entityRef, modelRefs, propertyRefFromSource } from '@/contract/helpers/refs/authoring-ref-builder';
+import { compositeRef, enumRef, primitiveRef, propertyRefFromSource } from '@/contract/helpers/refs/authoring-ref-builder';
 
 // ============================================================================
 // OPTIONS
@@ -31,7 +39,6 @@ export interface DefinePropertiesOptions {
   readonly scope: 'version' | 'resource';
   readonly resourceKey?: string;
   readonly state: Partial<PropertiesDefinition>;
-  readonly schemas?: Partial<SchemasDefinition>;
 }
 
 // ============================================================================
@@ -46,78 +53,118 @@ function ensurePropertiesState(state: Partial<PropertiesDefinition>): Properties
   return state as PropertiesDefinition;
 }
 
-function ensureSchemasState(state: Partial<SchemasDefinition>): Partial<SchemasDefinition> {
-  state.entities ??= {};
-  state.models ??= {};
-  state.dtos ??= {};
-  state.params ??= {};
+function isPropertySourceBuilder(value: PropertySourceInputLike): value is { readonly input: PropertySourceInput } {
+  return !!value && typeof value === 'object' && 'input' in value;
+}
 
-  return state;
+function toPropertySourceInput(value: PropertySourceInputLike): PropertySourceInput {
+  return isPropertySourceBuilder(value) ? value.input : value;
+}
+
+function normalizePropertySources<TFields extends PropertySourceMap>(fields: TFields): Record<keyof TFields & string, PropertySourceInput> {
+  const normalized = {} as Record<keyof TFields & string, PropertySourceInput>;
+
+  for (const [key, value] of Object.entries(fields) as [keyof TFields & string, TFields[keyof TFields & string]][]) {
+    normalized[key] = toPropertySourceInput(value);
+  }
+
+  return normalized;
+}
+
+function writePrimitiveSource(state: PropertiesDefinition, key: string, source: PrimitivePropertySourceInput): void {
+  state.primitives[key] = source as unknown as PrimitiveDefinition;
+}
+
+function writeEnumSource(state: PropertiesDefinition, key: string, source: EnumPropertySourceInput): void {
+  state.enums[key] = source as unknown as EnumDefinition;
+}
+
+function writeCompositeSource(state: PropertiesDefinition, key: string, source: CompositePropertySourceInput): void {
+  state.composites[key] = source as unknown as CompositeDefinition;
 }
 
 function writePropertySource(state: PropertiesDefinition, key: string, source: PropertySourceInput): void {
   if (source.kind === 'primitive') {
-    state.primitives[key] = source as unknown as PrimitiveDefinition;
+    writePrimitiveSource(state, key, source);
     return;
   }
 
   if (source.kind === 'enum') {
-    state.enums[key] = source as unknown as EnumDefinition;
+    writeEnumSource(state, key, source);
     return;
   }
 
   if (source.kind === 'composite') {
-    state.composites[key] = source as unknown as CompositeDefinition;
+    writeCompositeSource(state, key, source);
   }
 }
 
-function writeEntitySource<TFields extends EntityFieldInputMap>(
-  schemas: Partial<SchemasDefinition> | undefined,
-  name: string,
+function writePropertySources<TFields extends PropertySourceMap>(
+  state: PropertiesDefinition,
   fields: TFields,
-  options: EntityOptions,
-): void {
-  if (!schemas) return;
+): Record<keyof TFields & string, PropertySourceInput> {
+  const normalized = normalizePropertySources(fields);
 
-  const state = ensureSchemasState(schemas);
+  for (const [key, source] of Object.entries(normalized) as [keyof TFields & string, PropertySourceInput][]) {
+    writePropertySource(state, key, source);
+  }
 
-  state.entities![name] = {
-    fields: fields as unknown as Record<string, EntityField>,
-    extends: options.extends,
-    tags: options.tags,
-    description: options.description,
-    deprecated: options.deprecated,
-    meta: options.meta,
-  } as unknown as EntityDefinition;
+  return normalized;
 }
 
-function createPropertyRefs<TFields extends PropertySourceMap>(fields: TFields): Record<keyof TFields & string, PropertyAuthoringRef> {
+function createPropertyRefs<TFields extends PropertySourceMap>(
+  normalizedFields: Record<keyof TFields & string, PropertySourceInput>,
+): Record<keyof TFields & string, PropertyAuthoringRef> {
   const refs = {} as Record<keyof TFields & string, PropertyAuthoringRef>;
 
-  for (const [key, value] of Object.entries(fields) as [keyof TFields & string, TFields[keyof TFields & string]][]) {
+  for (const [key, value] of Object.entries(normalizedFields) as [keyof TFields & string, PropertySourceInput][]) {
     refs[key] = propertyRefFromSource(key, value);
   }
 
   return refs;
 }
 
-function createEntityFieldRefs<TFields extends EntityFieldInputMap>(
-  entityName: string,
-  fields: TFields,
-): Record<keyof TFields & string, EntityFieldAuthoringRef> {
-  const refs = {} as Record<keyof TFields & string, EntityFieldAuthoringRef>;
+function createPrimitiveRefs<TFields extends PrimitivePropertySourceMap>(fields: TFields): PrimitivePropertiesResult<TFields>['ref'] {
+  const refs: Record<string, PrimitiveAuthoringRef> = {};
 
   for (const key of Object.keys(fields) as Array<keyof TFields & string>) {
-    refs[key] = entityFieldRef(entityName, key);
+    refs[key] = primitiveRef(key);
   }
 
-  return refs;
+  return refs as PrimitivePropertiesResult<TFields>['ref'];
 }
 
-function writePropertySources<TFields extends PropertySourceMap>(state: PropertiesDefinition, fields: TFields): void {
-  for (const [key, value] of Object.entries(fields) as [keyof TFields & string, TFields[keyof TFields & string]][]) {
-    writePropertySource(state, key, value);
+function createEnumRefs<TFields extends EnumPropertySourceMap>(fields: TFields): EnumPropertiesResult<TFields>['ref'] {
+  const refs: Record<string, EnumAuthoringRef> = {};
+
+  for (const key of Object.keys(fields) as Array<keyof TFields & string>) {
+    refs[key] = enumRef(key);
   }
+
+  return refs as EnumPropertiesResult<TFields>['ref'];
+}
+
+function createCompositeRefs<TFields extends CompositePropertySourceMap>(fields: TFields): CompositePropertiesResult<TFields>['ref'] {
+  const refs: Record<string, CompositeAuthoringRef> = {};
+
+  for (const key of Object.keys(fields) as Array<keyof TFields & string>) {
+    refs[key] = compositeRef(key);
+  }
+
+  return refs as CompositePropertiesResult<TFields>['ref'];
+}
+
+function writePropertyGroup<TFields extends PropertySourceMap>(
+  state: Partial<PropertiesDefinition>,
+  fields: TFields,
+): PropertyRefsResult<TFields> {
+  const propertiesState = ensurePropertiesState(state);
+  const normalizedFields = writePropertySources(propertiesState, fields);
+
+  return {
+    fields,
+    ref: createPropertyRefs(normalizedFields) as PropertyRefsResult<TFields>['ref'],
+  };
 }
 
 // ============================================================================
@@ -130,46 +177,32 @@ export function defineProperties(options: DefinePropertiesOptions): PropertiesBu
       return options.state;
     },
 
-    shared<TFields extends PropertySourceMap>(fields: TFields): SharedPropertiesResult<TFields> {
-      const state = ensurePropertiesState(options.state);
-
-      writePropertySources(state, fields);
-
+    primitives<TFields extends PrimitivePropertySourceMap>(fields: TFields): PrimitivePropertiesResult<TFields> {
+      writePropertyGroup(options.state, fields);
       return {
         fields,
-        ref: createPropertyRefs(fields) as SharedPropertiesResult<TFields>['ref'],
+        ref: createPrimitiveRefs(fields),
       };
     },
 
-    forRef<TFields extends PropertySourceMap>(fields: TFields): ForRefPropertiesResult<TFields> {
-      const state = ensurePropertiesState(options.state);
-
-      writePropertySources(state, fields);
-
+    enums<TFields extends EnumPropertySourceMap>(fields: TFields): EnumPropertiesResult<TFields> {
+      writePropertyGroup(options.state, fields);
       return {
         fields,
-        ref: createPropertyRefs(fields) as ForRefPropertiesResult<TFields>['ref'],
+        ref: createEnumRefs(fields),
       };
     },
 
-    entity<TName extends string, TFields extends EntityFieldInputMap>(
-      name: TName,
-      fields: TFields,
-      entityOptions: EntityOptions = {},
-    ): EntityPropertiesResult<TName, TFields> {
-      const fieldRefs = createEntityFieldRefs(name, fields);
-
-      writeEntitySource(options.schemas, name, fields, entityOptions);
-
+    composites<TFields extends CompositePropertySourceMap>(fields: TFields): CompositePropertiesResult<TFields> {
+      writePropertyGroup(options.state, fields);
       return {
-        name,
         fields,
-        entity: entityRef(name),
-        ref: {
-          fields: fieldRefs as EntityPropertiesResult<TName, TFields>['ref']['fields'],
-          models: modelRefs(name) as EntityPropertiesResult<TName, TFields>['ref']['models'],
-        },
+        ref: createCompositeRefs(fields),
       };
+    },
+
+    refs<TFields extends PropertySourceMap>(fields: TFields): PropertyRefsResult<TFields> {
+      return writePropertyGroup(options.state, fields);
     },
 
     snapshot() {

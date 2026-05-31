@@ -2,7 +2,7 @@ export {
   defineCodepotConfig,
   defineVersionContract,
   defineProperties,
-  defineDtoSchemas,
+  defineSchemas,
   defineResource,
   defineRoutes,
   defineTransport,

@@ -37,6 +37,7 @@ export const AuthoringRefKind = {
 
   schemaEntity: 'schema.entity',
   schemaEntityField: 'schema.entity.field',
+  schemaEntityFieldSet: 'schema.entity.field_set',
   schemaModel: 'schema.model',
   schemaDto: 'schema.dto',
   schemaParams: 'schema.params',
@@ -70,13 +71,13 @@ export interface ArrayUsageOptions extends DefinitionItem {
 }
 
 export interface ExtendUsageOptions<TExtension> extends DefinitionItem {
-  readonly fields: TExtension;
+  readonly extendWith: TExtension;
 }
 
 export interface RefUsageOptions<TExtension = never> extends DefinitionItem {
   readonly required?: boolean;
   readonly nullable?: boolean;
-  readonly array?: true | ArrayUsageOptions;
+  readonly array?: true | ArrayUsageOptions | false;
   readonly extendWith?: ExtendUsageOptions<TExtension>;
 }
 
@@ -133,6 +134,7 @@ export type AuthoringRef<TTarget, TKind extends AuthoringRefKind, TExtension = n
   nonNullable(): RefUsage<TTarget, TKind, TExtension>;
 
   array(options?: true | ArrayUsageOptions): RefUsage<TTarget, TKind, TExtension>;
+  single(): RefUsage<TTarget, TKind, TExtension>;
 };
 
 export type ExtendableAuthoringRef<TTarget, TKind extends AuthoringRefKind, TExtension> = AuthoringRefBase<TTarget, TKind> & {
@@ -143,6 +145,7 @@ export type ExtendableAuthoringRef<TTarget, TKind extends AuthoringRefKind, TExt
   nonNullable(): ExtendableRefUsage<TTarget, TKind, TExtension>;
 
   array(options?: true | ArrayUsageOptions): ExtendableRefUsage<TTarget, TKind, TExtension>;
+  single(): ExtendableRefUsage<TTarget, TKind, TExtension>;
 
   extendWith(fields: TExtension): ExtendableRefUsage<TTarget, TKind, TExtension>;
 };
@@ -182,6 +185,9 @@ export type PropertyRefTarget = RefProperty;
 export type EntityAuthoringRef = AuthoringRef<EntityDefinition, typeof AuthoringRefKind.schemaEntity>;
 
 export type EntityFieldAuthoringRef = AuthoringRef<EntityField, typeof AuthoringRefKind.schemaEntityField>;
+
+// TODO: Add EntityFieldSetDefinition to schema types and use it here
+export type EntityFieldSetAuthoringRef = AuthoringRef<ModelDefinition, typeof AuthoringRefKind.schemaEntityFieldSet>;
 
 export type ModelAuthoringRef<TExtension = unknown> = ExtendableAuthoringRef<
   ModelDefinition,

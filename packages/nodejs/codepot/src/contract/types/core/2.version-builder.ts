@@ -7,7 +7,7 @@ import type { SchemasDefinition } from '@/contract/types/schema/definition';
 import type { ResourceDefinition } from '@/contract/types/resource/definition';
 
 import type { PropertiesBuilder } from './4.properties-builder';
-import type { DtoSchemasBuilder } from './5.dto-schemas-builder';
+import type { SchemasBuilder } from './5.schemas-builder';
 import type { DefineResourceOptions, ResourceBuilder } from './6.resource-builder';
 import type { TransportBuilder } from './8.transport-builder';
 import type { SecurityBuilder } from './9.security-builder';
@@ -36,7 +36,7 @@ export interface DefineVersionContractOptions {
   readonly urls?: readonly UrlDefinition[];
 
   /**
-   * Optional prebuilt sections.
+   * Optional prebuilt authoring sections.
    * Useful while some authoring helpers are not implemented yet.
    */
   readonly properties?: Partial<PropertiesDefinition>;
@@ -71,19 +71,21 @@ export interface VersionAuthoringState {
 export interface VersionBuilder {
   /**
    * Current authoring state.
-   * Compiler later normalizes this into CodepotDefinition.
+   * Compiler later normalizes this into final Codepot IR.
    */
   readonly state: VersionAuthoringState;
 
   /**
-   * Root/shared property definitions.
+   * Version-level reusable property sources:
+   * primitives, enums, composites, and reusable refs.
    */
   defineProperties(): PropertiesBuilder;
 
   /**
-   * Root/shared DTO and params schemas.
+   * Version-level schemas:
+   * entities, DTOs, params, model overrides, field-set overrides.
    */
-  defineDtoSchemas(): DtoSchemasBuilder;
+  defineSchemas(): SchemasBuilder;
 
   /**
    * Version-level transport registry:
@@ -108,28 +110,28 @@ export interface VersionBuilder {
   addResource(key: string, resource: ResourceDefinition): VersionBuilder;
 
   /**
-   * Allows adding/preloading compiled properties while helpers are incomplete.
+   * Allows adding/preloading properties while helpers are incomplete.
    */
   addProperties(properties: Partial<PropertiesDefinition>): VersionBuilder;
 
   /**
-   * Allows adding/preloading compiled schemas while helpers are incomplete.
+   * Allows adding/preloading schemas while helpers are incomplete.
    */
   addSchemas(schemas: Partial<SchemasDefinition>): VersionBuilder;
 
   /**
-   * Allows adding/preloading compiled transport while helpers are incomplete.
+   * Allows adding/preloading transport while helpers are incomplete.
    */
   addTransport(transport: Partial<TransportDefinition>): VersionBuilder;
 
   /**
-   * Allows adding/preloading compiled security while helpers are incomplete.
+   * Allows adding/preloading security while helpers are incomplete.
    */
   addSecurity(security: Partial<SecurityDefinition>): VersionBuilder;
 
   /**
-   * Compiler-facing snapshot.
-   * This is still authoring state, not final CodepotDefinition.
+   * Authoring snapshot.
+   * This is still authoring state, not final compiled Codepot IR.
    */
   snapshot(): VersionAuthoringState;
 }

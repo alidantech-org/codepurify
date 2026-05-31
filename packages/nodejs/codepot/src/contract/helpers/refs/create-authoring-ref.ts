@@ -62,6 +62,10 @@ export function createAuthoringRef<TTarget, TKind extends AuthoringRefKind>(
     array(options: true | ArrayUsageOptions = true) {
       return createUsage(base, { array: options });
     },
+
+    single() {
+      return createUsage(base, { array: false });
+    },
   };
 }
 
@@ -103,9 +107,15 @@ export function createExtendableAuthoringRef<TTarget, TKind extends AuthoringRef
       });
     },
 
+    single() {
+      return createExtendableUsage<TTarget, TKind, TExtension>(base, {
+        array: false,
+      });
+    },
+
     extendWith(fields: TExtension) {
       return createExtendableUsage<TTarget, TKind, TExtension>(base, {
-        extendWith: { fields },
+        extendWith: { extendWith: fields },
       });
     },
   };
@@ -186,7 +196,7 @@ export function createExtendableUsage<TTarget, TKind extends AuthoringRefKind, T
     extendWith(fields: TExtension) {
       return createExtendableUsage(ref, {
         ...usage,
-        extendWith: { fields },
+        extendWith: { extendWith: fields },
       });
     },
   };

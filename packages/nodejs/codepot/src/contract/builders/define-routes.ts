@@ -12,6 +12,7 @@ import type {
   RouteDefinitionInput,
   RouteHelper,
   RouteMethodChain,
+  RouteParamsInput,
   RouteRequestHelper,
   RouteResponseHelper,
   RoutesBuilder,
@@ -116,6 +117,18 @@ const routeRequest: RouteRequestHelper = {
 };
 
 // ============================================================================
+// PARAM HELPERS
+// ============================================================================
+
+function normalizeRouteParams(params: RouteParamsInput): RouteParamsInput {
+  if (params && typeof params === 'object' && 'params' in params && 'ref' in params) {
+    return params.params as RouteParamsInput;
+  }
+
+  return params;
+}
+
+// ============================================================================
 // ROUTE CHAIN
 // ============================================================================
 
@@ -141,7 +154,7 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
     params(params) {
       return createRouteChain(method, path, {
         ...current,
-        params,
+        params: normalizeRouteParams(params),
       });
     },
 

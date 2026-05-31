@@ -3,7 +3,7 @@
 export { defineCodepotConfig } from './builders/define-codepot-config';
 export { defineVersionContract } from './builders/define-version-contract';
 export { defineProperties } from './builders/define-properties';
-export { defineDtoSchemas } from './builders/define-dto-schemas';
+export { defineSchemas } from './builders/define-schemas';
 export { defineResource } from './builders/define-resource';
 export { defineRoutes } from './builders/define-routes';
 export { defineTransport } from './builders/define-transport';

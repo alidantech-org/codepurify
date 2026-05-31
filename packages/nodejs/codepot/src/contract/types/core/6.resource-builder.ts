@@ -8,7 +8,7 @@ import type { SchemasDefinition } from '@/contract/types/schema/definition';
 
 import type { ResourceAuthoringRef } from './3.authoring-ref';
 import type { PropertiesBuilder } from './4.properties-builder';
-import type { DtoSchemasBuilder } from './5.dto-schemas-builder';
+import type { SchemasBuilder } from './5.schemas-builder';
 import type { RoutesBuilder } from './7.routes-builder';
 import type { RouteSecurityInput, RouteSecurityRefsInput, SecurityRouteHelper } from './9.security-builder';
 
@@ -59,7 +59,11 @@ export interface ResourceAuthoringState extends DefinitionItem {
 
   readonly properties: Partial<PropertiesDefinition>;
 
-  readonly schemas: Pick<Partial<SchemasDefinition>, 'dtos' | 'params'>;
+  /**
+   * Resource-scoped schemas:
+   * entities, DTOs, params, model overrides, field-set overrides.
+   */
+  readonly schemas: Partial<SchemasDefinition>;
 
   readonly operations: Record<string, OperationDefinition>;
 
@@ -86,14 +90,16 @@ export interface ResourceBuilder {
   readonly security: SecurityRouteHelper;
 
   /**
-   * Resource-scoped properties/entities.
+   * Resource-scoped reusable property sources:
+   * primitives, enums, composites, and refs.
    */
   defineProperties(): PropertiesBuilder;
 
   /**
-   * Resource-scoped DTO and params schemas.
+   * Resource-scoped schemas:
+   * entities, DTOs, params, model overrides, field-set overrides.
    */
-  defineDtoSchemas(): DtoSchemasBuilder;
+  defineSchemas(): SchemasBuilder;
 
   /**
    * Resource-scoped routes and operations.
@@ -116,12 +122,12 @@ export interface ResourceBuilder {
   protected(input?: RouteSecurityRefsInput): ResourceBuilder;
 
   /**
-   * Adds/preloads compiled route data while route helpers are incomplete.
+   * Adds/preloads route data while route helpers are incomplete.
    */
   addRoute(key: string, route: RoutePathDefinition): ResourceBuilder;
 
   /**
-   * Adds/preloads compiled operation data while route helpers are incomplete.
+   * Adds/preloads operation data while route helpers are incomplete.
    */
   addOperation(key: string, operation: OperationDefinition): ResourceBuilder;
 

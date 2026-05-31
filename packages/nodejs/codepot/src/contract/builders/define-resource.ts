@@ -1,8 +1,8 @@
 // src/contract/builders/define-resource.ts
 
+import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
 import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
-import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { SchemasDefinition } from '@/contract/types/schema/definition';
 
 import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
@@ -13,7 +13,7 @@ import { resourceRef } from '@/contract/helpers/refs/authoring-ref-builder';
 import { securityRoute } from '@/contract/helpers/security/security';
 
 import { defineProperties } from './define-properties';
-import { defineDtoSchemas } from './define-dto-schemas';
+import { defineSchemas } from './define-schemas';
 import { defineRoutes } from './define-routes';
 
 // ============================================================================
@@ -60,12 +60,11 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
         scope: 'resource',
         resourceKey: options.key,
         state: properties,
-        schemas,
       });
     },
 
-    defineDtoSchemas() {
-      return defineDtoSchemas({
+    defineSchemas() {
+      return defineSchemas({
         scope: 'resource',
         resourceKey: options.key,
         state: schemas,

@@ -11,7 +11,7 @@ import type { DefineVersionContractOptions, VersionAuthoringState, VersionBuilde
 import type { DefineResourceOptions, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
 
 import { defineProperties } from './define-properties';
-import { defineDtoSchemas } from './define-dto-schemas';
+import { defineSchemas } from './define-schemas';
 import { defineResource } from './define-resource';
 import { defineTransport } from './define-transport';
 import { defineSecurity } from './define-security';
@@ -161,12 +161,11 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
       return defineProperties({
         scope: 'version',
         state: properties,
-        schemas,
       });
     },
 
-    defineDtoSchemas() {
-      return defineDtoSchemas({
+    defineSchemas() {
+      return defineSchemas({
         scope: 'version',
         state: schemas,
       });

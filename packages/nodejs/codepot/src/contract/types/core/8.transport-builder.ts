@@ -21,7 +21,7 @@ import type {
 // SHARED TRANSPORT INPUTS
 // ============================================================================
 
-export type TransportSchemaInput = MaybeUsage<DtoAuthoringRef | ModelAuthoringRef>;
+export type TransportSchemaInput = MaybeUsage<DtoAuthoringRef>;
 
 export type TransportContentTypeInput = ContentTypeAuthoringRef | string;
 

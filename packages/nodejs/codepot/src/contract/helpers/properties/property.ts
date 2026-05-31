@@ -2,50 +2,68 @@ import {
   FieldAccessLevel,
   FieldPersistenceMode,
   QueryOperator,
+  type FieldAccessConfig,
   type FieldPersistenceConfig,
+  type FieldQueryConfig,
 } from '@/contract/types/schema/entity/field/definition';
 
 import { PrimitiveFormat, PrimitiveType } from '@/contract/types/properties/primitive/definition';
 
-import type { EnumValuePrimitive } from '@/contract/types/properties/enum/definition';
-
 import type {
-  AccessOptionsBuilder,
   AccessHelper,
+  AccessOptionsBuilder,
   CompositePropertyBuilder,
   CompositePropertySourceInput,
+  CompositePropertyValueInput,
   EntityFieldInput,
+  EntityFieldInputMap,
   EntityFieldOptions,
-  EnumPropertyBuilder,
-  EnumPropertySourceInput,
-  EnumPropertyValueInput,
+  EntityFieldSetOverrideBuilder,
+  EntityFieldSetOverrideInput,
+  EntityModelOverrideBuilder,
+  EntityModelOverrideInput,
+  EntityRelationKind,
+  EntityTargetInput,
   FieldHelper,
+  FieldSourceValue,
   NumberPropertyBuilder,
   PersistenceHelper,
   PersistenceOptionsBuilder,
   PrimitivePropertyBuilder,
   PrimitivePropertySourceInput,
+  PropertyFieldBuilder,
   PropertyHelper,
   PropertySourceInput,
+  PropertySourceInputLike,
   QueryHelper,
   QueryOperatorBuilder,
   QueryOptionsBuilder,
   RefPropertyBuilder,
   RefPropertySourceInput,
+  RelationFieldBuilder,
   StringPropertyBuilder,
+  EnumPropertyBuilder,
+  EnumPropertySourceInput,
 } from '@/contract/types/core/4.properties-builder';
 
-import type { CompositeAuthoringRef, PropertyAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import { EntityFieldSourceKind, EntityRelationKind as RelationKind } from '@/contract/types/core/4.properties-builder';
+
+import type {
+  CompositeAuthoringRef,
+  EntityFieldAuthoringRef,
+  ModelAuthoringRef,
+  PropertyAuthoringRef,
+} from '@/contract/types/core/3.authoring-ref';
 
 // ============================================================================
-// INTERNAL HELPERS
+// PROPERTY SOURCE HELPERS
 // ============================================================================
 
 function primitiveInput(type: PrimitiveType, format?: PrimitiveFormat): PrimitivePropertySourceInput {
   return {
     kind: 'primitive',
     type,
-    format,
+    ...(format === undefined ? {} : { format }),
   };
 }
 
@@ -53,10 +71,13 @@ function patchPrimitive(input: PrimitivePropertySourceInput, patch: Partial<Prim
   return {
     ...input,
     ...patch,
-    validation: {
-      ...(input.validation ?? {}),
-      ...(patch.validation ?? {}),
-    },
+    validation:
+      input.validation || patch.validation
+        ? {
+            ...(input.validation ?? {}),
+            ...(patch.validation ?? {}),
+          }
+        : undefined,
   };
 }
 
@@ -65,111 +86,55 @@ function primitiveBuilder(input: PrimitivePropertySourceInput): PrimitivePropert
     input,
 
     min(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { minimum: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { minimum: value } }));
     },
 
     max(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { maximum: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { maximum: value } }));
     },
 
     exclusiveMin(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { exclusiveMinimum: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { exclusiveMinimum: value } }));
     },
 
     exclusiveMax(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { exclusiveMaximum: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { exclusiveMaximum: value } }));
     },
 
     multipleOf(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { multipleOf: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { multipleOf: value } }));
     },
 
     minLength(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { minLength: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { minLength: value } }));
     },
 
     maxLength(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { maxLength: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { maxLength: value } }));
     },
 
     pattern(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          validation: { pattern: value },
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { validation: { pattern: value } }));
     },
 
     format(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          format: value,
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { format: value }));
     },
 
     example(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          example: value,
-        }),
-      );
+      return primitiveBuilder(patchPrimitive(input, { example: value }));
     },
 
     description(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          description: value,
-        }),
-      );
+      return primitiveBuilder({ ...input, description: value });
     },
 
     deprecated(value = true) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          deprecated: value,
-        }),
-      );
+      return primitiveBuilder({ ...input, deprecated: value });
     },
 
     meta(value) {
-      return primitiveBuilder(
-        patchPrimitive(input, {
-          meta: value,
-        }),
-      );
-    },
-
-    build() {
-      return input;
+      return primitiveBuilder({ ...input, meta: value });
     },
   };
 }
@@ -219,6 +184,10 @@ function stringBuilder(input: PrimitivePropertySourceInput): StringPropertyBuild
     time() {
       return stringBuilder(patchPrimitive(input, { format: PrimitiveFormat.time }));
     },
+
+    binary() {
+      return stringBuilder(patchPrimitive(input, { format: PrimitiveFormat.binary }));
+    },
   };
 }
 
@@ -229,19 +198,9 @@ function numberBuilder(input: PrimitivePropertySourceInput): NumberPropertyBuild
     ...base,
 
     int() {
-      return numberBuilder(
-        patchPrimitive(input, {
-          type: PrimitiveType.integer,
-        }),
-      );
+      return numberBuilder(patchPrimitive(input, { type: PrimitiveType.integer }));
     },
   };
-}
-
-function normalizeEnumValues(
-  values: readonly EnumValuePrimitive[] | Record<string, EnumValuePrimitive | EnumPropertyValueInput>,
-): EnumPropertySourceInput['values'] {
-  return values;
 }
 
 function enumBuilder(input: EnumPropertySourceInput): EnumPropertyBuilder {
@@ -258,10 +217,6 @@ function enumBuilder(input: EnumPropertySourceInput): EnumPropertyBuilder {
 
     meta(value) {
       return enumBuilder({ ...input, meta: value });
-    },
-
-    build() {
-      return input;
     },
   };
 }
@@ -285,10 +240,6 @@ function compositeBuilder(input: CompositePropertySourceInput): CompositePropert
     meta(value) {
       return compositeBuilder({ ...input, meta: value });
     },
-
-    build() {
-      return input;
-    },
   };
 }
 
@@ -307,27 +258,7 @@ function refBuilder(input: RefPropertySourceInput): RefPropertyBuilder {
     meta(value) {
       return refBuilder({ ...input, meta: value });
     },
-
-    build() {
-      return input;
-    },
   };
-}
-
-type PropertySourceBuilderLike = {
-  build(): PropertySourceInput;
-};
-
-function isPropertySourceBuilderLike(input: PropertySourceInput | PropertySourceBuilderLike): input is PropertySourceBuilderLike {
-  return typeof (input as PropertySourceBuilderLike).build === 'function';
-}
-
-function asSource(input: PropertySourceInput | PropertySourceBuilderLike): PropertySourceInput {
-  if (isPropertySourceBuilderLike(input)) {
-    return input.build();
-  }
-
-  return input;
 }
 
 // ============================================================================
@@ -402,7 +333,7 @@ export const property: PropertyHelper = {
   enum(values) {
     return enumBuilder({
       kind: 'enum',
-      values: normalizeEnumValues(values),
+      values,
     });
   },
 
@@ -422,106 +353,15 @@ export const property: PropertyHelper = {
 };
 
 // ============================================================================
-// FIELD HELPER
+// QUERY / ACCESS / PERSISTENCE HELPERS
 // ============================================================================
 
-function fieldFrom(source: PropertySourceInput, options?: EntityFieldOptions): EntityFieldInput {
-  return {
-    source,
-    options,
-  };
-}
-
-export const field: FieldHelper = {
-  from(source, options) {
-    return fieldFrom(asSource(source), options);
-  },
-
-  primitive(type, options) {
-    return fieldFrom(property.primitive(type).build(), options);
-  },
-
-  string(options) {
-    return fieldFrom(property.string().build(), options);
-  },
-
-  number(options) {
-    return fieldFrom(property.number().build(), options);
-  },
-
-  integer(options) {
-    return fieldFrom(property.integer().build(), options);
-  },
-
-  boolean(options) {
-    return fieldFrom(property.boolean().build(), options);
-  },
-
-  date(options) {
-    return fieldFrom(property.date().build(), options);
-  },
-
-  dateTime(options) {
-    return fieldFrom(property.dateTime().build(), options);
-  },
-
-  time(options) {
-    return fieldFrom(property.time().build(), options);
-  },
-
-  email(options) {
-    return fieldFrom(property.email().build(), options);
-  },
-
-  uri(options) {
-    return fieldFrom(property.uri().build(), options);
-  },
-
-  url(options) {
-    return fieldFrom(property.url().build(), options);
-  },
-
-  uuid(options) {
-    return fieldFrom(property.uuid().build(), options);
-  },
-
-  objectId(options) {
-    return fieldFrom(property.objectId().build(), options);
-  },
-
-  phone(options) {
-    return fieldFrom(property.phone().build(), options);
-  },
-
-  password(options) {
-    return fieldFrom(property.password().build(), options);
-  },
-
-  binary(options) {
-    return fieldFrom(property.binary().build(), options);
-  },
-
-  enum(values, options) {
-    return fieldFrom(property.enum(values).build(), options);
-  },
-
-  composite(properties, options) {
-    return fieldFrom(property.composite(properties).build(), options);
-  },
-
-  ref(ref, options) {
-    return fieldFrom(property.ref(ref).build(), options);
-  },
-};
-
-// ============================================================================
-// QUERY HELPER
-// ============================================================================
-
-function queryOperatorBuilder(values: QueryOperator[] = []): QueryOperatorBuilder {
+function queryOperatorBuilder(values: readonly QueryOperator[] = []): QueryOperatorBuilder {
   const add = (value: QueryOperator) => queryOperatorBuilder([...values, value]);
 
   return {
+    input: values,
+
     eq: () => add(QueryOperator.eq),
     neq: () => add(QueryOperator.neq),
     in: () => add(QueryOperator.in),
@@ -535,13 +375,13 @@ function queryOperatorBuilder(values: QueryOperator[] = []): QueryOperatorBuilde
     lte: () => add(QueryOperator.lte),
     between: () => add(QueryOperator.between),
     exists: () => add(QueryOperator.exists),
-
-    done: () => values,
   };
 }
 
-function queryOptionsBuilder(config = {}): QueryOptionsBuilder {
+function queryOptionsBuilder(config: FieldQueryConfig = {}): QueryOptionsBuilder {
   return {
+    input: config,
+
     filter(value = true) {
       return queryOptionsBuilder({ ...config, filter: value });
     },
@@ -557,12 +397,8 @@ function queryOptionsBuilder(config = {}): QueryOptionsBuilder {
     operators(build) {
       return queryOptionsBuilder({
         ...config,
-        operators: build(queryOperatorBuilder()).done(),
+        operators: build(queryOperatorBuilder()).input,
       });
-    },
-
-    done() {
-      return config;
     },
   };
 }
@@ -585,16 +421,14 @@ export const query: QueryHelper = {
   },
 
   options(config) {
-    return config;
+    return queryOptionsBuilder(config);
   },
 };
 
-// ============================================================================
-// ACCESS HELPER
-// ============================================================================
-
-function accessOptionsBuilder(config = {}): AccessOptionsBuilder {
+function accessOptionsBuilder(config: FieldAccessConfig = {}): AccessOptionsBuilder {
   return {
+    input: config,
+
     read(level) {
       return accessOptionsBuilder({ ...config, read: level });
     },
@@ -625,10 +459,6 @@ function accessOptionsBuilder(config = {}): AccessOptionsBuilder {
 
     sensitive(value = true) {
       return accessOptionsBuilder({ ...config, sensitive: value });
-    },
-
-    done() {
-      return config;
     },
   };
 }
@@ -663,13 +493,9 @@ export const access: AccessHelper = {
   },
 
   options(config) {
-    return config;
+    return accessOptionsBuilder(config);
   },
 };
-
-// ============================================================================
-// PERSISTENCE HELPER
-// ============================================================================
 
 function persistenceOptionsBuilder(
   config: FieldPersistenceConfig = {
@@ -677,20 +503,31 @@ function persistenceOptionsBuilder(
   },
 ): PersistenceOptionsBuilder {
   return {
+    input: config,
+
     mode(mode) {
       return persistenceOptionsBuilder({ ...config, mode });
     },
 
     stored() {
-      return persistenceOptionsBuilder({ ...config, mode: FieldPersistenceMode.stored });
+      return persistenceOptionsBuilder({
+        ...config,
+        mode: FieldPersistenceMode.stored,
+      });
     },
 
     virtual() {
-      return persistenceOptionsBuilder({ ...config, mode: FieldPersistenceMode.virtual });
+      return persistenceOptionsBuilder({
+        ...config,
+        mode: FieldPersistenceMode.virtual,
+      });
     },
 
     computed() {
-      return persistenceOptionsBuilder({ ...config, mode: FieldPersistenceMode.computed });
+      return persistenceOptionsBuilder({
+        ...config,
+        mode: FieldPersistenceMode.computed,
+      });
     },
 
     generated(value = true) {
@@ -699,10 +536,6 @@ function persistenceOptionsBuilder(
 
     immutable(value = true) {
       return persistenceOptionsBuilder({ ...config, immutable: value });
-    },
-
-    done() {
-      return config;
     },
   };
 }
@@ -733,6 +566,362 @@ export const persistence: PersistenceHelper = {
   },
 
   options(config) {
-    return config;
+    return persistenceOptionsBuilder(config);
   },
 };
+
+// ============================================================================
+// FIELD HELPERS
+// ============================================================================
+
+function fieldInput(source: EntityFieldInput['source'], options?: EntityFieldOptions): EntityFieldInput {
+  return {
+    source,
+    ...(options === undefined ? {} : { options }),
+  };
+}
+
+function patchField(input: EntityFieldInput, patch: EntityFieldOptions): EntityFieldInput {
+  return {
+    ...input,
+    options: {
+      ...(input.options ?? {}),
+      ...patch,
+    },
+  };
+}
+
+function propertyFieldBuilder(input: EntityFieldInput): PropertyFieldBuilder {
+  return {
+    input,
+
+    required(value = true) {
+      return propertyFieldBuilder(patchField(input, { required: value }));
+    },
+
+    optional() {
+      return propertyFieldBuilder(patchField(input, { required: false }));
+    },
+
+    nullable(value = true) {
+      return propertyFieldBuilder(patchField(input, { nullable: value }));
+    },
+
+    nonNullable() {
+      return propertyFieldBuilder(patchField(input, { nullable: false }));
+    },
+
+    array(options = true) {
+      return propertyFieldBuilder(patchField(input, { array: options }));
+    },
+
+    single() {
+      const { array: _array, ...nextOptions } = input.options ?? {};
+      return propertyFieldBuilder({
+        ...input,
+        options: nextOptions,
+      });
+    },
+
+    default(value) {
+      return propertyFieldBuilder(patchField(input, { default: value }));
+    },
+
+    query(build) {
+      return propertyFieldBuilder(patchField(input, { query: build(query).input }));
+    },
+
+    access(build) {
+      return propertyFieldBuilder(patchField(input, { access: build(access).input }));
+    },
+
+    persistence(build) {
+      return propertyFieldBuilder(patchField(input, { persistence: build(persistence).input }));
+    },
+
+    description(value) {
+      return propertyFieldBuilder(patchField(input, { description: value }));
+    },
+
+    deprecated(value = true) {
+      return propertyFieldBuilder(patchField(input, { deprecated: value }));
+    },
+
+    meta(value) {
+      return propertyFieldBuilder(patchField(input, { meta: value }));
+    },
+  };
+}
+
+function fieldFromValue(source: FieldSourceValue): PropertyFieldBuilder {
+  if ('kind' in source && source.kind.includes('property.')) {
+    return propertyFieldBuilder(
+      fieldInput({
+        kind: EntityFieldSourceKind.property,
+        ref: source as PropertyAuthoringRef,
+      }),
+    );
+  }
+
+  if ('kind' in source && source.kind === 'schema.model') {
+    return propertyFieldBuilder(
+      fieldInput({
+        kind: EntityFieldSourceKind.model,
+        ref: source as ModelAuthoringRef,
+      }),
+    );
+  }
+
+  return propertyFieldBuilder(
+    fieldInput({
+      kind: EntityFieldSourceKind.inlineProperty,
+      property: source as PropertySourceInputLike,
+    }),
+  );
+}
+
+function inlinePropertyField(source: PropertySourceInputLike): PropertyFieldBuilder {
+  return propertyFieldBuilder(
+    fieldInput({
+      kind: EntityFieldSourceKind.inlineProperty,
+      property: source,
+    }),
+  );
+}
+
+function patchRelationSource(
+  input: EntityFieldInput,
+  patch: Partial<Extract<EntityFieldInput['source'], { kind: 'relation' }>>,
+): EntityFieldInput {
+  if (input.source.kind !== EntityFieldSourceKind.relation) {
+    return input;
+  }
+
+  return {
+    ...input,
+    source: {
+      ...input.source,
+      ...patch,
+    },
+  };
+}
+
+function relationFieldBuilder(input: EntityFieldInput): RelationFieldBuilder {
+  return {
+    input,
+
+    required(value = true) {
+      return relationFieldBuilder(patchField(input, { required: value }));
+    },
+
+    optional() {
+      return relationFieldBuilder(patchField(input, { required: false }));
+    },
+
+    inverse(ref: EntityFieldAuthoringRef) {
+      return relationFieldBuilder(patchRelationSource(input, { inverse: ref }));
+    },
+
+    through(entity, map) {
+      const mapping = map(entity);
+
+      return relationFieldBuilder(
+        patchRelationSource(input, {
+          through: {
+            entity,
+            from: mapping.from,
+            to: mapping.to,
+          },
+        }),
+      );
+    },
+
+    expandable(value = true) {
+      return relationFieldBuilder(patchRelationSource(input, { expandable: value }));
+    },
+
+    relationName(name) {
+      return relationFieldBuilder(patchRelationSource(input, { relationName: name }));
+    },
+
+    access(build) {
+      return relationFieldBuilder(patchField(input, { access: build(access).input }));
+    },
+
+    description(value) {
+      return relationFieldBuilder(patchField(input, { description: value }));
+    },
+
+    deprecated(value = true) {
+      return relationFieldBuilder(patchField(input, { deprecated: value }));
+    },
+
+    meta(value) {
+      return relationFieldBuilder(patchField(input, { meta: value }));
+    },
+  };
+}
+
+function relationField(relation: EntityRelationKind, target: EntityTargetInput): RelationFieldBuilder {
+  return relationFieldBuilder(
+    fieldInput({
+      kind: EntityFieldSourceKind.relation,
+      relation,
+      target,
+    }),
+  );
+}
+
+const callableField = ((source: FieldSourceValue) => fieldFromValue(source)) as FieldHelper;
+
+callableField.from = fieldFromValue;
+
+callableField.primitive = (type) => inlinePropertyField(property.primitive(type));
+callableField.string = () => inlinePropertyField(property.string());
+callableField.number = () => inlinePropertyField(property.number());
+callableField.integer = () => inlinePropertyField(property.integer());
+callableField.boolean = () => inlinePropertyField(property.boolean());
+callableField.date = () => inlinePropertyField(property.date());
+callableField.dateTime = () => inlinePropertyField(property.dateTime());
+callableField.time = () => inlinePropertyField(property.time());
+callableField.email = () => inlinePropertyField(property.email());
+callableField.uri = () => inlinePropertyField(property.uri());
+callableField.url = () => inlinePropertyField(property.url());
+callableField.uuid = () => inlinePropertyField(property.uuid());
+callableField.objectId = () => inlinePropertyField(property.objectId());
+callableField.phone = () => inlinePropertyField(property.phone());
+callableField.password = () => inlinePropertyField(property.password());
+callableField.binary = () => inlinePropertyField(property.binary());
+
+callableField.enum = (values) => inlinePropertyField(property.enum(values));
+callableField.composite = (properties) => inlinePropertyField(property.composite(properties));
+
+callableField.ref = (ref) => callableField(ref);
+
+callableField.belongsTo = (target) => relationField(RelationKind.belongsTo, target);
+callableField.hasOne = (target) => relationField(RelationKind.hasOne, target);
+callableField.hasMany = (target) => relationField(RelationKind.hasMany, target);
+callableField.manyToMany = (target) => relationField(RelationKind.manyToMany, target);
+
+export const field = callableField;
+
+// ============================================================================
+// MODEL / FIELD SET OVERRIDE HELPERS
+// ============================================================================
+
+export function entityModelOverrideBuilder<TFields extends EntityFieldInputMap>(
+  input: EntityModelOverrideInput<TFields> = {},
+): EntityModelOverrideBuilder<TFields> {
+  return {
+    input,
+
+    pick(...fields) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        pick: fields,
+      });
+    },
+
+    omit(...fields) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        omit: fields,
+      });
+    },
+
+    partial(value = true) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        partial: value,
+      });
+    },
+
+    relations(shape) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        relations: shape,
+      });
+    },
+
+    extendWith(fields) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        extendWith: fields,
+      });
+    },
+
+    description(value) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        description: value,
+      });
+    },
+
+    deprecated(value = true) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        deprecated: value,
+      });
+    },
+
+    meta(value) {
+      return entityModelOverrideBuilder<TFields>({
+        ...input,
+        meta: value,
+      });
+    },
+  };
+}
+
+export function entityFieldSetOverrideBuilder<TFields extends EntityFieldInputMap>(
+  input: EntityFieldSetOverrideInput<TFields> = {},
+): EntityFieldSetOverrideBuilder<TFields> {
+  return {
+    input,
+
+    only(...fields) {
+      return entityFieldSetOverrideBuilder<TFields>({
+        ...input,
+        mode: 'only',
+        fields,
+      });
+    },
+
+    include(...fields) {
+      return entityFieldSetOverrideBuilder<TFields>({
+        ...input,
+        mode: 'include',
+        fields,
+      });
+    },
+
+    exclude(...fields) {
+      return entityFieldSetOverrideBuilder<TFields>({
+        ...input,
+        mode: 'exclude',
+        fields,
+      });
+    },
+
+    description(value) {
+      return entityFieldSetOverrideBuilder<TFields>({
+        ...input,
+        description: value,
+      });
+    },
+
+    deprecated(value = true) {
+      return entityFieldSetOverrideBuilder<TFields>({
+        ...input,
+        deprecated: value,
+      });
+    },
+
+    meta(value) {
+      return entityFieldSetOverrideBuilder<TFields>({
+        ...input,
+        meta: value,
+      });
+    },
+  };
+}

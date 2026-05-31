@@ -5,6 +5,7 @@ import {
   type DtoAuthoringRef,
   type EntityAuthoringRef,
   type EntityFieldAuthoringRef,
+  type EntityFieldSetAuthoringRef,
   type EnumAuthoringRef,
   type ModelAuthoringRef,
   type OperationAuthoringRef,
@@ -23,13 +24,21 @@ import {
   type SecuritySchemeAuthoringRef,
 } from '@/contract/types/core/3.authoring-ref';
 
-import { ModelCategory } from '@/contract/types/schema/model/definition';
+import {
+  EntityFieldSetName,
+  type EntityFieldSetRefs,
+  EntityModelVariant,
+  type EntityModelRefs,
+  type PropertySourceInput,
+} from '@/contract/types/core/4.properties-builder';
 
 import { createEngineId, EngineIdPart } from '@/contract/engine/engine-id';
 
 import { createAuthoringRef, createExtendableAuthoringRef } from './create-authoring-ref';
 
-import type { PropertySourceInput } from '@/contract/types/core/4.properties-builder';
+// ============================================================================
+// PROPERTIES
+// ============================================================================
 
 export function primitiveRef(key: string): PrimitiveAuthoringRef {
   return createAuthoringRef({
@@ -66,6 +75,10 @@ export function propertyRefFromSource(key: string, source: PropertySourceInput):
   return source.ref;
 }
 
+// ============================================================================
+// SCHEMAS
+// ============================================================================
+
 export function entityRef(name: string): EntityAuthoringRef {
   return createAuthoringRef({
     id: createEngineId(EngineIdPart.schema, EngineIdPart.entity, name),
@@ -84,27 +97,81 @@ export function entityFieldRef(entityName: string, fieldKey: string): EntityFiel
   });
 }
 
-export function modelRef(entityName: string, category: ModelCategory): ModelAuthoringRef {
-  const key = `${entityName}:${category}`;
+export function modelRef(entityName: string, variant: EntityModelVariant): ModelAuthoringRef {
+  const key = `${entityName}:${variant}`;
 
   return createExtendableAuthoringRef({
-    id: createEngineId(EngineIdPart.schema, EngineIdPart.model, entityName, category),
+    id: createEngineId(EngineIdPart.schema, EngineIdPart.model, entityName, variant),
     kind: AuthoringRefKind.schemaModel,
     key,
     name: key,
   }) as ModelAuthoringRef;
 }
 
-export function modelRefs(entityName: string) {
+export function modelRefs(entityName: string): EntityModelRefs {
   return {
-    read: modelRef(entityName, ModelCategory.read),
-    create: modelRef(entityName, ModelCategory.create),
-    patch: modelRef(entityName, ModelCategory.patch),
-    query: modelRef(entityName, ModelCategory.query),
-    projection: modelRef(entityName, ModelCategory.projection),
-    redacted: modelRef(entityName, ModelCategory.redacted),
-    derived: modelRef(entityName, ModelCategory.derived),
-    internal: modelRef(entityName, ModelCategory.internal),
+    read: modelRef(entityName, EntityModelVariant.read),
+    create: modelRef(entityName, EntityModelVariant.create),
+    patch: modelRef(entityName, EntityModelVariant.patch),
+    query: modelRef(entityName, EntityModelVariant.query),
+    public: modelRef(entityName, EntityModelVariant.public),
+    publicList: modelRef(entityName, EntityModelVariant.publicList),
+    admin: modelRef(entityName, EntityModelVariant.admin),
+    internal: modelRef(entityName, EntityModelVariant.internal),
+    summary: modelRef(entityName, EntityModelVariant.summary),
+    option: modelRef(entityName, EntityModelVariant.option),
+    relation: modelRef(entityName, EntityModelVariant.relation),
+    projection: modelRef(entityName, EntityModelVariant.projection),
+    redacted: modelRef(entityName, EntityModelVariant.redacted),
+  };
+}
+
+export function entityFieldSetRef(entityName: string, setName: EntityFieldSetName): EntityFieldSetAuthoringRef {
+  const key = `${entityName}:${setName}`;
+
+  return createAuthoringRef({
+    id: createEngineId(EngineIdPart.schema, EngineIdPart.entity, entityName, EngineIdPart.fieldSet, setName),
+    kind: AuthoringRefKind.schemaEntityFieldSet,
+    key,
+    name: key,
+  });
+}
+
+export function entityFieldSetRefs(entityName: string): EntityFieldSetRefs {
+  return {
+    all: entityFieldSetRef(entityName, EntityFieldSetName.all),
+    scalar: entityFieldSetRef(entityName, EntityFieldSetName.scalar),
+    relation: entityFieldSetRef(entityName, EntityFieldSetName.relation),
+    readable: entityFieldSetRef(entityName, EntityFieldSetName.readable),
+    writable: entityFieldSetRef(entityName, EntityFieldSetName.writable),
+    selectable: entityFieldSetRef(entityName, EntityFieldSetName.selectable),
+    sortable: entityFieldSetRef(entityName, EntityFieldSetName.sortable),
+    filterable: entityFieldSetRef(entityName, EntityFieldSetName.filterable),
+    public: entityFieldSetRef(entityName, EntityFieldSetName.public),
+    internal: entityFieldSetRef(entityName, EntityFieldSetName.internal),
+    secret: entityFieldSetRef(entityName, EntityFieldSetName.secret),
+    sensitive: entityFieldSetRef(entityName, EntityFieldSetName.sensitive),
+    redacted: entityFieldSetRef(entityName, EntityFieldSetName.redacted),
+    persisted: entityFieldSetRef(entityName, EntityFieldSetName.persisted),
+    virtual: entityFieldSetRef(entityName, EntityFieldSetName.virtual),
+    computed: entityFieldSetRef(entityName, EntityFieldSetName.computed),
+    generated: entityFieldSetRef(entityName, EntityFieldSetName.generated),
+    immutable: entityFieldSetRef(entityName, EntityFieldSetName.immutable),
+    create: entityFieldSetRef(entityName, EntityFieldSetName.create),
+    patch: entityFieldSetRef(entityName, EntityFieldSetName.patch),
+    read: entityFieldSetRef(entityName, EntityFieldSetName.read),
+    list: entityFieldSetRef(entityName, EntityFieldSetName.list),
+    summary: entityFieldSetRef(entityName, EntityFieldSetName.summary),
+    option: entityFieldSetRef(entityName, EntityFieldSetName.option),
+    list_select: entityFieldSetRef(entityName, EntityFieldSetName.listSelect),
+    list_sort: entityFieldSetRef(entityName, EntityFieldSetName.listSort),
+    list_filter: entityFieldSetRef(entityName, EntityFieldSetName.listFilter),
+    public_list_select: entityFieldSetRef(entityName, EntityFieldSetName.publicListSelect),
+    public_list_sort: entityFieldSetRef(entityName, EntityFieldSetName.publicListSort),
+    public_list_filter: entityFieldSetRef(entityName, EntityFieldSetName.publicListFilter),
+    admin_list_select: entityFieldSetRef(entityName, EntityFieldSetName.adminListSelect),
+    admin_list_sort: entityFieldSetRef(entityName, EntityFieldSetName.adminListSort),
+    admin_list_filter: entityFieldSetRef(entityName, EntityFieldSetName.adminListFilter),
   };
 }
 
@@ -125,6 +192,10 @@ export function paramsRef(key: string): ParamsAuthoringRef {
     name: key,
   });
 }
+
+// ============================================================================
+// RESOURCES
+// ============================================================================
 
 export function resourceRef(key: string): ResourceAuthoringRef {
   return createAuthoringRef({
@@ -153,6 +224,10 @@ export function routeRef(resourceKey: string, key: string): RouteAuthoringRef {
   });
 }
 
+// ============================================================================
+// TRANSPORT
+// ============================================================================
+
 export function contentTypeRef(key: string): ContentTypeAuthoringRef {
   return createAuthoringRef({
     id: createEngineId(EngineIdPart.transport, EngineIdPart.contentType, key),
@@ -179,6 +254,10 @@ export function responseRef(key: string): ResponseAuthoringRef {
     name: key,
   });
 }
+
+// ============================================================================
+// SECURITY
+// ============================================================================
 
 export function securitySchemeRef(key: string): SecuritySchemeAuthoringRef {
   return createAuthoringRef({
