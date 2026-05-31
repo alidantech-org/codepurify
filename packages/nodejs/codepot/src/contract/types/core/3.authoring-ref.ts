@@ -70,15 +70,11 @@ export interface ArrayUsageOptions extends DefinitionItem {
   readonly uniqueItems?: boolean;
 }
 
-export interface ExtendUsageOptions<TExtension> extends DefinitionItem {
-  readonly extendWith: TExtension;
-}
-
 export interface RefUsageOptions<TExtension = never> extends DefinitionItem {
   readonly required?: boolean;
   readonly nullable?: boolean;
   readonly array?: true | ArrayUsageOptions | false;
-  readonly extendWith?: ExtendUsageOptions<TExtension>;
+  readonly extendWith?: TExtension;
 }
 
 // ============================================================================
@@ -95,8 +91,6 @@ export interface AuthoringRefBase<TTarget, TKind extends AuthoringRefKind> {
   readonly kind: TKind;
 
   readonly key: string;
-
-  readonly name?: string;
 
   /**
    * Type-only marker.

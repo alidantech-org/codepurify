@@ -14,11 +14,12 @@ import type { EnumDefinition, EnumValuePrimitive } from '@/contract/types/proper
 import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
 
 import type {
-  FieldAccessConfig,
-  FieldAccessLevel,
+  FieldCapabilityConfig,
+  FieldLifecycleConfig,
   FieldPersistenceConfig,
   FieldPersistenceMode,
-  FieldQueryConfig,
+  FieldVisibilityConfig,
+  FieldVisibilityLevel,
   QueryOperator,
 } from '@/contract/types/schema/entity/field/definition';
 
@@ -46,6 +47,44 @@ export const PropertySourceKind = {
 } as const;
 
 export type PropertySourceKind = (typeof PropertySourceKind)[keyof typeof PropertySourceKind];
+
+export const PropertySlotSourceMode = {
+  ref: 'ref',
+  inline: 'inline',
+  relation: 'relation',
+} as const;
+
+export type PropertySlotSourceMode = (typeof PropertySlotSourceMode)[keyof typeof PropertySlotSourceMode];
+
+export interface InlinePropertyPromotionHint {
+  readonly ownerKind: 'entity' | 'composite';
+  readonly ownerKey: string;
+  readonly fieldKey: string;
+  readonly suggestedKey: string;
+}
+
+export interface PropertySlotRefSource {
+  readonly mode: typeof PropertySlotSourceMode.ref;
+  readonly ref: PropertyAuthoringRef;
+}
+
+export interface PropertySlotInlineSource {
+  readonly mode: typeof PropertySlotSourceMode.inline;
+  readonly property: PropertySourceInput;
+  readonly promote: InlinePropertyPromotionHint;
+}
+
+export type PropertySlotSource = PropertySlotRefSource | PropertySlotInlineSource;
+
+export interface PropertyRefMemberInput {
+  readonly source: PropertySlotRefSource;
+}
+
+export interface InlinePropertyMemberInput {
+  readonly source: PropertySlotInlineSource;
+}
+
+export type NormalizedPropertyMemberInput = PropertyRefMemberInput | InlinePropertyMemberInput;
 
 export interface BasePropertySourceInput extends DefinitionItem {
   readonly kind: PropertySourceKind;
@@ -77,6 +116,12 @@ export interface CompositePropertySourceInput extends BasePropertySourceInput {
   readonly properties: Record<string, CompositePropertyValueInput>;
 }
 
+export interface NormalizedCompositePropertySourceInput extends BasePropertySourceInput {
+  readonly kind: typeof PropertySourceKind.composite;
+  readonly extends?: CompositeAuthoringRef;
+  readonly properties: Record<string, NormalizedPropertyMemberInput>;
+}
+
 export interface RefPropertySourceInput extends BasePropertySourceInput {
   readonly kind: typeof PropertySourceKind.ref;
   readonly ref: PropertyAuthoringRef;
@@ -87,6 +132,7 @@ export type PropertySourceInput =
   | PrimitivePropertySourceInput
   | EnumPropertySourceInput
   | CompositePropertySourceInput
+  | NormalizedCompositePropertySourceInput
   | RefPropertySourceInput;
 
 export interface PropertySourceBuilder<TInput extends PropertySourceInput> {
@@ -137,52 +183,72 @@ export interface QueryOperatorBuilder {
   exists(): QueryOperatorBuilder;
 }
 
-export interface QueryOptionsBuilder {
-  readonly input: FieldQueryConfig;
+export interface CapabilityOptionsBuilder {
+  readonly input: FieldCapabilityConfig;
 
-  filter(value?: boolean): QueryOptionsBuilder;
-  sort(value?: boolean): QueryOptionsBuilder;
-  select(value?: boolean): QueryOptionsBuilder;
+  filter(value?: boolean): CapabilityOptionsBuilder;
+  sort(value?: boolean): CapabilityOptionsBuilder;
+  select(value?: boolean): CapabilityOptionsBuilder;
 
-  operators(build: (operator: QueryOperatorBuilder) => QueryOperatorBuilder): QueryOptionsBuilder;
+  operators(build: (operator: QueryOperatorBuilder) => QueryOperatorBuilder): CapabilityOptionsBuilder;
 }
 
-export interface QueryHelper {
+export interface CapabilityHelper {
   operators(): QueryOperatorBuilder;
 
-  filter(value?: boolean): QueryOptionsBuilder;
-  sort(value?: boolean): QueryOptionsBuilder;
-  select(value?: boolean): QueryOptionsBuilder;
+  filter(value?: boolean): CapabilityOptionsBuilder;
+  sort(value?: boolean): CapabilityOptionsBuilder;
+  select(value?: boolean): CapabilityOptionsBuilder;
 
-  options(config: FieldQueryConfig): QueryOptionsBuilder;
+  options(config: FieldCapabilityConfig): CapabilityOptionsBuilder;
 }
 
-export interface AccessOptionsBuilder {
-  readonly input: FieldAccessConfig;
+export interface VisibilityOptionsBuilder {
+  readonly input: FieldVisibilityConfig;
 
-  read(level: FieldAccessLevel): AccessOptionsBuilder;
-  write(level: FieldAccessLevel): AccessOptionsBuilder;
+  read(level: FieldVisibilityLevel): VisibilityOptionsBuilder;
+  write(level: FieldVisibilityLevel): VisibilityOptionsBuilder;
 
-  public(): AccessOptionsBuilder;
-  internal(): AccessOptionsBuilder;
-  secret(): AccessOptionsBuilder;
-  auth(): AccessOptionsBuilder;
+  public(): VisibilityOptionsBuilder;
+  internal(): VisibilityOptionsBuilder;
+  secret(): VisibilityOptionsBuilder;
+  auth(): VisibilityOptionsBuilder;
 
-  sensitive(value?: boolean): AccessOptionsBuilder;
+  sensitive(value?: boolean): VisibilityOptionsBuilder;
 }
 
-export interface AccessHelper {
-  read(level: FieldAccessLevel): AccessOptionsBuilder;
-  write(level: FieldAccessLevel): AccessOptionsBuilder;
+export interface VisibilityHelper {
+  read(level: FieldVisibilityLevel): VisibilityOptionsBuilder;
+  write(level: FieldVisibilityLevel): VisibilityOptionsBuilder;
 
-  public(): AccessOptionsBuilder;
-  internal(): AccessOptionsBuilder;
-  secret(): AccessOptionsBuilder;
-  auth(): AccessOptionsBuilder;
+  public(): VisibilityOptionsBuilder;
+  internal(): VisibilityOptionsBuilder;
+  secret(): VisibilityOptionsBuilder;
+  auth(): VisibilityOptionsBuilder;
 
-  sensitive(value?: boolean): AccessOptionsBuilder;
+  sensitive(value?: boolean): VisibilityOptionsBuilder;
 
-  options(config: FieldAccessConfig): AccessOptionsBuilder;
+  options(config: FieldVisibilityConfig): VisibilityOptionsBuilder;
+}
+
+export interface LifecycleOptionsBuilder {
+  readonly input: FieldLifecycleConfig;
+
+  create(value?: boolean): LifecycleOptionsBuilder;
+  update(value?: boolean): LifecycleOptionsBuilder;
+  immutable(value?: boolean): LifecycleOptionsBuilder;
+  generated(value?: boolean): LifecycleOptionsBuilder;
+  readOnly(value?: boolean): LifecycleOptionsBuilder;
+}
+
+export interface LifecycleHelper {
+  create(value?: boolean): LifecycleOptionsBuilder;
+  update(value?: boolean): LifecycleOptionsBuilder;
+  immutable(value?: boolean): LifecycleOptionsBuilder;
+  generated(value?: boolean): LifecycleOptionsBuilder;
+  readOnly(value?: boolean): LifecycleOptionsBuilder;
+
+  options(config: FieldLifecycleConfig): LifecycleOptionsBuilder;
 }
 
 export interface PersistenceOptionsBuilder {
@@ -322,17 +388,22 @@ export const EntityRelationKind = {
 export type EntityRelationKind = (typeof EntityRelationKind)[keyof typeof EntityRelationKind];
 
 export interface PropertyFieldSourceInput {
-  readonly kind: typeof EntityFieldSourceKind.property;
+  readonly mode: typeof PropertySlotSourceMode.ref;
   readonly ref: PropertyAuthoringRef;
 }
 
 export interface InlinePropertyFieldSourceInput {
-  readonly kind: typeof EntityFieldSourceKind.inlineProperty;
-  readonly property: PropertySourceInputLike;
+  readonly mode: typeof PropertySlotSourceMode.inline;
+
+  // authoring-time before builder normalization
+  readonly property?: PropertySourceInputLike;
+
+  // normalized state
+  readonly promote?: InlinePropertyPromotionHint;
 }
 
 export interface ModelFieldSourceInput {
-  readonly kind: typeof EntityFieldSourceKind.model;
+  readonly mode: typeof PropertySlotSourceMode.ref;
   readonly ref: ModelAuthoringRef;
 }
 
@@ -345,7 +416,7 @@ export interface RelationFieldThroughInput {
 }
 
 export interface RelationFieldSourceInput extends DefinitionItem {
-  readonly kind: typeof EntityFieldSourceKind.relation;
+  readonly mode: typeof PropertySlotSourceMode.relation;
   readonly relation: EntityRelationKind;
   readonly target: EntityTargetInput;
   readonly through?: RelationFieldThroughInput;
@@ -354,11 +425,7 @@ export interface RelationFieldSourceInput extends DefinitionItem {
   readonly relationName?: string;
 }
 
-export type EntityFieldSourceInput =
-  | PropertyFieldSourceInput
-  | InlinePropertyFieldSourceInput
-  | ModelFieldSourceInput
-  | RelationFieldSourceInput;
+export type EntityFieldSourceInput = PropertySlotRefSource | PropertySlotInlineSource | ModelFieldSourceInput | RelationFieldSourceInput;
 
 export type FieldSourceValue = PropertyAuthoringRef | ModelAuthoringRef | PropertySourceInputLike;
 
@@ -370,9 +437,10 @@ export interface EntityFieldOptions extends DefinitionItem {
   readonly required?: boolean;
   readonly nullable?: boolean;
   readonly default?: unknown;
-  readonly array?: true | ArrayUsageOptions;
-  readonly query?: FieldQueryConfig;
-  readonly access?: FieldAccessConfig;
+  readonly array?: true | ArrayUsageOptions | false;
+  readonly capability?: FieldCapabilityConfig;
+  readonly visibility?: FieldVisibilityConfig;
+  readonly lifecycle?: FieldLifecycleConfig;
   readonly persistence?: FieldPersistenceConfig;
 }
 
@@ -401,9 +469,11 @@ export interface PropertyFieldBuilder extends BaseFieldBuilder<EntityFieldInput>
 
   default(value: unknown): PropertyFieldBuilder;
 
-  query(build: (query: QueryHelper) => QueryOptionsBuilder): PropertyFieldBuilder;
-  access(build: (access: AccessHelper) => AccessOptionsBuilder): PropertyFieldBuilder;
   persistence(build: (persistence: PersistenceHelper) => PersistenceOptionsBuilder): PropertyFieldBuilder;
+
+  capability(build: (capability: CapabilityHelper) => CapabilityOptionsBuilder): PropertyFieldBuilder;
+  visibility(build: (visibility: VisibilityHelper) => VisibilityOptionsBuilder): PropertyFieldBuilder;
+  lifecycle(build: (lifecycle: LifecycleHelper) => LifecycleOptionsBuilder): PropertyFieldBuilder;
 }
 
 export interface RelationFieldBuilder extends BaseFieldBuilder<EntityFieldInput> {
@@ -420,7 +490,7 @@ export interface RelationFieldBuilder extends BaseFieldBuilder<EntityFieldInput>
   expandable(value?: boolean): RelationFieldBuilder;
   relationName(name: string): RelationFieldBuilder;
 
-  access(build: (access: AccessHelper) => AccessOptionsBuilder): RelationFieldBuilder;
+  visibility(build: (visibility: VisibilityHelper) => VisibilityOptionsBuilder): RelationFieldBuilder;
 }
 
 export type FieldBuilder = PropertyFieldBuilder | RelationFieldBuilder;
@@ -629,6 +699,7 @@ export type MergeEntityFields<TParent extends EntityExtendsInput | undefined, TO
 
 export interface EntityOptions<TParent extends EntityExtendsInput | undefined = undefined> extends DefinitionItem {
   readonly extends?: TParent;
+  readonly abstract?: boolean;
   readonly tags?: readonly string[];
 }
 
@@ -706,6 +777,8 @@ export interface EntityPropertiesResult<
   readonly entity: EntityAuthoringRef;
 
   readonly ref: {
+    readonly entity: EntityAuthoringRef;
+
     readonly fields: {
       readonly [K in keyof TAllFields & string]: EntityFieldAuthoringRef;
     };

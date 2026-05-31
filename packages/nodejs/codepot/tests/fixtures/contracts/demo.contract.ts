@@ -26,6 +26,8 @@ const primitives = properties.primitives({
   integer: property.integer(),
   text: property.string(),
   boolean: property.boolean(),
+  moneyAmount: property.number().min(0),
+  currencyCode: property.string().minLength(3).maxLength(3),
 });
 
 // ============================================================================
@@ -45,6 +47,11 @@ export const enums = properties.enums({
 
 export const composites = properties.composites({
   money: property.composite({
+    amount: primitives.ref.moneyAmount,
+    currency: primitives.ref.currencyCode,
+  }),
+
+  inlineMoney: property.composite({
     amount: property.number().min(0),
     currency: property.string().minLength(3).maxLength(3),
   }),
@@ -54,21 +61,27 @@ export const composites = properties.composites({
 // BASE ENTITY
 // ============================================================================
 
-export const baseEntity = schemas.entity('BaseEntity', {
-  id: field(primitives.ref.id)
-    .required()
-    .query((q) => q.filter().sort().select())
-    .persistence((p) => p.stored().generated().immutable()),
+export const baseEntity = schemas.entity(
+  'BaseEntity',
+  {
+    id: field(primitives.ref.id)
+      .required()
+      .capability((c) => c.filter().sort().select())
+      .lifecycle((l) => l.generated().immutable())
+      .persistence((p) => p.stored()),
 
-  createdAt: field(primitives.ref.dateTime)
-    .required()
-    .query((q) => q.filter().sort())
-    .persistence((p) => p.stored().immutable()),
+    createdAt: field(primitives.ref.dateTime)
+      .required()
+      .capability((c) => c.filter().sort())
+      .lifecycle((l) => l.immutable())
+      .persistence((p) => p.stored()),
 
-  updatedAt: field(primitives.ref.dateTime)
-    .required()
-    .persistence((p) => p.stored()),
-});
+    updatedAt: field(primitives.ref.dateTime)
+      .required()
+      .persistence((p) => p.stored()),
+  },
+  { abstract: true },
+);
 
 // ============================================================================
 // ENTITIES
@@ -80,32 +93,37 @@ export const user = schemas
     {
       name: field(primitives.ref.displayName)
         .required()
-        .query((q) => q.filter().sort().select())
-        .access((a) => a.public()),
+        .capability((c) => c.filter().sort().select())
+        .visibility((v) => v.public()),
 
       email: field(primitives.ref.email)
         .required()
-        .query((q) => q.filter().select(false))
-        .access((a) => a.public().sensitive()),
+        .capability((c) => c.filter().select(false))
+        .visibility((v) => v.public().sensitive()),
 
       bio: field(primitives.ref.text)
         .optional()
         .nullable()
-        .access((a) => a.public()),
+        .visibility((v) => v.public()),
+
+      nickname: field(property.string().minLength(2).maxLength(40))
+        .optional()
+        .visibility((v) => v.public()),
 
       role: field(enums.ref.UserRole)
         .required()
-        .query((q) => q.filter().sort())
-        .access((a) => a.public()),
+        .capability((c) => c.filter().sort())
+        .visibility((v) => v.public()),
 
       roles: field(enums.ref.UserRole).array().required(),
 
       status: field(enums.ref.UserStatus)
         .required()
-        .query((q) => q.filter().sort())
-        .access((a) => a.internal()),
+        .capability((c) => c.filter().sort())
+        .visibility((v) => v.internal()),
 
       billingLimit: field(composites.ref.money).optional(),
+      inlineBillingLimit: field(composites.ref.inlineMoney).optional(),
     },
     {
       extends: baseEntity,
@@ -132,16 +150,16 @@ export const profile = schemas
     user: field
       .belongsTo(user)
       .required()
-      .access((a) => a.internal()),
+      .visibility((v) => v.internal()),
 
     displayName: field(primitives.ref.displayName)
       .required()
-      .access((a) => a.public()),
+      .visibility((v) => v.public()),
 
     bio: field(primitives.ref.bio)
       .optional()
       .nullable()
-      .access((a) => a.public()),
+      .visibility((v) => v.public()),
   })
   .models({
     public: (m) => m.pick('displayName', 'bio'),
@@ -155,11 +173,11 @@ export const post = schemas
 
     title: field(primitives.ref.displayName)
       .required()
-      .query((q) => q.filter().sort().select()),
+      .capability((c) => c.filter().sort().select()),
 
     body: field(primitives.ref.bio)
       .required()
-      .access((a) => a.public()),
+      .visibility((v) => v.public()),
   })
   .models({
     read: (m) => m.relations('expand'),
@@ -172,7 +190,7 @@ export const tag = schemas
   .entity('Tag', {
     name: field(primitives.ref.displayName)
       .required()
-      .query((q) => q.filter().sort()),
+      .capability((c) => c.filter().sort()),
 
     posts: field.manyToMany(post),
   })

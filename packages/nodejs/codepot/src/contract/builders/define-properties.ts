@@ -16,9 +16,12 @@ import type {
   CompositePropertiesResult,
   CompositePropertySourceInput,
   CompositePropertySourceMap,
+  CompositePropertyValueInput,
   EnumPropertiesResult,
   EnumPropertySourceInput,
   EnumPropertySourceMap,
+  NormalizedCompositePropertySourceInput,
+  NormalizedPropertyMemberInput,
   PrimitivePropertiesResult,
   PrimitivePropertySourceInput,
   PrimitivePropertySourceMap,
@@ -28,6 +31,10 @@ import type {
   PropertySourceInputLike,
   PropertySourceMap,
 } from '@/contract/types/core/4.properties-builder';
+
+import { PropertySlotSourceMode } from '@/contract/types/core/4.properties-builder';
+
+import { createInlinePropertyPromotionHint, unwrapPropertySourceInput } from '@/contract/helpers/properties/inline-property';
 
 import { compositeRef, enumRef, primitiveRef, propertyRefFromSource } from '@/contract/helpers/refs/authoring-ref-builder';
 
@@ -57,15 +64,79 @@ function isPropertySourceBuilder(value: PropertySourceInputLike): value is { rea
   return !!value && typeof value === 'object' && 'input' in value;
 }
 
-function toPropertySourceInput(value: PropertySourceInputLike): PropertySourceInput {
-  return isPropertySourceBuilder(value) ? value.input : value;
+function isPropertyRef(value: unknown): value is PropertyAuthoringRef {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    'id' in value &&
+    'kind' in value &&
+    'key' in value &&
+    typeof (value as { kind: unknown }).kind === 'string' &&
+    (value as { kind: string }).kind.startsWith('property.')
+  );
+}
+
+function normalizeCompositeMember(input: {
+  readonly compositeKey: string;
+  readonly fieldKey: string;
+  readonly value: CompositePropertyValueInput;
+}): NormalizedPropertyMemberInput {
+  if (isPropertyRef(input.value)) {
+    return {
+      source: {
+        mode: PropertySlotSourceMode.ref,
+        ref: input.value,
+      },
+    };
+  }
+
+  return {
+    source: {
+      mode: PropertySlotSourceMode.inline,
+      property: unwrapPropertySourceInput(input.value),
+      promote: createInlinePropertyPromotionHint({
+        ownerKind: 'composite',
+        ownerKey: input.compositeKey,
+        fieldKey: input.fieldKey,
+      }),
+    },
+  };
+}
+
+function normalizeCompositeSource(
+  key: string,
+  source: CompositePropertySourceInput | NormalizedCompositePropertySourceInput,
+): NormalizedCompositePropertySourceInput {
+  return {
+    ...source,
+    properties: Object.fromEntries(
+      Object.entries(source.properties).map(([fieldKey, value]) => [
+        fieldKey,
+        normalizeCompositeMember({
+          compositeKey: key,
+          fieldKey,
+          value,
+        }),
+      ]),
+    ) as NormalizedCompositePropertySourceInput['properties'],
+  };
+}
+
+function toPropertySourceInput(key: string, value: PropertySourceInputLike): PropertySourceInput {
+  const source = isPropertySourceBuilder(value) ? value.input : value;
+
+  if (source.kind === 'composite') {
+    return normalizeCompositeSource(key, source);
+  }
+
+  return source;
 }
 
 function normalizePropertySources<TFields extends PropertySourceMap>(fields: TFields): Record<keyof TFields & string, PropertySourceInput> {
   const normalized = {} as Record<keyof TFields & string, PropertySourceInput>;
 
   for (const [key, value] of Object.entries(fields) as [keyof TFields & string, TFields[keyof TFields & string]][]) {
-    normalized[key] = toPropertySourceInput(value);
+    normalized[key] = toPropertySourceInput(key, value);
   }
 
   return normalized;
@@ -79,7 +150,11 @@ function writeEnumSource(state: PropertiesDefinition, key: string, source: EnumP
   state.enums[key] = source as unknown as EnumDefinition;
 }
 
-function writeCompositeSource(state: PropertiesDefinition, key: string, source: CompositePropertySourceInput): void {
+function writeCompositeSource(
+  state: PropertiesDefinition,
+  key: string,
+  source: CompositePropertySourceInput | NormalizedCompositePropertySourceInput,
+): void {
   state.composites[key] = source as unknown as CompositeDefinition;
 }
 

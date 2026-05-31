@@ -22,6 +22,12 @@ export interface EntityDefinition extends DefinitionItem {
   extends?: Ref<EntityDefinition>;
 
   /**
+   * Abstract entities are reusable schema bases, not concrete entities.
+   * They are not emitted as DB tables/entities by default.
+   */
+  abstract?: boolean;
+
+  /**
    * Entity-owned fields only.
    * Inherited fields come from `extends` and must not be duplicated in output.
    */

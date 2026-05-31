@@ -13,7 +13,6 @@ export interface CreateAuthoringRefInput<TTarget, TKind extends AuthoringRefKind
   readonly id: string;
   readonly kind: TKind;
   readonly key: string;
-  readonly name?: string;
 }
 
 // ============================================================================
@@ -27,7 +26,6 @@ function createBaseRef<TTarget, TKind extends AuthoringRefKind>(
     id: input.id,
     kind: input.kind,
     key: input.key,
-    ...(input.name === undefined ? {} : { name: input.name }),
   };
 }
 
@@ -115,7 +113,7 @@ export function createExtendableAuthoringRef<TTarget, TKind extends AuthoringRef
 
     extendWith(fields: TExtension) {
       return createExtendableUsage<TTarget, TKind, TExtension>(base, {
-        extendWith: { extendWith: fields },
+        extendWith: fields,
       });
     },
   };
@@ -154,8 +152,7 @@ export function createUsage<TTarget, TKind extends AuthoringRefKind>(
     },
 
     single() {
-      const { array: _array, ...nextUsage } = usage;
-      return createUsage(ref, nextUsage);
+      return createUsage(ref, { ...usage, array: false });
     },
   };
 }
@@ -189,14 +186,13 @@ export function createExtendableUsage<TTarget, TKind extends AuthoringRefKind, T
     },
 
     single() {
-      const { array: _array, ...nextUsage } = usage;
-      return createExtendableUsage(ref, nextUsage);
+      return createExtendableUsage(ref, { ...usage, array: false });
     },
 
     extendWith(fields: TExtension) {
       return createExtendableUsage(ref, {
         ...usage,
-        extendWith: { extendWith: fields },
+        extendWith: fields,
       });
     },
   };

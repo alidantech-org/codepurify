@@ -9,7 +9,6 @@ import type { SchemasDefinition } from '@/contract/types/schema/definition';
 import type { DtoAuthoringRef, EntityFieldAuthoringRef, ParamsAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 import type {
-  AnyEntityResult,
   EntityAllFields,
   EntityExtendsInput,
   EntityFieldInput,
@@ -28,10 +27,11 @@ import type {
   MergeEntityFields,
 } from '@/contract/types/core/4.properties-builder';
 
+import { PropertySlotSourceMode } from '@/contract/types/core/4.properties-builder';
+
 import type {
   DtoFieldInput,
   DtoFieldInputMap,
-  DtoRef,
   DtoSchemaInput,
   DtoSchemaInputMap,
   DtoSchemasResult,
@@ -43,6 +43,12 @@ import type {
 import { entityFieldSetOverrideBuilder, entityModelOverrideBuilder } from '@/contract/helpers/properties/property';
 
 import { dtoRef, entityFieldRef, entityFieldSetRefs, entityRef, modelRefs, paramsRef } from '@/contract/helpers/refs/authoring-ref-builder';
+
+import { isEntityResult, normalizeEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
+
+import { createInlinePropertyPromotionHint, unwrapPropertySourceInput } from '@/contract/helpers/properties/inline-property';
+
+import { normalizeEntityFieldOptions } from '@/contract/helpers/properties/field-defaults';
 
 // ============================================================================
 // OPTIONS
@@ -75,15 +81,75 @@ function isEntityFieldBuilder(value: EntityFieldInputLike): value is FieldBuilde
   return !!value && typeof value === 'object' && 'input' in value;
 }
 
-function toEntityFieldInput(value: EntityFieldInputLike): EntityFieldInput {
-  return isEntityFieldBuilder(value) ? value.input : value;
+function withDefaultOptions(field: EntityFieldInput): EntityFieldInput {
+  return {
+    ...field,
+    options: normalizeEntityFieldOptions(field),
+  };
 }
 
-function normalizeEntityFields<TFields extends EntityFieldInputMap>(fields: TFields): Record<keyof TFields & string, EntityFieldInput> {
+function normalizeEntityFieldInput(input: {
+  readonly entityName: string;
+  readonly fieldKey: string;
+  readonly field: EntityFieldInput;
+}): EntityFieldInput {
+  let field = input.field;
+
+  if (field.source.mode === PropertySlotSourceMode.inline) {
+    if ('property' in field.source && field.source.property) {
+      field = {
+        ...field,
+        source: {
+          mode: PropertySlotSourceMode.inline,
+          property: unwrapPropertySourceInput(field.source.property),
+          promote: createInlinePropertyPromotionHint({
+            ownerKind: 'entity',
+            ownerKey: input.entityName,
+            fieldKey: input.fieldKey,
+          }),
+        },
+      };
+    }
+    // Already normalized
+  } else if (field.source.mode === PropertySlotSourceMode.relation) {
+    field = {
+      ...field,
+      source: {
+        ...field.source,
+        target: normalizeEntityTarget(field.source.target),
+        through: field.source.through
+          ? {
+              ...field.source.through,
+              entity: normalizeEntityTarget(field.source.through.entity),
+            }
+          : undefined,
+      },
+    };
+  }
+
+  return withDefaultOptions(field);
+}
+
+function toEntityFieldInput(value: EntityFieldInputLike): EntityFieldInput {
+  const input = isEntityFieldBuilder(value) ? value.input : value;
+
+  return input;
+}
+
+function normalizeEntityFields<TFields extends EntityFieldInputMap>(
+  entityName: string,
+  fields: TFields,
+): Record<keyof TFields & string, EntityFieldInput> {
   const normalized = {} as Record<keyof TFields & string, EntityFieldInput>;
 
   for (const [key, value] of Object.entries(fields) as [keyof TFields & string, TFields[keyof TFields & string]][]) {
-    normalized[key] = toEntityFieldInput(value);
+    const input = toEntityFieldInput(value);
+
+    normalized[key] = normalizeEntityFieldInput({
+      entityName,
+      fieldKey: key,
+      field: input,
+    });
   }
 
   return normalized;
@@ -224,12 +290,12 @@ function writeEntitySource<TFields extends EntityFieldInputMap, TParent extends 
   options: EntityOptions<TParent>,
 ): void {
   const state = ensureState(schemas);
-  const normalizedFields = normalizeEntityFields(fields);
+  const normalizedFields = normalizeEntityFields(name, fields);
 
   state.entities![name] = {
+    abstract: options.abstract,
     fields: normalizedFields as unknown as Record<string, EntityField>,
-    extends: options.extends?.entity,
-    inheritedFields: options.extends?.ref.fields,
+    extends: options.extends ? normalizeEntityTarget(options.extends) : undefined,
     tags: options.tags,
     description: options.description,
     deprecated: options.deprecated,
@@ -249,12 +315,15 @@ function createEntityResult<TName extends string, TOwnFields extends EntityField
     ...fields,
   } as MergeEntityFields<TParent, TOwnFields>;
 
+  const currentEntityRef = entityRef(name);
+
   const result: EntityPropertiesResult<TName, TOwnFields, MergeEntityFields<TParent, TOwnFields>> = {
     name,
     fields,
     allFields,
-    entity: entityRef(name),
+    entity: currentEntityRef,
     ref: {
+      entity: currentEntityRef,
       fields: fieldRefs as EntityPropertiesResult<TName, TOwnFields, MergeEntityFields<TParent, TOwnFields>>['ref']['fields'],
       models: modelRefs(name) as EntityPropertiesResult<TName, TOwnFields, MergeEntityFields<TParent, TOwnFields>>['ref']['models'],
       fieldSets: entityFieldSetRefs(name) as EntityPropertiesResult<
@@ -297,7 +366,9 @@ function isAuthoringRefOrUsage(value: unknown): boolean {
 function normalizeDtoSchema(value: DtoSchemaInput): unknown {
   // Direct ref/usage - wrap as source for storage
   if (isAuthoringRefOrUsage(value)) {
-    return { source: value };
+    return {
+      source: normalizeDtoRefUsage(value as DtoFieldInput),
+    };
   }
 
   // Flat field map - wrap in fields
@@ -306,9 +377,60 @@ function normalizeDtoSchema(value: DtoSchemaInput): unknown {
   };
 }
 
-function normalizeDtoFields(fields: DtoFieldInputMap): DtoFieldInputMap {
-  // DTO fields are already refs/usages, no transformation needed
-  return fields;
+function isAuthoringRef(value: unknown): value is {
+  readonly id: string;
+  readonly kind: string;
+  readonly key: string;
+} {
+  return !!value && typeof value === 'object' && 'id' in value && 'kind' in value && 'key' in value;
+}
+
+function isRefUsage(value: unknown): value is {
+  readonly ref: unknown;
+  readonly usage: unknown;
+} {
+  return !!value && typeof value === 'object' && 'ref' in value && 'usage' in value;
+}
+
+function normalizeDtoRefUsage(value: DtoFieldInput): {
+  readonly ref: DtoFieldInput;
+  readonly usage: Record<string, unknown>;
+} {
+  if (isRefUsage(value)) {
+    return {
+      ref: value.ref as DtoFieldInput,
+      usage: (value.usage as Record<string, unknown>) ?? {},
+    };
+  }
+
+  return {
+    ref: value,
+    usage: {},
+  };
+}
+
+function normalizeDtoFields(fields: DtoFieldInputMap): Record<
+  string,
+  {
+    readonly ref: DtoFieldInput;
+    readonly usage: Record<string, unknown>;
+  }
+> {
+  const normalized: Record<
+    string,
+    {
+      readonly ref: DtoFieldInput;
+      readonly usage: Record<string, unknown>;
+    }
+  > = {};
+
+  for (const [key, value] of Object.entries(fields)) {
+    // If value is an entity result, normalize it to entity ref first
+    const normalizedValue = isEntityResult(value) ? value.entity : value;
+    normalized[key] = normalizeDtoRefUsage(normalizedValue as DtoFieldInput);
+  }
+
+  return normalized;
 }
 
 function writeDtoSchemas<TSchemas extends DtoSchemaInputMap>(schemasState: Partial<SchemasDefinition>, schemas: TSchemas): void {

@@ -9,7 +9,7 @@ export { defineRoutes } from './builders/define-routes';
 export { defineTransport } from './builders/define-transport';
 export { defineSecurity } from './builders/define-security';
 
-export { property, field, query, access, persistence } from './helpers/properties/property';
+export { property, field, capability, visibility, lifecycle, persistence } from './helpers/properties/property';
 
 export {
   security,

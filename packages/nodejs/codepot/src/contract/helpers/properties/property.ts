@@ -1,20 +1,24 @@
 import {
-  FieldAccessLevel,
+  FieldVisibilityLevel,
   FieldPersistenceMode,
   QueryOperator,
-  type FieldAccessConfig,
+  type FieldCapabilityConfig,
+  type FieldLifecycleConfig,
   type FieldPersistenceConfig,
-  type FieldQueryConfig,
+  type FieldVisibilityConfig,
 } from '@/contract/types/schema/entity/field/definition';
 
 import { PrimitiveFormat, PrimitiveType } from '@/contract/types/properties/primitive/definition';
 
 import type {
-  AccessHelper,
-  AccessOptionsBuilder,
+  CapabilityHelper,
+  CapabilityOptionsBuilder,
+  LifecycleHelper,
+  LifecycleOptionsBuilder,
+  VisibilityHelper,
+  VisibilityOptionsBuilder,
   CompositePropertyBuilder,
   CompositePropertySourceInput,
-  CompositePropertyValueInput,
   EntityFieldInput,
   EntityFieldInputMap,
   EntityFieldOptions,
@@ -22,6 +26,7 @@ import type {
   EntityFieldSetOverrideInput,
   EntityModelOverrideBuilder,
   EntityModelOverrideInput,
+  EntityFieldSourceInput,
   EntityRelationKind,
   EntityTargetInput,
   FieldHelper,
@@ -33,11 +38,8 @@ import type {
   PrimitivePropertySourceInput,
   PropertyFieldBuilder,
   PropertyHelper,
-  PropertySourceInput,
   PropertySourceInputLike,
-  QueryHelper,
   QueryOperatorBuilder,
-  QueryOptionsBuilder,
   RefPropertyBuilder,
   RefPropertySourceInput,
   RelationFieldBuilder,
@@ -46,7 +48,7 @@ import type {
   EnumPropertySourceInput,
 } from '@/contract/types/core/4.properties-builder';
 
-import { EntityFieldSourceKind, EntityRelationKind as RelationKind } from '@/contract/types/core/4.properties-builder';
+import { PropertySlotSourceMode, EntityRelationKind as RelationKind } from '@/contract/types/core/4.properties-builder';
 
 import type {
   CompositeAuthoringRef,
@@ -54,6 +56,10 @@ import type {
   ModelAuthoringRef,
   PropertyAuthoringRef,
 } from '@/contract/types/core/3.authoring-ref';
+
+import { normalizeEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
+
+import { unwrapPropertySourceInput } from '@/contract/helpers/properties/inline-property';
 
 // ============================================================================
 // PROPERTY SOURCE HELPERS
@@ -378,24 +384,24 @@ function queryOperatorBuilder(values: readonly QueryOperator[] = []): QueryOpera
   };
 }
 
-function queryOptionsBuilder(config: FieldQueryConfig = {}): QueryOptionsBuilder {
+function capabilityOptionsBuilder(config: FieldCapabilityConfig = {}): CapabilityOptionsBuilder {
   return {
     input: config,
 
     filter(value = true) {
-      return queryOptionsBuilder({ ...config, filter: value });
+      return capabilityOptionsBuilder({ ...config, filter: value });
     },
 
     sort(value = true) {
-      return queryOptionsBuilder({ ...config, sort: value });
+      return capabilityOptionsBuilder({ ...config, sort: value });
     },
 
     select(value = true) {
-      return queryOptionsBuilder({ ...config, select: value });
+      return capabilityOptionsBuilder({ ...config, select: value });
     },
 
     operators(build) {
-      return queryOptionsBuilder({
+      return capabilityOptionsBuilder({
         ...config,
         operators: build(queryOperatorBuilder()).input,
       });
@@ -403,97 +409,149 @@ function queryOptionsBuilder(config: FieldQueryConfig = {}): QueryOptionsBuilder
   };
 }
 
-export const query: QueryHelper = {
+export const capability: CapabilityHelper = {
   operators() {
     return queryOperatorBuilder();
   },
 
   filter(value = true) {
-    return queryOptionsBuilder().filter(value);
+    return capabilityOptionsBuilder().filter(value);
   },
 
   sort(value = true) {
-    return queryOptionsBuilder().sort(value);
+    return capabilityOptionsBuilder().sort(value);
   },
 
   select(value = true) {
-    return queryOptionsBuilder().select(value);
+    return capabilityOptionsBuilder().select(value);
   },
 
   options(config) {
-    return queryOptionsBuilder(config);
+    return capabilityOptionsBuilder(config);
   },
 };
 
-function accessOptionsBuilder(config: FieldAccessConfig = {}): AccessOptionsBuilder {
+function visibilityOptionsBuilder(config: FieldVisibilityConfig = {}): VisibilityOptionsBuilder {
   return {
     input: config,
 
     read(level) {
-      return accessOptionsBuilder({ ...config, read: level });
+      return visibilityOptionsBuilder({ ...config, read: level });
     },
 
     write(level) {
-      return accessOptionsBuilder({ ...config, write: level });
+      return visibilityOptionsBuilder({ ...config, write: level });
     },
 
     public() {
-      return accessOptionsBuilder({ ...config, read: FieldAccessLevel.public });
+      return visibilityOptionsBuilder({ ...config, read: FieldVisibilityLevel.public });
     },
 
     internal() {
-      return accessOptionsBuilder({ ...config, read: FieldAccessLevel.internal });
+      return visibilityOptionsBuilder({ ...config, read: FieldVisibilityLevel.internal });
     },
 
     secret() {
-      return accessOptionsBuilder({
+      return visibilityOptionsBuilder({
         ...config,
-        read: FieldAccessLevel.secret,
+        read: FieldVisibilityLevel.secret,
         sensitive: true,
       });
     },
 
     auth() {
-      return accessOptionsBuilder({ ...config, read: FieldAccessLevel.auth });
+      return visibilityOptionsBuilder({ ...config, read: FieldVisibilityLevel.auth });
     },
 
     sensitive(value = true) {
-      return accessOptionsBuilder({ ...config, sensitive: value });
+      return visibilityOptionsBuilder({ ...config, sensitive: value });
     },
   };
 }
 
-export const access: AccessHelper = {
+export const visibility: VisibilityHelper = {
   read(level) {
-    return accessOptionsBuilder().read(level);
+    return visibilityOptionsBuilder().read(level);
   },
 
   write(level) {
-    return accessOptionsBuilder().write(level);
+    return visibilityOptionsBuilder().write(level);
   },
 
   public() {
-    return accessOptionsBuilder().public();
+    return visibilityOptionsBuilder().public();
   },
 
   internal() {
-    return accessOptionsBuilder().internal();
+    return visibilityOptionsBuilder().internal();
   },
 
   secret() {
-    return accessOptionsBuilder().secret();
+    return visibilityOptionsBuilder().secret();
   },
 
   auth() {
-    return accessOptionsBuilder().auth();
+    return visibilityOptionsBuilder().auth();
   },
 
   sensitive(value = true) {
-    return accessOptionsBuilder().sensitive(value);
+    return visibilityOptionsBuilder().sensitive(value);
   },
 
   options(config) {
-    return accessOptionsBuilder(config);
+    return visibilityOptionsBuilder(config);
+  },
+};
+
+function lifecycleOptionsBuilder(config: FieldLifecycleConfig = {}): LifecycleOptionsBuilder {
+  return {
+    input: config,
+
+    create(value = true) {
+      return lifecycleOptionsBuilder({ ...config, create: value });
+    },
+
+    update(value = true) {
+      return lifecycleOptionsBuilder({ ...config, update: value });
+    },
+
+    immutable(value = true) {
+      return lifecycleOptionsBuilder({ ...config, immutable: value });
+    },
+
+    generated(value = true) {
+      return lifecycleOptionsBuilder({ ...config, generated: value });
+    },
+
+    readOnly(value = true) {
+      return lifecycleOptionsBuilder({ ...config, readOnly: value });
+    },
+  };
+}
+
+export const lifecycle: LifecycleHelper = {
+  create(value = true) {
+    return lifecycleOptionsBuilder().create(value);
+  },
+
+  update(value = true) {
+    return lifecycleOptionsBuilder().update(value);
+  },
+
+  immutable(value = true) {
+    return lifecycleOptionsBuilder().immutable(value);
+  },
+
+  generated(value = true) {
+    return lifecycleOptionsBuilder().generated(value);
+  },
+
+  readOnly(value = true) {
+    return lifecycleOptionsBuilder().readOnly(value);
+  },
+
+  options(config) {
+    return lifecycleOptionsBuilder(config);
   },
 };
 
@@ -616,23 +674,23 @@ function propertyFieldBuilder(input: EntityFieldInput): PropertyFieldBuilder {
     },
 
     single() {
-      const { array: _array, ...nextOptions } = input.options ?? {};
-      return propertyFieldBuilder({
-        ...input,
-        options: nextOptions,
-      });
+      return propertyFieldBuilder(patchField(input, { array: false }));
     },
 
     default(value) {
       return propertyFieldBuilder(patchField(input, { default: value }));
     },
 
-    query(build) {
-      return propertyFieldBuilder(patchField(input, { query: build(query).input }));
+    capability(build) {
+      return propertyFieldBuilder(patchField(input, { capability: build(capability).input }));
     },
 
-    access(build) {
-      return propertyFieldBuilder(patchField(input, { access: build(access).input }));
+    visibility(build) {
+      return propertyFieldBuilder(patchField(input, { visibility: build(visibility).input }));
+    },
+
+    lifecycle(build) {
+      return propertyFieldBuilder(patchField(input, { lifecycle: build(lifecycle).input }));
     },
 
     persistence(build) {
@@ -657,7 +715,7 @@ function fieldFromValue(source: FieldSourceValue): PropertyFieldBuilder {
   if ('kind' in source && source.kind.includes('property.')) {
     return propertyFieldBuilder(
       fieldInput({
-        kind: EntityFieldSourceKind.property,
+        mode: PropertySlotSourceMode.ref,
         ref: source as PropertyAuthoringRef,
       }),
     );
@@ -666,7 +724,7 @@ function fieldFromValue(source: FieldSourceValue): PropertyFieldBuilder {
   if ('kind' in source && source.kind === 'schema.model') {
     return propertyFieldBuilder(
       fieldInput({
-        kind: EntityFieldSourceKind.model,
+        mode: PropertySlotSourceMode.ref,
         ref: source as ModelAuthoringRef,
       }),
     );
@@ -674,26 +732,26 @@ function fieldFromValue(source: FieldSourceValue): PropertyFieldBuilder {
 
   return propertyFieldBuilder(
     fieldInput({
-      kind: EntityFieldSourceKind.inlineProperty,
+      mode: PropertySlotSourceMode.inline,
       property: source as PropertySourceInputLike,
-    }),
+    } as unknown as EntityFieldSourceInput),
   );
 }
 
 function inlinePropertyField(source: PropertySourceInputLike): PropertyFieldBuilder {
   return propertyFieldBuilder(
     fieldInput({
-      kind: EntityFieldSourceKind.inlineProperty,
+      mode: PropertySlotSourceMode.inline,
       property: source,
-    }),
+    } as unknown as EntityFieldSourceInput),
   );
 }
 
 function patchRelationSource(
   input: EntityFieldInput,
-  patch: Partial<Extract<EntityFieldInput['source'], { kind: 'relation' }>>,
+  patch: Partial<Extract<EntityFieldInput['source'], { mode: typeof PropertySlotSourceMode.relation }>>,
 ): EntityFieldInput {
-  if (input.source.kind !== EntityFieldSourceKind.relation) {
+  if (input.source.mode !== PropertySlotSourceMode.relation) {
     return input;
   }
 
@@ -728,7 +786,7 @@ function relationFieldBuilder(input: EntityFieldInput): RelationFieldBuilder {
       return relationFieldBuilder(
         patchRelationSource(input, {
           through: {
-            entity,
+            entity: normalizeEntityTarget(entity),
             from: mapping.from,
             to: mapping.to,
           },
@@ -744,8 +802,8 @@ function relationFieldBuilder(input: EntityFieldInput): RelationFieldBuilder {
       return relationFieldBuilder(patchRelationSource(input, { relationName: name }));
     },
 
-    access(build) {
-      return relationFieldBuilder(patchField(input, { access: build(access).input }));
+    visibility(build) {
+      return relationFieldBuilder(patchField(input, { visibility: build(visibility).input }));
     },
 
     description(value) {
@@ -765,9 +823,9 @@ function relationFieldBuilder(input: EntityFieldInput): RelationFieldBuilder {
 function relationField(relation: EntityRelationKind, target: EntityTargetInput): RelationFieldBuilder {
   return relationFieldBuilder(
     fieldInput({
-      kind: EntityFieldSourceKind.relation,
+      mode: PropertySlotSourceMode.relation,
       relation,
-      target,
+      target: normalizeEntityTarget(target),
     }),
   );
 }

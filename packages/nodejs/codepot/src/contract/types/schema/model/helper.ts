@@ -3,16 +3,16 @@ import { ModelCategory } from "./definition";
 
 function inferCategories(field: EntityField): ModelCategory[] {
   const categories: ModelCategory[] = [];
-  const { access, query, persistence } = field;
+  const { visibility, capability, lifecycle, persistence } = field;
 
-  if (access?.read === 'public') categories.push('read');
-  if (access?.write) categories.push('create');
-  if (access?.write && !persistence?.immutable) categories.push('patch');
-  if (query?.filter || query?.sort || query?.select) categories.push('query');
-  if (persistence?.mode === 'stored' && access?.read !== 'secret') categories.push('projection');
-  if (access?.sensitive || access?.read === 'secret') categories.push('redacted');
+  if (visibility?.read === 'public') categories.push('read');
+  if (visibility?.write) categories.push('create');
+  if (visibility?.write && !persistence?.immutable) categories.push('patch');
+  if (capability?.filter || capability?.sort || capability?.select) categories.push('query');
+  if (persistence?.mode === 'stored' && visibility?.read !== 'secret') categories.push('projection');
+  if (visibility?.sensitive || visibility?.read === 'secret') categories.push('redacted');
   if (persistence?.mode === 'computed' || persistence?.mode === 'virtual') categories.push('derived');
-  if (access?.read === 'internal' || access?.read === 'auth') categories.push('internal');
+  if (visibility?.read === 'internal' || visibility?.read === 'auth') categories.push('internal');
 
   return categories;
 }

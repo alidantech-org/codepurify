@@ -1,5 +1,5 @@
 // ============================================================================
-// QUERY
+// CAPABILITY
 // ============================================================================
 
 import { RefProperty } from '../../../properties/definition';
@@ -24,7 +24,7 @@ export const QueryOperator = {
 
 export type QueryOperator = (typeof QueryOperator)[keyof typeof QueryOperator];
 
-export interface FieldQueryConfig extends DefinitionItem {
+export interface FieldCapabilityConfig extends DefinitionItem {
   filter?: boolean;
 
   sort?: boolean;
@@ -35,24 +35,40 @@ export interface FieldQueryConfig extends DefinitionItem {
 }
 
 // ============================================================================
-// FIELD ACCESS
+// VISIBILITY
 // ============================================================================
 
-export const FieldAccessLevel = {
+export const FieldVisibilityLevel = {
   public: 'public',
   internal: 'internal',
   secret: 'secret',
   auth: 'auth',
 } as const;
 
-export type FieldAccessLevel = (typeof FieldAccessLevel)[keyof typeof FieldAccessLevel];
+export type FieldVisibilityLevel = (typeof FieldVisibilityLevel)[keyof typeof FieldVisibilityLevel];
 
-export interface FieldAccessConfig extends DefinitionItem {
-  read?: FieldAccessLevel;
+export interface FieldVisibilityConfig extends DefinitionItem {
+  read?: FieldVisibilityLevel;
 
-  write?: FieldAccessLevel;
+  write?: FieldVisibilityLevel;
 
   sensitive?: boolean;
+}
+
+// ============================================================================
+// LIFECYCLE
+// ============================================================================
+
+export interface FieldLifecycleConfig extends DefinitionItem {
+  create?: boolean;
+
+  update?: boolean;
+
+  immutable?: boolean;
+
+  generated?: boolean;
+
+  readOnly?: boolean;
 }
 
 // ============================================================================
@@ -100,9 +116,11 @@ export interface EntityField extends DefinitionItem {
 
   default?: unknown;
 
-  query?: FieldQueryConfig;
+  capability?: FieldCapabilityConfig;
 
-  access?: FieldAccessConfig;
+  visibility?: FieldVisibilityConfig;
+
+  lifecycle?: FieldLifecycleConfig;
 
   persistence?: FieldPersistenceConfig;
 }

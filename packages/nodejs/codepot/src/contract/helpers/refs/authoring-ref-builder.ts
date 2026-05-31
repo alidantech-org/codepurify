@@ -45,7 +45,6 @@ export function primitiveRef(key: string): PrimitiveAuthoringRef {
     id: createEngineId(EngineIdPart.property, EngineIdPart.primitive, key),
     kind: AuthoringRefKind.propertyPrimitive,
     key,
-    name: key,
   });
 }
 
@@ -54,7 +53,6 @@ export function enumRef(key: string): EnumAuthoringRef {
     id: createEngineId(EngineIdPart.property, EngineIdPart.enum, key),
     kind: AuthoringRefKind.propertyEnum,
     key,
-    name: key,
   });
 }
 
@@ -63,7 +61,6 @@ export function compositeRef(key: string): CompositeAuthoringRef {
     id: createEngineId(EngineIdPart.property, EngineIdPart.composite, key),
     kind: AuthoringRefKind.propertyComposite,
     key,
-    name: key,
   });
 }
 
@@ -84,7 +81,6 @@ export function entityRef(name: string): EntityAuthoringRef {
     id: createEngineId(EngineIdPart.schema, EngineIdPart.entity, name),
     kind: AuthoringRefKind.schemaEntity,
     key: name,
-    name,
   });
 }
 
@@ -93,7 +89,6 @@ export function entityFieldRef(entityName: string, fieldKey: string): EntityFiel
     id: createEngineId(EngineIdPart.schema, EngineIdPart.entity, entityName, EngineIdPart.field, fieldKey),
     kind: AuthoringRefKind.schemaEntityField,
     key: fieldKey,
-    name: fieldKey,
   });
 }
 
@@ -104,7 +99,6 @@ export function modelRef(entityName: string, variant: EntityModelVariant): Model
     id: createEngineId(EngineIdPart.schema, EngineIdPart.model, entityName, variant),
     kind: AuthoringRefKind.schemaModel,
     key,
-    name: key,
   }) as ModelAuthoringRef;
 }
 
@@ -133,7 +127,6 @@ export function entityFieldSetRef(entityName: string, setName: EntityFieldSetNam
     id: createEngineId(EngineIdPart.schema, EngineIdPart.entity, entityName, EngineIdPart.fieldSet, setName),
     kind: AuthoringRefKind.schemaEntityFieldSet,
     key,
-    name: key,
   });
 }
 
@@ -180,7 +173,6 @@ export function dtoRef(key: string): DtoAuthoringRef {
     id: createEngineId(EngineIdPart.schema, EngineIdPart.dto, key),
     kind: AuthoringRefKind.schemaDto,
     key,
-    name: key,
   }) as DtoAuthoringRef;
 }
 
@@ -189,7 +181,6 @@ export function paramsRef(key: string): ParamsAuthoringRef {
     id: createEngineId(EngineIdPart.schema, EngineIdPart.params, key),
     kind: AuthoringRefKind.schemaParams,
     key,
-    name: key,
   });
 }
 
@@ -202,7 +193,6 @@ export function resourceRef(key: string): ResourceAuthoringRef {
     id: createEngineId(EngineIdPart.resource, key),
     kind: AuthoringRefKind.resource,
     key,
-    name: key,
   });
 }
 
@@ -211,7 +201,6 @@ export function operationRef(resourceKey: string, key: string): OperationAuthori
     id: createEngineId(EngineIdPart.resource, resourceKey, EngineIdPart.operation, key),
     kind: AuthoringRefKind.resourceOperation,
     key,
-    name: key,
   });
 }
 
@@ -220,7 +209,6 @@ export function routeRef(resourceKey: string, key: string): RouteAuthoringRef {
     id: createEngineId(EngineIdPart.resource, resourceKey, EngineIdPart.route, key),
     kind: AuthoringRefKind.resourceRoute,
     key,
-    name: key,
   });
 }
 
@@ -233,7 +221,6 @@ export function contentTypeRef(key: string): ContentTypeAuthoringRef {
     id: createEngineId(EngineIdPart.transport, EngineIdPart.contentType, key),
     kind: AuthoringRefKind.transportContentType,
     key,
-    name: key,
   });
 }
 
@@ -242,7 +229,6 @@ export function requestRef(key: string): RequestAuthoringRef {
     id: createEngineId(EngineIdPart.transport, EngineIdPart.request, key),
     kind: AuthoringRefKind.transportRequest,
     key,
-    name: key,
   });
 }
 
@@ -251,7 +237,6 @@ export function responseRef(key: string): ResponseAuthoringRef {
     id: createEngineId(EngineIdPart.transport, EngineIdPart.response, key),
     kind: AuthoringRefKind.transportResponse,
     key,
-    name: key,
   });
 }
 
@@ -264,7 +249,6 @@ export function securitySchemeRef(key: string): SecuritySchemeAuthoringRef {
     id: createEngineId(EngineIdPart.security, EngineIdPart.scheme, key),
     kind: AuthoringRefKind.securityScheme,
     key,
-    name: key,
   });
 }
 
@@ -273,7 +257,6 @@ export function securityAuthRef(key: string): SecurityAuthAuthoringRef {
     id: createEngineId(EngineIdPart.security, EngineIdPart.auth, key),
     kind: AuthoringRefKind.securityAuth,
     key,
-    name: key,
   });
 }
 
@@ -282,7 +265,6 @@ export function securityRoleSourceRef(key: string): SecurityRoleSourceAuthoringR
     id: createEngineId(EngineIdPart.security, EngineIdPart.roleSource, key),
     kind: AuthoringRefKind.securityRoleSource,
     key,
-    name: key,
   });
 }
 
@@ -291,7 +273,6 @@ export function securityRoleSetRef(key: string): SecurityRoleSetAuthoringRef {
     id: createEngineId(EngineIdPart.security, EngineIdPart.roleSet, key),
     kind: AuthoringRefKind.securityRoleSet,
     key,
-    name: key,
   });
 }
 
@@ -300,7 +281,6 @@ export function securityContextRef(key: string): SecurityContextAuthoringRef {
     id: createEngineId(EngineIdPart.security, EngineIdPart.context, key),
     kind: AuthoringRefKind.securityContext,
     key,
-    name: key,
   });
 }
 
@@ -309,6 +289,5 @@ export function securityGuardRef(key: string): SecurityGuardAuthoringRef {
     id: createEngineId(EngineIdPart.security, EngineIdPart.guard, key),
     kind: AuthoringRefKind.securityGuard,
     key,
-    name: key,
   });
 }

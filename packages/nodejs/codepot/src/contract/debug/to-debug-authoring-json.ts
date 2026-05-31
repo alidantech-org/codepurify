@@ -1,14 +1,9 @@
-import type {
-  AuthoringRef,
-  AuthoringRefKind,
-  RefUsage,
-} from '@/contract/types/core/3.authoring-ref';
+import type { AuthoringRef, AuthoringRefKind, RefUsage } from '@/contract/types/core/3.authoring-ref';
 
 interface DebugAuthoringRef {
   readonly id: string;
   readonly kind: string;
   readonly key: string;
-  readonly name?: string;
 }
 
 interface DebugRefUsage {
@@ -20,20 +15,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isAuthoringRef(
-  value: unknown,
-): value is AuthoringRef<unknown, AuthoringRefKind> {
-  return (
-    isRecord(value) &&
-    typeof value.id === 'string' &&
-    typeof value.kind === 'string' &&
-    typeof value.key === 'string'
-  );
+function isAuthoringRef(value: unknown): value is AuthoringRef<unknown, AuthoringRefKind> {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.kind === 'string' && typeof value.key === 'string';
 }
 
-function isRefUsage(
-  value: unknown,
-): value is RefUsage<unknown, AuthoringRefKind> {
+function isRefUsage(value: unknown): value is RefUsage<unknown, AuthoringRefKind> {
   return isRecord(value) && isAuthoringRef(value.ref) && isRecord(value.usage);
 }
 
@@ -42,13 +28,10 @@ function toDebugRef(ref: AuthoringRef<unknown, AuthoringRefKind>): DebugAuthorin
     id: ref.id,
     kind: ref.kind,
     key: ref.key,
-    ...(ref.name === undefined ? {} : { name: ref.name }),
   };
 }
 
-function toDebugUsage(
-  usage: RefUsage<unknown, AuthoringRefKind>,
-): DebugRefUsage {
+function toDebugUsage(usage: RefUsage<unknown, AuthoringRefKind>): DebugRefUsage {
   return {
     ref: toDebugRef(usage.ref),
     usage: toDebugAuthoringJson(usage.usage),
