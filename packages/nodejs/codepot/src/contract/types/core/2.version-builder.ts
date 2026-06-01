@@ -1,7 +1,7 @@
 import type { InfoDefinition } from '@/contract/types/info/definition';
 import type { UrlDefinition } from '@/contract/types/url/definition';
 import type { SecurityDefinition } from '@/contract/types/security/definition';
-import type { TransportDefinition } from '@/contract/types/transport/definition';
+import type { ErrorsDefinition } from '@/contract/types/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { SchemasDefinition } from '@/contract/types/schema/definition';
 import type { ResourceDefinition } from '@/contract/types/resource/definition';
@@ -9,7 +9,7 @@ import type { ResourceDefinition } from '@/contract/types/resource/definition';
 import type { PropertiesBuilder } from './4.properties-builder';
 import type { SchemasBuilder } from './5.schemas-builder';
 import type { DefineResourceOptions, ResourceBuilder } from './6.resource-builder';
-import type { TransportBuilder } from './8.transport-builder';
+import type { ErrorInputMap, ErrorsResult } from './8.errors-builder';
 import type { SecurityBuilder } from './9.security-builder';
 
 export interface DefineVersionContractOptions {
@@ -41,7 +41,7 @@ export interface DefineVersionContractOptions {
    */
   readonly properties?: Partial<PropertiesDefinition>;
   readonly schemas?: Partial<SchemasDefinition>;
-  readonly transport?: Partial<TransportDefinition>;
+  readonly errors?: Partial<ErrorsDefinition>;
   readonly security?: Partial<SecurityDefinition>;
   readonly resources?: Record<string, ResourceDefinition>;
 
@@ -59,7 +59,7 @@ export interface VersionAuthoringState {
 
   readonly properties: Partial<PropertiesDefinition>;
   readonly schemas: Partial<SchemasDefinition>;
-  readonly transport: Partial<TransportDefinition>;
+  readonly errors: Partial<ErrorsDefinition>;
   readonly security: Partial<SecurityDefinition>;
   readonly resources: Record<string, ResourceDefinition>;
 
@@ -88,14 +88,13 @@ export interface VersionBuilder {
   defineSchemas(): SchemasBuilder;
 
   /**
-   * Version-level transport registry:
-   * content types, reusable requests, reusable responses, defaults.
+   * Version-level reusable API errors.
    */
-  defineTransport(): TransportBuilder;
+  defineErrors<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput>;
 
   /**
-   * Version-level security registry:
-   * schemes, auth, roles, contexts, guards, defaults.
+   * Version-level security intent metadata:
+   * credentials, principals, and policies.
    */
   defineSecurity(): SecurityBuilder;
 
@@ -120,9 +119,9 @@ export interface VersionBuilder {
   addSchemas(schemas: Partial<SchemasDefinition>): VersionBuilder;
 
   /**
-   * Allows adding/preloading transport while helpers are incomplete.
+   * Allows adding/preloading reusable errors while helpers are incomplete.
    */
-  addTransport(transport: Partial<TransportDefinition>): VersionBuilder;
+  addErrors(errors: Partial<ErrorsDefinition>): VersionBuilder;
 
   /**
    * Allows adding/preloading security while helpers are incomplete.

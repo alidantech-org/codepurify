@@ -1,5 +1,6 @@
 import type { DefinitionItem } from '@/contract/types/definition';
 
+import type { ErrorsDefinition } from '@/contract/types/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { ResourceDefinition } from '@/contract/types/resource/definition';
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
@@ -9,8 +10,9 @@ import type { SchemasDefinition } from '@/contract/types/schema/definition';
 import type { ResourceAuthoringRef } from './3.authoring-ref';
 import type { PropertiesBuilder } from './4.properties-builder';
 import type { SchemasBuilder } from './5.schemas-builder';
+import type { ErrorInputMap, ErrorsResult } from './8.errors-builder';
 import type { RoutesBuilder } from './7.routes-builder';
-import type { RouteSecurityInput, RouteSecurityRefsInput, SecurityRouteHelper } from './9.security-builder';
+import type { RouteSecurityInput } from './9.security-builder';
 
 // ============================================================================
 // DEFINE RESOURCE OPTIONS
@@ -65,6 +67,11 @@ export interface ResourceAuthoringState extends DefinitionItem {
    */
   readonly schemas: Partial<SchemasDefinition>;
 
+  /**
+   * Resource-scoped reusable API errors.
+   */
+  readonly errors: Partial<ErrorsDefinition>;
+
   readonly operations: Record<string, OperationDefinition>;
 
   readonly routes: RoutesDefinition;
@@ -83,13 +90,6 @@ export interface ResourceBuilder {
   readonly ref: ResourceAuthoringRef;
 
   /**
-   * Security convenience helpers.
-   *
-   * Same helper family as version.defineSecurity().route.
-   */
-  readonly security: SecurityRouteHelper;
-
-  /**
    * Resource-scoped reusable property sources:
    * primitives, enums, composites, and refs.
    */
@@ -102,6 +102,11 @@ export interface ResourceBuilder {
   defineSchemas(): SchemasBuilder;
 
   /**
+   * Resource-scoped reusable API errors.
+   */
+  defineErrors<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput>;
+
+  /**
    * Resource-scoped routes and operations.
    */
   defineRoutes(): RoutesBuilder;
@@ -112,14 +117,9 @@ export interface ResourceBuilder {
   setSecurity(security: RouteSecurityInput): ResourceBuilder;
 
   /**
-   * Mark the whole resource public by default.
+   * Adds/preloads resource-scoped reusable errors while helpers are incomplete.
    */
-  public(): ResourceBuilder;
-
-  /**
-   * Mark the whole resource protected by default.
-   */
-  protected(input?: RouteSecurityRefsInput): ResourceBuilder;
+  addErrors(errors: Partial<ErrorsDefinition>): ResourceBuilder;
 
   /**
    * Adds/preloads route data while route helpers are incomplete.

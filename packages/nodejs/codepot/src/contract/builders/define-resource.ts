@@ -1,5 +1,6 @@
 // src/contract/builders/define-resource.ts
 
+import type { ErrorsDefinition } from '@/contract/types/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
 import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
@@ -7,14 +8,29 @@ import type { SchemasDefinition } from '@/contract/types/schema/definition';
 
 import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
 
-import type { RouteSecurityRefsInput } from '@/contract/types/core/9.security-builder';
+import type { ErrorInputMap, ErrorsResult } from '@/contract/types/core/8.errors-builder';
 
 import { resourceRef } from '@/contract/helpers/refs/authoring-ref-builder';
-import { securityRoute } from '@/contract/helpers/security/security';
 
+import { defineErrors } from './define-errors';
 import { defineProperties } from './define-properties';
-import { defineSchemas } from './define-schemas';
 import { defineRoutes } from './define-routes';
+import { defineSchemas } from './define-schemas';
+
+// ============================================================================
+// MERGE HELPERS
+// ============================================================================
+
+type MutableErrorsState = {
+  errors?: ErrorsDefinition['errors'];
+};
+
+function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDefinition>): void {
+  const mutable = target as MutableErrorsState;
+
+  mutable.errors ??= {};
+  Object.assign(mutable.errors, source.errors ?? {});
+}
 
 // ============================================================================
 // DEFINE RESOURCE
@@ -23,6 +39,7 @@ import { defineRoutes } from './define-routes';
 export function defineResource(options: DefineResourceOptions): ResourceBuilder {
   const properties: Partial<PropertiesDefinition> = {};
   const schemas: Partial<SchemasDefinition> = {};
+  const errors: Partial<ErrorsDefinition> = {};
   const operations: Record<string, OperationDefinition> = {};
   const routes: RoutesDefinition = {};
 
@@ -38,6 +55,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       },
       properties,
       schemas,
+      errors,
       operations,
       routes,
       description: options.description,
@@ -52,8 +70,6 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     },
 
     ref: resourceRef(options.key),
-
-    security: securityRoute,
 
     defineProperties() {
       return defineProperties({
@@ -71,6 +87,12 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       });
     },
 
+    defineErrors<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput> {
+      return defineErrors({
+        state: errors,
+      }).define(input);
+    },
+
     defineRoutes() {
       return defineRoutes({
         resourceKey: options.key,
@@ -84,13 +106,8 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       return builder;
     },
 
-    public() {
-      defaultSecurity = securityRoute.public();
-      return builder;
-    },
-
-    protected(input?: RouteSecurityRefsInput) {
-      defaultSecurity = securityRoute.protected(input);
+    addErrors(nextErrors) {
+      mergeErrors(errors, nextErrors);
       return builder;
     },
 

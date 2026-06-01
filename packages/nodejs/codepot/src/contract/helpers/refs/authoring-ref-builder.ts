@@ -1,27 +1,22 @@
 import {
   AuthoringRefKind,
   type CompositeAuthoringRef,
-  type ContentTypeAuthoringRef,
   type DtoAuthoringRef,
   type EntityAuthoringRef,
   type EntityFieldAuthoringRef,
   type EntityFieldSetAuthoringRef,
   type EnumAuthoringRef,
+  type ErrorAuthoringRef,
   type ModelAuthoringRef,
   type OperationAuthoringRef,
   type ParamsAuthoringRef,
   type PrimitiveAuthoringRef,
   type PropertyAuthoringRef,
-  type RequestAuthoringRef,
   type ResourceAuthoringRef,
-  type ResponseAuthoringRef,
   type RouteAuthoringRef,
-  type SecurityAuthAuthoringRef,
-  type SecurityContextAuthoringRef,
-  type SecurityGuardAuthoringRef,
-  type SecurityRoleSetAuthoringRef,
-  type SecurityRoleSourceAuthoringRef,
-  type SecuritySchemeAuthoringRef,
+  type SecurityCredentialAuthoringRef,
+  type SecurityPolicyAuthoringRef,
+  type SecurityPrincipalAuthoringRef,
 } from '@/contract/types/core/3.authoring-ref';
 
 import {
@@ -213,29 +208,13 @@ export function routeRef(resourceKey: string, key: string): RouteAuthoringRef {
 }
 
 // ============================================================================
-// TRANSPORT
+// ERRORS
 // ============================================================================
 
-export function contentTypeRef(key: string): ContentTypeAuthoringRef {
+export function errorRef(key: string): ErrorAuthoringRef {
   return createAuthoringRef({
-    id: createEngineId(EngineIdPart.transport, EngineIdPart.contentType, key),
-    kind: AuthoringRefKind.transportContentType,
-    key,
-  });
-}
-
-export function requestRef(key: string): RequestAuthoringRef {
-  return createAuthoringRef({
-    id: createEngineId(EngineIdPart.transport, EngineIdPart.request, key),
-    kind: AuthoringRefKind.transportRequest,
-    key,
-  });
-}
-
-export function responseRef(key: string): ResponseAuthoringRef {
-  return createAuthoringRef({
-    id: createEngineId(EngineIdPart.transport, EngineIdPart.response, key),
-    kind: AuthoringRefKind.transportResponse,
+    id: createEngineId(EngineIdPart.error, key),
+    kind: AuthoringRefKind.error,
     key,
   });
 }
@@ -244,50 +223,26 @@ export function responseRef(key: string): ResponseAuthoringRef {
 // SECURITY
 // ============================================================================
 
-export function securitySchemeRef(key: string): SecuritySchemeAuthoringRef {
+export function securityCredentialRef(key: string): SecurityCredentialAuthoringRef {
   return createAuthoringRef({
-    id: createEngineId(EngineIdPart.security, EngineIdPart.scheme, key),
-    kind: AuthoringRefKind.securityScheme,
+    id: createEngineId(EngineIdPart.security, EngineIdPart.credential, key),
+    kind: AuthoringRefKind.securityCredential,
     key,
   });
 }
 
-export function securityAuthRef(key: string): SecurityAuthAuthoringRef {
+export function securityPrincipalRef(key: string): SecurityPrincipalAuthoringRef {
   return createAuthoringRef({
-    id: createEngineId(EngineIdPart.security, EngineIdPart.auth, key),
-    kind: AuthoringRefKind.securityAuth,
+    id: createEngineId(EngineIdPart.security, EngineIdPart.principal, key),
+    kind: AuthoringRefKind.securityPrincipal,
     key,
   });
 }
 
-export function securityRoleSourceRef(key: string): SecurityRoleSourceAuthoringRef {
+export function securityPolicyRef(key: string): SecurityPolicyAuthoringRef {
   return createAuthoringRef({
-    id: createEngineId(EngineIdPart.security, EngineIdPart.roleSource, key),
-    kind: AuthoringRefKind.securityRoleSource,
-    key,
-  });
-}
-
-export function securityRoleSetRef(key: string): SecurityRoleSetAuthoringRef {
-  return createAuthoringRef({
-    id: createEngineId(EngineIdPart.security, EngineIdPart.roleSet, key),
-    kind: AuthoringRefKind.securityRoleSet,
-    key,
-  });
-}
-
-export function securityContextRef(key: string): SecurityContextAuthoringRef {
-  return createAuthoringRef({
-    id: createEngineId(EngineIdPart.security, EngineIdPart.context, key),
-    kind: AuthoringRefKind.securityContext,
-    key,
-  });
-}
-
-export function securityGuardRef(key: string): SecurityGuardAuthoringRef {
-  return createAuthoringRef({
-    id: createEngineId(EngineIdPart.security, EngineIdPart.guard, key),
-    kind: AuthoringRefKind.securityGuard,
+    id: createEngineId(EngineIdPart.security, EngineIdPart.policy, key),
+    kind: AuthoringRefKind.securityPolicy,
     key,
   });
 }

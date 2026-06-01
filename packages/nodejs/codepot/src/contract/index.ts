@@ -6,23 +6,26 @@ export { defineProperties } from './builders/define-properties';
 export { defineSchemas } from './builders/define-schemas';
 export { defineResource } from './builders/define-resource';
 export { defineRoutes } from './builders/define-routes';
-export { defineTransport } from './builders/define-transport';
 export { defineSecurity } from './builders/define-security';
 
 export { property, field, capability, visibility, lifecycle, persistence } from './helpers/properties/property';
 
 export {
+  credential,
+  header,
+  cookie,
+  query,
+  bearerHeader,
+  principal,
+  publicPolicy,
+  protectedPolicy,
+  requirePolicy,
   security,
-  securityScheme,
-  securityAuth,
-  securityContext,
-  securityGuard,
-  securityRoleSource,
-  securityRoleSet,
-  securityRoute,
 } from './helpers/security/security';
 
-export { transport, contentType, request, response } from './helpers/transport/transport';
+export { content } from './helpers/content/content';
+
+export { error } from './helpers/errors/error';
 
 export { createAuthoringRef, createExtendableAuthoringRef, createUsage, createExtendableUsage } from './helpers/refs/create-authoring-ref';
 

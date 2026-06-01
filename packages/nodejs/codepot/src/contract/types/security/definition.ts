@@ -1,186 +1,83 @@
-import { Ref } from '../ref';
-import { DefinitionItem } from '../definition';
-import { EnumDefinition, EnumValueDefinition } from '../properties/enum/definition';
-import { DtoDefinition } from '../schema/dto/definition';
-import { EntityDefinition } from '../schema/entity/definition';
+import type { DefinitionItem } from '@/contract/types/definition';
+
+import type { EntityFieldAuthoringRef, PrimitiveAuthoringRef, PropertyAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 // ============================================================================
-// SCHEMES
+// CREDENTIALS
 // ============================================================================
 
-export const SecuritySchemeType = {
-  http: 'http',
-  apiKey: 'apiKey',
-  oauth2: 'oauth2',
-  openId: 'openId',
-} as const;
-
-export type SecuritySchemeType = (typeof SecuritySchemeType)[keyof typeof SecuritySchemeType];
-
-export const ApiKeyLocation = {
+export const SecurityCredentialSource = {
   header: 'header',
-  query: 'query',
   cookie: 'cookie',
+  query: 'query',
 } as const;
 
-export type ApiKeyLocation = (typeof ApiKeyLocation)[keyof typeof ApiKeyLocation];
+export type SecurityCredentialSource = (typeof SecurityCredentialSource)[keyof typeof SecurityCredentialSource];
 
-export interface SecuritySchemeDefinition extends DefinitionItem {
-  type: SecuritySchemeType;
-  // http
-  scheme?: string;
-  bearerFormat?: string;
-  // apiKey
-  in?: ApiKeyLocation;
-  keyName?: string;
-  // oauth2
-  flows?: Record<string, unknown>;
-  // openId
-  openIdConnectUrl?: string;
-}
-
-// ============================================================================
-// AUTH
-// ============================================================================
-
-export const SecurityAuthMode = {
-  any: 'any',
-  all: 'all',
+export const SecurityCredentialFormat = {
+  raw: 'raw',
+  bearer: 'bearer',
+  basic: 'basic',
+  apiKey: 'api_key',
+  session: 'session',
 } as const;
 
-export type SecurityAuthMode = (typeof SecurityAuthMode)[keyof typeof SecurityAuthMode];
+export type SecurityCredentialFormat = (typeof SecurityCredentialFormat)[keyof typeof SecurityCredentialFormat];
 
-export interface SecurityAuthDefinition extends DefinitionItem {
-  /**
-   * Authentication mode: 'any' (at least one scheme required) or 'all' (all schemes required)
-   */
-  mode: SecurityAuthMode;
+export type SecurityCredentialValueType = PrimitiveAuthoringRef | PropertyAuthoringRef;
 
-  /**
-   * List of authentication schemes to use
-   */
-  schemes: Array<{
-    /**
-     * Reference to the security scheme definition
-     */
-    scheme: Ref<SecuritySchemeDefinition>;
-    /**
-     * Optional scopes required for this scheme
-     */
-    scopes?: string[];
-  }>;
+export interface SecurityCredentialDefinition extends DefinitionItem {
+  readonly source: SecurityCredentialSource;
+  readonly key: string;
+  readonly format?: SecurityCredentialFormat;
+  readonly valueType?: SecurityCredentialValueType;
 }
 
 // ============================================================================
-// ROLES
+// PRINCIPALS
 // ============================================================================
 
-export interface SecurityRoleSourceDefinition extends DefinitionItem {
-  /**
-   * Reference to the entity field that contains role values
-   */
-  source: Ref<EntityDefinition>; // entity field ref
-  /**
-   * Reference to the enum definition that defines valid role values
-   */
-  enum: Ref<EnumDefinition>; // enum ref
-}
+export type SecurityPrincipalFieldRef = EntityFieldAuthoringRef;
 
-export interface SecurityRoleSetDefinition extends DefinitionItem {
-  /**
-   * Reference to the role source definition
-   */
-  role: Ref<SecurityRoleSourceDefinition>;
+export type SecurityPrincipalFields = Record<string, SecurityPrincipalFieldRef>;
 
-  /**
-   * List of role values
-   */
-  values: Ref<EnumValueDefinition>[];
+export interface SecurityPrincipalDefinition extends DefinitionItem {
+  readonly fields: SecurityPrincipalFields;
 }
 
 // ============================================================================
-// GUARDS & CONTEXTS
+// POLICIES
 // ============================================================================
 
-export interface SecurityContextDefinition extends DefinitionItem {
+export const SecurityPolicyMode = {
+  public: 'public',
+  protected: 'protected',
+} as const;
+
+export type SecurityPolicyMode = (typeof SecurityPolicyMode)[keyof typeof SecurityPolicyMode];
+
+export interface SecurityPolicyDefinition extends DefinitionItem {
+  readonly mode: SecurityPolicyMode;
+
+  readonly credential?: unknown;
+  readonly principals?: Record<string, unknown>;
+
+  readonly roles?: readonly string[];
+  readonly permissions?: readonly string[];
+
   /**
-   * Target context identifier
+   * Generator-facing intent, not runtime logic.
+   * Examples: "authenticated", "tenant_role", "owner_only", "api_key".
    */
-  target: string;
-  /**
-   * Reference to the schema definition
-   */
-  schema: Ref<DtoDefinition>;
+  readonly intent?: string;
 }
 
-export interface SecurityGuardDefinition extends DefinitionItem {
-  /**
-   * Handler function name
-   */
-  handler: string;
-  /**
-   * List of output contexts
-   */
-  outputs?: Ref<SecurityContextDefinition>[];
-}
-
 // ============================================================================
-// ROUTE SECURITY
+// ROOT SECURITY
 // ============================================================================
 
-export interface RouteSecurityDefinition extends DefinitionItem {
-  /**
-   * Whether the route is protected
-   */
-  protected: boolean;
-  /**
-   * Reference to the authentication definition
-   */
-  auth?: Ref<SecurityAuthDefinition>;
-  /**
-   * List of role set references
-   */
-  roleSets?: Ref<SecurityRoleSetDefinition>[];
-  /**
-   * List of guard references
-   */
-  guards?: Ref<SecurityGuardDefinition>[];
-}
-
-export interface ResourceSecurityDefinition extends RouteSecurityDefinition {}
-
-// ============================================================================
-// REGISTRY
-// ============================================================================
-
-export interface SecurityDefinition extends DefinitionItem {
-  /**
-   * Security schemes
-   */
-  schemes: Record<string, SecuritySchemeDefinition>;
-  /**
-   * Authentication definitions
-   */
-  auth: Record<string, SecurityAuthDefinition>;
-  /**
-   * Role source definitions
-   */
-  roleSources?: Record<string, SecurityRoleSourceDefinition>;
-  /**
-   * Role set definitions
-   */
-  roleSets?: Record<string, SecurityRoleSetDefinition>;
-  /**
-   * Context definitions
-   */
-  contexts?: Record<string, SecurityContextDefinition>;
-  /**
-   * Guard definitions
-   */
-  guards?: Record<string, SecurityGuardDefinition>;
-
-  /**
-   * Default route security
-   */
-  defaults?: RouteSecurityDefinition;
+export interface SecurityDefinition {
+  readonly credentials: Record<string, SecurityCredentialDefinition>;
+  readonly principals: Record<string, SecurityPrincipalDefinition>;
+  readonly policies: Record<string, SecurityPolicyDefinition>;
 }

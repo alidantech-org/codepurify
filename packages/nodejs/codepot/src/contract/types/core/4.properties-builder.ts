@@ -1,3 +1,4 @@
+
 import type { DefinitionItem } from '@/contract/types/definition';
 
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';

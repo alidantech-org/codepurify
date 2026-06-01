@@ -1,285 +1,141 @@
-// src/contract/builders/define-security.ts
-
 import type {
-  SecurityAuthDefinition,
-  SecurityContextDefinition,
+  SecurityCredentialDefinition,
   SecurityDefinition,
-  SecurityGuardDefinition,
-  SecurityRoleSetDefinition,
-  SecurityRoleSourceDefinition,
-  SecuritySchemeDefinition,
+  SecurityPolicyDefinition,
+  SecurityPrincipalDefinition,
 } from '@/contract/types/security/definition';
 
 import type {
-  SecurityAuthAuthoringRef,
-  SecurityContextAuthoringRef,
-  SecurityGuardAuthoringRef,
-  SecurityRoleSetAuthoringRef,
-  SecurityRoleSourceAuthoringRef,
-  SecuritySchemeAuthoringRef,
-} from '@/contract/types/core/3.authoring-ref';
-
-import type {
-  RouteSecurityInput,
-  SecurityAuthInputMap,
-  SecurityAuthResult,
   SecurityBuilder,
-  SecurityContextInputMap,
-  SecurityContextsResult,
-  SecurityGuardInputMap,
-  SecurityGuardsResult,
-  SecurityRoleSetInputMap,
-  SecurityRoleSetsResult,
-  SecurityRoleSourceInputMap,
-  SecurityRoleSourcesResult,
-  SecuritySchemeInputMap,
-  SecuritySchemesResult,
+  SecurityCredentialInputMap,
+  SecurityCredentialsResult,
+  SecurityPrincipalInputMap,
+  SecurityPrincipalsResult,
+  SecurityPolicyInputMap,
+  SecurityPoliciesResult,
 } from '@/contract/types/core/9.security-builder';
 
 import {
-  securityAuth,
-  securityContext,
-  securityGuard,
-  securityRoleSet,
-  securityRoleSource,
-  securityRoute,
-  securityScheme,
+  bearerHeader,
+  cookie,
+  header,
+  principal,
+  publicPolicy,
+  protectedPolicy,
+  query,
+  requirePolicy,
 } from '@/contract/helpers/security/security';
 
-import {
-  securityAuthRef,
-  securityContextRef,
-  securityGuardRef,
-  securityRoleSetRef,
-  securityRoleSourceRef,
-  securitySchemeRef,
-} from '@/contract/helpers/refs/authoring-ref-builder';
-
-// ============================================================================
-// OPTIONS
-// ============================================================================
+import { securityCredentialRef, securityPolicyRef, securityPrincipalRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
 export interface DefineSecurityOptions {
-  readonly state?: Partial<SecurityDefinition>;
-  readonly initial?: Partial<SecurityDefinition>;
+  readonly state: Partial<SecurityDefinition>;
 }
 
-// ============================================================================
-// STATE HELPERS
-// ============================================================================
+function ensureState(state: Partial<SecurityDefinition>): SecurityDefinition {
+  (state as any).credentials ??= {};
+  (state as any).principals ??= {};
+  (state as any).policies ??= {};
 
-function createInitialState(initial?: Partial<SecurityDefinition>): Partial<SecurityDefinition> {
-  return {
-    schemes: initial?.schemes ?? {},
-    auth: initial?.auth ?? {},
-    roleSources: initial?.roleSources ?? {},
-    roleSets: initial?.roleSets ?? {},
-    contexts: initial?.contexts ?? {},
-    guards: initial?.guards ?? {},
-    defaults: initial?.defaults,
-  };
+  return state as SecurityDefinition;
 }
 
-function ensureState(state: Partial<SecurityDefinition>): Partial<SecurityDefinition> {
-  state.schemes ??= {};
-  state.auth ??= {};
-  state.roleSources ??= {};
-  state.roleSets ??= {};
-  state.contexts ??= {};
-  state.guards ??= {};
-
-  return state;
-}
-
-function writeSchemes<TInput extends SecuritySchemeInputMap>(state: Partial<SecurityDefinition>, input: TInput): void {
-  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.schemes![key] = value as unknown as SecuritySchemeDefinition;
-  }
-}
-
-function writeAuth<TInput extends SecurityAuthInputMap>(state: Partial<SecurityDefinition>, input: TInput): void {
-  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.auth![key] = value as unknown as SecurityAuthDefinition;
-  }
-}
-
-function writeRoleSources<TInput extends SecurityRoleSourceInputMap>(state: Partial<SecurityDefinition>, input: TInput): void {
-  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.roleSources![key] = value as unknown as SecurityRoleSourceDefinition;
-  }
-}
-
-function writeRoleSets<TInput extends SecurityRoleSetInputMap>(state: Partial<SecurityDefinition>, input: TInput): void {
-  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.roleSets![key] = value as unknown as SecurityRoleSetDefinition;
-  }
-}
-
-function writeContexts<TInput extends SecurityContextInputMap>(state: Partial<SecurityDefinition>, input: TInput): void {
-  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.contexts![key] = value as unknown as SecurityContextDefinition;
-  }
-}
-
-function writeGuards<TInput extends SecurityGuardInputMap>(state: Partial<SecurityDefinition>, input: TInput): void {
-  for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.guards![key] = value as unknown as SecurityGuardDefinition;
-  }
-}
-
-function createSchemeRefs<TInput extends SecuritySchemeInputMap>(input: TInput): Record<keyof TInput & string, SecuritySchemeAuthoringRef> {
-  const refs = {} as Record<keyof TInput & string, SecuritySchemeAuthoringRef>;
+function createCredentialRefs<TInput extends SecurityCredentialInputMap>(input: TInput): SecurityCredentialsResult<TInput>['ref'] {
+  const refs = {} as Record<keyof TInput & string, ReturnType<typeof securityCredentialRef>>;
 
   for (const key of Object.keys(input) as Array<keyof TInput & string>) {
-    refs[key] = securitySchemeRef(key);
+    refs[key] = securityCredentialRef(key);
   }
 
-  return refs;
+  return refs as SecurityCredentialsResult<TInput>['ref'];
 }
 
-function createAuthRefs<TInput extends SecurityAuthInputMap>(input: TInput): Record<keyof TInput & string, SecurityAuthAuthoringRef> {
-  const refs = {} as Record<keyof TInput & string, SecurityAuthAuthoringRef>;
+function createPrincipalRefs<TInput extends SecurityPrincipalInputMap>(input: TInput): SecurityPrincipalsResult<TInput>['ref'] {
+  const refs = {} as Record<keyof TInput & string, ReturnType<typeof securityPrincipalRef>>;
 
   for (const key of Object.keys(input) as Array<keyof TInput & string>) {
-    refs[key] = securityAuthRef(key);
+    refs[key] = securityPrincipalRef(key);
   }
 
-  return refs;
+  return refs as SecurityPrincipalsResult<TInput>['ref'];
 }
 
-function createRoleSourceRefs<TInput extends SecurityRoleSourceInputMap>(
-  input: TInput,
-): Record<keyof TInput & string, SecurityRoleSourceAuthoringRef> {
-  const refs = {} as Record<keyof TInput & string, SecurityRoleSourceAuthoringRef>;
+function createPolicyRefs<TInput extends SecurityPolicyInputMap>(input: TInput): SecurityPoliciesResult<TInput>['ref'] {
+  const refs = {} as Record<keyof TInput & string, ReturnType<typeof securityPolicyRef>>;
 
   for (const key of Object.keys(input) as Array<keyof TInput & string>) {
-    refs[key] = securityRoleSourceRef(key);
+    refs[key] = securityPolicyRef(key);
   }
 
-  return refs;
+  return refs as SecurityPoliciesResult<TInput>['ref'];
 }
 
-function createRoleSetRefs<TInput extends SecurityRoleSetInputMap>(
-  input: TInput,
-): Record<keyof TInput & string, SecurityRoleSetAuthoringRef> {
-  const refs = {} as Record<keyof TInput & string, SecurityRoleSetAuthoringRef>;
-
-  for (const key of Object.keys(input) as Array<keyof TInput & string>) {
-    refs[key] = securityRoleSetRef(key);
-  }
-
-  return refs;
-}
-
-function createContextRefs<TInput extends SecurityContextInputMap>(
-  input: TInput,
-): Record<keyof TInput & string, SecurityContextAuthoringRef> {
-  const refs = {} as Record<keyof TInput & string, SecurityContextAuthoringRef>;
-
-  for (const key of Object.keys(input) as Array<keyof TInput & string>) {
-    refs[key] = securityContextRef(key);
-  }
-
-  return refs;
-}
-
-function createGuardRefs<TInput extends SecurityGuardInputMap>(input: TInput): Record<keyof TInput & string, SecurityGuardAuthoringRef> {
-  const refs = {} as Record<keyof TInput & string, SecurityGuardAuthoringRef>;
-
-  for (const key of Object.keys(input) as Array<keyof TInput & string>) {
-    refs[key] = securityGuardRef(key);
-  }
-
-  return refs;
-}
-
-// ============================================================================
-// DEFINE SECURITY
-// ============================================================================
-
-export function defineSecurity(options: DefineSecurityOptions = {}): SecurityBuilder {
-  const state = ensureState(options.state ?? createInitialState(options.initial));
-
-  let defaults = state.defaults as RouteSecurityInput | undefined;
-
-  function snapshot(): Partial<SecurityDefinition> {
-    state.defaults = defaults as unknown as SecurityDefinition['defaults'];
-    return state;
-  }
-
+export function defineSecurity(options: DefineSecurityOptions): SecurityBuilder {
   const builder: SecurityBuilder = {
     get state() {
-      return snapshot();
+      return options.state;
     },
 
-    scheme: securityScheme,
-    auth: securityAuth,
-    context: securityContext,
-    guard: securityGuard,
-    roleSource: securityRoleSource,
-    roleSet: securityRoleSet,
-    route: securityRoute,
+    header,
 
-    defineSchemes<TInput extends SecuritySchemeInputMap>(input: TInput): SecuritySchemesResult<TInput> {
-      writeSchemes(state, input);
+    cookie,
+
+    query,
+
+    bearerHeader,
+
+    principal,
+
+    public: publicPolicy,
+
+    protected: protectedPolicy,
+
+    require: requirePolicy,
+
+    credentials<TInput extends SecurityCredentialInputMap>(credentials: TInput): SecurityCredentialsResult<TInput> {
+      const state = ensureState(options.state);
+
+      for (const [key, value] of Object.entries(credentials) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
+        state.credentials[key] = value as unknown as SecurityCredentialDefinition;
+      }
 
       return {
-        schemes: input,
-        ref: createSchemeRefs(input) as SecuritySchemesResult<TInput>['ref'],
+        credentials,
+        ref: createCredentialRefs(credentials),
       };
     },
 
-    defineAuth<TInput extends SecurityAuthInputMap>(input: TInput): SecurityAuthResult<TInput> {
-      writeAuth(state, input);
+    principals<TInput extends SecurityPrincipalInputMap>(principals: TInput): SecurityPrincipalsResult<TInput> {
+      const state = ensureState(options.state);
+
+      for (const [key, value] of Object.entries(principals) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
+        state.principals[key] = {
+          fields: value,
+        } as unknown as SecurityPrincipalDefinition;
+      }
 
       return {
-        auth: input,
-        ref: createAuthRefs(input) as SecurityAuthResult<TInput>['ref'],
+        principals,
+        ref: createPrincipalRefs(principals),
       };
     },
 
-    defineRoleSources<TInput extends SecurityRoleSourceInputMap>(input: TInput): SecurityRoleSourcesResult<TInput> {
-      writeRoleSources(state, input);
+    policies<TInput extends SecurityPolicyInputMap>(policies: TInput): SecurityPoliciesResult<TInput> {
+      const state = ensureState(options.state);
+
+      for (const [key, value] of Object.entries(policies) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
+        state.policies[key] = value as unknown as SecurityPolicyDefinition;
+      }
 
       return {
-        roleSources: input,
-        ref: createRoleSourceRefs(input) as SecurityRoleSourcesResult<TInput>['ref'],
+        policies,
+        ref: createPolicyRefs(policies),
       };
     },
 
-    defineRoleSets<TInput extends SecurityRoleSetInputMap>(input: TInput): SecurityRoleSetsResult<TInput> {
-      writeRoleSets(state, input);
-
-      return {
-        roleSets: input,
-        ref: createRoleSetRefs(input) as SecurityRoleSetsResult<TInput>['ref'],
-      };
+    snapshot() {
+      return options.state;
     },
-
-    defineContexts<TInput extends SecurityContextInputMap>(input: TInput): SecurityContextsResult<TInput> {
-      writeContexts(state, input);
-
-      return {
-        contexts: input,
-        ref: createContextRefs(input) as SecurityContextsResult<TInput>['ref'],
-      };
-    },
-
-    defineGuards<TInput extends SecurityGuardInputMap>(input: TInput): SecurityGuardsResult<TInput> {
-      writeGuards(state, input);
-
-      return {
-        guards: input,
-        ref: createGuardRefs(input) as SecurityGuardsResult<TInput>['ref'],
-      };
-    },
-
-    setDefaults(nextDefaults) {
-      defaults = nextDefaults;
-      return builder;
-    },
-
-    snapshot,
   };
 
   return builder;

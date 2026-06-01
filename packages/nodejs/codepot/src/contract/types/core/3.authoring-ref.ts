@@ -1,3 +1,5 @@
+// src/contract/types/core/3.authoring-ref.ts
+
 import type { PrimitiveDefinition } from '@/contract/types/properties/primitive/definition';
 import type { EnumDefinition } from '@/contract/types/properties/enum/definition';
 import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
@@ -13,15 +15,12 @@ import type { ResourceDefinition } from '@/contract/types/resource/definition';
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
 import type { RoutePathDefinition } from '@/contract/types/resource/route/definition';
 
-import type { ContentTypeDefinition, RequestDefinition, ResponseDefinition } from '@/contract/types/transport/definition';
+import type { ErrorDefinition } from '@/contract/types/errors/definition';
 
 import type {
-  SecurityAuthDefinition,
-  SecurityContextDefinition,
-  SecurityGuardDefinition,
-  SecurityRoleSetDefinition,
-  SecurityRoleSourceDefinition,
-  SecuritySchemeDefinition,
+  SecurityCredentialDefinition,
+  SecurityPolicyDefinition,
+  SecurityPrincipalDefinition,
 } from '@/contract/types/security/definition';
 
 import type { DefinitionItem } from '@/contract/types/definition';
@@ -46,16 +45,11 @@ export const AuthoringRefKind = {
   resourceOperation: 'resource.operation',
   resourceRoute: 'resource.route',
 
-  transportContentType: 'transport.contentType',
-  transportRequest: 'transport.request',
-  transportResponse: 'transport.response',
+  error: 'error',
 
-  securityScheme: 'security.scheme',
-  securityAuth: 'security.auth',
-  securityRoleSource: 'security.roleSource',
-  securityRoleSet: 'security.roleSet',
-  securityContext: 'security.context',
-  securityGuard: 'security.guard',
+  securityCredential: 'security.credential',
+  securityPrincipal: 'security.principal',
+  securityPolicy: 'security.policy',
 } as const;
 
 export type AuthoringRefKind = (typeof AuthoringRefKind)[keyof typeof AuthoringRefKind];
@@ -180,7 +174,7 @@ export type EntityAuthoringRef = AuthoringRef<EntityDefinition, typeof Authoring
 
 export type EntityFieldAuthoringRef = AuthoringRef<EntityField, typeof AuthoringRefKind.schemaEntityField>;
 
-// TODO: Add EntityFieldSetDefinition to schema types and use it here
+// TODO: Add EntityFieldSetDefinition to schema types and use it here.
 export type EntityFieldSetAuthoringRef = AuthoringRef<ModelDefinition, typeof AuthoringRefKind.schemaEntityFieldSet>;
 
 export type ModelAuthoringRef<TExtension = unknown> = ExtendableAuthoringRef<
@@ -206,27 +200,23 @@ export type OperationAuthoringRef = AuthoringRef<OperationDefinition, typeof Aut
 export type RouteAuthoringRef = AuthoringRef<RoutePathDefinition, typeof AuthoringRefKind.resourceRoute>;
 
 // ============================================================================
-// TRANSPORT REFS
+// ERROR REFS
 // ============================================================================
 
-export type ContentTypeAuthoringRef = AuthoringRef<ContentTypeDefinition, typeof AuthoringRefKind.transportContentType>;
-
-export type RequestAuthoringRef = AuthoringRef<RequestDefinition, typeof AuthoringRefKind.transportRequest>;
-
-export type ResponseAuthoringRef = AuthoringRef<ResponseDefinition, typeof AuthoringRefKind.transportResponse>;
+export type ErrorAuthoringRef = AuthoringRef<ErrorDefinition, typeof AuthoringRefKind.error>;
 
 // ============================================================================
 // SECURITY REFS
 // ============================================================================
 
-export type SecuritySchemeAuthoringRef = AuthoringRef<SecuritySchemeDefinition, typeof AuthoringRefKind.securityScheme>;
+export type SecurityCredentialAuthoringRef<TTarget = SecurityCredentialDefinition> = AuthoringRef<
+  TTarget,
+  typeof AuthoringRefKind.securityCredential
+>;
 
-export type SecurityAuthAuthoringRef = AuthoringRef<SecurityAuthDefinition, typeof AuthoringRefKind.securityAuth>;
+export type SecurityPrincipalAuthoringRef<TTarget = SecurityPrincipalDefinition> = AuthoringRef<
+  TTarget,
+  typeof AuthoringRefKind.securityPrincipal
+>;
 
-export type SecurityRoleSourceAuthoringRef = AuthoringRef<SecurityRoleSourceDefinition, typeof AuthoringRefKind.securityRoleSource>;
-
-export type SecurityRoleSetAuthoringRef = AuthoringRef<SecurityRoleSetDefinition, typeof AuthoringRefKind.securityRoleSet>;
-
-export type SecurityContextAuthoringRef = AuthoringRef<SecurityContextDefinition, typeof AuthoringRefKind.securityContext>;
-
-export type SecurityGuardAuthoringRef = AuthoringRef<SecurityGuardDefinition, typeof AuthoringRefKind.securityGuard>;
+export type SecurityPolicyAuthoringRef<TTarget = SecurityPolicyDefinition> = AuthoringRef<TTarget, typeof AuthoringRefKind.securityPolicy>;

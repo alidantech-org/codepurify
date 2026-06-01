@@ -1,246 +1,72 @@
-import { ApiKeyLocation, SecurityAuthMode, SecuritySchemeType } from '@/contract/types/security/definition';
+import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/security/definition';
 
 import type {
-  RouteSecurityRefsInput,
-  SecurityAuthHelper,
-  SecurityContextHelper,
-  SecurityGuardHelper,
-  SecurityRoleSetHelper,
-  SecurityRoleSourceHelper,
-  SecurityRouteHelper,
-  SecuritySchemeHelper,
+  SecurityBuilder,
+  SecurityCredentialOptions,
+  SecurityCredentialInput,
+  SecurityPrincipalInput,
+  SecurityRequirePolicyInput,
+  SecurityPolicyInput,
 } from '@/contract/types/core/9.security-builder';
 
-// ============================================================================
-// SCHEME HELPERS
-// ============================================================================
-
-export const securityScheme: SecuritySchemeHelper = {
-  bearer(options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.http,
-      scheme: 'bearer',
-    };
-  },
-
-  bearerJwt(options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.http,
-      scheme: 'bearer',
-      bearerFormat: options.bearerFormat ?? 'JWT',
-    };
-  },
-
-  basic(options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.http,
-      scheme: 'basic',
-    };
-  },
-
-  http(scheme, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.http,
-      scheme,
-    };
-  },
-
-  apiKey(keyName, location, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.apiKey,
-      in: location,
-      keyName,
-    };
-  },
-
-  apiKeyHeader(keyName, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.apiKey,
-      in: ApiKeyLocation.header,
-      keyName,
-    };
-  },
-
-  apiKeyQuery(keyName, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.apiKey,
-      in: ApiKeyLocation.query,
-      keyName,
-    };
-  },
-
-  apiKeyCookie(keyName, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.apiKey,
-      in: ApiKeyLocation.cookie,
-      keyName,
-    };
-  },
-
-  oauth2(flows, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.oauth2,
-      flows,
-    };
-  },
-
-  openId(openIdConnectUrl, options = {}) {
-    return {
-      ...options,
-      type: SecuritySchemeType.openId,
-      openIdConnectUrl,
-    };
-  },
-};
-
-// ============================================================================
-// AUTH HELPERS
-// ============================================================================
-
-export const securityAuth: SecurityAuthHelper = {
-  scheme(scheme, scopes) {
-    return {
-      scheme,
-      scopes,
-    };
-  },
-
-  any(schemes, options = {}) {
-    return {
-      ...options,
-      mode: SecurityAuthMode.any,
-      schemes,
-    };
-  },
-
-  all(schemes, options = {}) {
-    return {
-      ...options,
-      mode: SecurityAuthMode.all,
-      schemes,
-    };
-  },
-};
-
-// ============================================================================
-// CONTEXT HELPERS
-// ============================================================================
-
-export const securityContext: SecurityContextHelper = {
-  dto(target, schema, options = {}) {
-    return {
-      ...options,
-      target,
-      schema,
-    };
-  },
-};
-
-// ============================================================================
-// GUARD HELPERS
-// ============================================================================
-
-export const securityGuard: SecurityGuardHelper = {
-  handler(handler, options = {}) {
-    return {
-      ...options,
-      handler,
-    };
-  },
-};
-
-// ============================================================================
-// ROLE HELPERS
-// ============================================================================
-
-export const securityRoleSource: SecurityRoleSourceHelper = {
-  entityField(source, enumRef, options = {}) {
-    return {
-      ...options,
-      source,
-      enum: enumRef,
-    };
-  },
-};
-
-export const securityRoleSet: SecurityRoleSetHelper = {
-  values(role, values, options = {}) {
-    return {
-      ...options,
-      role,
-      values,
-    };
-  },
-};
-
-// ============================================================================
-// ROUTE / RESOURCE SECURITY USAGE HELPERS
-// ============================================================================
-
-function protectedSecurity(input: RouteSecurityRefsInput = {}) {
+export function credential(
+  source: SecurityCredentialSource,
+  key: string,
+  options: SecurityCredentialOptions = {},
+): SecurityCredentialInput {
   return {
-    ...input,
-    protected: true,
+    ...options,
+    source,
+    key,
   };
 }
 
-export const securityRoute: SecurityRouteHelper = {
-  public(options = {}) {
-    return {
-      ...options,
-      protected: false,
-    };
-  },
+export function header(key: string, options: SecurityCredentialOptions = {}): SecurityCredentialInput {
+  return credential(SecurityCredentialSource.header, key, options);
+}
 
-  protected(input = {}) {
-    return protectedSecurity(input);
-  },
+export function cookie(key: string, options: SecurityCredentialOptions = {}): SecurityCredentialInput {
+  return credential(SecurityCredentialSource.cookie, key, options);
+}
 
-  auth(auth, options = {}) {
-    return protectedSecurity({
-      ...options,
-      auth,
-    });
-  },
+export function query(key: string, options: SecurityCredentialOptions = {}): SecurityCredentialInput {
+  return credential(SecurityCredentialSource.query, key, options);
+}
 
-  roles(roleSets, options = {}) {
-    return protectedSecurity({
-      ...options,
-      roleSets,
-    });
-  },
+export function bearerHeader(options: Omit<SecurityCredentialOptions, 'format'> = {}): SecurityCredentialInput {
+  return header('authorization', {
+    ...options,
+    format: SecurityCredentialFormat.bearer,
+  });
+}
 
-  guards(guards, options = {}) {
-    return protectedSecurity({
-      ...options,
-      guards,
-    });
-  },
+export function principal(fields: SecurityPrincipalInput): SecurityPrincipalInput {
+  return fields;
+}
 
-  custom(input) {
-    return input;
-  },
-};
+export function publicPolicy(options = {}): SecurityPolicyInput {
+  return {
+    ...options,
+    mode: SecurityPolicyMode.public,
+  };
+}
 
-// ============================================================================
-// GROUPED EXPORT
-// ============================================================================
+export function protectedPolicy(options = {}): SecurityPolicyInput {
+  return {
+    ...options,
+    mode: SecurityPolicyMode.protected,
+  };
+}
+
+export function requirePolicy(input: SecurityRequirePolicyInput): SecurityPolicyInput {
+  return {
+    ...input,
+    mode: SecurityPolicyMode.protected,
+  };
+}
 
 export const security = {
-  scheme: securityScheme,
-  auth: securityAuth,
-  context: securityContext,
-  guard: securityGuard,
-  roleSource: securityRoleSource,
-  roleSet: securityRoleSet,
-  route: securityRoute,
+  public: publicPolicy,
+  protected: protectedPolicy,
+  require: requirePolicy,
 };

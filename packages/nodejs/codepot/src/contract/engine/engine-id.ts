@@ -15,18 +15,12 @@ export const EngineIdPart = {
   dto: 'dto',
   params: 'params',
 
-  transport: 'transport',
-  contentType: 'content_type',
-  request: 'request',
-  response: 'response',
+  error: 'error',
 
   security: 'security',
-  scheme: 'scheme',
-  auth: 'auth',
-  roleSource: 'role_source',
-  roleSet: 'role_set',
-  context: 'context',
-  guard: 'guard',
+  credential: 'credential',
+  principal: 'principal',
+  policy: 'policy',
 
   route: 'route',
   operation: 'operation',

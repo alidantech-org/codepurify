@@ -1,3 +1,5 @@
+// src/contract/types/core/7.routes-builder.ts
+
 import type { DefinitionItem } from '@/contract/types/definition';
 
 import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
@@ -6,15 +8,15 @@ import type { HttpMethod, RoutePathDefinition, RoutesDefinition } from '@/contra
 import type {
   DtoAuthoringRef,
   EntityFieldAuthoringRef,
+  ErrorAuthoringRef,
   MaybeUsage,
-  ModelAuthoringRef,
   OperationAuthoringRef,
   ParamsAuthoringRef,
   PropertyAuthoringRef,
-  RequestAuthoringRef,
-  ResponseAuthoringRef,
   RouteAuthoringRef,
 } from './3.authoring-ref';
+
+import type { ContentHelper, ContentInput, ContentInputList } from './8.errors-builder';
 
 import type { ParamSourceRef, ParamsInputMap, ParamsResult } from './5.schemas-builder';
 
@@ -28,81 +30,43 @@ export type RouteSchemaInput = MaybeUsage<DtoAuthoringRef>;
 
 export type RouteQueryInput = RouteSchemaInput;
 
-export type RouteBodyInput = RouteSchemaInput | RequestAuthoringRef;
+export type RouteBodyInput = RouteSchemaInput;
 
 export type RouteParamValueInput = ParamSourceRef | ParamsAuthoringRef | PropertyAuthoringRef | EntityFieldAuthoringRef;
 
 export type RouteInlineParamsInput = Record<string, RouteParamValueInput>;
 
-export type RouteParamsInput = ParamsInputMap | ParamsResult<ParamsInputMap> | RouteInlineParamsInput;
-
-export type RouteResponseInput = ResponseAuthoringRef | RouteInlineResponseInput;
+export type RouteParamsInput = ParamsAuthoringRef | ParamsInputMap | ParamsResult<ParamsInputMap> | RouteInlineParamsInput;
 
 // ============================================================================
-// INLINE REQUEST / RESPONSE INPUTS
+// ROUTE OUTPUT / ERRORS
 // ============================================================================
 
-export interface RouteInlineRequestInput extends DefinitionItem {
-  readonly schema: RouteSchemaInput;
-
-  /**
-   * MIME type or registered content type key/path.
-   */
-  readonly contentType?: string;
+export interface RouteOutputOptions extends DefinitionItem {
+  readonly status?: number;
+  readonly content?: ContentInputList;
 }
 
-export interface RouteInlineResponseInput extends DefinitionItem {
+export interface RouteOutputInput extends DefinitionItem {
+  readonly status: number;
   readonly schema?: RouteSchemaInput;
+  readonly content?: readonly ContentInput[];
+}
 
-  /**
-   * MIME type or registered content type key/path.
-   */
-  readonly contentType?: string;
+export type RouteErrorInput = ErrorAuthoringRef;
 
+// ============================================================================
+// LOW-LEVEL ESCAPE HATCH
+// ============================================================================
+
+export interface RouteInlineResponseInput extends DefinitionItem {
+  readonly status?: number;
+  readonly schema?: RouteSchemaInput;
+  readonly content?: ContentInputList;
   readonly headers?: Record<string, RouteSchemaInput>;
 }
 
-// ============================================================================
-// RESPONSE HELPER
-// ============================================================================
-
-export interface RouteResponseHelper {
-  json(schema?: RouteSchemaInput, options?: Omit<RouteInlineResponseInput, 'schema' | 'contentType'>): RouteInlineResponseInput;
-
-  text(schema?: RouteSchemaInput, options?: Omit<RouteInlineResponseInput, 'schema' | 'contentType'>): RouteInlineResponseInput;
-
-  binary(options?: Omit<RouteInlineResponseInput, 'schema' | 'contentType'>): RouteInlineResponseInput;
-
-  empty(options?: DefinitionItem): RouteInlineResponseInput;
-
-  contentType(
-    contentType: string,
-    schema?: RouteSchemaInput,
-    options?: Omit<RouteInlineResponseInput, 'schema' | 'contentType'>,
-  ): RouteInlineResponseInput;
-
-  ref(ref: ResponseAuthoringRef): ResponseAuthoringRef;
-}
-
-// ============================================================================
-// REQUEST HELPER
-// ============================================================================
-
-export interface RouteRequestHelper {
-  json(schema: RouteSchemaInput, options?: Omit<RouteInlineRequestInput, 'schema' | 'contentType'>): RouteInlineRequestInput;
-
-  form(schema: RouteSchemaInput, options?: Omit<RouteInlineRequestInput, 'schema' | 'contentType'>): RouteInlineRequestInput;
-
-  multipart(schema: RouteSchemaInput, options?: Omit<RouteInlineRequestInput, 'schema' | 'contentType'>): RouteInlineRequestInput;
-
-  contentType(
-    contentType: string,
-    schema: RouteSchemaInput,
-    options?: Omit<RouteInlineRequestInput, 'schema' | 'contentType'>,
-  ): RouteInlineRequestInput;
-
-  ref(ref: RequestAuthoringRef): RequestAuthoringRef;
-}
+export type RouteResponseInput = ErrorAuthoringRef | RouteInlineResponseInput;
 
 // ============================================================================
 // ROUTE METHOD CHAIN
@@ -117,13 +81,39 @@ export interface RouteMethodChain extends DefinitionItem {
 
   query(query: RouteQueryInput): RouteMethodChain;
 
-  body(body: RouteBodyInput | RouteInlineRequestInput): RouteMethodChain;
+  /**
+   * Request body. JSON is default unless content is provided.
+   */
+  body(body: RouteBodyInput, content?: ContentInputList): RouteMethodChain;
 
   /**
    * Route-level security override.
    */
   security(security: RouteSecurityInput): RouteMethodChain;
 
+  /**
+   * Success output. Defaults to status 200 and JSON content.
+   */
+  output(schema: RouteSchemaInput, contentOrOptions?: ContentInputList | RouteOutputOptions): RouteDefinitionInput;
+
+  /**
+   * Created output. Defaults to status 201 and JSON content.
+   */
+  created(schema: RouteSchemaInput, contentOrOptions?: ContentInputList | RouteOutputOptions): RouteDefinitionInput;
+
+  /**
+   * No body success output. Defaults to status 204.
+   */
+  noContent(options?: Omit<RouteOutputOptions, 'content'>): RouteDefinitionInput;
+
+  /**
+   * Semantic reusable errors.
+   */
+  errors(...errors: readonly RouteErrorInput[]): RouteMethodChain;
+
+  /**
+   * Low-level HTTP escape hatch. Prefer output/created/noContent/errors.
+   */
   responses(responses: Record<number, RouteResponseInput>): RouteDefinitionInput;
 
   operation(operation: OperationAuthoringRef): RouteMethodChain;
@@ -142,11 +132,21 @@ export interface RouteDefinitionInput extends DefinitionItem {
 
   readonly query?: RouteQueryInput;
 
-  readonly body?: RouteBodyInput | RouteInlineRequestInput;
+  readonly body?: {
+    readonly schema: RouteBodyInput;
+    readonly content?: readonly ContentInput[];
+  };
 
   readonly security?: RouteSecurityInput;
 
-  readonly responses: Record<number, RouteResponseInput>;
+  readonly output?: RouteOutputInput;
+
+  readonly errors?: readonly RouteErrorInput[];
+
+  /**
+   * Low-level HTTP escape hatch.
+   */
+  readonly responses?: Record<number, RouteResponseInput>;
 
   /**
    * Optional explicit operation ref.
@@ -162,9 +162,7 @@ export type DefineRoutesFactoryInput = Record<string, RouteDefinitionInput>;
 // ============================================================================
 
 export interface RouteHelper {
-  readonly response: RouteResponseHelper;
-
-  readonly request: RouteRequestHelper;
+  readonly content: ContentHelper;
 
   get(path: string): RouteMethodChain;
 

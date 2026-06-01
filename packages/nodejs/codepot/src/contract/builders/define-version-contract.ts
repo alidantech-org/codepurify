@@ -1,19 +1,21 @@
 // src/contract/builders/define-version-contract.ts
 
+import type { ErrorsDefinition } from '@/contract/types/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';
 import type { ResourceDefinition } from '@/contract/types/resource/definition';
 import type { SchemasDefinition } from '@/contract/types/schema/definition';
 import type { SecurityDefinition } from '@/contract/types/security/definition';
-import type { TransportDefinition } from '@/contract/types/transport/definition';
 
 import type { DefineVersionContractOptions, VersionAuthoringState, VersionBuilder } from '@/contract/types/core/2.version-builder';
 
 import type { DefineResourceOptions, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
 
+import type { ErrorInputMap, ErrorsResult } from '@/contract/types/core/8.errors-builder';
+
+import { defineErrors } from './define-errors';
 import { defineProperties } from './define-properties';
-import { defineSchemas } from './define-schemas';
 import { defineResource } from './define-resource';
-import { defineTransport } from './define-transport';
+import { defineSchemas } from './define-schemas';
 import { defineSecurity } from './define-security';
 
 // ============================================================================
@@ -43,30 +45,33 @@ function createSchemasState(initial?: Partial<SchemasDefinition>): Partial<Schem
   };
 }
 
-function createTransportState(initial?: Partial<TransportDefinition>): Partial<TransportDefinition> {
+function createErrorsState(initial?: Partial<ErrorsDefinition>): Partial<ErrorsDefinition> {
   return {
-    contentTypes: initial?.contentTypes ?? {},
-    requests: initial?.requests ?? {},
-    responses: initial?.responses ?? {},
-    defaults: initial?.defaults,
+    errors: initial?.errors ?? {},
   };
 }
 
 function createSecurityState(initial?: Partial<SecurityDefinition>): Partial<SecurityDefinition> {
   return {
-    schemes: initial?.schemes ?? {},
-    auth: initial?.auth ?? {},
-    roleSources: initial?.roleSources ?? {},
-    roleSets: initial?.roleSets ?? {},
-    contexts: initial?.contexts ?? {},
-    guards: initial?.guards ?? {},
-    defaults: initial?.defaults,
+    credentials: initial?.credentials ?? {},
+    principals: initial?.principals ?? {},
+    policies: initial?.policies ?? {},
   };
 }
 
 // ============================================================================
 // MERGE HELPERS
 // ============================================================================
+
+type MutableErrorsState = {
+  errors?: ErrorsDefinition['errors'];
+};
+
+type MutableSecurityState = {
+  credentials?: SecurityDefinition['credentials'];
+  principals?: SecurityDefinition['principals'];
+  policies?: SecurityDefinition['policies'];
+};
 
 function mergeProperties(target: Partial<PropertiesDefinition>, source: Partial<PropertiesDefinition>): void {
   Object.assign((target.primitives ??= {}), source.primitives ?? {});
@@ -81,27 +86,23 @@ function mergeSchemas(target: Partial<SchemasDefinition>, source: Partial<Schema
   Object.assign((target.params ??= {}), source.params ?? {});
 }
 
-function mergeTransport(target: Partial<TransportDefinition>, source: Partial<TransportDefinition>): void {
-  Object.assign((target.contentTypes ??= {}), source.contentTypes ?? {});
-  Object.assign((target.requests ??= {}), source.requests ?? {});
-  Object.assign((target.responses ??= {}), source.responses ?? {});
+function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDefinition>): void {
+  const mutable = target as MutableErrorsState;
 
-  if (source.defaults !== undefined) {
-    target.defaults = source.defaults;
-  }
+  mutable.errors ??= {};
+  Object.assign(mutable.errors, source.errors ?? {});
 }
 
 function mergeSecurity(target: Partial<SecurityDefinition>, source: Partial<SecurityDefinition>): void {
-  Object.assign((target.schemes ??= {}), source.schemes ?? {});
-  Object.assign((target.auth ??= {}), source.auth ?? {});
-  Object.assign((target.roleSources ??= {}), source.roleSources ?? {});
-  Object.assign((target.roleSets ??= {}), source.roleSets ?? {});
-  Object.assign((target.contexts ??= {}), source.contexts ?? {});
-  Object.assign((target.guards ??= {}), source.guards ?? {});
+  const mutable = target as MutableSecurityState;
 
-  if (source.defaults !== undefined) {
-    target.defaults = source.defaults;
-  }
+  mutable.credentials ??= {};
+  mutable.principals ??= {};
+  mutable.policies ??= {};
+
+  Object.assign(mutable.credentials, source.credentials ?? {});
+  Object.assign(mutable.principals, source.principals ?? {});
+  Object.assign(mutable.policies, source.policies ?? {});
 }
 
 function snapshotResources(
@@ -123,7 +124,7 @@ function snapshotResources(
 export function defineVersionContract(options: DefineVersionContractOptions): VersionBuilder {
   const properties = createPropertiesState(options.properties);
   const schemas = createSchemasState(options.schemas);
-  const transport = createTransportState(options.transport);
+  const errors = createErrorsState(options.errors);
   const security = createSecurityState(options.security);
 
   const resources: Record<string, ResourceDefinition> = {
@@ -142,7 +143,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
 
       properties,
       schemas,
-      transport,
+      errors,
       security,
       resources: snapshotResources(resources, resourceBuilders),
 
@@ -171,10 +172,10 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
       });
     },
 
-    defineTransport() {
-      return defineTransport({
-        state: transport,
-      });
+    defineErrors<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput> {
+      return defineErrors({
+        state: errors,
+      }).define(input);
     },
 
     defineSecurity() {
@@ -206,8 +207,8 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
       return builder;
     },
 
-    addTransport(nextTransport) {
-      mergeTransport(transport, nextTransport);
+    addErrors(nextErrors) {
+      mergeErrors(errors, nextErrors);
       return builder;
     },
 

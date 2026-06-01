@@ -1,4 +1,4 @@
-import { defineCodepotConfig, defineVersionContract, field, property } from '@/index';
+import { content, defineCodepotConfig, defineVersionContract, error, field, property } from '@/index';
 
 // ============================================================================
 // VERSION DEFINITION
@@ -20,12 +20,18 @@ export const schemas = v1.defineSchemas();
 const primitives = properties.primitives({
   id: property.uuid(),
   dateTime: property.dateTime(),
+
   displayName: property.string().minLength(2).maxLength(80),
+  title: property.string().minLength(2).maxLength(120),
   email: property.email(),
   bio: property.string().maxLength(500),
+  message: property.string().maxLength(1000),
+  fileName: property.string().minLength(1).maxLength(180),
+
   integer: property.integer(),
   text: property.string(),
   boolean: property.boolean(),
+
   moneyAmount: property.number().min(0),
   currencyCode: property.string().minLength(3).maxLength(3),
 });
@@ -36,14 +42,26 @@ const primitives = properties.primitives({
 
 export const enums = properties.enums({
   UserRole: property.enum({
+    owner: { value: 'owner', label: 'Owner' },
     admin: { value: 'admin', label: 'Admin' },
     member: { value: 'member', label: 'Member' },
   }),
+
   UserStatus: property.enum({
     active: { value: 'active', label: 'Active' },
     suspended: { value: 'suspended', label: 'Suspended' },
   }),
+
+  PostStatus: property.enum({
+    draft: { value: 'draft', label: 'Draft' },
+    published: { value: 'published', label: 'Published' },
+    archived: { value: 'archived', label: 'Archived' },
+  }),
 });
+
+// ============================================================================
+// COMPOSITES
+// ============================================================================
 
 export const composites = properties.composites({
   money: property.composite({
@@ -79,6 +97,13 @@ export const baseEntity = schemas.entity(
     updatedAt: field(primitives.ref.dateTime)
       .required()
       .persistence((p) => p.stored()),
+
+    deletedAt: field(primitives.ref.dateTime)
+      .optional()
+      .nullable()
+      .capability((c) => c.filter())
+      .lifecycle((l) => l.immutable())
+      .persistence((p) => p.stored()),
   },
   { abstract: true },
 );
@@ -87,10 +112,35 @@ export const baseEntity = schemas.entity(
 // ENTITIES
 // ============================================================================
 
+export const tenant = schemas
+  .entity(
+    'Tenant',
+    {
+      ownerId: field(primitives.ref.id).capability((c) => c.filter()),
+
+      name: field(primitives.ref.displayName)
+        .required()
+        .capability((c) => c.filter().sort().select())
+        .visibility((v) => v.public()),
+    },
+    {
+      extends: baseEntity,
+      tags: ['tenant'],
+    },
+  )
+  .models({
+    public: (m) => m.pick('id', 'name'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
+  });
+
 export const user = schemas
   .entity(
     'User',
     {
+      tenant: field.belongsTo(tenant).required(),
+      // TODO relation capability/visibility proof pending: .capability()/.visibility() not supported on relations yet
+
       name: field(primitives.ref.displayName)
         .required()
         .capability((c) => c.filter().sort().select())
@@ -101,7 +151,7 @@ export const user = schemas
         .capability((c) => c.filter().select(false))
         .visibility((v) => v.public().sensitive()),
 
-      bio: field(primitives.ref.text)
+      bio: field(primitives.ref.bio)
         .optional()
         .nullable()
         .visibility((v) => v.public()),
@@ -123,7 +173,11 @@ export const user = schemas
         .visibility((v) => v.internal()),
 
       billingLimit: field(composites.ref.money).optional(),
+
       inlineBillingLimit: field(composites.ref.inlineMoney).optional(),
+
+      // TODO relation hasOne proof pending: field.hasOne(profile) is not implemented yet.
+      // TODO relation hasMany proof pending: field.hasMany(post) is not implemented yet.
     },
     {
       extends: baseEntity,
@@ -140,64 +194,92 @@ export const user = schemas
   })
   .models({
     read: (m) => m.relations('expand'),
-    create: (m) => m.partial(),
-    patch: (m) => m.partial(),
-    public: (m) => m.pick('name', 'bio', 'id'),
+    create: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
+    public: (m) => m.pick('id', 'name', 'bio', 'role'),
   });
 
 export const profile = schemas
-  .entity('Profile', {
-    user: field
-      .belongsTo(user)
-      .required()
-      .visibility((v) => v.internal()),
+  .entity(
+    'Profile',
+    {
+      user: field.belongsTo(user).required(),
+      // TODO relation capability/visibility proof pending: .capability()/.visibility() not supported on relations yet
 
-    displayName: field(primitives.ref.displayName)
-      .required()
-      .visibility((v) => v.public()),
+      displayName: field(primitives.ref.displayName)
+        .required()
+        .visibility((v) => v.public()),
 
-    bio: field(primitives.ref.bio)
-      .optional()
-      .nullable()
-      .visibility((v) => v.public()),
-  })
+      bio: field(primitives.ref.bio)
+        .optional()
+        .nullable()
+        .visibility((v) => v.public()),
+    },
+    { extends: baseEntity },
+  )
   .models({
-    public: (m) => m.pick('displayName', 'bio'),
-    create: (m) => m.omit('user'),
-    patch: (m) => m.partial(),
+    public: (m) => m.pick('id', 'displayName', 'bio'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'user'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
   });
 
 export const post = schemas
-  .entity('Post', {
-    author: field.belongsTo(user).required(),
+  .entity(
+    'Post',
+    {
+      author: field.belongsTo(user).required(),
+      // TODO relation capability/visibility proof pending: .capability()/.visibility() not supported on relations yet
 
-    title: field(primitives.ref.displayName)
-      .required()
-      .capability((c) => c.filter().sort().select()),
+      title: field(primitives.ref.title)
+        .required()
+        .capability((c) => c.filter().sort().select())
+        .visibility((v) => v.public()),
 
-    body: field(primitives.ref.bio)
-      .required()
-      .visibility((v) => v.public()),
-  })
+      body: field(primitives.ref.bio)
+        .required()
+        .visibility((v) => v.public()),
+
+      status: field(enums.ref.PostStatus)
+        .required()
+        .capability((c) => c.filter().sort())
+        .visibility((v) => v.public()),
+    },
+    { extends: baseEntity },
+  )
   .models({
     read: (m) => m.relations('expand'),
-    public: (m) => m.pick('author', 'title', 'body'),
-    create: (m) => m.omit('author'),
-    patch: (m) => m.partial().omit('author'),
+    public: (m) => m.pick('id', 'author', 'title', 'body', 'status'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'author'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'author'),
   });
 
 export const tag = schemas
-  .entity('Tag', {
-    name: field(primitives.ref.displayName)
-      .required()
-      .capability((c) => c.filter().sort()),
+  .entity(
+    'Tag',
+    {
+      name: field(primitives.ref.displayName)
+        .required()
+        .capability((c) => c.filter().sort()),
 
-    posts: field.manyToMany(post),
-  })
+      posts: field.manyToMany(post),
+      // TODO relation visibility proof pending: .visibility() not supported on manyToMany yet
+    },
+    { extends: baseEntity },
+  )
   .models({
-    public: (m) => m.pick('name'),
-    option: (m) => m.pick('name'),
+    public: (m) => m.pick('id', 'name'),
+    option: (m) => m.pick('id', 'name'),
   });
+
+// TODO relation through proof pending: field.manyToMany(...).through(...) is not implemented yet.
+// export const postTag = schemas.entity(
+//   'PostTag',
+//   {
+//     post: field.belongsTo(post).required(),
+//     tag: field.belongsTo(tag).required(),
+//   },
+//   { extends: baseEntity },
+// );
 
 // ============================================================================
 // DTOS
@@ -205,13 +287,18 @@ export const tag = schemas
 
 const commonDtos = schemas.dtos({
   ErrorResponse: {
-    message: primitives.ref.text.required(),
+    message: primitives.ref.message.required(),
     code: primitives.ref.text.optional(),
+  },
+
+  ValidationErrorResponse: {
+    message: primitives.ref.message.required(),
+    field: primitives.ref.text.optional(),
   },
 
   ApiResponse: {
     success: primitives.ref.boolean.required(),
-    message: primitives.ref.text.optional(),
+    message: primitives.ref.message.optional(),
   },
 
   PaginatedResponse: {
@@ -222,12 +309,49 @@ const commonDtos = schemas.dtos({
 });
 
 export const dtos = schemas.dtos({
-  // User DTOs - direct model assignment
+  // Mode 1: direct model-backed DTO
   UserPublic: user.ref.models.public,
-
   UserPatchBody: user.ref.models.patch,
 
-  // User DTOs - composition via extendWith
+  // Mode 2: field-map DTO
+  ListUsersQuery: {
+    search: primitives.ref.text.optional(),
+    role: user.ref.fields.role.optional(),
+    status: user.ref.fields.status.optional(),
+    page: primitives.ref.integer.optional(),
+    limit: primitives.ref.integer.optional(),
+  },
+
+  CreateUserBody: {
+    name: user.ref.fields.name.required(),
+    email: user.ref.fields.email.required(),
+    role: user.ref.fields.role.required(),
+    tenant: user.ref.fields.tenant.required(),
+  },
+
+  UpdateProfileBody: {
+    name: user.ref.fields.name.optional(),
+    bio: user.ref.fields.bio.optional().nullable(),
+  },
+
+  UploadAvatarBody: {
+    file: primitives.ref.fileName.required(),
+  },
+
+  FeedResponse: {
+    title: primitives.ref.title.required(),
+    body: primitives.ref.bio.required(),
+  },
+
+  ExportUsersResponse: {
+    fileName: primitives.ref.fileName.required(),
+  },
+
+  // Mode 3: extendWith composition
+  UploadAvatarResponse: commonDtos.ref.ApiResponse.extendWith({
+    user: user.ref.models.public.required(),
+  }),
+
   UserResponse: commonDtos.ref.ApiResponse.extendWith({
     user: user.ref.models.public.required(),
   }),
@@ -236,50 +360,35 @@ export const dtos = schemas.dtos({
     items: user.ref.models.public.array().required(),
   }),
 
-  // User DTOs - flat field map
-  UpdateProfileBody: {
-    name: user.ref.fields.name.optional(),
-    bio: user.ref.fields.bio.optional().nullable(),
-  },
-
-  // Proof DTOs - inheritance from entity field options
-  // UserBioInheritsEntityOptions: bio inherits optional + nullable from User.bio
+  // Entity field inheritance/override proofs
   UserBioInheritsEntityOptions: {
     bio: user.ref.fields.bio,
   },
 
-  // UserBioRequiredButStillNullable: required overrides entity optional, nullable inherited
   UserBioRequiredButStillNullable: {
     bio: user.ref.fields.bio.required(),
   },
 
-  // UserBioRequiredNonNullable: required + nonNullable override both
   UserBioRequiredNonNullable: {
     bio: user.ref.fields.bio.required().nonNullable(),
   },
 
-  // UserEmailOptionalOverride: optional overrides entity required
   UserEmailOptionalOverride: {
     email: user.ref.fields.email.optional(),
   },
 
-  // Proof DTOs - array/single inheritance from entity field options
-  // UserRolesInheritArray: roles inherits array from entity
   UserRolesInheritArray: {
     roles: user.ref.fields.roles,
   },
 
-  // UserPrimaryRoleSingle: array false override (single from array)
   UserPrimaryRoleSingle: {
     role: user.ref.fields.roles.single(),
   },
 
-  // UserRoleArrayOverride: array true override (array from single)
   UserRoleArrayOverride: {
     roles: user.ref.fields.role.array(),
   },
 
-  // UserPrimaryRoleStrict: required + nonNullable + single override all
   UserPrimaryRoleStrict: {
     role: user.ref.fields.roles.required().nonNullable().single(),
   },
@@ -291,7 +400,194 @@ export const dtos = schemas.dtos({
 
 export const params = schemas.params({
   id: user.ref.fields.id,
+  tenantId: tenant.ref.fields.id,
+  postId: post.ref.fields.id,
 });
+
+// ============================================================================
+// ERRORS
+// ============================================================================
+
+export const errors = v1.defineErrors({
+  unauthorized: error(401, commonDtos.ref.ErrorResponse, {
+    intent: 'unauthorized',
+  }),
+
+  forbidden: error(403, commonDtos.ref.ErrorResponse, {
+    intent: 'forbidden',
+  }),
+
+  notFound: error(404, commonDtos.ref.ErrorResponse, {
+    intent: 'not_found',
+  }),
+
+  validation: error(422, commonDtos.ref.ValidationErrorResponse, {
+    intent: 'validation',
+  }),
+
+  xmlError: error(400, commonDtos.ref.ErrorResponse, content.xml()),
+});
+
+// ============================================================================
+// SECURITY
+// ============================================================================
+
+const security = v1.defineSecurity();
+
+const credentials = security.credentials({
+  bearer: security.bearerHeader({
+    valueType: primitives.ref.text,
+  }),
+
+  session: security.cookie('session_id', {
+    format: 'session',
+    valueType: primitives.ref.text,
+  }),
+});
+
+const principals = security.principals({
+  user: security.principal({
+    id: user.ref.fields.id,
+    roles: user.ref.fields.roles,
+    status: user.ref.fields.status,
+  }),
+
+  tenant: security.principal({
+    id: tenant.ref.fields.id,
+    ownerId: tenant.ref.fields.ownerId,
+  }),
+});
+
+const policies = security.policies({
+  public: security.public(),
+
+  authenticated: security.protected(),
+
+  tenantMember: security.require({
+    credential: credentials.ref.bearer,
+    principals: {
+      user: principals.ref.user,
+      tenant: principals.ref.tenant,
+    },
+    roles: ['owner', 'admin', 'member'],
+    intent: 'tenant_role',
+  }),
+
+  tenantAdmin: security.require({
+    credential: credentials.ref.bearer,
+    principals: {
+      user: principals.ref.user,
+      tenant: principals.ref.tenant,
+    },
+    roles: ['owner', 'admin'],
+    permissions: ['users.read', 'users.write'],
+    intent: 'tenant_role',
+  }),
+});
+
+// ============================================================================
+// RESOURCES + RESOURCE-SCOPED ERRORS + ROUTES
+// ============================================================================
+
+const users = v1.defineResource({
+  key: 'users',
+  folders: ['platform', 'auth'],
+  security: security.protected(),
+});
+
+const userSchemas = users.defineSchemas();
+
+const userParams = userSchemas.params({
+  id: user.ref.fields.id,
+});
+
+const userErrors = users.defineErrors({
+  emailTaken: error(409, commonDtos.ref.ErrorResponse, {
+    intent: 'conflict',
+    meta: { reason: 'email_taken' },
+  }),
+});
+
+users.defineRoutes().define((route) => ({
+  listUsers: route
+    .get('/')
+    .query(dtos.ref.ListUsersQuery)
+    .security(policies.ref.tenantAdmin)
+    .errors(errors.ref.unauthorized, errors.ref.forbidden)
+    .output(dtos.ref.UserListResponse),
+
+  getUser: route
+    .get('/:id')
+    .params(params.ref.id)
+    .security(security.protected())
+    .errors(errors.ref.unauthorized, errors.ref.notFound)
+    .output(dtos.ref.UserResponse),
+
+  createUser: route
+    .post('/')
+    .body(dtos.ref.CreateUserBody)
+    .security(policies.ref.tenantAdmin)
+    .errors(errors.ref.validation, userErrors.ref.emailTaken)
+    .created(dtos.ref.UserResponse),
+
+  updateProfile: route
+    .patch('/:id/profile')
+    .params(params.ref.id)
+    .body(dtos.ref.UpdateProfileBody)
+    .security(security.protected())
+    .errors(errors.ref.validation, errors.ref.unauthorized, errors.ref.notFound)
+    .output(dtos.ref.UserResponse),
+
+  uploadAvatar: route
+    .post('/:id/avatar')
+    .params(params.ref.id)
+    .body(dtos.ref.UploadAvatarBody, content.multipart())
+    .security(security.protected())
+    .errors(errors.ref.validation, errors.ref.unauthorized)
+    .created(dtos.ref.UploadAvatarResponse),
+
+  exportUsersCsv: route
+    .get('/export.csv')
+    .security(policies.ref.tenantAdmin)
+    .errors(errors.ref.unauthorized, errors.ref.forbidden)
+    .output(dtos.ref.ExportUsersResponse, content.csv()),
+
+  feedXml: route
+    .get('/feed.xml')
+    .security(policies.ref.public)
+    .errors(errors.ref.xmlError)
+    .output(dtos.ref.FeedResponse, [content.json(), content.xml()]),
+
+  deleteUser: route
+    .delete('/:id')
+    .params(params.ref.id)
+    .security(policies.ref.tenantAdmin)
+    .errors(errors.ref.unauthorized, errors.ref.notFound)
+    .noContent(),
+}));
+
+const tenants = v1.defineResource({
+  key: 'tenants',
+  folders: ['platform', 'tenant'],
+  security: policies.ref.tenantMember,
+});
+
+tenants.defineRoutes().define((route) => ({
+  getTenant: route
+    .get('/:tenantId')
+    .params(params.ref.tenantId)
+    .security(policies.ref.tenantMember)
+    .errors(errors.ref.unauthorized, errors.ref.forbidden, errors.ref.notFound)
+    .output(dtos.ref.UserResponse),
+
+  updateTenant: route
+    .patch('/:tenantId')
+    .params(params.ref.tenantId)
+    .body(dtos.ref.UpdateProfileBody)
+    .security(policies.ref.tenantAdmin)
+    .errors(errors.ref.validation, errors.ref.forbidden)
+    .output(dtos.ref.UserResponse),
+}));
 
 // ============================================================================
 // EXPORT
@@ -299,7 +595,11 @@ export const params = schemas.params({
 
 export const demoConfig = defineCodepotConfig({
   contracts: [v1],
-  output: { folder: 'tests/generated/debug', baseName: 'demo', formats: ['json', 'yaml'] },
+  output: {
+    folder: 'tests/generated/debug',
+    baseName: 'demo',
+    formats: ['json', 'yaml'],
+  },
 });
 
 export default demoConfig;

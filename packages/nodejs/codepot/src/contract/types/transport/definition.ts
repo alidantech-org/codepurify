@@ -1,6 +1,7 @@
 import { Ref } from '../ref';
 import { DefinitionItem } from '../definition';
 import { RefSchema } from '../schema/definition';
+import { MaybeUsage, DtoAuthoringRef } from '../core/3.authoring-ref';
 
 // ============================================================================
 // CONTENT TYPE
@@ -109,4 +110,34 @@ export interface TransportDefinition extends DefinitionItem {
      */
     responseContentType?: Ref<ContentTypeDefinition>;
   };
+}
+
+
+// ============================================================================
+// CONTENT
+// ============================================================================
+
+export interface TransportContentDefinition extends DefinitionItem {
+  readonly type: string;
+}
+
+// ============================================================================
+// ERRORS
+// ============================================================================
+
+export type TransportErrorSchema = MaybeUsage<DtoAuthoringRef>;
+
+export interface TransportErrorDefinition extends DefinitionItem {
+  readonly status: number;
+  readonly schema: TransportErrorSchema;
+  readonly content?: readonly TransportContentDefinition[];
+  readonly headers?: Record<string, TransportErrorSchema>;
+}
+
+// ============================================================================
+// ROOT
+// ============================================================================
+
+export interface TransportDefinition {
+  readonly errors: Record<string, TransportErrorDefinition>;
 }

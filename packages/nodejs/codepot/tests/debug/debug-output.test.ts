@@ -22,40 +22,19 @@ describe('debug authoring output', () => {
 
     expect(json).toContain('schema:entity:User:field:name');
     expect(json).toContain('schema:entity:User:field:role');
-    expect(json).toContain('schema:model:User:read');
-    expect(json).toContain('schema:dto:ErrorResponse');
+    expect(json).toContain('schema:model:User:public');
+    expect(json).toContain('error:unauthorized');
 
-    expect(json).toContain('security:scheme:bearer');
-    expect(json).toContain('security:auth:jwt');
-    expect(json).toContain('security:role_source:userRole');
-    expect(json).toContain('security:role_set:admins');
+    expect(json).toContain('security:credential:bearer');
+    expect(json).toContain('security:principal:user');
+    expect(json).toContain('security:policy:tenantAdmin');
 
-    expect(json).toContain('"contentTypes"');
-    expect(json).toContain('"json"');
-    expect(json).toContain('"application/json"');
-    expect(json).toContain('transport:response:BadRequest');
-    expect(json).toContain('transport:response:Unauthorized');
-    expect(json).toContain('transport:response:NotFound');
-
-    expect(json).toContain('resource:users:operation:listUsers');
-    expect(json).toContain('resource:users:operation:getUser');
-    expect(json).toContain('resource:users:operation:publicProfile');
-
-    expect(json).toContain('"listUsers"');
-    expect(json).toContain('"getUser"');
-    expect(json).toContain('"publicProfile"');
-
-    expect(json).toContain('"path":"/"');
-    expect(json).toContain('"path":"/:id"');
-    expect(json).toContain('"path":"/public/:id"');
+    expect(json).toContain('resource:users');
 
     expect(json).toContain('"routes"');
-    expect(json).toContain('"responses"');
-    expect(json).toContain('schema:model:User:read');
 
     expect(json).not.toContain('"$ref"');
     expect(json).not.toContain('#/schemas');
-    expect(json).not.toContain('#/transport');
     expect(json).not.toContain('#/security');
 
     // Verify operations do not contain duplicated input/output
@@ -156,7 +135,7 @@ describe('debug authoring output', () => {
     const json = writeDebugPackageJson(demoConfig);
 
     expect(json).toContain('"contracts"');
-    expect(json).toContain('security:auth:jwt');
+    expect(json).toContain('security:credential:bearer');
     expect(json).not.toContain('"$ref"');
     expect(json).not.toContain('#/schemas');
   });
@@ -165,8 +144,91 @@ describe('debug authoring output', () => {
     const yaml = writeDebugPackageYaml(demoConfig);
 
     expect(yaml).toContain('contracts:');
-    expect(yaml).toContain('security:auth:jwt');
+    expect(yaml).toContain('security:credential:bearer');
     expect(yaml).not.toContain('$ref');
     expect(yaml).not.toContain('#/schemas');
+  });
+
+  it('emits new security model with credentials, principals, and policies', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const security = contract.security;
+
+    // Verify credentials
+    expect(security.credentials).toBeDefined();
+    expect(security.credentials.bearer).toBeDefined();
+    expect(security.credentials.bearer.source).toBe('header');
+    expect(security.credentials.bearer.key).toBe('authorization');
+    expect(security.credentials.bearer.format).toBe('bearer');
+    expect(security.credentials.bearer.valueType.id).toBe('property:primitive:text');
+
+    expect(security.credentials.session).toBeDefined();
+    expect(security.credentials.session.source).toBe('cookie');
+    expect(security.credentials.session.key).toBe('session_id');
+    expect(security.credentials.session.format).toBe('session');
+
+    // Verify principals
+    expect(security.principals).toBeDefined();
+    expect(security.principals.user).toBeDefined();
+    expect(security.principals.user.fields.id.id).toBe('schema:entity:BaseEntity:field:id');
+    expect(security.principals.user.fields.roles.id).toBe('schema:entity:User:field:roles');
+    expect(security.principals.user.fields.status.id).toBe('schema:entity:User:field:status');
+
+    expect(security.principals.tenant).toBeDefined();
+    expect(security.principals.tenant.fields.id.id).toBe('schema:entity:BaseEntity:field:id');
+    expect(security.principals.tenant.fields.ownerId.id).toBe('schema:entity:Tenant:field:ownerId');
+
+    // Verify policies
+    expect(security.policies).toBeDefined();
+    expect(security.policies.public).toBeDefined();
+    expect(security.policies.public.mode).toBe('public');
+
+    expect(security.policies.authenticated).toBeDefined();
+    expect(security.policies.authenticated.mode).toBe('protected');
+
+    expect(security.policies.tenantMember).toBeDefined();
+    expect(security.policies.tenantMember.mode).toBe('protected');
+    expect(security.policies.tenantMember.credential.id).toBe('security:credential:bearer');
+    expect(security.policies.tenantMember.principals.user.id).toBe('security:principal:user');
+    expect(security.policies.tenantMember.principals.tenant.id).toBe('security:principal:tenant');
+    expect(security.policies.tenantMember.roles).toEqual(['owner', 'admin', 'member']);
+    expect(security.policies.tenantMember.intent).toBe('tenant_role');
+
+    expect(security.policies.tenantAdmin).toBeDefined();
+    expect(security.policies.tenantAdmin.mode).toBe('protected');
+    expect(security.policies.tenantAdmin.credential.id).toBe('security:credential:bearer');
+    expect(security.policies.tenantAdmin.principals.user.id).toBe('security:principal:user');
+    expect(security.policies.tenantAdmin.principals.tenant.id).toBe('security:principal:tenant');
+    expect(security.policies.tenantAdmin.roles).toEqual(['owner', 'admin']);
+    expect(security.policies.tenantAdmin.permissions).toEqual(['users.read', 'users.write']);
+    expect(security.policies.tenantAdmin.intent).toBe('tenant_role');
+  });
+
+  it('resources accept both inline security policy and policy refs', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+
+    const users = contract.resources.users;
+    expect(users.defaults.security).toBeDefined();
+    expect(users.defaults.security.mode).toBe('protected');
+
+    const tenants = contract.resources.tenants;
+    expect(tenants.defaults.security).toBeDefined();
+    expect(tenants.defaults.security.id).toBe('security:policy:tenantMember');
+    expect(tenants.defaults.security.kind).toBe('security.policy');
+  });
+
+  it('old security graph is gone', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const security = contract.security;
+
+    // Verify old concepts are gone
+    expect(security.schemes).toBeUndefined();
+    expect(security.auth).toBeUndefined();
+    expect(security.roleSources).toBeUndefined();
+    expect(security.roleSets).toBeUndefined();
+    expect(security.contexts).toBeUndefined();
+    expect(security.guards).toBeUndefined();
   });
 });

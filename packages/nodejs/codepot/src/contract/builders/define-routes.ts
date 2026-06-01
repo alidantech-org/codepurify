@@ -10,14 +10,19 @@ import type { OperationAuthoringRef, RouteAuthoringRef } from '@/contract/types/
 import type {
   DefineRoutesFactoryInput,
   RouteDefinitionInput,
+  RouteErrorInput,
   RouteHelper,
   RouteMethodChain,
+  RouteOutputOptions,
   RouteParamsInput,
-  RouteRequestHelper,
-  RouteResponseHelper,
+  RouteSchemaInput,
   RoutesBuilder,
   RoutesBuilderResult,
 } from '@/contract/types/core/7.routes-builder';
+
+import type { ContentDefinition } from '@/contract/types/errors/definition';
+
+import { content } from '@/contract/helpers/content/content';
 
 import { operationRef, routeRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
@@ -32,92 +37,7 @@ export interface DefineRoutesOptions {
 }
 
 // ============================================================================
-// RESPONSE / REQUEST HELPERS
-// ============================================================================
-
-const routeResponse: RouteResponseHelper = {
-  json(schema, options = {}) {
-    return {
-      ...options,
-      schema,
-      contentType: 'application/json',
-    };
-  },
-
-  text(schema, options = {}) {
-    return {
-      ...options,
-      schema,
-      contentType: 'text/plain',
-    };
-  },
-
-  binary(options = {}) {
-    return {
-      ...options,
-      contentType: 'application/octet-stream',
-    };
-  },
-
-  empty(options = {}) {
-    return {
-      ...options,
-    };
-  },
-
-  contentType(contentType, schema, options = {}) {
-    return {
-      ...options,
-      contentType,
-      schema,
-    };
-  },
-
-  ref(ref) {
-    return ref;
-  },
-};
-
-const routeRequest: RouteRequestHelper = {
-  json(schema, options = {}) {
-    return {
-      ...options,
-      schema,
-      contentType: 'application/json',
-    };
-  },
-
-  form(schema, options = {}) {
-    return {
-      ...options,
-      schema,
-      contentType: 'application/x-www-form-urlencoded',
-    };
-  },
-
-  multipart(schema, options = {}) {
-    return {
-      ...options,
-      schema,
-      contentType: 'multipart/form-data',
-    };
-  },
-
-  contentType(contentType, schema, options = {}) {
-    return {
-      ...options,
-      contentType,
-      schema,
-    };
-  },
-
-  ref(ref) {
-    return ref;
-  },
-};
-
-// ============================================================================
-// PARAM HELPERS
+// NORMALIZATION HELPERS
 // ============================================================================
 
 function normalizeRouteParams(params: RouteParamsInput): RouteParamsInput {
@@ -126,6 +46,49 @@ function normalizeRouteParams(params: RouteParamsInput): RouteParamsInput {
   }
 
   return params;
+}
+
+function normalizeContent(contentValue?: readonly ContentDefinition[] | ContentDefinition): readonly ContentDefinition[] | undefined {
+  if (contentValue === undefined) return undefined;
+
+  return (Array.isArray(contentValue) ? contentValue : [contentValue]) as readonly ContentDefinition[];
+}
+
+function isContentDefinition(value: unknown): value is ContentDefinition {
+  return !!value && typeof value === 'object' && 'type' in value && typeof (value as { type: unknown }).type === 'string';
+}
+
+function isContentDefinitionList(value: unknown): value is readonly ContentDefinition[] | ContentDefinition {
+  return isContentDefinition(value) || (Array.isArray(value) && value.every(isContentDefinition));
+}
+
+function normalizeOutputOptions(
+  contentOrOptions?: readonly ContentDefinition[] | ContentDefinition | RouteOutputOptions,
+): RouteOutputOptions {
+  if (contentOrOptions === undefined) return {};
+
+  if (isContentDefinitionList(contentOrOptions)) {
+    return {
+      content: contentOrOptions,
+    };
+  }
+
+  return contentOrOptions;
+}
+
+function createOutput(
+  schema: RouteSchemaInput | undefined,
+  status: number,
+  contentOrOptions?: readonly ContentDefinition[] | ContentDefinition | RouteOutputOptions,
+) {
+  const options = normalizeOutputOptions(contentOrOptions);
+
+  return {
+    ...options,
+    status: options.status ?? status,
+    ...(schema === undefined ? {} : { schema }),
+    content: normalizeContent(options.content),
+  };
 }
 
 // ============================================================================
@@ -137,7 +100,6 @@ function createRouteInput(method: HttpMethod, path: string, input: Partial<Route
     ...input,
     method,
     path,
-    responses: input.responses ?? {},
   };
 }
 
@@ -165,10 +127,13 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
       });
     },
 
-    body(body) {
+    body(schema, contentValue) {
       return createRouteChain(method, path, {
         ...current,
-        body,
+        body: {
+          schema,
+          content: normalizeContent(contentValue),
+        },
       });
     },
 
@@ -179,10 +144,34 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
       });
     },
 
-    operation(operation) {
+    output(schema, contentOrOptions) {
+      return {
+        ...current,
+        output: createOutput(schema, 200, contentOrOptions),
+      };
+    },
+
+    created(schema, contentOrOptions) {
+      return {
+        ...current,
+        output: createOutput(schema, 201, contentOrOptions),
+      };
+    },
+
+    noContent(options = {}) {
+      return {
+        ...current,
+        output: {
+          ...options,
+          status: options.status ?? 204,
+        },
+      };
+    },
+
+    errors(...errors: readonly RouteErrorInput[]) {
       return createRouteChain(method, path, {
         ...current,
-        operation,
+        errors,
       });
     },
 
@@ -192,12 +181,18 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
         responses,
       };
     },
+
+    operation(operation) {
+      return createRouteChain(method, path, {
+        ...current,
+        operation,
+      });
+    },
   };
 }
 
 const routeHelper: RouteHelper = {
-  response: routeResponse,
-  request: routeRequest,
+  content,
 
   get(path) {
     return createRouteChain(HttpMethod.get, path);
