@@ -1,4 +1,4 @@
-// src/contract/types/compiled/schema/entity/field/definition.ts
+// src/contract/types/ir/schema/entity/field/definition.ts
 
 import type { DefinitionItem } from '../../../definition';
 import type { Ref } from '../../../ref';
@@ -28,10 +28,10 @@ export const QueryOperator = {
 export type QueryOperator = (typeof QueryOperator)[keyof typeof QueryOperator];
 
 export interface FieldCapabilityConfig extends DefinitionItem {
-  readonly filter?: boolean;
-  readonly sort?: boolean;
-  readonly select?: boolean;
-  readonly operators?: readonly QueryOperator[];
+  filter?: boolean;
+  sort?: boolean;
+  select?: boolean;
+  operators?: QueryOperator[];
 }
 
 // ============================================================================
@@ -48,9 +48,9 @@ export const FieldVisibilityLevel = {
 export type FieldVisibilityLevel = (typeof FieldVisibilityLevel)[keyof typeof FieldVisibilityLevel];
 
 export interface FieldVisibilityConfig extends DefinitionItem {
-  readonly read?: FieldVisibilityLevel;
-  readonly write?: FieldVisibilityLevel;
-  readonly sensitive?: boolean;
+  read?: FieldVisibilityLevel;
+  write?: FieldVisibilityLevel;
+  sensitive?: boolean;
 }
 
 // ============================================================================
@@ -58,11 +58,11 @@ export interface FieldVisibilityConfig extends DefinitionItem {
 // ============================================================================
 
 export interface FieldLifecycleConfig extends DefinitionItem {
-  readonly create?: boolean;
-  readonly update?: boolean;
-  readonly immutable?: boolean;
-  readonly generated?: boolean;
-  readonly read_only?: boolean;
+  create?: boolean;
+  update?: boolean;
+  immutable?: boolean;
+  generated?: boolean;
+  read_only?: boolean;
 }
 
 // ============================================================================
@@ -78,9 +78,9 @@ export const FieldPersistenceMode = {
 export type FieldPersistenceMode = (typeof FieldPersistenceMode)[keyof typeof FieldPersistenceMode];
 
 export interface FieldPersistenceConfig extends DefinitionItem {
-  readonly mode: FieldPersistenceMode;
-  readonly generated?: boolean;
-  readonly immutable?: boolean;
+  mode: FieldPersistenceMode;
+  generated?: boolean;
+  immutable?: boolean;
 }
 
 // ============================================================================
@@ -88,9 +88,9 @@ export interface FieldPersistenceConfig extends DefinitionItem {
 // ============================================================================
 
 export interface ArrayDefinition extends DefinitionItem {
-  readonly min_items?: number;
-  readonly max_items?: number;
-  readonly unique_items?: boolean;
+  min_items?: number;
+  max_items?: number;
+  unique_items?: boolean;
 }
 
 // ============================================================================
@@ -107,16 +107,16 @@ export const EntityRelationKind = {
 export type EntityRelationKind = (typeof EntityRelationKind)[keyof typeof EntityRelationKind];
 
 export interface EntityRelationThroughDefinition {
-  readonly entity: Ref<EntityDefinition>;
-  readonly from: Ref<EntityFieldDefinition>;
-  readonly to: Ref<EntityFieldDefinition>;
+  entity: Ref<EntityDefinition>;
+  from: Ref<EntityFieldDefinition>;
+  to: Ref<EntityFieldDefinition>;
 }
 
 export interface EntityRelationDefinition {
-  readonly relation: EntityRelationKind;
-  readonly target: Ref<EntityDefinition>;
-  readonly inverse?: Ref<EntityFieldDefinition>;
-  readonly through?: EntityRelationThroughDefinition;
+  relation: EntityRelationKind;
+  target: Ref<EntityDefinition>;
+  inverse?: Ref<EntityFieldDefinition>;
+  through?: EntityRelationThroughDefinition;
 }
 
 // ============================================================================
@@ -124,15 +124,15 @@ export interface EntityRelationDefinition {
 // ============================================================================
 
 export interface EntityFieldOptionsDefinition extends DefinitionItem {
-  readonly required?: boolean;
-  readonly nullable?: boolean;
-  readonly array?: true | ArrayDefinition;
-  readonly default?: unknown;
+  required?: boolean;
+  nullable?: boolean;
+  array?: true | ArrayDefinition;
+  default?: unknown;
 
-  readonly capability?: FieldCapabilityConfig;
-  readonly visibility?: FieldVisibilityConfig;
-  readonly lifecycle?: FieldLifecycleConfig;
-  readonly persistence?: FieldPersistenceConfig;
+  capability?: FieldCapabilityConfig;
+  visibility?: FieldVisibilityConfig;
+  lifecycle?: FieldLifecycleConfig;
+  persistence?: FieldPersistenceConfig;
 }
 
 // ============================================================================

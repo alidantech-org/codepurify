@@ -1,4 +1,4 @@
-// src/contract/types/compiled/security/definition.ts
+// src/contract/types/ir/security/definition.ts
 
 import type { DefinitionItem } from '../definition';
 import type { Ref } from '../ref';
@@ -28,10 +28,10 @@ export const SecurityCredentialFormat = {
 export type SecurityCredentialFormat = (typeof SecurityCredentialFormat)[keyof typeof SecurityCredentialFormat];
 
 export interface SecurityCredentialDefinition extends DefinitionItem {
-  readonly source: SecurityCredentialSource;
-  readonly key: string;
-  readonly format?: SecurityCredentialFormat;
-  readonly value_type?: Ref<PrimitiveDefinition>;
+  source: SecurityCredentialSource;
+  key: string;
+  format?: SecurityCredentialFormat;
+  value_type?: Ref<PrimitiveDefinition>;
 }
 
 // ============================================================================
@@ -41,7 +41,7 @@ export interface SecurityCredentialDefinition extends DefinitionItem {
 export type SecurityPrincipalFields = Record<string, Ref<EntityFieldDefinition>>;
 
 export interface SecurityPrincipalDefinition extends DefinitionItem {
-  readonly fields: SecurityPrincipalFields;
+  fields: SecurityPrincipalFields;
 }
 
 // ============================================================================
@@ -56,19 +56,19 @@ export const SecurityPolicyMode = {
 export type SecurityPolicyMode = (typeof SecurityPolicyMode)[keyof typeof SecurityPolicyMode];
 
 export interface SecurityPolicyDefinition extends DefinitionItem {
-  readonly mode: SecurityPolicyMode;
+  mode: SecurityPolicyMode;
 
-  readonly credential?: Ref<SecurityCredentialDefinition>;
-  readonly principals?: Record<string, Ref<SecurityPrincipalDefinition>>;
+  credential?: Ref<SecurityCredentialDefinition>;
+  principals?: Record<string, Ref<SecurityPrincipalDefinition>>;
 
-  readonly roles?: readonly string[];
-  readonly permissions?: readonly string[];
+  roles?: string[];
+  permissions?: string[];
 
   /**
    * Generator-facing intent, not runtime logic.
    * Examples: "authenticated", "tenant_role", "owner_only", "api_key".
    */
-  readonly intent?: string;
+  intent?: string;
 }
 
 // ============================================================================
@@ -76,7 +76,7 @@ export interface SecurityPolicyDefinition extends DefinitionItem {
 // ============================================================================
 
 export interface SecurityDefinition {
-  readonly credentials: Record<string, SecurityCredentialDefinition>;
-  readonly principals: Record<string, SecurityPrincipalDefinition>;
-  readonly policies: Record<string, SecurityPolicyDefinition>;
+  credentials: Record<string, SecurityCredentialDefinition>;
+  principals: Record<string, SecurityPrincipalDefinition>;
+  policies: Record<string, SecurityPolicyDefinition>;
 }

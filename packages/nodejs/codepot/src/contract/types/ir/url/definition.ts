@@ -1,4 +1,4 @@
-// src/contract/types/compiled/url/definition.ts
+// src/contract/types/ir/url/definition.ts
 
 import type { DefinitionItem } from '../definition';
 
@@ -58,36 +58,36 @@ export interface UrlDefinition extends DefinitionItem {
    * Stable compiled key/use.
    * Examples: "public_api", "website", "admin", "docs".
    */
-  readonly key: string;
+  key: string;
 
   /**
    * What this URL is used for.
    */
-  readonly kind: UrlKind;
+  kind: UrlKind;
 
   /**
    * Environment this URL belongs to.
    */
-  readonly env: UrlEnv;
+  env: UrlEnv;
 
   /**
    * Full URI.
    */
-  readonly uri: string;
+  uri: string;
 
   /**
    * Optional protocol hint for codegen and validation.
    */
-  readonly protocol?: UrlProtocol;
+  protocol?: UrlProtocol;
 
   /**
    * Optional base path for APIs served under a subpath.
    * Example: "/api/v1".
    */
-  readonly base_path?: string;
+  base_path?: string;
 
   /**
    * Optional display label.
    */
-  readonly label?: string;
+  label?: string;
 }

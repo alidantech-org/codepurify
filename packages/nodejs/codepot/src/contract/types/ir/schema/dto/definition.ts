@@ -1,4 +1,4 @@
-// src/contract/types/compiled/schema/dto/definition.ts
+// src/contract/types/ir/schema/dto/definition.ts
 
 import type { DefinitionItem } from '../../definition';
 import type { Ref } from '../../ref';
@@ -10,16 +10,16 @@ import type { ModelDefinition } from '../model/definition';
 // ============================================================================
 
 export interface DtoArrayFieldDefinition extends DefinitionItem {
-  readonly type: 'array';
-  readonly items: Ref<EntityFieldDefinition> | Ref<ModelDefinition> | Ref<DtoDefinition>;
-  readonly required?: boolean;
-  readonly nullable?: boolean;
+  type: 'array';
+  items: Ref<EntityFieldDefinition> | Ref<ModelDefinition> | Ref<DtoDefinition>;
+  required?: boolean;
+  nullable?: boolean;
 }
 
 export interface DtoRefFieldDefinition extends DefinitionItem {
-  readonly ref: Ref<EntityFieldDefinition> | Ref<ModelDefinition> | Ref<DtoDefinition>;
-  readonly required?: boolean;
-  readonly nullable?: boolean;
+  ref: Ref<EntityFieldDefinition> | Ref<ModelDefinition> | Ref<DtoDefinition>;
+  required?: boolean;
+  nullable?: boolean;
 }
 
 export type DtoFieldDefinition =
@@ -38,19 +38,19 @@ export interface DtoDefinition extends DefinitionItem {
    * Direct DTO source.
    * Example: UserPublic DTO can be from UserPublic model.
    */
-  readonly from?: Ref<ModelDefinition> | Ref<DtoDefinition>;
+  from?: Ref<ModelDefinition> | Ref<DtoDefinition>;
 
   /**
    * DTO inheritance.
    * Example: UserResponse extends ApiResponse.
    */
-  readonly extends?: Ref<DtoDefinition>;
+  extends?: Ref<DtoDefinition>;
 
   /**
    * Compiled DTO fields only.
    * Inherited DTO fields should live on `extends`, not be duplicated here.
    */
-  readonly fields: Record<string, DtoFieldDefinition>;
+  fields: Record<string, DtoFieldDefinition>;
 
-  readonly partial?: boolean;
+  partial?: boolean;
 }

@@ -1,4 +1,4 @@
-// src/contract/types/compiled/properties/primitive/definition.ts
+// src/contract/types/ir/properties/primitive/definition.ts
 
 import type { DefinitionItem } from '../../definition';
 
@@ -41,20 +41,20 @@ export type PrimitiveFormat = (typeof PrimitiveFormat)[keyof typeof PrimitiveFor
 // ============================================================================
 
 export interface PrimitiveValidationDefinition {
-  readonly minimum?: number;
-  readonly maximum?: number;
-  readonly exclusive_minimum?: number;
-  readonly exclusive_maximum?: number;
+  minimum?: number;
+  maximum?: number;
+  exclusive_minimum?: number;
+  exclusive_maximum?: number;
 
   /**
    * Decimal step/scale validation.
    * Example: 0.01 for two decimal places or 0.5 for half steps.
    */
-  readonly multiple_of?: number;
+  multiple_of?: number;
 
-  readonly min_length?: number;
-  readonly max_length?: number;
-  readonly pattern?: string;
+  min_length?: number;
+  max_length?: number;
+  pattern?: string;
 }
 
 // ============================================================================
@@ -62,8 +62,8 @@ export interface PrimitiveValidationDefinition {
 // ============================================================================
 
 export interface PrimitiveDefinition extends DefinitionItem {
-  readonly type: PrimitiveType;
-  readonly format?: PrimitiveFormat;
-  readonly validation?: PrimitiveValidationDefinition;
-  readonly example?: unknown;
+  type: PrimitiveType;
+  format?: PrimitiveFormat;
+  validation?: PrimitiveValidationDefinition;
+  example?: unknown;
 }

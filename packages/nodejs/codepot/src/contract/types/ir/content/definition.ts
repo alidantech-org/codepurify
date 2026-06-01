@@ -1,4 +1,4 @@
-// src/contract/types/compiled/content/definition.ts
+// src/contract/types/ir/content/definition.ts
 
 import type { DefinitionItem } from '../definition';
 
@@ -19,9 +19,9 @@ export const ContentStrategy = {
 export type ContentStrategy = (typeof ContentStrategy)[keyof typeof ContentStrategy];
 
 export interface ContentTypeDefinition extends DefinitionItem {
-  readonly type: string;
-  readonly strategy: ContentStrategy;
+  type: string;
+  strategy: ContentStrategy;
 
-  readonly binary?: boolean;
-  readonly structured?: boolean;
+  binary?: boolean;
+  structured?: boolean;
 }

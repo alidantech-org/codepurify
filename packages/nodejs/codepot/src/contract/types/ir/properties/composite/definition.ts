@@ -1,4 +1,4 @@
-// src/contract/types/compiled/properties/composite/definition.ts
+// src/contract/types/ir/properties/composite/definition.ts
 
 import type { DefinitionItem } from '../../definition';
 import type { Ref } from '../../ref';
@@ -22,7 +22,7 @@ export interface CompositeDefinition extends DefinitionItem {
    * Real composite inheritance/extension.
    * One parent max keeps merge order predictable.
    */
-  readonly extends?: Ref<CompositeDefinition>;
+  extends?: Ref<CompositeDefinition>;
 
   /**
    * Composite-owned fields.
@@ -30,12 +30,12 @@ export interface CompositeDefinition extends DefinitionItem {
    * Values must be compiled refs. Inline authoring properties should already be
    * promoted by the compiler before this IR is emitted.
    */
-  readonly properties: Record<string, CompositePropertyRef>;
+  properties: Record<string, CompositePropertyRef>;
 
   /**
    * Optional compiled ownership refs.
    * Useful for codegen placement, but not required for shared/global composites.
    */
-  readonly resource?: Ref<ResourceDefinition>;
-  readonly entity?: Ref<EntityDefinition>;
+  resource?: Ref<ResourceDefinition>;
+  entity?: Ref<EntityDefinition>;
 }

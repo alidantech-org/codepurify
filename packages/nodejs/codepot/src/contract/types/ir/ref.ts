@@ -1,4 +1,4 @@
-// src/contract/types/compiled/ref.ts
+// src/contract/types/ir/ref.ts
 
 /**
  * JSON/YAML reference used by the compiled Codepot spec.
@@ -8,7 +8,7 @@
  * codegen without authoring-layer knowledge.
  */
 export interface Ref<_TypeTarget = unknown> {
-  readonly $ref: string;
+  $ref: string;
 }
 
 export type RefLike<TypeTarget = unknown> = Ref<TypeTarget>;

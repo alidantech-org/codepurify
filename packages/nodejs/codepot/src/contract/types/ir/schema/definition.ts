@@ -1,4 +1,4 @@
-// src/contract/types/compiled/schema/definition.ts
+// src/contract/types/ir/schema/definition.ts
 
 import type { DtoDefinition } from './dto/definition';
 import type { EntityDefinition } from './entity/definition';
@@ -12,11 +12,11 @@ import type { FieldSetDefinition } from './field-set/definition';
 // ============================================================================
 
 export interface SchemasDefinition {
-  readonly entities: Record<string, EntityDefinition>;
-  readonly field_sets: Record<string, FieldSetDefinition>;
-  readonly models: Record<string, ModelDefinition>;
-  readonly dtos: Record<string, DtoDefinition>;
-  readonly params: ParamsDefinition;
+  entities: Record<string, EntityDefinition>;
+  field_sets: Record<string, FieldSetDefinition>;
+  models: Record<string, ModelDefinition>;
+  dtos: Record<string, DtoDefinition>;
+  params: ParamsDefinition;
 }
 
 export type RefSchema = EntityDefinition | EntityFieldDefinition | FieldSetDefinition | ModelDefinition | DtoDefinition;

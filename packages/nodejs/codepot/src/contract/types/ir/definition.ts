@@ -1,4 +1,4 @@
-// src/contract/types/compiled/definition.ts
+// src/contract/types/ir/definition.ts
 
 // ============================================================================
 // ROOT
@@ -18,9 +18,9 @@ import type { UrlDefinition } from './url/definition';
 // ============================================================================
 
 export interface DefinitionItem {
-  readonly meta?: Record<string, unknown>;
-  readonly description?: string;
-  readonly deprecated?: boolean;
+  meta?: Record<string, unknown>;
+  description?: string;
+  deprecated?: boolean;
 }
 
 // ============================================================================
@@ -37,50 +37,50 @@ export interface CodepotDefinition extends DefinitionItem {
   /**
    * Codepot compiled IR/schema version.
    */
-  readonly codepot: string;
+  codepot: string;
 
   /**
    * Stable API/project key.
    * Compiler should normalize this to snake_case.
    */
-  readonly key: string;
+  key: string;
 
   /**
    * API major version.
    */
-  readonly version: number;
+  version: number;
 
-  readonly info: InfoDefinition;
+  info: InfoDefinition;
 
-  readonly urls: readonly UrlDefinition[];
+  urls: UrlDefinition[];
 
   /**
    * Reusable content type registry.
    */
-  readonly content_types: Record<string, ContentTypeDefinition>;
+  content_types: Record<string, ContentTypeDefinition>;
 
   /**
    * Reusable low-level properties.
    */
-  readonly properties: PropertiesDefinition;
+  properties: PropertiesDefinition;
 
   /**
    * Reusable schemas.
    */
-  readonly schemas: SchemasDefinition;
+  schemas: SchemasDefinition;
 
   /**
    * Reusable response registry.
    */
-  readonly responses: ResponsesDefinition;
+  responses: ResponsesDefinition;
 
   /**
    * API security registry.
    */
-  readonly security: SecurityDefinition;
+  security: SecurityDefinition;
 
   /**
    * API resources.
    */
-  readonly resources: Record<string, ResourceDefinition>;
+  resources: Record<string, ResourceDefinition>;
 }

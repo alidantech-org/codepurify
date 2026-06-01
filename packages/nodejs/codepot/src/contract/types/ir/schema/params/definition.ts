@@ -1,4 +1,4 @@
-// src/contract/types/compiled/schema/params/definition.ts
+// src/contract/types/ir/schema/params/definition.ts
 
 import type { Ref } from '../../ref';
 import type { EntityFieldDefinition } from '../entity/field/definition';

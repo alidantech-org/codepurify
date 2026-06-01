@@ -1,4 +1,4 @@
-// src/contract/types/compiled/resource/definition.ts
+// src/contract/types/ir/resource/definition.ts
 
 import type { DefinitionItem } from '../definition';
 import type { Ref } from '../ref';
@@ -11,7 +11,7 @@ import type { RoutesDefinition } from './route/definition';
 // ============================================================================
 
 export interface ResourceDefaultsDefinition extends DefinitionItem {
-  readonly security?: Ref<SecurityPolicyDefinition>;
+  security?: Ref<SecurityPolicyDefinition>;
 }
 
 // ============================================================================
@@ -23,17 +23,17 @@ export interface ResourceDefinition extends DefinitionItem {
    * Compiled URL base path.
    * Example: /users, /posts, /admin/users
    */
-  readonly base_path: string;
+  base_path: string;
 
   /**
    * Codegen/project organization folders.
    * These are not URL path segments.
    */
-  readonly folders: readonly string[];
+  folders: string[];
 
-  readonly defaults: ResourceDefaultsDefinition;
+  defaults: ResourceDefaultsDefinition;
 
-  readonly operations: Record<string, OperationDefinition>;
+  operations: Record<string, OperationDefinition>;
 
-  readonly routes: RoutesDefinition;
+  routes: RoutesDefinition;
 }

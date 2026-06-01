@@ -2,7 +2,7 @@
 
 import type { Ref } from '@/contract/types/ir/ref';
 
-import { propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from '../context/ref-resolver';
+import { propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
 import { toSnakeCaseKey, toKebabCase } from '../../utils/naming/normalize-key';
 
 export type CompiledPropertyKind = 'primitive' | 'enum' | 'composite';

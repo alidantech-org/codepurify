@@ -1,4 +1,4 @@
-// src/contract/types/compiled/resource/operation/definition.ts
+// src/contract/types/ir/resource/operation/definition.ts
 
 import type { DefinitionItem } from '../../definition';
 import type { Ref } from '../../ref';
@@ -24,34 +24,34 @@ export interface OperationInputDefinition extends DefinitionItem {
   /**
    * Injected request contexts such as auth user, tenant, locale, etc.
    */
-  readonly context?: readonly OperationContextRef[];
+  context?: OperationContextRef[];
 
   /**
    * Path parameter schema.
    */
-  readonly params?: Ref<ParamsDefinition>;
+  params?: Ref<ParamsDefinition>;
 
   /**
    * Query string schema.
    */
-  readonly query?: OperationSchemaRef;
+  query?: OperationSchemaRef;
 
   /**
    * Request body schema.
    */
-  readonly body?: OperationSchemaRef;
+  body?: OperationSchemaRef;
 }
 
 export interface OperationOutputDefinition extends DefinitionItem {
   /**
    * Success payload schema.
    */
-  readonly result?: OperationSchemaRef;
+  result?: OperationSchemaRef;
 
   /**
    * Typed error responses.
    */
-  readonly errors?: readonly Ref<ErrorResponseDefinition>[];
+  errors?: Ref<ErrorResponseDefinition>[];
 }
 
 // ============================================================================
@@ -59,6 +59,6 @@ export interface OperationOutputDefinition extends DefinitionItem {
 // ============================================================================
 
 export interface OperationDefinition extends DefinitionItem {
-  readonly input: OperationInputDefinition;
-  readonly output: OperationOutputDefinition;
+  input: OperationInputDefinition;
+  output: OperationOutputDefinition;
 }

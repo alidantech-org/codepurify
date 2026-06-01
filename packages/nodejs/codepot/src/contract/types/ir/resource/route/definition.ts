@@ -1,4 +1,4 @@
-// src/contract/types/compiled/resource/route/definition.ts
+// src/contract/types/ir/resource/route/definition.ts
 
 import type { DefinitionItem } from '../../definition';
 import type { Ref } from '../../ref';
@@ -33,21 +33,21 @@ export type HttpMethod = (typeof HttpMethod)[keyof typeof HttpMethod];
 export type RouteSchemaRef = Ref<DtoDefinition> | Ref<ModelDefinition>;
 
 export interface RouteBodyDefinition extends DefinitionItem {
-  readonly schema: RouteSchemaRef;
-  readonly content_type: Ref<ContentTypeDefinition>;
+  schema: RouteSchemaRef;
+  content_type: Ref<ContentTypeDefinition>;
 }
 
 export interface RouteOutputDefinition extends DefinitionItem {
-  readonly status: number;
-  readonly schema?: RouteSchemaRef;
-  readonly content_type?: Ref<ContentTypeDefinition>;
+  status: number;
+  schema?: RouteSchemaRef;
+  content_type?: Ref<ContentTypeDefinition>;
 }
 
 export interface RouteInlineResponseDefinition extends DefinitionItem {
-  readonly status?: number;
-  readonly schema?: RouteSchemaRef;
-  readonly content_type?: Ref<ContentTypeDefinition>;
-  readonly headers?: Record<string, RouteSchemaRef>;
+  status?: number;
+  schema?: RouteSchemaRef;
+  content_type?: Ref<ContentTypeDefinition>;
+  headers?: Record<string, RouteSchemaRef>;
 }
 
 export type RouteResponseDefinition = Ref<ErrorResponseDefinition> | RouteInlineResponseDefinition;
@@ -57,18 +57,18 @@ export type RouteResponseDefinition = Ref<ErrorResponseDefinition> | RouteInline
 // ============================================================================
 
 export interface RouteMethodDefinition extends DefinitionItem {
-  readonly operation: Ref<OperationDefinition>;
+  operation: Ref<OperationDefinition>;
 
-  readonly security?: Ref<SecurityPolicyDefinition>;
+  security?: Ref<SecurityPolicyDefinition>;
 
-  readonly params?: Ref<ParamsDefinition>;
-  readonly query?: RouteSchemaRef;
-  readonly body?: RouteBodyDefinition;
+  params?: Ref<ParamsDefinition>;
+  query?: RouteSchemaRef;
+  body?: RouteBodyDefinition;
 
   /**
    * Response map keyed by HTTP status code.
    */
-  readonly responses: Record<number, RouteResponseDefinition>;
+  responses: Record<number, RouteResponseDefinition>;
 }
 
 // ============================================================================

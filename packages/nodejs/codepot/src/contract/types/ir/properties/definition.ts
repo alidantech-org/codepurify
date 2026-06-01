@@ -1,4 +1,4 @@
-// src/contract/types/compiled/properties/definition.ts
+// src/contract/types/ir/properties/definition.ts
 
 import type { PrimitiveDefinition } from './primitive/definition';
 import type { EnumDefinition } from './enum/definition';
@@ -15,7 +15,7 @@ export type RefProperty = PrimitiveDefinition | EnumDefinition | CompositeDefini
 // ============================================================================
 
 export interface PropertiesDefinition {
-  readonly primitives: Record<string, PrimitiveDefinition>;
-  readonly enums: Record<string, EnumDefinition>;
-  readonly composites: Record<string, CompositeDefinition>;
+  primitives: Record<string, PrimitiveDefinition>;
+  enums: Record<string, EnumDefinition>;
+  composites: Record<string, CompositeDefinition>;
 }
