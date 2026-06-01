@@ -1,5 +1,258 @@
-import type { DtoDefinition } from '@/contract/types/ir/schema/dto/definition';
+// src/compiler/resolvers/dto-resolver.ts
 
-export function resolveDto(_input: unknown): DtoDefinition {
-  throw new Error('resolveDto is not implemented yet.');
+import type {
+  DtoAuthoringDefinition,
+  DtoFieldAuthoringDefinition,
+  DtoFieldInput,
+  DtoFieldsAuthoringDefinition,
+  DtoSourceAuthoringDefinition,
+  ParamsAuthoringDefinition,
+} from '@/contract/types/authoring/5.schemas-builder';
+
+import type {
+  DtoAuthoringRef,
+  EntityFieldAuthoringRef,
+  ModelAuthoringRef,
+  ParamsAuthoringRef,
+  PropertyAuthoringRef,
+} from '@/contract/types/authoring/3.authoring-ref';
+
+import type { RefProperty } from '@/contract/types/ir/properties/definition';
+import type { DtoDefinition } from '@/contract/types/ir/schema/dto/definition';
+import type { ParamsDefinition } from '@/contract/types/ir/schema/params/definition';
+import type { EntityFieldDefinition } from '@/contract/types/ir/schema/entity/field/definition';
+import type { Ref } from '@/contract/types/ir/ref';
+
+import { dtoRef, entityFieldRef, modelRef, paramsRef, propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
+
+import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
+
+// ============================================================================
+// DTO INPUT
+// ============================================================================
+
+export interface ResolveDtoInput {
+  readonly key: string;
+  readonly dto: DtoAuthoringDefinition;
+}
+
+// ============================================================================
+// PARAM INPUT
+// ============================================================================
+
+export interface ResolveParamsInput {
+  readonly key: string;
+  readonly ref: ParamsAuthoringDefinition[string];
+}
+
+// ============================================================================
+// AUTHORING REF GUARDS
+// ============================================================================
+
+/**
+ * Checks whether an input value is an authoring ref-like object.
+ */
+function isAuthoringRef(input: unknown): input is {
+  readonly id: string;
+  readonly kind: string;
+  readonly key: string;
+} {
+  return (
+    input !== null &&
+    typeof input === 'object' &&
+    'id' in input &&
+    typeof input.id === 'string' &&
+    'kind' in input &&
+    typeof input.kind === 'string' &&
+    'key' in input &&
+    typeof input.key === 'string'
+  );
+}
+
+/**
+ * Checks whether a value is a ref usage wrapper with a nested ref.
+ */
+function isUsageWrapper(input: unknown): input is {
+  readonly ref: unknown;
+} {
+  return input !== null && typeof input === 'object' && 'ref' in input;
+}
+
+/**
+ * Unwraps usage values into their underlying authoring ref when possible.
+ */
+function unwrapDtoFieldInput(input: DtoFieldInput): unknown {
+  if (isUsageWrapper(input)) {
+    return input.ref;
+  }
+
+  return input;
+}
+
+// ============================================================================
+// REF RESOLUTION
+// ============================================================================
+
+/**
+ * Resolves a property authoring ref into an IR property ref.
+ */
+function resolvePropertyAuthoringRef(input: PropertyAuthoringRef): Ref<RefProperty> {
+  const key = toSnakeCaseKey(input.key);
+
+  if (input.kind === 'property.primitive') {
+    return propertyPrimitiveRef(key);
+  }
+
+  if (input.kind === 'property.enum') {
+    return propertyEnumRef(key);
+  }
+
+  return propertyCompositeRef(key);
+}
+
+/**
+ * Resolves an entity field authoring ref into an IR entity field ref.
+ *
+ * Authoring field refs encode entity and field in the id:
+ * schema:entity:{Entity}:field:{field}
+ */
+function resolveEntityFieldAuthoringRef(input: EntityFieldAuthoringRef): Ref<EntityFieldDefinition> {
+  const parts = input.id.split(':');
+  const entityIndex = parts.indexOf('entity');
+  const fieldIndex = parts.indexOf('field');
+
+  if (entityIndex < 0 || fieldIndex < 0) {
+    throw new Error(`Invalid entity field ref id "${input.id}".`);
+  }
+
+  const entityKey = toSnakeCaseKey(parts[entityIndex + 1]);
+  const fieldKey = toSnakeCaseKey(parts[fieldIndex + 1]);
+
+  return entityFieldRef(entityKey, fieldKey);
+}
+
+/**
+ * Resolves any DTO field input into an IR ref.
+ */
+function resolveDtoFieldRef(input: DtoFieldInput): Ref {
+  const value = unwrapDtoFieldInput(input);
+
+  if (!isAuthoringRef(value)) {
+    throw new Error('DTO field input must be an authoring ref or usage wrapper.');
+  }
+
+  if (value.kind.startsWith('property.')) {
+    return resolvePropertyAuthoringRef(value as PropertyAuthoringRef);
+  }
+
+  if (value.kind === 'schema.entity.field') {
+    return resolveEntityFieldAuthoringRef(value as EntityFieldAuthoringRef);
+  }
+
+  if (value.kind === 'schema.model') {
+    return modelRef(toSnakeCaseKey((value as ModelAuthoringRef).key));
+  }
+
+  if (value.kind === 'schema.dto') {
+    return dtoRef(toSnakeCaseKey((value as DtoAuthoringRef).key));
+  }
+
+  if (value.kind === 'schema.params') {
+    return paramsRef(toSnakeCaseKey((value as ParamsAuthoringRef).key));
+  }
+
+  throw new Error(`Unsupported DTO field ref kind "${value.kind}".`);
+}
+
+// ============================================================================
+// DTO SHAPE GUARDS
+// ============================================================================
+
+/**
+ * Checks whether the authoring DTO is source-backed.
+ */
+function isDtoSourceDefinition(input: DtoAuthoringDefinition): input is DtoSourceAuthoringDefinition {
+  return 'source' in input;
+}
+
+/**
+ * Checks whether the authoring DTO is field-map-backed.
+ */
+function isDtoFieldsDefinition(input: DtoAuthoringDefinition): input is DtoFieldsAuthoringDefinition {
+  return 'fields' in input;
+}
+
+// ============================================================================
+// DTO FIELDS
+// ============================================================================
+
+/**
+ * Resolves authoring DTO fields into IR DTO fields.
+ */
+function resolveDtoFields(fields: Record<string, DtoFieldAuthoringDefinition>): DtoDefinition['fields'] {
+  const output: DtoDefinition['fields'] = {};
+
+  for (const [key, field] of Object.entries(fields)) {
+    output[toSnakeCaseKey(key)] = resolveDtoFieldRef(field.ref);
+  }
+
+  return output;
+}
+
+// ============================================================================
+// DTO RESOLVE
+// ============================================================================
+
+/**
+ * Converts one authoring DTO into an IR DTO definition.
+ *
+ * IR DTO fields are required, so source-backed DTOs emit an empty field map
+ * plus `extends`.
+ */
+export function resolveDto(input: ResolveDtoInput): DtoDefinition {
+  const { dto } = input;
+
+  if (isDtoSourceDefinition(dto)) {
+    return {
+      extends: resolveDtoFieldRef(dto.source.ref) as DtoDefinition['extends'],
+      fields: {},
+    };
+  }
+
+  if (isDtoFieldsDefinition(dto)) {
+    return {
+      fields: resolveDtoFields(dto.fields),
+    };
+  }
+
+  throw new Error(`Unable to resolve DTO "${input.key}".`);
+}
+
+// ============================================================================
+// PARAMS RESOLVE
+// ============================================================================
+
+/**
+ * Converts one params authoring ref into an IR params definition.
+ */
+export function resolveParams(input: ResolveParamsInput): ParamsDefinition {
+  const ref = input.ref;
+
+  if (!isAuthoringRef(ref)) {
+    throw new Error(`Params "${input.key}" must reference a property or entity field.`);
+  }
+
+  if (ref.kind.startsWith('property.')) {
+    return {
+      ref: resolvePropertyAuthoringRef(ref as PropertyAuthoringRef) as ParamsDefinition['ref'],
+    };
+  }
+
+  if (ref.kind === 'schema.entity.field') {
+    return {
+      ref: resolveEntityFieldAuthoringRef(ref as EntityFieldAuthoringRef) as ParamsDefinition['ref'],
+    };
+  }
+
+  throw new Error(`Unsupported params ref kind "${ref.kind}".`);
 }

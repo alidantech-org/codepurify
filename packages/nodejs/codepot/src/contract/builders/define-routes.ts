@@ -12,7 +12,6 @@ import type {
   RouteMethodChain,
   RouteOutputOptions,
   RouteParamsInput,
-  RoutePathAuthoringDefinition,
   RouteSchemaInput,
   RoutesAuthoringState,
   RoutesBuilder,

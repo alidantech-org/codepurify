@@ -1,50 +1,12 @@
-// src/contract/types/core/content.types.ts
+// src/contract/types/authoring/content.types.ts
 
 import type { DefinitionItem } from './4.properties-builder';
-
-// ============================================================================
-// CONTENT TYPE KEYS
-// ============================================================================
-
-export const ContentTypeKey = {
-  json: 'json',
-  xml: 'xml',
-  yaml: 'yaml',
-  html: 'html',
-  csv: 'csv',
-  text: 'text',
-  binary: 'binary',
-  stream: 'stream',
-  multipart: 'multipart',
-  form: 'form',
-  graphql: 'graphql',
-  protobuf: 'protobuf',
-  msgpack: 'msgpack',
-  custom: 'custom',
-} as const;
-
-export type ContentTypeKey = (typeof ContentTypeKey)[keyof typeof ContentTypeKey];
-
-// ============================================================================
-// CONTENT DEFINITION
-// ============================================================================
+import type { ContentTypeKey, ContentTypeStrategy } from '@/contract/constants';
 
 export interface ContentDefinition extends DefinitionItem {
-  /**
-   * Stable authoring key.
-   * Compiler later converts this to: #/content_types/{key}
-   */
   readonly key: ContentTypeKey | string;
-
-  /**
-   * MIME type.
-   */
   readonly type: string;
-
-  /**
-   * Optional strategy hint for codegen.
-   */
-  readonly strategy?: ContentTypeKey | string;
+  readonly strategy?: ContentTypeStrategy | string;
 }
 
 export type ContentInput = ContentDefinition | readonly ContentDefinition[];

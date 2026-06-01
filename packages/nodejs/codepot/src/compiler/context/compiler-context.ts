@@ -2,14 +2,12 @@
 
 import type { VersionAuthoringState } from '@/contract/types/authoring/2.version-builder';
 import type { CodepotDefinition } from '@/contract/types/ir/definition';
-import type { UrlDefinition } from '@/contract/types/ir/url/definition';
-import type { InfoDefinition } from '@/contract/types/ir/info/definition';
 
-export interface CompilerDiagnostic {
-  readonly level: 'error' | 'warning';
-  readonly path: string;
-  readonly message: string;
-}
+import type { CompilerDiagnostic } from './diagnostics';
+
+// ============================================================================
+// CONTEXT
+// ============================================================================
 
 export interface CompilerContext {
   readonly authoring: VersionAuthoringState;
@@ -17,38 +15,64 @@ export interface CompilerContext {
   readonly ir: CodepotDefinition;
 }
 
+// ============================================================================
+// EMPTY IR FACTORY
+// ============================================================================
+
+function createEmptyIr(authoring: VersionAuthoringState): CodepotDefinition {
+  return {
+    codepot: authoring.codepot,
+    key: authoring.key,
+    version: authoring.version,
+
+    info: authoring.info,
+
+    urls: [],
+
+    content_types: {},
+
+    properties: {
+      primitives: {},
+      enums: {},
+      composites: {},
+    },
+
+    schemas: {
+      entities: {},
+      field_sets: {},
+      models: {},
+      dtos: {},
+      params: {},
+    },
+
+    responses: {
+      errors: {},
+    },
+
+    security: {
+      credentials: {},
+      principals: {},
+      policies: {},
+    },
+
+    resources: {},
+
+    ...(authoring.description !== undefined ? { description: authoring.description } : {}),
+
+    ...(authoring.deprecated !== undefined ? { deprecated: authoring.deprecated } : {}),
+
+    ...(authoring.meta !== undefined ? { meta: authoring.meta } : {}),
+  };
+}
+
+// ============================================================================
+// CREATE CONTEXT
+// ============================================================================
+
 export function createCompilerContext(authoring: VersionAuthoringState): CompilerContext {
   return {
     authoring,
     diagnostics: [],
-    ir: {
-      codepot: authoring.codepot,
-      key: authoring.key,
-      version: authoring.version,
-      info: authoring.info,
-      urls: (authoring.urls ?? []) as unknown as UrlDefinition[],
-      content_types: {},
-      properties: {
-        primitives: {},
-        enums: {},
-        composites: {},
-      },
-      schemas: {
-        entities: {},
-        field_sets: {},
-        models: {},
-        dtos: {},
-        params: {},
-      },
-      responses: {
-        errors: {},
-      },
-      security: {
-        credentials: {},
-        principals: {},
-        policies: {},
-      },
-      resources: {},
-    },
+    ir: createEmptyIr(authoring),
   };
 }

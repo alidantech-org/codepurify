@@ -1,125 +1,190 @@
 // src/compiler/passes/01-properties.ts
 
+import type { PropertyAuthoringRef } from '@/contract/types/authoring/3.authoring-ref';
+import type {
+  CompositePropertySourceInput,
+  CompositePropertyValueInput,
+  EnumPropertySourceInput,
+  PrimitivePropertySourceInput,
+  PropertySourceBuilder,
+  PropertySourceInput,
+} from '@/contract/types/authoring/4.properties-builder';
+
 import type { Ref } from '@/contract/types/ir/ref';
-import type { PrimitiveDefinition } from '@/contract/types/ir/properties/primitive/definition';
-import type { EnumDefinition } from '@/contract/types/ir/properties/enum/definition';
-import type { CompositeDefinition } from '@/contract/types/ir/properties/composite/definition';
+
 import type { CompilerContext } from '../context/compiler-context';
+
 import {
-  compileEnumProperty,
-  compilePrimitiveProperty,
+  CompiledPropertyKind,
   promoteInlineProperty,
+  resolveEnumProperty,
+  resolvePrimitiveProperty,
   resolvePropertyRef,
-  type PromotedProperty,
+  type PromotedPropertyDefinition,
 } from '../resolvers/property-resolver';
+
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
-function registerPromotedProperty(ctx: CompilerContext, promoted: PromotedProperty): void {
-  if (promoted.kind === 'primitive') {
-    ctx.ir.properties.primitives[promoted.key] = promoted.value as unknown as PrimitiveDefinition;
+// ============================================================================
+// SOURCE NORMALIZATION
+// ============================================================================
+
+/**
+ * Normalizes property helper builders into raw property source inputs.
+ *
+ * Authoring helpers usually return `{ input }`; compiler passes should resolve
+ * that wrapper before calling lower-level property resolvers.
+ */
+function unwrapPropertySource(input: PropertySourceInput | PropertySourceBuilder<PropertySourceInput>): PropertySourceInput {
+  if ('input' in input) {
+    return input.input;
+  }
+
+  return input;
+}
+
+/**
+ * Checks whether a composite member is a property source builder wrapper.
+ */
+function isPropertySourceBuilder(input: CompositePropertyValueInput): input is PropertySourceBuilder<PropertySourceInput> {
+  return input !== null && typeof input === 'object' && 'input' in input;
+}
+
+/**
+ * Checks whether a composite member is a real authoring property ref.
+ *
+ * We require `id`, `kind`, and `key` because raw property source objects may
+ * accidentally contain an `id`, but they are not refs.
+ */
+function isPropertyAuthoringRef(input: CompositePropertyValueInput): input is PropertyAuthoringRef {
+  return (
+    input !== null &&
+    typeof input === 'object' &&
+    'id' in input &&
+    typeof input.id === 'string' &&
+    'kind' in input &&
+    typeof input.kind === 'string' &&
+    'key' in input &&
+    typeof input.key === 'string'
+  );
+}
+
+/**
+ * Checks whether a value is a raw property source input.
+ */
+function isPropertySourceInput(input: CompositePropertyValueInput): input is PropertySourceInput {
+  return input !== null && typeof input === 'object' && 'kind' in input;
+}
+
+// ============================================================================
+// PROMOTION REGISTRATION
+// ============================================================================
+
+/**
+ * Registers a promoted inline property in the proper IR property bucket.
+ */
+function registerPromotedProperty(ctx: CompilerContext, promoted: PromotedPropertyDefinition): void {
+  if (promoted.kind === CompiledPropertyKind.primitive) {
+    ctx.ir.properties.primitives[promoted.key] = promoted.definition as never;
     return;
   }
 
-  if (promoted.kind === 'enum') {
-    ctx.ir.properties.enums[promoted.key] = promoted.value as unknown as EnumDefinition;
+  if (promoted.kind === CompiledPropertyKind.enum) {
+    ctx.ir.properties.enums[promoted.key] = promoted.definition as never;
     return;
   }
 
-  if (promoted.kind === 'composite') {
-    ctx.ir.properties.composites[promoted.key] = promoted.value as unknown as CompositeDefinition;
+  if (promoted.kind === CompiledPropertyKind.composite) {
+    ctx.ir.properties.composites[promoted.key] = promoted.definition as never;
   }
 }
 
-function compileCompositeMember(ctx: CompilerContext, compositeKey: string, memberKey: string, value: unknown): Ref {
-  if (typeof value !== 'object' || value === null) {
-    throw new Error(`Invalid composite member value for "${compositeKey}.${memberKey}".`);
+// ============================================================================
+// COMPOSITES
+// ============================================================================
+
+/**
+ * Resolves one composite member into an IR property ref.
+ *
+ * Direct refs are converted to `$ref`. Inline property definitions are promoted
+ * into reusable IR properties first, then the member points to that `$ref`.
+ */
+function resolveCompositeMember(ctx: CompilerContext, compositeKey: string, memberKey: string, input: CompositePropertyValueInput): Ref {
+  if (isPropertyAuthoringRef(input)) {
+    return resolvePropertyRef(input).ref;
   }
 
-  const v = value as Record<string, unknown>;
-
-  // Debug: log what we received
-  // console.log(`Compiling ${compositeKey}.${memberKey}:`, Object.keys(v), v);
-
-  // Direct ref object: { id, kind, key } - check this first
-  if (v.id) {
-    return resolvePropertyRef(v);
-  }
-
-  // PropertySlotRefSource: { mode: 'ref', ref: PropertyAuthoringRef }
-  if (v.mode === 'ref' && v.ref) {
-    return resolvePropertyRef(v.ref as Record<string, unknown>);
-  }
-
-  // PropertyRefMemberInput: { source: { mode: 'ref', ref: {...} } }
-  if (v.source && typeof v.source === 'object') {
-    const source = v.source as Record<string, unknown>;
-    if (source.mode === 'ref' && source.ref) {
-      return resolvePropertyRef(source.ref as Record<string, unknown>);
-    }
-  }
-
-  // PropertySourceBuilder: { input: { kind: 'primitive', ... } }
-  if (v.input) {
-    const promoted = promoteInlineProperty(v.input as Record<string, unknown>, `${compositeKey}_${memberKey}`);
+  if (isPropertySourceBuilder(input)) {
+    const source = unwrapPropertySource(input);
+    const promoted = promoteInlineProperty(source, compositeKey, memberKey);
 
     registerPromotedProperty(ctx, promoted);
 
     return promoted.ref;
   }
 
-  // Direct inline property: { kind: 'primitive', ... }
-  if (v.kind) {
-    const promoted = promoteInlineProperty(v, `${compositeKey}_${memberKey}`);
+  if (isPropertySourceInput(input)) {
+    const promoted = promoteInlineProperty(input, compositeKey, memberKey);
 
     registerPromotedProperty(ctx, promoted);
 
     return promoted.ref;
   }
 
-  throw new Error(`Unable to compile composite member "${compositeKey}.${memberKey}". Keys: ${Object.keys(v).join(', ')}`);
+  throw new Error(`Unable to resolve composite member "${compositeKey}.${memberKey}".`);
 }
 
-function compileComposite(ctx: CompilerContext, key: string, source: Record<string, unknown>): Record<string, unknown> {
-  const compiledKey = toSnakeCaseKey(key);
-  const properties: Record<string, unknown> = {};
+/**
+ * Converts an authoring composite property into an IR composite definition.
+ */
+function resolveCompositeProperty(ctx: CompilerContext, key: string, input: CompositePropertySourceInput) {
+  const compositeKey = toSnakeCaseKey(key);
+  const properties: Record<string, Ref> = {};
 
-  for (const [memberKey, value] of Object.entries(source.properties ?? {})) {
-    properties[toSnakeCaseKey(memberKey)] = compileCompositeMember(ctx, compiledKey, memberKey, value);
+  for (const [memberKey, memberInput] of Object.entries(input.properties)) {
+    properties[toSnakeCaseKey(memberKey)] = resolveCompositeMember(ctx, compositeKey, memberKey, memberInput);
   }
 
-  const result: Record<string, unknown> = { properties };
-
-  if (source.description) result.description = source.description;
-  if (source.deprecated !== undefined) result.deprecated = source.deprecated;
-  if (source.meta) result.meta = source.meta;
-
-  if (source.extends) {
-    result.extends = resolvePropertyRef(source.extends as Record<string, unknown>);
-  }
-
-  return result;
+  return {
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(input.deprecated !== undefined ? { deprecated: input.deprecated } : {}),
+    ...(input.meta !== undefined ? { meta: input.meta } : {}),
+    ...(input.extends !== undefined ? { extends: resolvePropertyRef(input.extends).ref } : {}),
+    properties,
+  };
 }
 
+// ============================================================================
+// PASS
+// ============================================================================
+
+/**
+ * Compiles authoring properties into IR properties.
+ *
+ * This pass owns:
+ * - primitive property definitions
+ * - enum property definitions
+ * - composite property definitions
+ * - inline property promotion inside composites
+ */
 export function compileProperties(ctx: CompilerContext): void {
   const properties = ctx.authoring.properties;
 
-  for (const [key, source] of Object.entries(properties.primitives ?? {})) {
-    ctx.ir.properties.primitives[toSnakeCaseKey(key)] = compilePrimitiveProperty(
-      source as unknown as Record<string, unknown>,
-    ) as unknown as PrimitiveDefinition;
+  for (const [key, input] of Object.entries(properties.primitives ?? {})) {
+    ctx.ir.properties.primitives[toSnakeCaseKey(key)] = resolvePrimitiveProperty(
+      unwrapPropertySource(input) as PrimitivePropertySourceInput,
+    );
   }
 
-  for (const [key, source] of Object.entries(properties.enums ?? {})) {
-    ctx.ir.properties.enums[toSnakeCaseKey(key)] = compileEnumProperty(
-      source as unknown as Record<string, unknown>,
-    ) as unknown as EnumDefinition;
+  for (const [key, input] of Object.entries(properties.enums ?? {})) {
+    ctx.ir.properties.enums[toSnakeCaseKey(key)] = resolveEnumProperty(unwrapPropertySource(input) as EnumPropertySourceInput);
   }
 
-  for (const [key, source] of Object.entries(properties.composites ?? {})) {
-    ctx.ir.properties.composites[toSnakeCaseKey(key)] = compileComposite(
+  for (const [key, input] of Object.entries(properties.composites ?? {})) {
+    ctx.ir.properties.composites[toSnakeCaseKey(key)] = resolveCompositeProperty(
       ctx,
       key,
-      source as unknown as Record<string, unknown>,
-    ) as unknown as CompositeDefinition;
+      unwrapPropertySource(input) as CompositePropertySourceInput,
+    );
   }
 }

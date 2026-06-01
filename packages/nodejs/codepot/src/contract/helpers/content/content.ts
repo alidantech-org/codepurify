@@ -1,17 +1,22 @@
 // src/contract/helpers/content/content.ts
 
-import type { ContentDefinition, ContentTypeKey } from '@/contract/types/authoring/content.types';
+import { BuiltinContentTypes, ContentMimeType, ContentTypeKey, ContentTypeStrategy } from '@/contract/constants';
+
+import type { ContentDefinition, ContentInput } from '@/contract/types/authoring/content.types';
 
 // ============================================================================
 // INTERNAL
 // ============================================================================
 
-function defineContent(
-  key: ContentTypeKey | string,
-  type: string,
-  strategy: ContentTypeKey | string = key,
-  options: Omit<ContentDefinition, 'key' | 'type' | 'strategy'> = {},
-): ContentDefinition {
+type ContentOptions = Omit<ContentDefinition, 'key' | 'type' | 'strategy'>;
+
+/**
+ * Creates a content descriptor used by authoring.
+ *
+ * The compiler later registers this descriptor under IR `content_types`
+ * and replaces route content with `$ref` values.
+ */
+function defineContent(key: string, type: string, strategy: string, options: ContentOptions = {}): ContentDefinition {
   return {
     ...options,
     key,
@@ -20,68 +25,85 @@ function defineContent(
   };
 }
 
+/**
+ * Finds a built-in content descriptor by key.
+ */
+function builtinContent(key: Exclude<ContentTypeKey, 'custom'>, options: ContentOptions = {}): ContentDefinition {
+  const builtin = BuiltinContentTypes.find((item) => item.key === key);
+
+  if (!builtin) {
+    throw new Error(`Missing built-in content type "${key}".`);
+  }
+
+  return defineContent(builtin.key, builtin.type, builtin.strategy, options);
+}
+
 // ============================================================================
 // CONTENT HELPER
 // ============================================================================
 
 export const content = {
-  json(options = {}) {
-    return defineContent('json', 'application/json', 'json', options);
+  json(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.json, options);
   },
 
-  xml(options = {}) {
-    return defineContent('xml', 'application/xml', 'xml', options);
+  xml(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.xml, options);
   },
 
-  yaml(options = {}) {
-    return defineContent('yaml', 'application/yaml', 'yaml', options);
+  yaml(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.yaml, options);
   },
 
-  html(options = {}) {
-    return defineContent('html', 'text/html', 'html', options);
+  html(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.html, options);
   },
 
-  csv(options = {}) {
-    return defineContent('csv', 'text/csv', 'csv', options);
+  csv(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.csv, options);
   },
 
-  text(options = {}) {
-    return defineContent('text', 'text/plain', 'text', options);
+  text(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.text, options);
   },
 
-  binary(options = {}) {
-    return defineContent('binary', 'application/octet-stream', 'binary', options);
+  binary(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.binary, options);
   },
 
-  stream(options = {}) {
-    return defineContent('stream', 'application/octet-stream', 'stream', options);
+  stream(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.stream, options);
   },
 
-  multipart(options = {}) {
-    return defineContent('multipart', 'multipart/form-data', 'multipart', options);
+  multipart(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.multipart, options);
   },
 
-  form(options = {}) {
-    return defineContent('form', 'application/x-www-form-urlencoded', 'form', options);
+  form(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.form, options);
   },
 
-  graphql(options = {}) {
-    return defineContent('graphql', 'application/graphql', 'graphql', options);
+  graphql(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.graphql, options);
   },
 
-  protobuf(options = {}) {
-    return defineContent('protobuf', 'application/x-protobuf', 'protobuf', options);
+  protobuf(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.protobuf, options);
   },
 
-  msgpack(options = {}) {
-    return defineContent('msgpack', 'application/msgpack', 'msgpack', options);
+  msgpack(options: ContentOptions = {}) {
+    return builtinContent(ContentTypeKey.msgpack, options);
   },
 
-  custom(key: string, type: string, strategy = 'custom', options = {}) {
+  custom(key: string, type: string, strategy: string = ContentTypeStrategy.custom, options: ContentOptions = {}) {
     return defineContent(key, type, strategy, options);
   },
 
-  types(...types: ContentDefinition[]) {
+  types(...types: ContentDefinition[]): readonly ContentDefinition[] {
     return types;
   },
 };
+
+export type { ContentDefinition, ContentInput };
+
+export { ContentMimeType, ContentTypeKey, ContentTypeStrategy };

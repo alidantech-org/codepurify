@@ -1,133 +1,240 @@
 // src/compiler/resolvers/property-resolver.ts
 
+import type {
+  EnumPropertySourceInput,
+  PrimitivePropertySourceInput,
+  PropertySourceInput,
+} from '@/contract/types/authoring/4.properties-builder';
+
+import type { PropertyAuthoringRef } from '@/contract/types/authoring/3.authoring-ref';
+
 import type { Ref } from '@/contract/types/ir/ref';
+import type { CompositeDefinition } from '@/contract/types/ir/properties/composite/definition';
+import type { EnumDefinition } from '@/contract/types/ir/properties/enum/definition';
+import type { PrimitiveDefinition } from '@/contract/types/ir/properties/primitive/definition';
 
 import { propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
-import { toSnakeCaseKey, toKebabCase } from '../../utils/naming/normalize-key';
+import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
-export type CompiledPropertyKind = 'primitive' | 'enum' | 'composite';
+// ============================================================================
+// RESOLVER TYPES
+// ============================================================================
 
-export interface PromotedProperty {
+export const CompiledPropertyKind = {
+  primitive: 'primitive',
+  enum: 'enum',
+  composite: 'composite',
+} as const;
+
+export type CompiledPropertyKind = (typeof CompiledPropertyKind)[keyof typeof CompiledPropertyKind];
+
+export interface ResolvedPropertyRef {
   readonly kind: CompiledPropertyKind;
   readonly key: string;
-  readonly value: Record<string, unknown>;
   readonly ref: Ref;
 }
 
-export function compilePrimitiveProperty(source: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {
-    type: source.type,
+export interface PromotedPropertyDefinition {
+  readonly kind: CompiledPropertyKind;
+  readonly key: string;
+  readonly ref: Ref;
+  readonly definition: PrimitiveDefinition | EnumDefinition | CompositeDefinition;
+}
+
+// ============================================================================
+// DEFINITION ITEM
+// ============================================================================
+
+/**
+ * Copies shared definition metadata from authoring into IR.
+ */
+function resolveDefinitionItem(input: {
+  readonly description?: string;
+  readonly deprecated?: boolean;
+  readonly meta?: Record<string, unknown>;
+}): Record<string, unknown> {
+  return {
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(input.deprecated !== undefined ? { deprecated: input.deprecated } : {}),
+    ...(input.meta !== undefined ? { meta: input.meta } : {}),
   };
-
-  if (source.description) result.description = source.description;
-  if (source.deprecated !== undefined) result.deprecated = source.deprecated;
-  if (source.meta) result.meta = source.meta;
-  if (source.format) result.format = toKebabCase(String(source.format));
-  if (source.validation) {
-    result.validation = normalizeValidation(source.validation as Record<string, unknown>);
-  }
-  if (source.example !== undefined) result.example = source.example;
-
-  return result;
 }
 
-export function compileEnumProperty(source: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {
-    values: compileEnumValues(source.values),
-  };
+// ============================================================================
+// VALIDATION
+// ============================================================================
 
-  if (source.description) result.description = source.description;
-  if (source.deprecated !== undefined) result.deprecated = source.deprecated;
-  if (source.meta) result.meta = source.meta;
+/**
+ * Converts authoring validation keys into IR validation keys.
+ *
+ * Authoring stays camelCase, while IR uses normalized snake_case keys.
+ */
+function resolvePrimitiveValidation(validation?: PrimitivePropertySourceInput['validation']): Record<string, unknown> | undefined {
+  if (validation === undefined) return undefined;
 
-  return result;
-}
-
-export function compileEnumValues(values: unknown): Record<string, unknown>[] {
-  if (Array.isArray(values)) {
-    return values.map((value) => ({ value }));
-  }
-
-  return Object.values(values ?? {}).map((entry: unknown) => {
-    if (typeof entry === 'string' || typeof entry === 'number') {
-      return { value: entry };
-    }
-
-    if (typeof entry !== 'object' || entry === null) {
-      return { value: entry };
-    }
-
-    const result: Record<string, unknown> = {
-      value: (entry as Record<string, unknown>).value,
-    };
-
-    const e = entry as Record<string, unknown>;
-    if (e.label !== undefined) result.label = e.label;
-    if (e.description) result.description = e.description;
-    if (e.deprecated !== undefined) result.deprecated = e.deprecated;
-    if (e.meta) result.meta = e.meta;
-
-    return result;
-  });
-}
-
-export function normalizeValidation(validation: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
+  const output: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(validation)) {
-    out[toSnakeCaseKey(key)] = value;
+    output[toSnakeCaseKey(key)] = value;
   }
 
-  return out;
+  return output;
 }
 
-export function resolvePropertyRef(ref: Record<string, unknown>): Ref {
-  const id = ref?.id as string | undefined;
+// ============================================================================
+// PRIMITIVES
+// ============================================================================
 
-  if (!id) {
-    throw new Error('Missing property ref id.');
-  }
+/**
+ * Converts an authoring primitive property into an IR primitive definition.
+ */
+export function resolvePrimitiveProperty(input: PrimitivePropertySourceInput): PrimitiveDefinition {
+  return {
+    ...resolveDefinitionItem(input),
 
-  const parts = id.split(':');
+    type: input.type,
 
-  if (parts[0] !== 'property') {
-    throw new Error(`Expected property ref, got "${id}".`);
-  }
+    ...(input.format !== undefined ? { format: input.format } : {}),
 
-  const kind = parts[1];
-  const key = toSnakeCaseKey(parts[2]);
+    ...(input.validation !== undefined ? { validation: resolvePrimitiveValidation(input.validation) } : {}),
 
-  if (kind === 'primitive') return propertyPrimitiveRef(key);
-  if (kind === 'enum') return propertyEnumRef(key);
-  if (kind === 'composite') return propertyCompositeRef(key);
-
-  throw new Error(`Unsupported property ref kind "${kind}" in "${id}".`);
+    ...(input.example !== undefined ? { example: input.example } : {}),
+  } as PrimitiveDefinition;
 }
 
-export function promoteInlineProperty(source: Record<string, unknown>, fallbackKey: string): PromotedProperty {
-  const kind = source?.kind as string | undefined;
+// ============================================================================
+// ENUMS
+// ============================================================================
 
-  if (kind === 'primitive') {
-    const key = toSnakeCaseKey(fallbackKey);
+/**
+ * Converts enum values from authoring map/array style into IR array style.
+ */
+function resolveEnumValues(values: EnumPropertySourceInput['values']): EnumDefinition['values'] {
+  if (Array.isArray(values)) {
+    return values.map((value) => ({
+      value,
+    })) as EnumDefinition['values'];
+  }
+
+  return Object.values(values).map((entry) => {
+    if (typeof entry === 'string' || typeof entry === 'number') {
+      return {
+        value: entry,
+      };
+    }
 
     return {
-      kind,
+      ...resolveDefinitionItem(entry),
+      value: entry.value,
+      ...(entry.label !== undefined ? { label: entry.label } : {}),
+    };
+  }) as EnumDefinition['values'];
+}
+
+/**
+ * Converts an authoring enum property into an IR enum definition.
+ */
+export function resolveEnumProperty(input: EnumPropertySourceInput): EnumDefinition {
+  return {
+    ...resolveDefinitionItem(input),
+    values: resolveEnumValues(input.values),
+  };
+}
+
+// ============================================================================
+// AUTHORING REF PARSING
+// ============================================================================
+
+/**
+ * Parses a property authoring ref id.
+ *
+ * Expected examples:
+ * - property:primitive:id
+ * - property:enum:UserRole
+ * - property:composite:money
+ */
+function parsePropertyAuthoringRef(input: PropertyAuthoringRef): ResolvedPropertyRef {
+  const parts = input.id.split(':');
+
+  if (parts.length < 3 || parts[0] !== 'property') {
+    throw new Error(`Expected property authoring ref, got "${input.id}".`);
+  }
+
+  const rawKind = parts[1];
+  const key = toSnakeCaseKey(parts.slice(2).join('_'));
+
+  if (rawKind === CompiledPropertyKind.primitive) {
+    return {
+      kind: CompiledPropertyKind.primitive,
       key,
-      value: compilePrimitiveProperty(source),
       ref: propertyPrimitiveRef(key),
     };
   }
 
-  if (kind === 'enum') {
-    const key = toSnakeCaseKey(fallbackKey);
-
+  if (rawKind === CompiledPropertyKind.enum) {
     return {
-      kind,
+      kind: CompiledPropertyKind.enum,
       key,
-      value: compileEnumProperty(source),
       ref: propertyEnumRef(key),
     };
   }
 
-  throw new Error(`Inline property kind "${kind}" is not supported yet.`);
+  if (rawKind === CompiledPropertyKind.composite) {
+    return {
+      kind: CompiledPropertyKind.composite,
+      key,
+      ref: propertyCompositeRef(key),
+    };
+  }
+
+  throw new Error(`Unsupported property authoring ref kind "${rawKind}".`);
+}
+
+/**
+ * Resolves a property authoring ref into an IR `$ref`.
+ */
+export function resolvePropertyRef(input: PropertyAuthoringRef): ResolvedPropertyRef {
+  return parsePropertyAuthoringRef(input);
+}
+
+// ============================================================================
+// INLINE PROMOTION
+// ============================================================================
+
+/**
+ * Creates the compiled key for an inline property promoted into reusable IR.
+ */
+function createPromotedPropertyKey(ownerKey: string, fieldKey: string): string {
+  return toSnakeCaseKey(`${ownerKey}_${fieldKey}`);
+}
+
+/**
+ * Promotes an inline authoring primitive/enum property into a reusable IR
+ * property definition and returns the promoted `$ref`.
+ *
+ * Composite inline promotion is intentionally not supported here yet because
+ * nested composites need recursive ownership naming.
+ */
+export function promoteInlineProperty(input: PropertySourceInput, ownerKey: string, fieldKey: string): PromotedPropertyDefinition {
+  const key = createPromotedPropertyKey(ownerKey, fieldKey);
+
+  if (input.kind === CompiledPropertyKind.primitive) {
+    return {
+      kind: CompiledPropertyKind.primitive,
+      key,
+      ref: propertyPrimitiveRef(key),
+      definition: resolvePrimitiveProperty(input),
+    };
+  }
+
+  if (input.kind === CompiledPropertyKind.enum) {
+    return {
+      kind: CompiledPropertyKind.enum,
+      key,
+      ref: propertyEnumRef(key),
+      definition: resolveEnumProperty(input),
+    };
+  }
+
+  throw new Error(`Inline property kind "${input.kind}" is not supported for promotion yet.`);
 }
