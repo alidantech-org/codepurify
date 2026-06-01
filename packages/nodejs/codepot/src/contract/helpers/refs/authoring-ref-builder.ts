@@ -17,7 +17,7 @@ import {
   type SecurityCredentialAuthoringRef,
   type SecurityPolicyAuthoringRef,
   type SecurityPrincipalAuthoringRef,
-} from '@/contract/types/core/3.authoring-ref';
+} from '@/contract/types/authoring/3.authoring-ref';
 
 import {
   EntityFieldSetNameValues,
@@ -27,7 +27,7 @@ import {
   type EntityModelVariant,
   type EntityModelRefs,
   type PropertySourceInput,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
 import { createEngineId, EngineIdPart } from '@/contract/engine/engine-id';
 

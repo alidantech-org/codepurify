@@ -1,6 +1,6 @@
 // src/contract/builders/define-schemas.ts
 
-import type { DtoAuthoringRef, EntityFieldAuthoringRef, ParamsAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import type { DtoAuthoringRef, EntityFieldAuthoringRef, ParamsAuthoringRef } from '@/contract/types/authoring/3.authoring-ref';
 
 import type {
   EntityAllFields,
@@ -23,9 +23,9 @@ import type {
   MergeEntityFields,
   RelationFieldSourceInput,
   UnresolvedRelationFieldSourceInput,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
-import { PropertySlotSourceMode } from '@/contract/types/core/4.properties-builder';
+import { PropertySlotSourceMode } from '@/contract/types/authoring/4.properties-builder';
 
 import type {
   DtoAuthoringDefinition,
@@ -39,7 +39,7 @@ import type {
   ParamsResult,
   SchemasAuthoringState,
   SchemasBuilder,
-} from '@/contract/types/core/5.schemas-builder';
+} from '@/contract/types/authoring/5.schemas-builder';
 
 import {
   entityFieldSetOverrideBuilder,

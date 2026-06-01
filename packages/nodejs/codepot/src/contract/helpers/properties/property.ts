@@ -8,7 +8,7 @@ import {
   type FieldLifecycleConfig,
   type FieldPersistenceConfig,
   type FieldVisibilityConfig,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
 import type {
   CapabilityHelper,
@@ -52,20 +52,20 @@ import type {
   EnumPropertyBuilder,
   EnumPropertySourceInput,
   RelationFieldSourceInput,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
-import { PropertySlotSourceMode, EntityRelationKind as RelationKind } from '@/contract/types/core/4.properties-builder';
+import { PropertySlotSourceMode, EntityRelationKind as RelationKind } from '@/contract/types/authoring/4.properties-builder';
 
 import type {
   CompositeAuthoringRef,
   EntityFieldAuthoringRef,
   ModelAuthoringRef,
   PropertyAuthoringRef,
-} from '@/contract/types/core/3.authoring-ref';
+} from '@/contract/types/authoring/3.authoring-ref';
 
 import { normalizeEntityTarget, resolveEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
 
-import type { AnyEntityResult } from '@/contract/types/core/4.properties-builder';
+import type { AnyEntityResult } from '@/contract/types/authoring/4.properties-builder';
 
 // ============================================================================
 // PROPERTY SOURCE HELPERS

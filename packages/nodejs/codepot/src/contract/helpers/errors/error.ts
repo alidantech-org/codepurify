@@ -1,6 +1,7 @@
 // src/contract/helpers/errors/error.ts
 
-import type { ContentDefinition, ErrorInput as ErrorDefinition, ErrorSchemaInput } from '@/contract/types/core/8.errors-builder';
+import type { ErrorInput as ErrorDefinition, ErrorSchemaInput } from '@/contract/types/authoring/8.errors-builder';
+import type { ContentDefinition } from '@/contract/types/authoring/content.types';
 
 // ============================================================================
 // CONTENT NORMALIZATION

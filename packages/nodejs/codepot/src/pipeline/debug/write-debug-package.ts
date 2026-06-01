@@ -1,6 +1,6 @@
 import { stringify } from 'yaml';
 
-import type { CodepotConfig } from '@/contract/types/core/1.codepot-config.types';
+import type { CodepotConfig } from '@/contract/types/authoring/1.codepot-config.types';
 import { emitDebugPackage } from './emit-debug-package';
 
 export function writeDebugPackageJson(config: CodepotConfig): string {

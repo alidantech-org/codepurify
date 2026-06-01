@@ -15,7 +15,7 @@ import type { DefinitionItem } from './4.properties-builder';
 
 import type { ParamSourceRef, ParamsInputMap, ParamsResult } from './5.schemas-builder';
 
-import type { ContentDefinition, ContentHelper, ContentInput } from './8.errors-builder';
+import type { ContentDefinition, ContentHelper, ContentInput } from './content.types';
 
 // ============================================================================
 // ROUTE CONTENT TYPE ALIASES

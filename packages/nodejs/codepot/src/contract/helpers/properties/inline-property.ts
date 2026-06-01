@@ -1,7 +1,4 @@
-import type {
-  InlinePropertyPromotionHint,
-  PropertySourceInput,
-} from '@/contract/types/core/4.properties-builder';
+import type { InlinePropertyPromotionHint, PropertySourceInput } from '@/contract/types/authoring/4.properties-builder';
 
 function toSnake(value: string): string {
   return value
@@ -24,9 +21,7 @@ export function createInlinePropertyPromotionHint(input: {
   };
 }
 
-export function unwrapPropertySourceInput(
-  value: PropertySourceInput | { readonly input: PropertySourceInput },
-): PropertySourceInput {
+export function unwrapPropertySourceInput(value: PropertySourceInput | { readonly input: PropertySourceInput }): PropertySourceInput {
   if (value && typeof value === 'object' && 'input' in value) {
     return value.input;
   }

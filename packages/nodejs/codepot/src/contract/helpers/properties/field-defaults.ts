@@ -8,7 +8,7 @@ import {
   type FieldLifecycleConfig,
   type FieldPersistenceConfig,
   type FieldVisibilityConfig,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
 function isRelation(field: EntityFieldInput): boolean {
   return field.source.mode === PropertySlotSourceMode.relation;

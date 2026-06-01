@@ -1,15 +1,22 @@
 // src/contract/helpers/content/content.ts
 
-import type { ContentDefinition } from '@/contract/types/core/8.errors-builder';
+import type { ContentDefinition, ContentTypeKey } from '@/contract/types/authoring/content.types';
 
 // ============================================================================
 // INTERNAL
 // ============================================================================
 
-function contentType(type: string, options: Omit<ContentDefinition, 'type'> = {}): ContentDefinition {
+function defineContent(
+  key: ContentTypeKey | string,
+  type: string,
+  strategy: ContentTypeKey | string = key,
+  options: Omit<ContentDefinition, 'key' | 'type' | 'strategy'> = {},
+): ContentDefinition {
   return {
     ...options,
+    key,
     type,
+    strategy,
   };
 }
 
@@ -19,59 +26,59 @@ function contentType(type: string, options: Omit<ContentDefinition, 'type'> = {}
 
 export const content = {
   json(options = {}) {
-    return contentType('application/json', options);
+    return defineContent('json', 'application/json', 'json', options);
   },
 
   xml(options = {}) {
-    return contentType('application/xml', options);
+    return defineContent('xml', 'application/xml', 'xml', options);
   },
 
   yaml(options = {}) {
-    return contentType('application/yaml', options);
+    return defineContent('yaml', 'application/yaml', 'yaml', options);
   },
 
   html(options = {}) {
-    return contentType('text/html', options);
+    return defineContent('html', 'text/html', 'html', options);
   },
 
   csv(options = {}) {
-    return contentType('text/csv', options);
+    return defineContent('csv', 'text/csv', 'csv', options);
   },
 
   text(options = {}) {
-    return contentType('text/plain', options);
+    return defineContent('text', 'text/plain', 'text', options);
   },
 
   binary(options = {}) {
-    return contentType('application/octet-stream', options);
+    return defineContent('binary', 'application/octet-stream', 'binary', options);
   },
 
   stream(options = {}) {
-    return contentType('application/octet-stream', options);
+    return defineContent('stream', 'application/octet-stream', 'stream', options);
   },
 
   multipart(options = {}) {
-    return contentType('multipart/form-data', options);
+    return defineContent('multipart', 'multipart/form-data', 'multipart', options);
   },
 
   form(options = {}) {
-    return contentType('application/x-www-form-urlencoded', options);
+    return defineContent('form', 'application/x-www-form-urlencoded', 'form', options);
   },
 
   graphql(options = {}) {
-    return contentType('application/graphql', options);
+    return defineContent('graphql', 'application/graphql', 'graphql', options);
   },
 
   protobuf(options = {}) {
-    return contentType('application/x-protobuf', options);
+    return defineContent('protobuf', 'application/x-protobuf', 'protobuf', options);
   },
 
   msgpack(options = {}) {
-    return contentType('application/msgpack', options);
+    return defineContent('msgpack', 'application/msgpack', 'msgpack', options);
   },
 
-  type(type: string, options = {}) {
-    return contentType(type, options);
+  custom(key: string, type: string, strategy = 'custom', options = {}) {
+    return defineContent(key, type, strategy, options);
   },
 
   types(...types: ContentDefinition[]) {

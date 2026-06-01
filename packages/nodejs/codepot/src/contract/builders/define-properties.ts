@@ -5,7 +5,7 @@ import type {
   EnumAuthoringRef,
   PrimitiveAuthoringRef,
   PropertyAuthoringRef,
-} from '@/contract/types/core/3.authoring-ref';
+} from '@/contract/types/authoring/3.authoring-ref';
 
 import type {
   CompositePropertiesResult,
@@ -26,9 +26,9 @@ import type {
   PropertySourceInput,
   PropertySourceInputLike,
   PropertySourceMap,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
-import { PropertySlotSourceMode } from '@/contract/types/core/4.properties-builder';
+import { PropertySlotSourceMode } from '@/contract/types/authoring/4.properties-builder';
 
 import { createInlinePropertyPromotionHint, unwrapPropertySourceInput } from '@/contract/helpers/properties/inline-property';
 

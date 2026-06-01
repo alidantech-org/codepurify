@@ -7,7 +7,7 @@ import type {
   SecurityPrincipalsResult,
   SecurityPolicyInputMap,
   SecurityPoliciesResult,
-} from '@/contract/types/core/9.security-builder';
+} from '@/contract/types/authoring/9.security-builder';
 
 import {
   bearerHeader,

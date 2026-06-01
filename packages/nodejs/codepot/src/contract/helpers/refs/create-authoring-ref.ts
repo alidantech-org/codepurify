@@ -7,7 +7,7 @@ import type {
   ExtendableRefUsage,
   RefUsage,
   RefUsageOptions,
-} from '@/contract/types/core/3.authoring-ref';
+} from '@/contract/types/authoring/3.authoring-ref';
 
 export interface CreateAuthoringRefInput<TTarget, TKind extends AuthoringRefKind> {
   readonly id: string;

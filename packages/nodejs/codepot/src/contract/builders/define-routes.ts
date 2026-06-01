@@ -1,8 +1,8 @@
 // src/contract/builders/define-routes.ts
 
-import type { RouteAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import type { RouteAuthoringRef } from '@/contract/types/authoring/3.authoring-ref';
 
-import { HttpMethod } from '@/contract/types/core/7.routes-builder';
+import { HttpMethod } from '@/contract/types/authoring/7.routes-builder';
 
 import type {
   RouteContentDefinition,
@@ -18,7 +18,7 @@ import type {
   RoutesBuilder,
   RoutesBuilderResult,
   DefineRoutesFactoryInput,
-} from '@/contract/types/core/7.routes-builder';
+} from '@/contract/types/authoring/7.routes-builder';
 
 import { content } from '@/contract/helpers/content/content';
 
@@ -34,6 +34,12 @@ export interface DefineRoutesOptions {
 }
 
 // ============================================================================
+// DEFAULTS
+// ============================================================================
+
+const DEFAULT_CONTENT = [content.json()] as const;
+
+// ============================================================================
 // NORMALIZATION HELPERS
 // ============================================================================
 
@@ -45,10 +51,18 @@ function normalizeRouteParams(params: RouteParamsInput): RouteParamsInput {
   return params;
 }
 
+/**
+ * Normalize content - applies default JSON when no content provided and schema exists.
+ */
 function normalizeContent(
   contentValue?: readonly RouteContentDefinition[] | RouteContentDefinition,
+  hasSchema = true,
 ): readonly RouteContentDefinition[] | undefined {
-  if (contentValue === undefined) return undefined;
+  // No schema (e.g., 204 no-content) - no content type
+  if (!hasSchema) return undefined;
+
+  // No content provided - apply JSON default
+  if (contentValue === undefined) return DEFAULT_CONTENT;
 
   return (Array.isArray(contentValue) ? contentValue : [contentValue]) as readonly RouteContentDefinition[];
 }
@@ -81,12 +95,13 @@ function createOutput(
   contentOrOptions?: readonly RouteContentDefinition[] | RouteContentDefinition | RouteOutputOptions,
 ) {
   const options = normalizeOutputOptions(contentOrOptions);
+  const hasSchema = schema !== undefined;
 
   return {
     ...options,
     status: options.status ?? status,
-    ...(schema === undefined ? {} : { schema }),
-    content: normalizeContent(options.content),
+    ...(hasSchema ? { schema } : {}),
+    content: normalizeContent(options.content, hasSchema),
   };
 }
 
@@ -131,7 +146,7 @@ function createRouteChain(method: HttpMethod, path: string, input: Partial<Route
         ...current,
         body: {
           schema,
-          content: normalizeContent(contentValue),
+          content: normalizeContent(contentValue, true),
         },
       });
     },

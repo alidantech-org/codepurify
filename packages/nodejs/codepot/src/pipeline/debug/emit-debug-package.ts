@@ -1,4 +1,4 @@
-import type { CodepotConfig } from '@/contract/types/core/1.codepot-config.types';
+import type { CodepotConfig } from '@/contract/types/authoring/1.codepot-config.types';
 import { toDebugAuthoringJson } from '@/contract/debug/to-debug-authoring-json';
 
 export interface DebugPackageOutput {
@@ -7,8 +7,6 @@ export interface DebugPackageOutput {
 
 export function emitDebugPackage(config: CodepotConfig): DebugPackageOutput {
   return {
-    contracts: config.contracts.map((contract) =>
-      toDebugAuthoringJson(contract.snapshot()),
-    ),
+    contracts: config.contracts.map((contract) => toDebugAuthoringJson(contract.snapshot())),
   };
 }

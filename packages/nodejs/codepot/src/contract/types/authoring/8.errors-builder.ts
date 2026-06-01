@@ -4,15 +4,7 @@ import type { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from './3.authori
 
 import type { DefinitionItem } from './4.properties-builder';
 
-// ============================================================================
-// AUTHORING CONTENT TYPES
-// ============================================================================
-
-export interface ContentDefinition extends DefinitionItem {
-  readonly type: string;
-}
-
-export type ContentInput = ContentDefinition | readonly ContentDefinition[];
+import type { ContentDefinition, ContentInput, ContentHelper } from './content.types';
 
 // ============================================================================
 // SHARED ERROR INPUTS
@@ -47,42 +39,6 @@ export interface ErrorsResult<TInput extends ErrorInputMap> {
 // ============================================================================
 
 export type ErrorsAuthoringState = Record<string, ErrorInput>;
-
-// ============================================================================
-// CONTENT HELPER
-// ============================================================================
-
-export interface ContentHelper {
-  json(options?: DefinitionItem): ContentDefinition;
-
-  xml(options?: DefinitionItem): ContentDefinition;
-
-  yaml(options?: DefinitionItem): ContentDefinition;
-
-  html(options?: DefinitionItem): ContentDefinition;
-
-  csv(options?: DefinitionItem): ContentDefinition;
-
-  text(options?: DefinitionItem): ContentDefinition;
-
-  binary(options?: DefinitionItem): ContentDefinition;
-
-  stream(options?: DefinitionItem): ContentDefinition;
-
-  multipart(options?: DefinitionItem): ContentDefinition;
-
-  form(options?: DefinitionItem): ContentDefinition;
-
-  graphql(options?: DefinitionItem): ContentDefinition;
-
-  protobuf(options?: DefinitionItem): ContentDefinition;
-
-  msgpack(options?: DefinitionItem): ContentDefinition;
-
-  type(type: string, options?: DefinitionItem): ContentDefinition;
-
-  types(...types: ContentDefinition[]): readonly ContentDefinition[];
-}
 
 // ============================================================================
 // ERRORS BUILDER

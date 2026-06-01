@@ -1,6 +1,12 @@
 // src/contract/builders/define-errors.ts
 
-import type { ErrorInput, ErrorInputMap, ErrorsAuthoringState, ErrorsBuilder, ErrorsResult } from '@/contract/types/core/8.errors-builder';
+import type {
+  ErrorInput,
+  ErrorInputMap,
+  ErrorsAuthoringState,
+  ErrorsBuilder,
+  ErrorsResult,
+} from '@/contract/types/authoring/8.errors-builder';
 
 import { content } from '@/contract/helpers/content/content';
 import { error } from '@/contract/helpers/errors/error';

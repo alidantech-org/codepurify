@@ -1,4 +1,4 @@
-import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/core/9.security-builder';
+import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/authoring/9.security-builder';
 
 import type {
   SecurityCredentialOptions,
@@ -6,7 +6,7 @@ import type {
   SecurityPrincipalInput,
   SecurityRequirePolicyInput,
   SecurityPolicyInput,
-} from '@/contract/types/core/9.security-builder';
+} from '@/contract/types/authoring/9.security-builder';
 
 export function credential(
   source: SecurityCredentialSource,

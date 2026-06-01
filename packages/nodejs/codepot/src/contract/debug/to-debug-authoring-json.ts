@@ -1,4 +1,4 @@
-import type { AuthoringRef, AuthoringRefKind, RefUsage } from '@/contract/types/core/3.authoring-ref';
+import type { AuthoringRef, AuthoringRefKind, RefUsage } from '@/contract/types/authoring/3.authoring-ref';
 
 interface DebugAuthoringRef {
   readonly id: string;

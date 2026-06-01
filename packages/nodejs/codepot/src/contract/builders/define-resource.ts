@@ -1,10 +1,10 @@
 // src/contract/builders/define-resource.ts
 
-import type { PropertiesAuthoringState } from '@/contract/types/core/4.properties-builder';
-import type { SchemasAuthoringState } from '@/contract/types/core/5.schemas-builder';
-import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
-import type { RoutesAuthoringState, RoutePathAuthoringDefinition } from '@/contract/types/core/7.routes-builder';
-import type { ErrorsAuthoringState, ErrorInputMap, ErrorsResult } from '@/contract/types/core/8.errors-builder';
+import type { PropertiesAuthoringState } from '@/contract/types/authoring/4.properties-builder';
+import type { SchemasAuthoringState } from '@/contract/types/authoring/5.schemas-builder';
+import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/authoring/6.resource-builder';
+import type { RoutesAuthoringState, RoutePathAuthoringDefinition } from '@/contract/types/authoring/7.routes-builder';
+import type { ErrorsAuthoringState, ErrorInputMap, ErrorsResult } from '@/contract/types/authoring/8.errors-builder';
 
 import { resourceRef } from '@/contract/helpers/refs/authoring-ref-builder';
 

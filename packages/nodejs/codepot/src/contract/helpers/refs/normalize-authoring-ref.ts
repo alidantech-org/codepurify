@@ -1,11 +1,11 @@
-import type { EntityAuthoringRef, EntityFieldAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import type { EntityAuthoringRef, EntityFieldAuthoringRef } from '@/contract/types/authoring/3.authoring-ref';
 
 import type {
   AnyEntityResult,
   EntityExtendsInput,
   EntityTargetInput,
   ResolvedEntityTargetInput,
-} from '@/contract/types/core/4.properties-builder';
+} from '@/contract/types/authoring/4.properties-builder';
 
 export function isAuthoringRef(value: unknown): value is {
   readonly id: string;

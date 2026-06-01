@@ -6,15 +6,15 @@ import type {
   VersionBuilder,
   InfoDefinition,
   UrlDefinition,
-} from '@/contract/types/core/2.version-builder';
+} from '@/contract/types/authoring/2.version-builder';
 
-import type { DefineResourceOptions, ResourceBuilder, ResourceAuthoringState } from '@/contract/types/core/6.resource-builder';
+import type { DefineResourceOptions, ResourceBuilder, ResourceAuthoringState } from '@/contract/types/authoring/6.resource-builder';
 
-import type { ErrorInputMap, ErrorsResult, ErrorsAuthoringState } from '@/contract/types/core/8.errors-builder';
+import type { ErrorInputMap, ErrorsResult, ErrorsAuthoringState } from '@/contract/types/authoring/8.errors-builder';
 
-import type { PropertiesAuthoringState } from '@/contract/types/core/4.properties-builder';
-import type { SchemasAuthoringState } from '@/contract/types/core/5.schemas-builder';
-import type { SecurityAuthoringState } from '@/contract/types/core/9.security-builder';
+import type { PropertiesAuthoringState } from '@/contract/types/authoring/4.properties-builder';
+import type { SchemasAuthoringState } from '@/contract/types/authoring/5.schemas-builder';
+import type { SecurityAuthoringState } from '@/contract/types/authoring/9.security-builder';
 
 import { defineErrors } from './define-errors';
 import { defineProperties } from './define-properties';

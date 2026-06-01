@@ -220,6 +220,88 @@ describe('debug authoring output', () => {
     expect(tenants.defaults.security.kind).toBe('security.policy');
   });
 
+  it('adds json content by default when body has schema', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const users = contract.resources.users;
+
+    expect(users.routes.createUser.body.content).toEqual([
+      {
+        key: 'json',
+        type: 'application/json',
+        strategy: 'json',
+      },
+    ]);
+  });
+
+  it('adds json content by default when output has schema', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const users = contract.resources.users;
+
+    expect(users.routes.listUsers.output.content).toEqual([
+      {
+        key: 'json',
+        type: 'application/json',
+        strategy: 'json',
+      },
+    ]);
+  });
+
+  it('does not add json content for no-content output', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const users = contract.resources.users;
+
+    expect(users.routes.deleteUser.output.status).toBe(204);
+    expect(users.routes.deleteUser.output.content).toBeUndefined();
+  });
+
+  it('preserves explicit multipart content', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const users = contract.resources.users;
+
+    expect(users.routes.uploadAvatar.body.content).toEqual([
+      {
+        key: 'multipart',
+        type: 'multipart/form-data',
+        strategy: 'multipart',
+      },
+    ]);
+  });
+
+  it('preserves multiple explicit output content types', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const users = contract.resources.users;
+
+    expect(users.routes.feedXml.output.content).toEqual([
+      {
+        key: 'json',
+        type: 'application/json',
+        strategy: 'json',
+      },
+      {
+        key: 'xml',
+        type: 'application/xml',
+        strategy: 'xml',
+      },
+    ]);
+  });
+
+  it('content descriptors include key, type, and strategy', () => {
+    const output = emitDebugPackage(demoConfig);
+    const contract = output.contracts[0] as any;
+    const users = contract.resources.users;
+
+    // Verify content descriptor structure
+    const jsonContent = users.routes.createUser.body.content[0];
+    expect(jsonContent).toHaveProperty('key');
+    expect(jsonContent).toHaveProperty('type');
+    expect(jsonContent).toHaveProperty('strategy');
+  });
+
   it('old security graph is gone', () => {
     const output = emitDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
