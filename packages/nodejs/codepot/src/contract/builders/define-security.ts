@@ -3,7 +3,7 @@ import type {
   SecurityDefinition,
   SecurityPolicyDefinition,
   SecurityPrincipalDefinition,
-} from '@/contract/types/security/definition';
+} from '@/contract/types/compiled/security/definition';
 
 import type {
   SecurityBuilder,

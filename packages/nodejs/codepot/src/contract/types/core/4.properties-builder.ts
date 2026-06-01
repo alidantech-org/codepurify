@@ -1,17 +1,17 @@
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
-import type { PropertiesDefinition } from '@/contract/types/properties/definition';
+import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
 
 import type {
   PrimitiveDefinition,
   PrimitiveFormat,
   PrimitiveType,
   PrimitiveValidationDefinition,
-} from '@/contract/types/properties/primitive/definition';
+} from '@/contract/types/compiled/properties/primitive/definition';
 
-import type { EnumDefinition, EnumValuePrimitive } from '@/contract/types/properties/enum/definition';
+import type { EnumDefinition, EnumValuePrimitive } from '@/contract/types/compiled/properties/enum/definition';
 
-import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
+import type { CompositeDefinition } from '@/contract/types/compiled/properties/composite/definition';
 
 import type {
   FieldCapabilityConfig,
@@ -21,7 +21,7 @@ import type {
   FieldVisibilityConfig,
   FieldVisibilityLevel,
   QueryOperator,
-} from '@/contract/types/schema/entity/field/definition';
+} from '@/contract/types/compiled/schema/entity/field/definition';
 
 import type {
   ArrayUsageOptions,

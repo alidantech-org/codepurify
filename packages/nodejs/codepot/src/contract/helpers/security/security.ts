@@ -1,4 +1,4 @@
-import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/security/definition';
+import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/compiled/security/definition';
 
 import type {
   SecurityBuilder,

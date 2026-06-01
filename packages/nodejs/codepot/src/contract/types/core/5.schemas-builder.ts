@@ -1,6 +1,6 @@
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
-import type { SchemasDefinition } from '@/contract/types/schema/definition';
+import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
 
 import type {
   DtoAuthoringRef,

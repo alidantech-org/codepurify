@@ -1,11 +1,11 @@
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
 import type {
   SecurityCredentialFormat,
   SecurityCredentialSource,
   SecurityDefinition,
   SecurityPolicyDefinition,
-} from '@/contract/types/security/definition';
+} from '@/contract/types/compiled/security/definition';
 
 import type {
   EntityFieldAuthoringRef,

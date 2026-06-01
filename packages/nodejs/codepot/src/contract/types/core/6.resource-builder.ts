@@ -1,11 +1,11 @@
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
-import type { ErrorsDefinition } from '@/contract/types/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/properties/definition';
-import type { ResourceDefinition } from '@/contract/types/resource/definition';
-import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
-import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
-import type { SchemasDefinition } from '@/contract/types/schema/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
+import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
+import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
+import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
+import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
 
 import type { ResourceAuthoringRef } from './3.authoring-ref';
 import type { PropertiesBuilder } from './4.properties-builder';

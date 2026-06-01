@@ -1,4 +1,4 @@
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
 import type { EntityFieldAuthoringRef, PrimitiveAuthoringRef, PropertyAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 

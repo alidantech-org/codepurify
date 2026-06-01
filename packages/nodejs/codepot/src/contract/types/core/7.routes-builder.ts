@@ -1,9 +1,9 @@
 // src/contract/types/core/7.routes-builder.ts
 
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
-import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
-import type { HttpMethod, RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
+import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
+import type { HttpMethod, RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
 
 import type {
   DtoAuthoringRef,

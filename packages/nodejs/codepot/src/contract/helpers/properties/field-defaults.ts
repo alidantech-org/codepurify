@@ -4,7 +4,7 @@ import {
   type FieldLifecycleConfig,
   type FieldPersistenceConfig,
   type FieldVisibilityConfig,
-} from '@/contract/types/schema/entity/field/definition';
+} from '@/contract/types/compiled/schema/entity/field/definition';
 
 import {
   PropertySlotSourceMode,

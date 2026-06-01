@@ -3,9 +3,9 @@ import { DefinitionItem } from '../../definition';
 import { RefSchema } from '../../schema/definition';
 import { ParamsDefinition } from '../../schema/params/definition';
 import { SecurityPolicyDefinition } from '../../security/definition';
-import { ContentDefinition } from '../../errors/definition';
+import { ContentDefinition } from '../../responses/errors/definition';
 import { OperationDefinition } from '../operation/definition';
-import { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from '../../core/3.authoring-ref';
+import { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from '../../../core/3.authoring-ref';
 
 // ============================================================================
 // HTTP METHOD

@@ -1,6 +1,6 @@
 // src/contract/builders/define-errors.ts
 
-import type { ErrorDefinition, ErrorsDefinition } from '@/contract/types/errors/definition';
+import type { ErrorDefinition, ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
 
 import type { ErrorInputMap, ErrorsBuilder, ErrorsResult } from '@/contract/types/core/8.errors-builder';
 
@@ -17,23 +17,11 @@ export interface DefineErrorsOptions {
 }
 
 // ============================================================================
-// MUTABLE STATE TYPES
-// ============================================================================
-
-type MutableErrorsState = {
-  errors?: ErrorsDefinition['errors'];
-};
-
-// ============================================================================
 // STATE HELPERS
 // ============================================================================
 
 function ensureState(state: Partial<ErrorsDefinition>): ErrorsDefinition {
-  const mutable = state as MutableErrorsState;
-
-  mutable.errors ??= {};
-
-  return mutable as ErrorsDefinition;
+  return state as ErrorsDefinition;
 }
 
 function createErrorRefs<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput>['ref'] {
@@ -48,7 +36,7 @@ function createErrorRefs<TInput extends ErrorInputMap>(input: TInput): ErrorsRes
 
 function writeErrors<TInput extends ErrorInputMap>(state: ErrorsDefinition, input: TInput): void {
   for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state.errors[key] = value as unknown as ErrorDefinition;
+    state[key] = value as unknown as ErrorDefinition;
   }
 }
 

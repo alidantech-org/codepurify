@@ -1,4 +1,4 @@
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
 import type { DtoAuthoringRef, MaybeUsage } from '@/contract/types/core/3.authoring-ref';
 
@@ -66,6 +66,4 @@ export interface ErrorDefinition extends DefinitionItem {
 // ROOT
 // ============================================================================
 
-export interface ErrorsDefinition {
-  readonly errors: Record<string, ErrorDefinition>;
-}
+export type ErrorsDefinition = Record<string, ErrorDefinition>;

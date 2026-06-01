@@ -1,9 +1,9 @@
 // src/contract/builders/define-routes.ts
 
-import { HttpMethod } from '@/contract/types/resource/route/definition';
+import { HttpMethod } from '@/contract/types/compiled/resource/route/definition';
 
-import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
-import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
+import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
+import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
 
 import type { OperationAuthoringRef, RouteAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
@@ -20,7 +20,7 @@ import type {
   RoutesBuilderResult,
 } from '@/contract/types/core/7.routes-builder';
 
-import type { ContentDefinition } from '@/contract/types/errors/definition';
+import type { ContentDefinition } from '@/contract/types/compiled/responses/errors/definition';
 
 import { content } from '@/contract/helpers/content/content';
 

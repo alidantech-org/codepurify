@@ -1,10 +1,10 @@
 // src/contract/builders/define-schemas.ts
 
-import type { DtoDefinition } from '@/contract/types/schema/dto/definition';
-import type { ParamsDefinition } from '@/contract/types/schema/params/definition';
-import type { EntityDefinition } from '@/contract/types/schema/entity/definition';
-import type { EntityField } from '@/contract/types/schema/entity/field/definition';
-import type { SchemasDefinition } from '@/contract/types/schema/definition';
+import type { DtoDefinition } from '@/contract/types/compiled/schema/dto/definition';
+import type { ParamsDefinition } from '@/contract/types/compiled/schema/params/definition';
+import type { EntityDefinition } from '@/contract/types/compiled/schema/entity/definition';
+import type { EntityField } from '@/contract/types/compiled/schema/entity/field/definition';
+import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
 
 import type { DtoAuthoringRef, EntityFieldAuthoringRef, ParamsAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 

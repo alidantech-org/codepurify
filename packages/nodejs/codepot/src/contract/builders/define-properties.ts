@@ -1,9 +1,9 @@
 // src/contract/builders/define-properties.ts
 
-import type { PropertiesDefinition } from '@/contract/types/properties/definition';
-import type { PrimitiveDefinition } from '@/contract/types/properties/primitive/definition';
-import type { EnumDefinition } from '@/contract/types/properties/enum/definition';
-import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
+import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
+import type { PrimitiveDefinition } from '@/contract/types/compiled/properties/primitive/definition';
+import type { EnumDefinition } from '@/contract/types/compiled/properties/enum/definition';
+import type { CompositeDefinition } from '@/contract/types/compiled/properties/composite/definition';
 
 import type {
   CompositeAuthoringRef,

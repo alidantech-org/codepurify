@@ -294,7 +294,6 @@ export const tag = schemas
       posts: field
         .relation()
         .array()
-        .visibility((v) => v.public())
         .capability((c) => c.select()),
 
       name: field(primitives.ref.displayName)

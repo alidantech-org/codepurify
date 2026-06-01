@@ -6,9 +6,9 @@ import {
   type FieldLifecycleConfig,
   type FieldPersistenceConfig,
   type FieldVisibilityConfig,
-} from '@/contract/types/schema/entity/field/definition';
+} from '@/contract/types/compiled/schema/entity/field/definition';
 
-import { PrimitiveFormat, PrimitiveType } from '@/contract/types/properties/primitive/definition';
+import { PrimitiveFormat, PrimitiveType } from '@/contract/types/compiled/properties/primitive/definition';
 
 import type {
   CapabilityHelper,

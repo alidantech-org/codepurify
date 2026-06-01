@@ -1,10 +1,10 @@
 // src/contract/builders/define-version-contract.ts
 
-import type { ErrorsDefinition } from '@/contract/types/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/properties/definition';
-import type { ResourceDefinition } from '@/contract/types/resource/definition';
-import type { SchemasDefinition } from '@/contract/types/schema/definition';
-import type { SecurityDefinition } from '@/contract/types/security/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
+import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
+import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
+import type { SecurityDefinition } from '@/contract/types/compiled/security/definition';
 
 import type { DefineVersionContractOptions, VersionAuthoringState, VersionBuilder } from '@/contract/types/core/2.version-builder';
 
@@ -47,7 +47,7 @@ function createSchemasState(initial?: Partial<SchemasDefinition>): Partial<Schem
 
 function createErrorsState(initial?: Partial<ErrorsDefinition>): Partial<ErrorsDefinition> {
   return {
-    errors: initial?.errors ?? {},
+    ...(initial ?? {}),
   };
 }
 
@@ -62,10 +62,6 @@ function createSecurityState(initial?: Partial<SecurityDefinition>): Partial<Sec
 // ============================================================================
 // MERGE HELPERS
 // ============================================================================
-
-type MutableErrorsState = {
-  errors?: ErrorsDefinition['errors'];
-};
 
 type MutableSecurityState = {
   credentials?: SecurityDefinition['credentials'];
@@ -87,10 +83,7 @@ function mergeSchemas(target: Partial<SchemasDefinition>, source: Partial<Schema
 }
 
 function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDefinition>): void {
-  const mutable = target as MutableErrorsState;
-
-  mutable.errors ??= {};
-  Object.assign(mutable.errors, source.errors ?? {});
+  Object.assign(target, source);
 }
 
 function mergeSecurity(target: Partial<SecurityDefinition>, source: Partial<SecurityDefinition>): void {

@@ -1,29 +1,29 @@
 // src/contract/types/core/3.authoring-ref.ts
 
-import type { PrimitiveDefinition } from '@/contract/types/properties/primitive/definition';
-import type { EnumDefinition } from '@/contract/types/properties/enum/definition';
-import type { CompositeDefinition } from '@/contract/types/properties/composite/definition';
-import type { RefProperty } from '@/contract/types/properties/definition';
+import type { PrimitiveDefinition } from '@/contract/types/compiled/properties/primitive/definition';
+import type { EnumDefinition } from '@/contract/types/compiled/properties/enum/definition';
+import type { CompositeDefinition } from '@/contract/types/compiled/properties/composite/definition';
+import type { RefProperty } from '@/contract/types/compiled/properties/definition';
 
-import type { EntityDefinition } from '@/contract/types/schema/entity/definition';
-import type { EntityField } from '@/contract/types/schema/entity/field/definition';
-import type { ModelDefinition } from '@/contract/types/schema/model/definition';
-import type { DtoDefinition } from '@/contract/types/schema/dto/definition';
-import type { ParamsDefinition } from '@/contract/types/schema/params/definition';
+import type { EntityDefinition } from '@/contract/types/compiled/schema/entity/definition';
+import type { EntityField } from '@/contract/types/compiled/schema/entity/field/definition';
+import type { ModelDefinition } from '@/contract/types/compiled/schema/model/definition';
+import type { DtoDefinition } from '@/contract/types/compiled/schema/dto/definition';
+import type { ParamsDefinition } from '@/contract/types/compiled/schema/params/definition';
 
-import type { ResourceDefinition } from '@/contract/types/resource/definition';
-import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
-import type { RoutePathDefinition } from '@/contract/types/resource/route/definition';
+import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
+import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
+import type { RoutePathDefinition } from '@/contract/types/compiled/resource/route/definition';
 
-import type { ErrorDefinition } from '@/contract/types/errors/definition';
+import type { ErrorDefinition } from '@/contract/types/compiled/responses/errors/definition';
 
 import type {
   SecurityCredentialDefinition,
   SecurityPolicyDefinition,
   SecurityPrincipalDefinition,
-} from '@/contract/types/security/definition';
+} from '@/contract/types/compiled/security/definition';
 
-import type { DefinitionItem } from '@/contract/types/definition';
+import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
 // ============================================================================
 // AUTHORING REF KIND

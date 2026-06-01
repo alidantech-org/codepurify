@@ -1,10 +1,10 @@
 // src/contract/builders/define-resource.ts
 
-import type { ErrorsDefinition } from '@/contract/types/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/properties/definition';
-import type { OperationDefinition } from '@/contract/types/resource/operation/definition';
-import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/resource/route/definition';
-import type { SchemasDefinition } from '@/contract/types/schema/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
+import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
+import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
+import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
 
 import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
 
@@ -21,15 +21,8 @@ import { defineSchemas } from './define-schemas';
 // MERGE HELPERS
 // ============================================================================
 
-type MutableErrorsState = {
-  errors?: ErrorsDefinition['errors'];
-};
-
 function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDefinition>): void {
-  const mutable = target as MutableErrorsState;
-
-  mutable.errors ??= {};
-  Object.assign(mutable.errors, source.errors ?? {});
+  Object.assign(target, source);
 }
 
 // ============================================================================
