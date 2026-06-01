@@ -1,65 +1,41 @@
-import { Ref } from '../../ref';
-import { DefinitionItem } from '../../definition';
-import { EntityDefinition } from '../entity/definition';
+// src/contract/types/compiled/schema/model/definition.ts
 
-export const ModelCategory = {
-  // access.read === 'public' → safe to expose externally
-  read: 'read',
+import type { DefinitionItem } from '../../definition';
+import type { Ref } from '../../ref';
+import type { EntityDefinition } from '../entity/definition';
+import type { EntityFieldDefinition } from '../entity/field/definition';
 
-  // access.write is set (any level) → accepted in create payloads
-  create: 'create',
+// ============================================================================
+// MODEL FIELD
+// ============================================================================
 
-  // create fields minus persistence.immutable === true → patchable subset
-  patch: 'patch',
+export interface ModelArrayFieldDefinition extends DefinitionItem {
+  readonly type: 'array';
+  readonly items: Ref<EntityFieldDefinition> | Ref<ModelDefinition>;
+  readonly required?: boolean;
+  readonly nullable?: boolean;
+}
 
-  // query.filter === true OR query.sort === true OR query.select === true
-  query: 'query',
+export type ModelFieldDefinition = Ref<EntityFieldDefinition> | ModelArrayFieldDefinition;
 
-  // persistence.mode === 'stored' AND access.read !== 'secret' → DB projection
-  projection: 'projection',
-
-  // access.sensitive === true OR access.read === 'secret' → strip from responses
-  redacted: 'redacted',
-
-  // persistence.mode === 'computed' OR 'virtual' → never written, derived at runtime
-  derived: 'derived',
-
-  // access.read === 'internal' OR access.read === 'auth' → backend/service-layer only
-  internal: 'internal',
-} as const;
-
-export type ModelCategory = (typeof ModelCategory)[keyof typeof ModelCategory];
+// ============================================================================
+// MODEL DEFINITION
+// ============================================================================
 
 export interface ModelDefinition extends DefinitionItem {
-  /**
-   * Derivation source only.
-   * This does not mean generated inheritance.
-   */
-  from: Ref<EntityDefinition>;
+  readonly from: Ref<EntityDefinition>;
 
   /**
-   * Derivation family.
-   * Compiler uses this to infer same-category parent inheritance.
+   * Preserve inheritance when the source entity extends another entity and the
+   * parent has the same compiled model variant.
    */
-  category: ModelCategory;
+  readonly extends?: Ref<ModelDefinition>;
+
+  readonly partial?: boolean;
 
   /**
-   * Field selection.
+   * Compiled model fields only.
+   * Inherited model fields should live on `extends`, not be duplicated here.
    */
-  pick?: string[];
-
-  /**
-   * Field exclusion.
-   */
-  omit?: string[];
-
-  /**
-   * Make all fields optional.
-   */
-  partial?: boolean;
-
-  /**
-   * Optional required-field override after pick/omit/partial.
-   */
-  required?: string[];
+  readonly fields: Record<string, ModelFieldDefinition>;
 }

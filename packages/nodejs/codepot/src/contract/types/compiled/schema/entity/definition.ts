@@ -1,41 +1,43 @@
-import { DefinitionItem } from '../../definition';
-import { Ref } from '../../ref';
-import { EntityField } from './field/definition';
-import { EntityRelationDefinition } from './relation/definition';
-import { ResourceDefinition } from '../../resource/definition';
+// src/contract/types/compiled/schema/entity/definition.ts
+
+import type { DefinitionItem } from '../../definition';
+import type { Ref } from '../../ref';
+import type { ResourceDefinition } from '../../resource/definition';
+import type { EntityFieldDefinition } from './field/definition';
+
+// ============================================================================
+// ENTITY DEFINITION
+// ============================================================================
 
 export interface EntityDefinition extends DefinitionItem {
   /**
-   * Enforced consistency: Use Ref if Resources are first-class definitions.
+   * Optional compiled ownership ref.
+   * Useful for codegen placement, but not required for shared/global entities.
    */
-  resource?: Ref<ResourceDefinition>;
+  readonly resource?: Ref<ResourceDefinition>;
 
   /**
    * Optional grouping/search/docs tags.
    */
-  tags?: string[];
+  readonly tags?: readonly string[];
 
   /**
    * Real entity inheritance only.
-   * One parent max to keep generated classes safe.
+   * One parent max keeps generated classes safe.
    */
-  extends?: Ref<EntityDefinition>;
+  readonly extends?: Ref<EntityDefinition>;
 
   /**
-   * Abstract entities are reusable schema bases, not concrete entities.
-   * They are not emitted as DB tables/entities by default.
+   * Abstract entities are reusable schema bases, not concrete runtime records.
+   * Codegen may skip DB/table emission for abstract entities by default.
    */
-  abstract?: boolean;
+  readonly abstract?: boolean;
 
   /**
    * Entity-owned fields only.
-   * Inherited fields come from `extends` and must not be duplicated in output.
+   *
+   * Inherited fields are available through `extends` and should not be
+   * duplicated here unless the compiler intentionally flattens output.
    */
-  fields: Record<string, EntityField>;
-
-  /**
-   * Inline definition: Keeps the relation logic tightly coupled to its source entity,
-   * avoiding unnecessary global file fragmentation.
-   */
-  relations?: Record<string, EntityRelationDefinition>;
+  readonly fields: Record<string, EntityFieldDefinition>;
 }

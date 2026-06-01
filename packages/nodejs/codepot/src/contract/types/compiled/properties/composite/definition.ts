@@ -1,28 +1,41 @@
-import { Ref } from '../../ref';
-import { RefProperty } from '../definition';
-import { DefinitionItem } from '../../definition';
-import { EntityDefinition } from '../../schema/entity/definition';
-import { ResourceDefinition } from '../../resource/definition';
+// src/contract/types/compiled/properties/composite/definition.ts
+
+import type { DefinitionItem } from '../../definition';
+import type { Ref } from '../../ref';
+import type { ResourceDefinition } from '../../resource/definition';
+import type { EntityDefinition } from '../../schema/entity/definition';
+import type { PrimitiveDefinition } from '../primitive/definition';
+import type { EnumDefinition } from '../enum/definition';
+
+// ============================================================================
+// COMPOSITE MEMBERS
+// ============================================================================
+
+export type CompositePropertyRef = Ref<PrimitiveDefinition> | Ref<EnumDefinition> | Ref<CompositeDefinition>;
+
+// ============================================================================
+// COMPOSITE DEFINITION
+// ============================================================================
 
 export interface CompositeDefinition extends DefinitionItem {
   /**
    * Real composite inheritance/extension.
-   * One parent max to keep merging predictable.
+   * One parent max keeps merge order predictable.
    */
-  extends?: Ref<CompositeDefinition>;
+  readonly extends?: Ref<CompositeDefinition>;
 
   /**
-   * Composite-owned reusable property refs.
+   * Composite-owned fields.
+   *
+   * Values must be compiled refs. Inline authoring properties should already be
+   * promoted by the compiler before this IR is emitted.
    */
-  properties: Record<string, Ref<RefProperty>>;
+  readonly properties: Record<string, CompositePropertyRef>;
 
   /**
-   * Reference to the resource that owns this enum
+   * Optional compiled ownership refs.
+   * Useful for codegen placement, but not required for shared/global composites.
    */
-  resource?: Ref<ResourceDefinition>;
-
-  /**
-   * Reference to the entity that owns this enum
-   */
-  entity?: Ref<EntityDefinition>;
+  readonly resource?: Ref<ResourceDefinition>;
+  readonly entity?: Ref<EntityDefinition>;
 }

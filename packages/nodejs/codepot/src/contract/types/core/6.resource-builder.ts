@@ -1,6 +1,6 @@
 import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
-import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
 import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
 import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';

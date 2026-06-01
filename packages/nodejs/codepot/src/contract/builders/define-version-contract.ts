@@ -1,6 +1,6 @@
 // src/contract/builders/define-version-contract.ts
 
-import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
 import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
 import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';

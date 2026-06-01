@@ -1,29 +1,21 @@
-import { CompositeDefinition } from './composite/definition';
-import { EnumDefinition } from './enum/definition';
-import { PrimitiveDefinition } from './primitive/definition';
+// src/contract/types/compiled/properties/definition.ts
 
-/**
- * Reference to a property to be used when referencing a property
- */
+import type { PrimitiveDefinition } from './primitive/definition';
+import type { EnumDefinition } from './enum/definition';
+import type { CompositeDefinition } from './composite/definition';
+
+// ============================================================================
+// PROPERTY REFS
+// ============================================================================
+
 export type RefProperty = PrimitiveDefinition | EnumDefinition | CompositeDefinition;
 
-/**
- * Properties definition
- */
-export interface PropertiesDefinition {
-  /**
-   * Primitive properties 
-   */
-  primitives: Record<string, PrimitiveDefinition>;
-  
-  /**
-   * Enum properties 
-   */
-  enums: Record<string, EnumDefinition>;
-  
-  /**
-   * Composite properties 
-   */
-  composites: Record<string, CompositeDefinition>;
-}
+// ============================================================================
+// PROPERTIES DEFINITION
+// ============================================================================
 
+export interface PropertiesDefinition {
+  readonly primitives: Record<string, PrimitiveDefinition>;
+  readonly enums: Record<string, EnumDefinition>;
+  readonly composites: Record<string, CompositeDefinition>;
+}

@@ -2,7 +2,7 @@
 
 import type { DefinitionItem } from '@/contract/types/compiled/definition';
 
-import type { ContentDefinition, ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ContentDefinition, ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
 
 import type { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from './3.authoring-ref';
 

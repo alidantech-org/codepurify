@@ -1,24 +1,56 @@
-import { RefProperty } from '../../properties/definition';
-import { Ref } from '../../ref';
-import { ModelDefinition } from '../model/definition';
-import { DefinitionItem } from '../../definition';
+// src/contract/types/compiled/schema/dto/definition.ts
+
+import type { DefinitionItem } from '../../definition';
+import type { Ref } from '../../ref';
+import type { EntityFieldDefinition } from '../entity/field/definition';
+import type { ModelDefinition } from '../model/definition';
+
+// ============================================================================
+// DTO FIELD
+// ============================================================================
+
+export interface DtoArrayFieldDefinition extends DefinitionItem {
+  readonly type: 'array';
+  readonly items: Ref<EntityFieldDefinition> | Ref<ModelDefinition> | Ref<DtoDefinition>;
+  readonly required?: boolean;
+  readonly nullable?: boolean;
+}
+
+export interface DtoRefFieldDefinition extends DefinitionItem {
+  readonly ref: Ref<EntityFieldDefinition> | Ref<ModelDefinition> | Ref<DtoDefinition>;
+  readonly required?: boolean;
+  readonly nullable?: boolean;
+}
+
+export type DtoFieldDefinition =
+  | Ref<EntityFieldDefinition>
+  | Ref<ModelDefinition>
+  | Ref<DtoDefinition>
+  | DtoRefFieldDefinition
+  | DtoArrayFieldDefinition;
+
+// ============================================================================
+// DTO DEFINITION
+// ============================================================================
 
 export interface DtoDefinition extends DefinitionItem {
   /**
-   * Optional inheritance from a model or another DTO.
-   * If omitted, the DTO is standalone.
+   * Direct DTO source.
+   * Example: UserPublic DTO can be from UserPublic model.
    */
-  extends?: Ref<ModelDefinition | DtoDefinition>;
+  readonly from?: Ref<ModelDefinition> | Ref<DtoDefinition>;
 
   /**
-   * Field overrides and additions.
-   * If omitted, fields are inherited from `extends` (if any).
+   * DTO inheritance.
+   * Example: UserResponse extends ApiResponse.
    */
-  fields?: Record<string, Ref<RefProperty>>;
+  readonly extends?: Ref<DtoDefinition>;
 
   /**
-   * If true, all inherited fields become optional.
-   * Useful for PATCH-style updates.
+   * Compiled DTO fields only.
+   * Inherited DTO fields should live on `extends`, not be duplicated here.
    */
-  partial?: boolean;
+  readonly fields: Record<string, DtoFieldDefinition>;
+
+  readonly partial?: boolean;
 }

@@ -1,22 +1,64 @@
-import { Ref } from '../../ref';
-import { DefinitionItem } from '../../definition';
-import { DtoDefinition } from '../../schema/dto/definition';
-import { ModelDefinition } from '../../schema/model/definition';
-import { ParamsDefinition } from '../../schema/params/definition';
+// src/contract/types/compiled/resource/operation/definition.ts
+
+import type { DefinitionItem } from '../../definition';
+import type { Ref } from '../../ref';
+import type { DtoDefinition } from '../../schema/dto/definition';
+import type { ModelDefinition } from '../../schema/model/definition';
+import type { ParamsDefinition } from '../../schema/params/definition';
+import type { SecurityPrincipalDefinition } from '../../security/definition';
+import type { ErrorResponseDefinition } from '../../response/errors/definition';
+
+// ============================================================================
+// OPERATION SCHEMA REFS
+// ============================================================================
+
+export type OperationSchemaRef = Ref<DtoDefinition> | Ref<ModelDefinition>;
+
+export type OperationContextRef = Ref<DtoDefinition> | Ref<ModelDefinition> | Ref<SecurityPrincipalDefinition>;
+
+// ============================================================================
+// INPUT / OUTPUT
+// ============================================================================
 
 export interface OperationInputDefinition extends DefinitionItem {
-  context?: Ref<DtoDefinition>[]; // injected request contexts (auth, tenant, etc.)
-  params?: Ref<ParamsDefinition>; // path parameters schema
-  query?: Ref<DtoDefinition | ModelDefinition>; // query string schema
-  body?: Ref<DtoDefinition | ModelDefinition>; // request body schema
+  /**
+   * Injected request contexts such as auth user, tenant, locale, etc.
+   */
+  readonly context?: readonly OperationContextRef[];
+
+  /**
+   * Path parameter schema.
+   */
+  readonly params?: Ref<ParamsDefinition>;
+
+  /**
+   * Query string schema.
+   */
+  readonly query?: OperationSchemaRef;
+
+  /**
+   * Request body schema.
+   */
+  readonly body?: OperationSchemaRef;
 }
 
 export interface OperationOutputDefinition extends DefinitionItem {
-  result?: Ref<DtoDefinition | ModelDefinition>; // success payload schema
-  errors?: Ref<DtoDefinition | ModelDefinition>[]; // typed error schemas (multiple possible)
+  /**
+   * Success payload schema.
+   */
+  readonly result?: OperationSchemaRef;
+
+  /**
+   * Typed error responses.
+   */
+  readonly errors?: readonly Ref<ErrorResponseDefinition>[];
 }
 
+// ============================================================================
+// OPERATION
+// ============================================================================
+
 export interface OperationDefinition extends DefinitionItem {
-  input?: OperationInputDefinition;
-  output?: OperationOutputDefinition;
+  readonly input: OperationInputDefinition;
+  readonly output: OperationOutputDefinition;
 }

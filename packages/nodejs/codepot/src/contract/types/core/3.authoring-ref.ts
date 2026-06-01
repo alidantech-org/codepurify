@@ -15,7 +15,7 @@ import type { ResourceDefinition } from '@/contract/types/compiled/resource/defi
 import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
 import type { RoutePathDefinition } from '@/contract/types/compiled/resource/route/definition';
 
-import type { ErrorDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ErrorDefinition } from '@/contract/types/compiled/response/errors/definition';
 
 import type {
   SecurityCredentialDefinition,

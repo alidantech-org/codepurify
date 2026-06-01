@@ -1,7 +1,7 @@
 import type { InfoDefinition } from '@/contract/types/compiled/info/definition';
 import type { UrlDefinition } from '@/contract/types/compiled/url/definition';
 import type { SecurityDefinition } from '@/contract/types/compiled/security/definition';
-import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
 import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
 import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';

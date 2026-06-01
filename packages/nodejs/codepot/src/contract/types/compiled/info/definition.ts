@@ -1,25 +1,71 @@
-import { DefinitionItem } from '../definition';
+// src/contract/types/compiled/info/definition.ts
 
-export interface ContactDefinition {
-  name?: string;
-  url?: string;
-  email?: string;
+import type { DefinitionItem } from '../definition';
+
+// ============================================================================
+// CONTACT
+// ============================================================================
+
+export interface ContactDefinition extends DefinitionItem {
+  readonly name?: string;
+  readonly url?: string;
+  readonly email?: string;
 }
 
-export interface LicenseDefinition {
-  name: string;
-  identifier?: string;
-  url?: string;
+// ============================================================================
+// LICENSE
+// ============================================================================
+
+export interface LicenseDefinition extends DefinitionItem {
+  readonly name: string;
+
+  /**
+   * SPDX identifier when available.
+   * Example: MIT, Apache-2.0, GPL-3.0-only.
+   */
+  readonly identifier?: string;
+
+  readonly url?: string;
 }
+
+// ============================================================================
+// INFO LINKS
+// ============================================================================
+
+export interface InfoLinksDefinition {
+  readonly website?: string;
+  readonly docs?: string;
+  readonly support?: string;
+  readonly changelog?: string;
+  readonly status?: string;
+  readonly repository?: string;
+}
+
+// ============================================================================
+// INFO
+// ============================================================================
 
 export interface InfoDefinition extends DefinitionItem {
-  title: string;
+  readonly title: string;
 
-  version: string;
+  /**
+   * Public API/product version.
+   */
+  readonly version: string;
 
-  termsOfService?: string;
+  /**
+   * Optional short product/API summary.
+   */
+  readonly summary?: string;
 
-  contact?: ContactDefinition;
+  readonly terms_of_service?: string;
 
-  license?: LicenseDefinition;
+  readonly contact?: ContactDefinition;
+
+  readonly license?: LicenseDefinition;
+
+  /**
+   * Useful product/project links.
+   */
+  readonly links?: InfoLinksDefinition;
 }

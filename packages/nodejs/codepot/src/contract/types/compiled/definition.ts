@@ -1,49 +1,86 @@
+// src/contract/types/compiled/definition.ts
+
 // ============================================================================
 // ROOT
 // ============================================================================
 
-import { InfoDefinition } from './info/definition';
-import { PropertiesDefinition } from './properties/definition';
-import { ResourceDefinition } from './resource/definition';
-import { TransportDefinition } from './transport/definition';
-import { SchemasDefinition } from './schema/definition';
-import { SecurityDefinition } from './security/definition';
-import { UrlDefinition } from './url/definition';
+import type { ContentTypeDefinition } from './content/definition';
+import type { InfoDefinition } from './info/definition';
+import type { PropertiesDefinition } from './properties/definition';
+import type { ResourceDefinition } from './resource/definition';
+import type { ResponsesDefinition } from './response/definition';
+import type { SchemasDefinition } from './schema/definition';
+import type { SecurityDefinition } from './security/definition';
+import type { UrlDefinition } from './url/definition';
+
+// ============================================================================
+// SHARED DEFINITION ITEM
+// ============================================================================
 
 export interface DefinitionItem {
-  meta?: Record<string, unknown>;
-  description?: string;
-  deprecated?: boolean;
+  readonly meta?: Record<string, unknown>;
+  readonly description?: string;
+  readonly deprecated?: boolean;
 }
 
+// ============================================================================
+// COMPILED CODEPOT DEFINITION
+// ============================================================================
+
+/**
+ * Compiled Codepot IR/spec.
+ *
+ * This is the stable compiler output and the only contract shape codegen
+ * should consume. Authoring-layer refs/helpers must not leak into this type.
+ */
 export interface CodepotDefinition extends DefinitionItem {
-  /**1. 🍲 Codepot IR/schema version  */
-  codepot: string;
+  /**
+   * Codepot compiled IR/schema version.
+   */
+  readonly codepot: string;
 
-  /**2. 🗝️ API/project key use snake_case for clean wording */
-  key: string;
+  /**
+   * Stable API/project key.
+   * Compiler should normalize this to snake_case.
+   */
+  readonly key: string;
 
-  /**3. 📊 API version */
-  version: number;
+  /**
+   * API major version.
+   */
+  readonly version: number;
 
-  /**4. 📝 API information */
-  info: InfoDefinition;
+  readonly info: InfoDefinition;
 
-  /**5. 🌐 API URLs */
-  urls: UrlDefinition[];
+  readonly urls: readonly UrlDefinition[];
 
-  /**6. 🧩 Reusable low-level properties */
-  properties: PropertiesDefinition;
+  /**
+   * Reusable content type registry.
+   */
+  readonly content_types: ContentTypeDefinition;
 
-  /**7. 🧩 Reusable schemas */
-  schemas: SchemasDefinition;
+  /**
+   * Reusable low-level properties.
+   */
+  readonly properties: PropertiesDefinition;
 
-  /**8. 🔄 Reusable responses and default response map  */
-  transport: TransportDefinition;
+  /**
+   * Reusable schemas.
+   */
+  readonly schemas: SchemasDefinition;
 
-  /**9. 🔐 API security registry */
-  security: SecurityDefinition;
+  /**
+   * Reusable response registry.
+   */
+  readonly responses: ResponsesDefinition;
 
-  /**10. 📦 API resources -- progress 👈 we are here  */
-  resources: Record<string, ResourceDefinition>;
+  /**
+   * API security registry.
+   */
+  readonly security: SecurityDefinition;
+
+  /**
+   * API resources.
+   */
+  readonly resources: Record<string, ResourceDefinition>;
 }

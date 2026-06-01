@@ -1,28 +1,22 @@
-import { DtoDefinition } from './dto/definition';
-import { EntityDefinition } from './entity/definition';
-import { ModelDefinition } from './model/definition';
-import { ParamsDefinition } from './params/definition';
+// src/contract/types/compiled/schema/definition.ts
+
+import type { DtoDefinition } from './dto/definition';
+import type { EntityDefinition } from './entity/definition';
+import type { EntityFieldDefinition } from './entity/field/definition';
+import type { ModelDefinition } from './model/definition';
+import type { ParamsDefinition } from './params/definition';
+import type { FieldSetDefinition } from './field-set/definition';
+
+// ============================================================================
+// SCHEMAS
+// ============================================================================
 
 export interface SchemasDefinition {
-  /**
-   * Entity schemas
-   */
-  entities: Record<string, EntityDefinition>;
-
-  /**
-   * Model schemas
-   */
-  models: Record<string, ModelDefinition>;
-
-  /**
-   * DTO schemas
-   */
-  dtos: Record<string, DtoDefinition>;
-
-  /**
-   * Params schemas
-   */
-  params: Record<string, ParamsDefinition>;
+  readonly entities: Record<string, EntityDefinition>;
+  readonly field_sets: Record<string, FieldSetDefinition>;
+  readonly models: Record<string, ModelDefinition>;
+  readonly dtos: Record<string, DtoDefinition>;
+  readonly params: ParamsDefinition;
 }
 
-export type RefSchema = EntityDefinition | ModelDefinition | DtoDefinition | ParamsDefinition;
+export type RefSchema = EntityDefinition | EntityFieldDefinition | FieldSetDefinition | ModelDefinition | DtoDefinition;

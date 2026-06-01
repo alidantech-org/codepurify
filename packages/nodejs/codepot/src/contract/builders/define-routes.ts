@@ -20,7 +20,7 @@ import type {
   RoutesBuilderResult,
 } from '@/contract/types/core/7.routes-builder';
 
-import type { ContentDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ContentDefinition } from '@/contract/types/compiled/response/errors/definition';
 
 import { content } from '@/contract/helpers/content/content';
 

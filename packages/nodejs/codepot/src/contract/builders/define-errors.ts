@@ -1,6 +1,6 @@
 // src/contract/builders/define-errors.ts
 
-import type { ErrorDefinition, ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ErrorDefinition, ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
 
 import type { ErrorInputMap, ErrorsBuilder, ErrorsResult } from '@/contract/types/core/8.errors-builder';
 

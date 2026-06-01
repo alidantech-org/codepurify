@@ -1,15 +1,12 @@
-import { PrimitiveDefinition } from '../../properties/primitive/definition';
-import { Ref } from '../../ref';
-import { DefinitionItem } from '../../definition';
+// src/contract/types/compiled/schema/params/definition.ts
 
-export interface ParamsDefinition extends DefinitionItem {
-  /**
-   * Reference to the primitive definition.
-   */
-  ref: Ref<PrimitiveDefinition>;
+import type { Ref } from '../../ref';
+import type { EntityFieldDefinition } from '../entity/field/definition';
 
-  /**
-   * Whether this parameter is required.
-   */
-  required?: boolean;
-}
+// ============================================================================
+// PARAMS
+// ============================================================================
+
+export type ParamDefinition = Ref<EntityFieldDefinition>;
+
+export type ParamsDefinition = Record<string, ParamDefinition>;

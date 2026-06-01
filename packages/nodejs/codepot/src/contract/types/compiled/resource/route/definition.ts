@@ -1,11 +1,14 @@
-import { Ref } from '../../ref';
-import { DefinitionItem } from '../../definition';
-import { RefSchema } from '../../schema/definition';
-import { ParamsDefinition } from '../../schema/params/definition';
-import { SecurityPolicyDefinition } from '../../security/definition';
-import { ContentDefinition } from '../../responses/errors/definition';
-import { OperationDefinition } from '../operation/definition';
-import { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from '../../../core/3.authoring-ref';
+// src/contract/types/compiled/resource/route/definition.ts
+
+import type { DefinitionItem } from '../../definition';
+import type { Ref } from '../../ref';
+import type { ContentTypeDefinition } from '../../content/definition';
+import type { ErrorResponseDefinition } from '../../response/errors/definition';
+import type { DtoDefinition } from '../../schema/dto/definition';
+import type { ModelDefinition } from '../../schema/model/definition';
+import type { ParamsDefinition } from '../../schema/params/definition';
+import type { SecurityPolicyDefinition } from '../../security/definition';
+import type { OperationDefinition } from '../operation/definition';
 
 // ============================================================================
 // HTTP METHOD
@@ -24,60 +27,60 @@ export const HttpMethod = {
 export type HttpMethod = (typeof HttpMethod)[keyof typeof HttpMethod];
 
 // ============================================================================
-// ROUTE SCHEMA/CONTENT/ERROR TYPES
+// ROUTE SCHEMA / CONTENT
 // ============================================================================
 
-export type RouteSchemaDefinition = MaybeUsage<DtoAuthoringRef>;
+export type RouteSchemaRef = Ref<DtoDefinition> | Ref<ModelDefinition>;
 
-export type RouteContentDefinition = ContentDefinition;
-
-export interface RouteInputDefinition extends DefinitionItem {
-  readonly schema: RouteSchemaDefinition;
-  readonly content?: readonly RouteContentDefinition[];
+export interface RouteBodyDefinition extends DefinitionItem {
+  readonly schema: RouteSchemaRef;
+  readonly content_type: Ref<ContentTypeDefinition>;
 }
 
 export interface RouteOutputDefinition extends DefinitionItem {
   readonly status: number;
-  readonly schema?: RouteSchemaDefinition;
-  readonly content?: readonly RouteContentDefinition[];
+  readonly schema?: RouteSchemaRef;
+  readonly content_type?: Ref<ContentTypeDefinition>;
 }
-
-export type RouteErrorDefinition = ErrorAuthoringRef;
 
 export interface RouteInlineResponseDefinition extends DefinitionItem {
   readonly status?: number;
-  readonly schema?: RouteSchemaDefinition;
-  readonly content?: readonly RouteContentDefinition[];
-  readonly headers?: Record<string, RouteSchemaDefinition>;
+  readonly schema?: RouteSchemaRef;
+  readonly content_type?: Ref<ContentTypeDefinition>;
+  readonly headers?: Record<string, RouteSchemaRef>;
 }
 
-export type RouteResponseDefinition = ErrorAuthoringRef | RouteInlineResponseDefinition;
+export type RouteResponseDefinition = Ref<ErrorResponseDefinition> | RouteInlineResponseDefinition;
 
 // ============================================================================
 // ROUTE METHOD
 // ============================================================================
 
 export interface RouteMethodDefinition extends DefinitionItem {
-  operation: Ref<OperationDefinition>;
-  security?: SecurityPolicyDefinition;
-  query?: Ref<RefSchema>;
-  input?: RouteInputDefinition;
-  output?: RouteOutputDefinition;
-  errors?: readonly RouteErrorDefinition[];
-  responses?: Record<number, RouteResponseDefinition>;
-}
+  readonly operation: Ref<OperationDefinition>;
 
-// ============================================================================
-// ROUTE PATH
-// ============================================================================
+  readonly security?: Ref<SecurityPolicyDefinition>;
 
-export interface RoutePathDefinition extends DefinitionItem {
-  parameters?: Record<string, Ref<ParamsDefinition>>;
-  methods: Partial<Record<HttpMethod, RouteMethodDefinition>>;
+  readonly params?: Ref<ParamsDefinition>;
+  readonly query?: RouteSchemaRef;
+  readonly body?: RouteBodyDefinition;
+
+  /**
+   * Response map keyed by HTTP status code.
+   */
+  readonly responses: Record<number, RouteResponseDefinition>;
 }
 
 // ============================================================================
 // ROUTES
 // ============================================================================
 
-export type RoutesDefinition = Record<string, RoutePathDefinition>;
+/**
+ * Route map:
+ *
+ * routes:
+ *   /users:
+ *     get: ...
+ *     post: ...
+ */
+export type RoutesDefinition = Record<string, Partial<Record<HttpMethod, RouteMethodDefinition>>>;

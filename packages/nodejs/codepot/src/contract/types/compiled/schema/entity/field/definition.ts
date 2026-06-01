@@ -1,19 +1,22 @@
+// src/contract/types/compiled/schema/entity/field/definition.ts
+
+import type { DefinitionItem } from '../../../definition';
+import type { Ref } from '../../../ref';
+import type { RefProperty } from '../../../properties/definition';
+import type { EntityDefinition } from '../definition';
+
 // ============================================================================
 // CAPABILITY
 // ============================================================================
-
-import { RefProperty } from '../../../properties/definition';
-import { Ref, RefUsageDefinition, ArrayUsageDefinition } from '../../../ref';
-import { DefinitionItem } from '../../../definition';
 
 export const QueryOperator = {
   eq: 'eq',
   neq: 'neq',
   in: 'in',
-  notIn: 'notIn',
+  not_in: 'not_in',
   contains: 'contains',
-  startsWith: 'startsWith',
-  endsWith: 'endsWith',
+  starts_with: 'starts_with',
+  ends_with: 'ends_with',
   gt: 'gt',
   gte: 'gte',
   lt: 'lt',
@@ -25,13 +28,10 @@ export const QueryOperator = {
 export type QueryOperator = (typeof QueryOperator)[keyof typeof QueryOperator];
 
 export interface FieldCapabilityConfig extends DefinitionItem {
-  filter?: boolean;
-
-  sort?: boolean;
-
-  select?: boolean;
-
-  operators?: readonly QueryOperator[];
+  readonly filter?: boolean;
+  readonly sort?: boolean;
+  readonly select?: boolean;
+  readonly operators?: readonly QueryOperator[];
 }
 
 // ============================================================================
@@ -48,11 +48,9 @@ export const FieldVisibilityLevel = {
 export type FieldVisibilityLevel = (typeof FieldVisibilityLevel)[keyof typeof FieldVisibilityLevel];
 
 export interface FieldVisibilityConfig extends DefinitionItem {
-  read?: FieldVisibilityLevel;
-
-  write?: FieldVisibilityLevel;
-
-  sensitive?: boolean;
+  readonly read?: FieldVisibilityLevel;
+  readonly write?: FieldVisibilityLevel;
+  readonly sensitive?: boolean;
 }
 
 // ============================================================================
@@ -60,15 +58,11 @@ export interface FieldVisibilityConfig extends DefinitionItem {
 // ============================================================================
 
 export interface FieldLifecycleConfig extends DefinitionItem {
-  create?: boolean;
-
-  update?: boolean;
-
-  immutable?: boolean;
-
-  generated?: boolean;
-
-  readOnly?: boolean;
+  readonly create?: boolean;
+  readonly update?: boolean;
+  readonly immutable?: boolean;
+  readonly generated?: boolean;
+  readonly read_only?: boolean;
 }
 
 // ============================================================================
@@ -84,43 +78,69 @@ export const FieldPersistenceMode = {
 export type FieldPersistenceMode = (typeof FieldPersistenceMode)[keyof typeof FieldPersistenceMode];
 
 export interface FieldPersistenceConfig extends DefinitionItem {
-  mode: FieldPersistenceMode;
-
-  generated?: boolean;
-
-  immutable?: boolean;
+  readonly mode: FieldPersistenceMode;
+  readonly generated?: boolean;
+  readonly immutable?: boolean;
 }
 
 // ============================================================================
-// ENTITY FIELDS
+// ARRAY
 // ============================================================================
 
-export interface EntityField extends DefinitionItem {
-  /**
-   * Usage of a primitive, enum, or composite property.
-   *
-   * The referenced property definition remains single.
-   * This field decides whether it is used as single or array.
-   */
-  type: {
-    readonly $ref: string;
-    readonly array?: true | ArrayUsageDefinition;
-    readonly description?: string;
-    readonly deprecated?: boolean;
-    readonly meta?: Record<string, unknown>;
-  };
-
-  required?: boolean;
-
-  nullable?: boolean;
-
-  default?: unknown;
-
-  capability?: FieldCapabilityConfig;
-
-  visibility?: FieldVisibilityConfig;
-
-  lifecycle?: FieldLifecycleConfig;
-
-  persistence?: FieldPersistenceConfig;
+export interface ArrayDefinition extends DefinitionItem {
+  readonly min_items?: number;
+  readonly max_items?: number;
+  readonly unique_items?: boolean;
 }
+
+// ============================================================================
+// RELATION
+// ============================================================================
+
+export const EntityRelationKind = {
+  belongs_to: 'belongs_to',
+  has_one: 'has_one',
+  has_many: 'has_many',
+  many_to_many: 'many_to_many',
+} as const;
+
+export type EntityRelationKind = (typeof EntityRelationKind)[keyof typeof EntityRelationKind];
+
+export interface EntityRelationThroughDefinition {
+  readonly entity: Ref<EntityDefinition>;
+  readonly from: Ref<EntityFieldDefinition>;
+  readonly to: Ref<EntityFieldDefinition>;
+}
+
+export interface EntityRelationDefinition {
+  readonly relation: EntityRelationKind;
+  readonly target: Ref<EntityDefinition>;
+  readonly inverse?: Ref<EntityFieldDefinition>;
+  readonly through?: EntityRelationThroughDefinition;
+}
+
+// ============================================================================
+// FIELD OPTIONS
+// ============================================================================
+
+export interface EntityFieldOptionsDefinition extends DefinitionItem {
+  readonly required?: boolean;
+  readonly nullable?: boolean;
+  readonly array?: true | ArrayDefinition;
+  readonly default?: unknown;
+
+  readonly capability?: FieldCapabilityConfig;
+  readonly visibility?: FieldVisibilityConfig;
+  readonly lifecycle?: FieldLifecycleConfig;
+  readonly persistence?: FieldPersistenceConfig;
+}
+
+// ============================================================================
+// ENTITY FIELD
+// ============================================================================
+
+export type EntityPropertyFieldDefinition = Ref<RefProperty> & EntityFieldOptionsDefinition;
+
+export type EntityRelationFieldDefinition = EntityRelationDefinition & EntityFieldOptionsDefinition;
+
+export type EntityFieldDefinition = EntityPropertyFieldDefinition | EntityRelationFieldDefinition;

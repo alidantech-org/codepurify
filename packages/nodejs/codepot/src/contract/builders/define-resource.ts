@@ -1,6 +1,6 @@
 // src/contract/builders/define-resource.ts
 
-import type { ErrorsDefinition } from '@/contract/types/compiled/responses/errors/definition';
+import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
 import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
 import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
 import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
