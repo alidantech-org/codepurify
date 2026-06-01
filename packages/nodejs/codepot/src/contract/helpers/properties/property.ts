@@ -43,9 +43,15 @@ import type {
   RefPropertyBuilder,
   RefPropertySourceInput,
   RelationFieldBuilder,
+  RelationInverseInput,
+  ResolvedEntityTargetInput,
+  UnresolvedRelationFieldSourceInput,
+  EntityRelationLinkBuilder,
+  EntityRelationOverrideFactory,
   StringPropertyBuilder,
   EnumPropertyBuilder,
   EnumPropertySourceInput,
+  RelationFieldSourceInput,
 } from '@/contract/types/core/4.properties-builder';
 
 import { PropertySlotSourceMode, EntityRelationKind as RelationKind } from '@/contract/types/core/4.properties-builder';
@@ -57,9 +63,9 @@ import type {
   PropertyAuthoringRef,
 } from '@/contract/types/core/3.authoring-ref';
 
-import { normalizeEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
+import { normalizeEntityTarget, resolveEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
 
-import { unwrapPropertySourceInput } from '@/contract/helpers/properties/inline-property';
+import type { AnyEntityResult } from '@/contract/types/core/4.properties-builder';
 
 // ============================================================================
 // PROPERTY SOURCE HELPERS
@@ -747,20 +753,56 @@ function inlinePropertyField(source: PropertySourceInputLike): PropertyFieldBuil
   );
 }
 
-function patchRelationSource(
-  input: EntityFieldInput,
-  patch: Partial<Extract<EntityFieldInput['source'], { mode: typeof PropertySlotSourceMode.relation }>>,
-): EntityFieldInput {
+function patchRelationSource(input: EntityFieldInput, patch: Partial<RelationFieldSourceInput>): EntityFieldInput {
   if (input.source.mode !== PropertySlotSourceMode.relation) {
     return input;
   }
 
+  const nextSource = {
+    ...input.source,
+    ...patch,
+  };
+
+  if (nextSource.relation !== undefined && nextSource.target !== undefined) {
+    return {
+      ...input,
+      source: nextSource as RelationFieldSourceInput,
+    };
+  }
+
   return {
     ...input,
-    source: {
-      ...input.source,
-      ...patch,
-    },
+    source: nextSource as UnresolvedRelationFieldSourceInput,
+  };
+}
+function resolveRelationCallbackTarget(target: EntityTargetInput): ResolvedEntityTargetInput {
+  return resolveEntityTarget(target);
+}
+
+function resolveRelationInverse(target: EntityTargetInput, refOrFactory: RelationInverseInput): EntityFieldAuthoringRef {
+  if (typeof refOrFactory !== 'function') {
+    return refOrFactory;
+  }
+
+  const resolvedTarget = resolveRelationCallbackTarget(target);
+
+  return refOrFactory(resolvedTarget as AnyEntityResult);
+}
+
+function resolveRelationThroughMapping(
+  entity: EntityTargetInput,
+  map?: (join: any) => {
+    readonly from: EntityFieldAuthoringRef;
+    readonly to: EntityFieldAuthoringRef;
+  },
+) {
+  if (!map) {
+    return undefined;
+  }
+
+  return {
+    entity,
+    map,
   };
 }
 
@@ -776,19 +818,65 @@ function relationFieldBuilder(input: EntityFieldInput): RelationFieldBuilder {
       return relationFieldBuilder(patchField(input, { required: false }));
     },
 
-    inverse(ref: EntityFieldAuthoringRef) {
-      return relationFieldBuilder(patchRelationSource(input, { inverse: ref }));
+    nullable(value = true) {
+      return relationFieldBuilder(patchField(input, { nullable: value }));
+    },
+
+    nonNullable() {
+      return relationFieldBuilder(patchField(input, { nullable: false }));
+    },
+
+    array(options = true) {
+      return relationFieldBuilder(patchField(input, { array: options }));
+    },
+
+    single() {
+      return relationFieldBuilder(patchField(input, { array: false }));
+    },
+
+    default(value) {
+      return relationFieldBuilder(patchField(input, { default: value }));
+    },
+
+    capability(build) {
+      return relationFieldBuilder(patchField(input, { capability: build(capability).input }));
+    },
+
+    visibility(build) {
+      return relationFieldBuilder(patchField(input, { visibility: build(visibility).input }));
+    },
+
+    lifecycle(build) {
+      return relationFieldBuilder(patchField(input, { lifecycle: build(lifecycle).input }));
+    },
+
+    persistence(build) {
+      return relationFieldBuilder(patchField(input, { persistence: build(persistence).input }));
+    },
+
+    inverse(refOrFactory) {
+      if (input.source.mode !== PropertySlotSourceMode.relation) {
+        return relationFieldBuilder(input);
+      }
+
+      if (!input.source.target) {
+        return relationFieldBuilder(input);
+      }
+
+      return relationFieldBuilder(
+        patchRelationSource(input, {
+          inverse: resolveRelationInverse(input.source.target, refOrFactory),
+        }),
+      );
     },
 
     through(entity, map) {
-      const mapping = map(entity);
-
       return relationFieldBuilder(
         patchRelationSource(input, {
           through: {
             entity: normalizeEntityTarget(entity),
-            from: mapping.from,
-            to: mapping.to,
+            from: map.from,
+            to: map.to,
           },
         }),
       );
@@ -800,10 +888,6 @@ function relationFieldBuilder(input: EntityFieldInput): RelationFieldBuilder {
 
     relationName(name) {
       return relationFieldBuilder(patchRelationSource(input, { relationName: name }));
-    },
-
-    visibility(build) {
-      return relationFieldBuilder(patchField(input, { visibility: build(visibility).input }));
     },
 
     description(value) {
@@ -825,9 +909,49 @@ function relationField(relation: EntityRelationKind, target: EntityTargetInput):
     fieldInput({
       mode: PropertySlotSourceMode.relation,
       relation,
-      target: normalizeEntityTarget(target),
+      target,
     }),
   );
+}
+
+function relationSlotField(): RelationFieldBuilder {
+  return relationFieldBuilder(
+    fieldInput({
+      mode: PropertySlotSourceMode.relation,
+    }),
+  );
+}
+
+export function entityRelationLinkBuilder(base: EntityFieldInput): EntityRelationLinkBuilder {
+  function link(relation: EntityRelationKind, target: EntityTargetInput): RelationFieldBuilder {
+    return relationFieldBuilder({
+      ...base,
+      source: {
+        ...(base.source.mode === PropertySlotSourceMode.relation ? base.source : {}),
+        mode: PropertySlotSourceMode.relation,
+        relation,
+        target,
+      },
+    });
+  }
+
+  return {
+    belongsTo(target) {
+      return link(RelationKind.belongsTo, target);
+    },
+
+    hasOne(target) {
+      return link(RelationKind.hasOne, target);
+    },
+
+    hasMany(target) {
+      return link(RelationKind.hasMany, target);
+    },
+
+    manyToMany(target) {
+      return link(RelationKind.manyToMany, target);
+    },
+  };
 }
 
 const callableField = ((source: FieldSourceValue) => fieldFromValue(source)) as FieldHelper;
@@ -855,6 +979,8 @@ callableField.enum = (values) => inlinePropertyField(property.enum(values));
 callableField.composite = (properties) => inlinePropertyField(property.composite(properties));
 
 callableField.ref = (ref) => callableField(ref);
+
+callableField.relation = relationSlotField;
 
 callableField.belongsTo = (target) => relationField(RelationKind.belongsTo, target);
 callableField.hasOne = (target) => relationField(RelationKind.hasOne, target);

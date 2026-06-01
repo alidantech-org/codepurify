@@ -23,8 +23,12 @@ import type {
   EntityModelOverrides,
   EntityOptions,
   EntityPropertiesResult,
+  EntityRelationOverrides,
+  EntityRelationOverrideFactory,
   FieldBuilder,
   MergeEntityFields,
+  RelationFieldSourceInput,
+  UnresolvedRelationFieldSourceInput,
 } from '@/contract/types/core/4.properties-builder';
 
 import { PropertySlotSourceMode } from '@/contract/types/core/4.properties-builder';
@@ -40,11 +44,15 @@ import type {
   SchemasBuilder,
 } from '@/contract/types/core/5.schemas-builder';
 
-import { entityFieldSetOverrideBuilder, entityModelOverrideBuilder } from '@/contract/helpers/properties/property';
+import {
+  entityFieldSetOverrideBuilder,
+  entityModelOverrideBuilder,
+  entityRelationLinkBuilder,
+} from '@/contract/helpers/properties/property';
 
 import { dtoRef, entityFieldRef, entityFieldSetRefs, entityRef, modelRefs, paramsRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
-import { isEntityResult, normalizeEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
+import { isEntityResult, normalizeEntityTarget, resolveEntityTarget } from '@/contract/helpers/refs/normalize-authoring-ref';
 
 import { createInlinePropertyPromotionHint, unwrapPropertySourceInput } from '@/contract/helpers/properties/inline-property';
 
@@ -88,6 +96,38 @@ function withDefaultOptions(field: EntityFieldInput): EntityFieldInput {
   };
 }
 
+function normalizeRelationFieldSource(
+  source: UnresolvedRelationFieldSourceInput | RelationFieldSourceInput,
+): UnresolvedRelationFieldSourceInput | RelationFieldSourceInput {
+  if (!('relation' in source) || source.relation === undefined || source.target === undefined) {
+    return source;
+  }
+
+  return {
+    ...source,
+    target: normalizeEntityTarget(source.target),
+    through: source.through ? normalizeRelationThrough(source.through) : undefined,
+    inverse: source.inverse,
+  };
+}
+
+function normalizeRelationThrough(through: any): any {
+  const resolvedJoin = resolveEntityTarget(through.entity);
+
+  const mapping = through.map
+    ? through.map(resolvedJoin)
+    : {
+        from: through.from,
+        to: through.to,
+      };
+
+  return {
+    entity: normalizeEntityTarget(through.entity),
+    from: mapping.from,
+    to: mapping.to,
+  };
+}
+
 function normalizeEntityFieldInput(input: {
   readonly entityName: string;
   readonly fieldKey: string;
@@ -114,16 +154,7 @@ function normalizeEntityFieldInput(input: {
   } else if (field.source.mode === PropertySlotSourceMode.relation) {
     field = {
       ...field,
-      source: {
-        ...field.source,
-        target: normalizeEntityTarget(field.source.target),
-        through: field.source.through
-          ? {
-              ...field.source.through,
-              entity: normalizeEntityTarget(field.source.through.entity),
-            }
-          : undefined,
-      },
+      source: normalizeRelationFieldSource(field.source),
     };
   }
 
@@ -303,6 +334,60 @@ function writeEntitySource<TFields extends EntityFieldInputMap, TParent extends 
   } as unknown as EntityDefinition;
 }
 
+function writeEntityRelations<TFields extends EntityFieldInputMap>(
+  schemas: Partial<SchemasDefinition>,
+  name: string,
+  relations: TFields,
+): void {
+  const state = ensureState(schemas);
+  const entity = state.entities?.[name] as (EntityDefinition & { fields: Record<string, EntityField> }) | undefined;
+
+  if (!entity) return;
+
+  const normalized = normalizeEntityFields(name, relations);
+
+  entity.fields = {
+    ...(entity.fields ?? {}),
+    ...(normalized as unknown as Record<string, EntityField>),
+  };
+}
+
+function normalizeEntityRelationOverride(baseField: EntityFieldInput, value: EntityRelationOverrideFactory): EntityFieldInput {
+  return value(entityRelationLinkBuilder(baseField)).input;
+}
+
+function writeEntityRelationOverrides<TFields extends EntityFieldInputMap>(
+  schemas: Partial<SchemasDefinition>,
+  name: string,
+  overrides: EntityRelationOverrides<TFields>,
+): void {
+  const state = ensureState(schemas);
+
+  const entity = state.entities?.[name] as (EntityDefinition & { fields: Record<string, EntityField> }) | undefined;
+
+  if (!entity) return;
+
+  for (const [key, value] of Object.entries(overrides) as [keyof TFields & string, EntityRelationOverrideFactory][]) {
+    const existing = entity.fields[key] as unknown as EntityFieldInput | undefined;
+
+    if (!existing) {
+      throw new Error(`Relation "${name}.${key}" cannot be configured because the field does not exist.`);
+    }
+
+    if (existing.source.mode !== PropertySlotSourceMode.relation) {
+      throw new Error(`Relation "${name}.${key}" cannot be configured because the field is not a relation field.`);
+    }
+
+    const linked = normalizeEntityRelationOverride(existing, value);
+
+    entity.fields[key] = normalizeEntityFieldInput({
+      entityName: name,
+      fieldKey: key,
+      field: linked,
+    }) as unknown as EntityField;
+  }
+}
+
 function createEntityResult<TName extends string, TOwnFields extends EntityFieldInputMap, TParent extends EntityExtendsInput | undefined>(
   schemas: Partial<SchemasDefinition>,
   name: TName,
@@ -340,6 +425,12 @@ function createEntityResult<TName extends string, TOwnFields extends EntityField
 
     fieldSets<TOverrides extends EntityFieldSetOverrides<MergeEntityFields<TParent, TOwnFields>>>(overrides: TOverrides) {
       writeEntityFieldSetOverrides(schemas, name, overrides);
+      return result;
+    },
+
+    relations<TOverrides extends EntityRelationOverrides<MergeEntityFields<TParent, TOwnFields>>>(overrides: TOverrides) {
+      writeEntityRelationOverrides(schemas, name, overrides);
+
       return result;
     },
   };

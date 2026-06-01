@@ -1,4 +1,3 @@
-
 import type { DefinitionItem } from '@/contract/types/definition';
 
 import type { PropertiesDefinition } from '@/contract/types/properties/definition';
@@ -370,15 +369,6 @@ export interface PropertyHelper {
 // FIELD SOURCES
 // ============================================================================
 
-export const EntityFieldSourceKind = {
-  property: 'property',
-  inlineProperty: 'inline_property',
-  relation: 'relation',
-  model: 'model',
-} as const;
-
-export type EntityFieldSourceKind = (typeof EntityFieldSourceKind)[keyof typeof EntityFieldSourceKind];
-
 export const EntityRelationKind = {
   belongsTo: 'belongs_to',
   hasOne: 'has_one',
@@ -408,12 +398,35 @@ export interface ModelFieldSourceInput {
   readonly ref: ModelAuthoringRef;
 }
 
-export type EntityTargetInput = EntityAuthoringRef | EntityPropertiesResult<string, EntityFieldInputMap, EntityFieldInputMap>;
+export type LazyEntityTargetInput = () => EntityTargetInput;
 
-export interface RelationFieldThroughInput {
-  readonly entity: EntityTargetInput;
-  readonly from: EntityFieldAuthoringRef;
-  readonly to: EntityFieldAuthoringRef;
+export type EntityTargetInput =
+  | EntityAuthoringRef
+  | EntityPropertiesResult<string, EntityFieldInputMap, EntityFieldInputMap>
+  | LazyEntityTargetInput;
+
+export type ResolvedEntityTargetInput = EntityAuthoringRef | EntityPropertiesResult<string, EntityFieldInputMap, EntityFieldInputMap>;
+
+export interface RelationFieldThroughInput<TJoin extends EntityTargetInput = EntityTargetInput> {
+  readonly entity: TJoin;
+  readonly from?: EntityFieldAuthoringRef;
+  readonly to?: EntityFieldAuthoringRef;
+  readonly map?: (join: AnyEntityResult) => {
+    readonly from: EntityFieldAuthoringRef;
+    readonly to: EntityFieldAuthoringRef;
+  };
+}
+
+export type RelationInverseInput = EntityFieldAuthoringRef | ((target: AnyEntityResult) => EntityFieldAuthoringRef);
+
+export interface UnresolvedRelationFieldSourceInput extends DefinitionItem {
+  readonly mode: typeof PropertySlotSourceMode.relation;
+  readonly relation?: undefined;
+  readonly target?: undefined;
+  readonly through?: undefined;
+  readonly inverse?: undefined;
+  readonly expandable?: boolean;
+  readonly relationName?: string;
 }
 
 export interface RelationFieldSourceInput extends DefinitionItem {
@@ -426,7 +439,12 @@ export interface RelationFieldSourceInput extends DefinitionItem {
   readonly relationName?: string;
 }
 
-export type EntityFieldSourceInput = PropertySlotRefSource | PropertySlotInlineSource | ModelFieldSourceInput | RelationFieldSourceInput;
+export type EntityFieldSourceInput =
+  | PropertySlotRefSource
+  | PropertySlotInlineSource
+  | ModelFieldSourceInput
+  | UnresolvedRelationFieldSourceInput
+  | RelationFieldSourceInput;
 
 export type FieldSourceValue = PropertyAuthoringRef | ModelAuthoringRef | PropertySourceInputLike;
 
@@ -477,21 +495,43 @@ export interface PropertyFieldBuilder extends BaseFieldBuilder<EntityFieldInput>
   lifecycle(build: (lifecycle: LifecycleHelper) => LifecycleOptionsBuilder): PropertyFieldBuilder;
 }
 
+/**
+ * Relation fields are first-class fields.
+ *
+ * They support the same core option chain as property fields, but their source
+ * is a relation edge instead of a property source. Runtime normalization should
+ * store relation targets/inverse/through as lightweight refs only.
+ */
 export interface RelationFieldBuilder extends BaseFieldBuilder<EntityFieldInput> {
-  inverse(ref: EntityFieldAuthoringRef): RelationFieldBuilder;
+  nullable(value?: boolean): RelationFieldBuilder;
+  nonNullable(): RelationFieldBuilder;
 
-  through(
-    entity: EntityTargetInput,
-    map: (join: EntityTargetInput) => {
+  array(options?: true | ArrayUsageOptions): RelationFieldBuilder;
+  single(): RelationFieldBuilder;
+
+  default(value: unknown): RelationFieldBuilder;
+
+  persistence(build: (persistence: PersistenceHelper) => PersistenceOptionsBuilder): RelationFieldBuilder;
+
+  capability(build: (capability: CapabilityHelper) => CapabilityOptionsBuilder): RelationFieldBuilder;
+
+  visibility(build: (visibility: VisibilityHelper) => VisibilityOptionsBuilder): RelationFieldBuilder;
+
+  lifecycle(build: (lifecycle: LifecycleHelper) => LifecycleOptionsBuilder): RelationFieldBuilder;
+
+  inverse(refOrFactory: RelationInverseInput): RelationFieldBuilder;
+
+  through<TJoin extends EntityTargetInput>(
+    entity: TJoin,
+    map: {
       readonly from: EntityFieldAuthoringRef;
       readonly to: EntityFieldAuthoringRef;
     },
   ): RelationFieldBuilder;
 
   expandable(value?: boolean): RelationFieldBuilder;
-  relationName(name: string): RelationFieldBuilder;
 
-  visibility(build: (visibility: VisibilityHelper) => VisibilityOptionsBuilder): RelationFieldBuilder;
+  relationName(name: string): RelationFieldBuilder;
 }
 
 export type FieldBuilder = PropertyFieldBuilder | RelationFieldBuilder;
@@ -534,11 +574,28 @@ export interface FieldHelper {
 
   ref(ref: PropertyAuthoringRef): PropertyFieldBuilder;
 
+  relation(): RelationFieldBuilder;
+
   belongsTo(target: EntityTargetInput): RelationFieldBuilder;
   hasOne(target: EntityTargetInput): RelationFieldBuilder;
   hasMany(target: EntityTargetInput): RelationFieldBuilder;
   manyToMany(target: EntityTargetInput): RelationFieldBuilder;
 }
+
+export interface EntityRelationLinkBuilder {
+  belongsTo(target: EntityTargetInput): RelationFieldBuilder;
+  hasOne(target: EntityTargetInput): RelationFieldBuilder;
+  hasMany(target: EntityTargetInput): RelationFieldBuilder;
+  manyToMany(target: EntityTargetInput): RelationFieldBuilder;
+}
+
+export type EntityRelationOverrideFactory = (relation: EntityRelationLinkBuilder) => RelationFieldBuilder;
+
+export type RelationFieldKeys<TFields extends EntityFieldInputMap> = keyof TFields & string;
+
+export type EntityRelationOverrides<TFields extends EntityFieldInputMap> = Partial<
+  Record<RelationFieldKeys<TFields>, EntityRelationOverrideFactory>
+>;
 
 // ============================================================================
 // ENTITY MODELS / FIELD SETS
@@ -792,6 +849,10 @@ export interface EntityPropertiesResult<
   models<TOverrides extends EntityModelOverrides<TAllFields>>(overrides: TOverrides): EntityPropertiesResult<TName, TOwnFields, TAllFields>;
 
   fieldSets<TOverrides extends EntityFieldSetOverrides<TAllFields>>(
+    overrides: TOverrides,
+  ): EntityPropertiesResult<TName, TOwnFields, TAllFields>;
+
+  relations<TOverrides extends EntityRelationOverrides<TAllFields>>(
     overrides: TOverrides,
   ): EntityPropertiesResult<TName, TOwnFields, TAllFields>;
 }

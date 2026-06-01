@@ -27,10 +27,17 @@ function hasKeys(value: object): boolean {
   return Object.keys(value).length > 0;
 }
 
-function normalizeVisibility(options: EntityFieldOptions): FieldVisibilityConfig {
+function normalizeVisibility(options: EntityFieldOptions): FieldVisibilityConfig | undefined {
+  if (options.visibility === undefined) {
+    return {
+      read: 'internal',
+    };
+  }
+
   return {
-    read: options.visibility?.read ?? 'internal',
-    ...(options.visibility?.sensitive !== undefined ? { sensitive: options.visibility.sensitive } : {}),
+    ...(options.visibility.read !== undefined ? { read: options.visibility.read } : { read: 'internal' }),
+    ...(options.visibility.write !== undefined ? { write: options.visibility.write } : {}),
+    ...(options.visibility.sensitive !== undefined ? { sensitive: options.visibility.sensitive } : {}),
   };
 }
 
@@ -47,34 +54,38 @@ function normalizeLifecycle(options: EntityFieldOptions): FieldLifecycleConfig |
 }
 
 function normalizePersistence(field: EntityFieldInput, options: EntityFieldOptions): FieldPersistenceConfig {
+  const mode = options.persistence?.mode ?? (isRelation(field) ? FieldPersistenceMode.virtual : FieldPersistenceMode.stored);
+
   return {
-    mode: options.persistence?.mode ?? (isRelation(field) ? FieldPersistenceMode.virtual : FieldPersistenceMode.stored),
-
+    mode,
     ...(options.persistence?.generated !== undefined ? { generated: options.persistence.generated } : {}),
-
     ...(options.persistence?.immutable !== undefined ? { immutable: options.persistence.immutable } : {}),
   };
 }
 
 export function normalizeEntityFieldOptions(field: EntityFieldInput): EntityFieldOptions {
   const options = field.options ?? {};
-  const normalized: EntityFieldOptions = {
+
+  const visibility = normalizeVisibility(options);
+  const capability = normalizeCapability(options);
+  const lifecycle = normalizeLifecycle(options);
+  const persistence = normalizePersistence(field, options);
+
+  return {
     ...options,
 
     required: options.required ?? true,
 
-    visibility: normalizeVisibility(options),
+    visibility,
 
-    persistence: normalizePersistence(field, options),
+    persistence,
 
     ...(options.nullable !== undefined ? { nullable: options.nullable } : {}),
 
     ...(options.array !== undefined ? { array: options.array } : relationDefaultsToArray(field) ? { array: true } : {}),
 
-    ...(normalizeCapability(options) !== undefined ? { capability: normalizeCapability(options) } : {}),
+    ...(capability !== undefined ? { capability } : {}),
 
-    ...(normalizeLifecycle(options) !== undefined ? { lifecycle: normalizeLifecycle(options) } : {}),
+    ...(lifecycle !== undefined ? { lifecycle } : {}),
   };
-
-  return normalized;
 }

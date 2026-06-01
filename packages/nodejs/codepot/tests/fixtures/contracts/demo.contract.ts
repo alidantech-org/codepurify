@@ -130,16 +130,30 @@ export const tenant = schemas
   )
   .models({
     public: (m) => m.pick('id', 'name'),
-    create: (m) => m.omit('id', 'createdAt', 'updatedAt'),
-    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'deletedAt'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt'),
   });
 
 export const user = schemas
   .entity(
     'User',
     {
-      tenant: field.belongsTo(tenant).required(),
-      // TODO relation capability/visibility proof pending: .capability()/.visibility() not supported on relations yet
+      tenant: field
+        .relation()
+        .required()
+        .capability((c) => c.filter().select())
+        .visibility((v) => v.internal()),
+
+      profile: field
+        .relation()
+        .optional()
+        .visibility((v) => v.internal()),
+
+      posts: field
+        .relation()
+        .array()
+        .visibility((v) => v.public())
+        .capability((c) => c.select()),
 
       name: field(primitives.ref.displayName)
         .required()
@@ -175,9 +189,6 @@ export const user = schemas
       billingLimit: field(composites.ref.money).optional(),
 
       inlineBillingLimit: field(composites.ref.inlineMoney).optional(),
-
-      // TODO relation hasOne proof pending: field.hasOne(profile) is not implemented yet.
-      // TODO relation hasMany proof pending: field.hasMany(post) is not implemented yet.
     },
     {
       extends: baseEntity,
@@ -194,8 +205,8 @@ export const user = schemas
   })
   .models({
     read: (m) => m.relations('expand'),
-    create: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
-    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
+    create: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'profile', 'posts'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'profile', 'posts'),
     public: (m) => m.pick('id', 'name', 'bio', 'role'),
   });
 
@@ -203,8 +214,16 @@ export const profile = schemas
   .entity(
     'Profile',
     {
-      user: field.belongsTo(user).required(),
-      // TODO relation capability/visibility proof pending: .capability()/.visibility() not supported on relations yet
+      user: field
+        .relation()
+        .required()
+        .capability((c) => c.filter().select())
+        .visibility((v) => v.internal()),
+
+      tenantSnapshot: field
+        .relation()
+        .optional()
+        .visibility((v) => v.internal()),
 
       displayName: field(primitives.ref.displayName)
         .required()
@@ -219,16 +238,31 @@ export const profile = schemas
   )
   .models({
     public: (m) => m.pick('id', 'displayName', 'bio'),
-    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'user'),
-    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'user', 'tenantSnapshot'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt'),
   });
 
 export const post = schemas
   .entity(
     'Post',
     {
-      author: field.belongsTo(user).required(),
-      // TODO relation capability/visibility proof pending: .capability()/.visibility() not supported on relations yet
+      author: field
+        .relation()
+        .required()
+        .capability((c) => c.filter().select())
+        .visibility((v) => v.internal()),
+
+      tags: field
+        .relation()
+        .array()
+        .visibility((v) => v.public())
+        .capability((c) => c.select()),
+
+      relatedProfiles: field
+        .relation()
+        .array()
+        .visibility((v) => v.internal())
+        .capability((c) => c.select()),
 
       title: field(primitives.ref.title)
         .required()
@@ -248,21 +282,24 @@ export const post = schemas
   )
   .models({
     read: (m) => m.relations('expand'),
-    public: (m) => m.pick('id', 'author', 'title', 'body', 'status'),
-    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'author'),
-    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'author'),
+    public: (m) => m.pick('id', 'author', 'title', 'body', 'status', 'tags'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'author', 'tags', 'relatedProfiles'),
+    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'author', 'tags', 'relatedProfiles'),
   });
 
 export const tag = schemas
   .entity(
     'Tag',
     {
+      posts: field
+        .relation()
+        .array()
+        .visibility((v) => v.public())
+        .capability((c) => c.select()),
+
       name: field(primitives.ref.displayName)
         .required()
         .capability((c) => c.filter().sort()),
-
-      posts: field.manyToMany(post),
-      // TODO relation visibility proof pending: .visibility() not supported on manyToMany yet
     },
     { extends: baseEntity },
   )
@@ -271,15 +308,81 @@ export const tag = schemas
     option: (m) => m.pick('id', 'name'),
   });
 
-// TODO relation through proof pending: field.manyToMany(...).through(...) is not implemented yet.
-// export const postTag = schemas.entity(
-//   'PostTag',
-//   {
-//     post: field.belongsTo(post).required(),
-//     tag: field.belongsTo(tag).required(),
-//   },
-//   { extends: baseEntity },
-// );
+export const postTag = schemas
+  .entity(
+    'PostTag',
+    {
+      post: field
+        .relation()
+        .required()
+        .capability((c) => c.filter())
+        .visibility((v) => v.internal()),
+
+      tag: field
+        .relation()
+        .required()
+        .capability((c) => c.filter())
+        .visibility((v) => v.internal()),
+    },
+    {
+      extends: baseEntity,
+      tags: ['join', 'post_tag'],
+    },
+  )
+  .models({
+    read: (m) => m.relations('expand'),
+    create: (m) => m.omit('id', 'createdAt', 'updatedAt', 'deletedAt'),
+  });
+
+// ============================================================================
+// RELATION LINKING
+// ============================================================================
+
+user.relations({
+  tenant: (r) => r.belongsTo(tenant),
+
+  profile: (r) => r.hasOne(profile).inverse(profile.ref.fields.user),
+
+  posts: (r) => r.hasMany(post).inverse(post.ref.fields.author),
+});
+
+profile.relations({
+  user: (r) => r.belongsTo(user).inverse(user.ref.fields.profile),
+
+  tenantSnapshot: (r) => r.hasOne(tenant),
+});
+
+post.relations({
+  author: (r) => r.belongsTo(user).inverse(user.ref.fields.posts),
+
+  tags: (r) =>
+    r
+      .manyToMany(tag)
+      .through(postTag, {
+        from: postTag.ref.fields.post,
+        to: postTag.ref.fields.tag,
+      })
+      .inverse(tag.ref.fields.posts),
+
+  relatedProfiles: (r) => r.hasMany(profile),
+});
+
+tag.relations({
+  posts: (r) =>
+    r
+      .manyToMany(post)
+      .through(postTag, {
+        from: postTag.ref.fields.tag,
+        to: postTag.ref.fields.post,
+      })
+      .inverse(post.ref.fields.tags),
+});
+
+postTag.relations({
+  post: (r) => r.belongsTo(post),
+
+  tag: (r) => r.belongsTo(tag),
+});
 
 // ============================================================================
 // DTOS
@@ -309,15 +412,24 @@ const commonDtos = schemas.dtos({
 });
 
 export const dtos = schemas.dtos({
-  // Mode 1: direct model-backed DTO
+  // Mode 1: direct model-backed DTOs
   UserPublic: user.ref.models.public,
   UserPatchBody: user.ref.models.patch,
+  PostPublic: post.ref.models.public,
 
-  // Mode 2: field-map DTO
+  // Mode 2: field-map DTOs
   ListUsersQuery: {
     search: primitives.ref.text.optional(),
     role: user.ref.fields.role.optional(),
     status: user.ref.fields.status.optional(),
+    page: primitives.ref.integer.optional(),
+    limit: primitives.ref.integer.optional(),
+  },
+
+  ListPostsQuery: {
+    search: primitives.ref.text.optional(),
+    status: post.ref.fields.status.optional(),
+    author: post.ref.fields.author.optional(),
     page: primitives.ref.integer.optional(),
     limit: primitives.ref.integer.optional(),
   },
@@ -327,6 +439,12 @@ export const dtos = schemas.dtos({
     email: user.ref.fields.email.required(),
     role: user.ref.fields.role.required(),
     tenant: user.ref.fields.tenant.required(),
+  },
+
+  CreatePostBody: {
+    title: post.ref.fields.title.required(),
+    body: post.ref.fields.body.required(),
+    status: post.ref.fields.status.optional(),
   },
 
   UpdateProfileBody: {
@@ -358,6 +476,14 @@ export const dtos = schemas.dtos({
 
   UserListResponse: commonDtos.ref.PaginatedResponse.extendWith({
     items: user.ref.models.public.array().required(),
+  }),
+
+  PostResponse: commonDtos.ref.ApiResponse.extendWith({
+    post: post.ref.models.public.required(),
+  }),
+
+  PostListResponse: commonDtos.ref.PaginatedResponse.extendWith({
+    items: post.ref.models.public.array().required(),
   }),
 
   // Entity field inheritance/override proofs
@@ -518,7 +644,7 @@ users.defineRoutes().define((route) => ({
 
   getUser: route
     .get('/:id')
-    .params(params.ref.id)
+    .params(userParams.ref.id)
     .security(security.protected())
     .errors(errors.ref.unauthorized, errors.ref.notFound)
     .output(dtos.ref.UserResponse),
@@ -532,7 +658,7 @@ users.defineRoutes().define((route) => ({
 
   updateProfile: route
     .patch('/:id/profile')
-    .params(params.ref.id)
+    .params(userParams.ref.id)
     .body(dtos.ref.UpdateProfileBody)
     .security(security.protected())
     .errors(errors.ref.validation, errors.ref.unauthorized, errors.ref.notFound)
@@ -540,7 +666,7 @@ users.defineRoutes().define((route) => ({
 
   uploadAvatar: route
     .post('/:id/avatar')
-    .params(params.ref.id)
+    .params(userParams.ref.id)
     .body(dtos.ref.UploadAvatarBody, content.multipart())
     .security(security.protected())
     .errors(errors.ref.validation, errors.ref.unauthorized)
@@ -560,9 +686,59 @@ users.defineRoutes().define((route) => ({
 
   deleteUser: route
     .delete('/:id')
-    .params(params.ref.id)
+    .params(userParams.ref.id)
     .security(policies.ref.tenantAdmin)
     .errors(errors.ref.unauthorized, errors.ref.notFound)
+    .noContent(),
+
+  legacyRawResponses: route.get('/legacy').responses({
+    200: {
+      status: 200,
+      schema: dtos.ref.UserResponse,
+      content: [content.json()],
+    },
+  }),
+}));
+
+const posts = v1.defineResource({
+  key: 'posts',
+  folders: ['content'],
+  security: security.protected(),
+});
+
+const postSchemas = posts.defineSchemas();
+
+const postParams = postSchemas.params({
+  id: post.ref.fields.id,
+});
+
+posts.defineRoutes().define((route) => ({
+  listPosts: route
+    .get('/')
+    .query(dtos.ref.ListPostsQuery)
+    .security(policies.ref.authenticated)
+    .errors(errors.ref.unauthorized)
+    .output(dtos.ref.PostListResponse),
+
+  getPost: route
+    .get('/:id')
+    .params(postParams.ref.id)
+    .security(policies.ref.authenticated)
+    .errors(errors.ref.unauthorized, errors.ref.notFound)
+    .output(dtos.ref.PostResponse),
+
+  createPost: route
+    .post('/')
+    .body(dtos.ref.CreatePostBody)
+    .security(policies.ref.tenantMember)
+    .errors(errors.ref.validation, errors.ref.unauthorized)
+    .created(dtos.ref.PostResponse),
+
+  deletePost: route
+    .delete('/:id')
+    .params(postParams.ref.id)
+    .security(policies.ref.tenantAdmin)
+    .errors(errors.ref.unauthorized, errors.ref.forbidden, errors.ref.notFound)
     .noContent(),
 }));
 

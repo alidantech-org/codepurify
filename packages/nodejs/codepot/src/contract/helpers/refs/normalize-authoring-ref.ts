@@ -1,6 +1,11 @@
-import type { AuthoringRef, EntityAuthoringRef, EntityFieldAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import type { EntityAuthoringRef, EntityFieldAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
-import type { EntityExtendsInput, EntityTargetInput } from '@/contract/types/core/4.properties-builder';
+import type {
+  AnyEntityResult,
+  EntityExtendsInput,
+  EntityTargetInput,
+  ResolvedEntityTargetInput,
+} from '@/contract/types/core/4.properties-builder';
 
 export function isAuthoringRef(value: unknown): value is {
   readonly id: string;
@@ -10,19 +15,27 @@ export function isAuthoringRef(value: unknown): value is {
   return !!value && typeof value === 'object' && 'id' in value && 'kind' in value && 'key' in value;
 }
 
-export function isEntityResult(value: unknown): value is {
-  readonly entity: EntityAuthoringRef;
-  readonly ref: {
-    readonly fields: Record<string, EntityFieldAuthoringRef>;
-  };
-} {
-  return !!value && typeof value === 'object' && 'entity' in value && 'ref' in value;
+export function isEntityResult(value: unknown): value is AnyEntityResult {
+  return (
+    !!value && typeof value === 'object' && 'ref' in value && 'entity' in value && typeof (value as { name?: unknown }).name === 'string'
+  );
 }
 
-export function normalizeEntityTarget(target: EntityTargetInput | EntityExtendsInput): EntityAuthoringRef {
-  if (isEntityResult(target)) return target.entity;
+export function resolveEntityTarget(target: EntityTargetInput): ResolvedEntityTargetInput {
+  if (typeof target === 'function') {
+    return target() as ResolvedEntityTargetInput;
+  }
+  return target as ResolvedEntityTargetInput;
+}
 
-  return target as EntityAuthoringRef;
+export function normalizeEntityTarget(target: EntityTargetInput): EntityAuthoringRef {
+  const resolved = resolveEntityTarget(target);
+
+  if (isEntityResult(resolved)) {
+    return resolved.ref.entity;
+  }
+
+  return resolved;
 }
 
 export function normalizeMaybeEntityTarget<T>(value: T): T | EntityAuthoringRef {
