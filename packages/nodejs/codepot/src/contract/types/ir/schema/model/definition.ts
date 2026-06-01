@@ -4,6 +4,7 @@ import type { DefinitionItem } from '../../definition';
 import type { Ref } from '../../ref';
 import type { EntityDefinition } from '../entity/definition';
 import type { EntityFieldDefinition } from '../entity/field/definition';
+import type { FieldSetDefinition } from '../field-set/definition';
 
 // ============================================================================
 // MODEL FIELD
@@ -32,6 +33,18 @@ export interface ModelDefinition extends DefinitionItem {
   extends?: Ref<ModelDefinition>;
 
   partial?: boolean;
+
+  /**
+   * Optional model-linked field sets.
+   *
+   * These are refs to root `schemas.field_sets` entries. Model `fields` remains
+   * the direct field map; these refs are helper metadata for codegen and query UI.
+   */
+  field_sets?: {
+    readonly select?: Ref<FieldSetDefinition>;
+    readonly sort?: Ref<FieldSetDefinition>;
+    readonly filter?: Ref<FieldSetDefinition>;
+  };
 
   /**
    * Compiled model fields only.

@@ -7,6 +7,20 @@ import { resolveDto, resolveParams } from '../resolvers/dto-resolver';
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
 // ============================================================================
+// SCOPED KEYS
+// ============================================================================
+
+/**
+ * Creates a promoted root key for a resource-scoped schema.
+ *
+ * Example:
+ * users + CreateUserBody -> users.create_user_body
+ */
+function createResourceScopedSchemaKey(resourceKey: string, schemaKey: string): string {
+  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(schemaKey)}`;
+}
+
+// ============================================================================
 // DTOS
 // ============================================================================
 
@@ -19,6 +33,22 @@ function compileDtos(ctx: CompilerContext): void {
       key,
       dto,
     });
+  }
+}
+
+/**
+ * Compiles resource-scoped DTOs into root IR DTOs with dotted keys.
+ */
+function compileResourceDtos(ctx: CompilerContext): void {
+  for (const [resourceKey, resource] of Object.entries(ctx.authoring.resources ?? {})) {
+    for (const [dtoKey, dto] of Object.entries(resource.schemas.dtos ?? {})) {
+      const compiledKey = createResourceScopedSchemaKey(resourceKey, dtoKey);
+
+      ctx.ir.schemas.dtos[compiledKey] = resolveDto({
+        key: compiledKey,
+        dto,
+      });
+    }
   }
 }
 
@@ -38,6 +68,22 @@ function compileParams(ctx: CompilerContext): void {
   }
 }
 
+/**
+ * Compiles resource-scoped params into root IR params with dotted keys.
+ */
+function compileResourceParams(ctx: CompilerContext): void {
+  for (const [resourceKey, resource] of Object.entries(ctx.authoring.resources ?? {})) {
+    for (const [paramKey, ref] of Object.entries(resource.schemas.params ?? {})) {
+      const compiledKey = createResourceScopedSchemaKey(resourceKey, paramKey);
+
+      ctx.ir.schemas.params[compiledKey] = resolveParams({
+        key: compiledKey,
+        ref,
+      }).ref;
+    }
+  }
+}
+
 // ============================================================================
 // PASS
 // ============================================================================
@@ -51,4 +97,6 @@ function compileParams(ctx: CompilerContext): void {
 export function compileSchemas(ctx: CompilerContext): void {
   compileDtos(ctx);
   compileParams(ctx);
+  compileResourceDtos(ctx);
+  compileResourceParams(ctx);
 }

@@ -6,12 +6,14 @@ import { compileContentTypes } from './passes/00-content-types';
 import { compileProperties } from './passes/01-properties';
 import { compileEntities } from './passes/02-entities';
 import { compileRelations } from './passes/03-relations';
+import { compileFieldSets } from './passes/04-field-sets';
 import { compileModels } from './passes/04-models';
 import { compileSchemas } from './passes/05-schemas';
 import { compileSecurity } from './passes/06-security';
 import { compileErrors } from './passes/07-errors';
 import { compileResources } from './passes/08-resources';
 import { compileMeta } from './passes/09-meta';
+import { assertValidIrRefs } from './validators/ref-validator';
 
 function throwIfDiagnosticsHaveErrors(
   diagnostics: readonly {
@@ -51,6 +53,11 @@ export function compile(contract: VersionAuthoringState): CodepotDefinition {
   compileRelations(ctx);
 
   /**
+   * Pass 04: Compiles entity field-set overrides into IR schemas.field_sets.
+   */
+  compileFieldSets(ctx);
+
+  /**
    * Pass 04: Compiles entity model variants into IR schemas.models.
    */
   compileModels(ctx);
@@ -81,6 +88,7 @@ export function compile(contract: VersionAuthoringState): CodepotDefinition {
   compileMeta(ctx);
 
   throwIfDiagnosticsHaveErrors(ctx.diagnostics);
+  assertValidIrRefs(ctx.ir);
 
   return ctx.ir;
 }

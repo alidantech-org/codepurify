@@ -1,0 +1,114 @@
+import { describe, expect, it } from 'vitest';
+
+import { compile } from '@/compiler';
+import { v1 } from '../fixtures/contracts/demo.contract';
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
+describe('compiler field sets', () => {
+  it('emits entity field-set overrides as root field_sets with dotted keys', () => {
+    const ir = compile(v1.snapshot());
+
+    expect(ir.schemas.field_sets['user.list_select']).toEqual([
+      {
+        $ref: '#/schemas/entities/base_entity/fields/id',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/name',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/role',
+      },
+    ]);
+
+    expect(ir.schemas.field_sets['user.list_sort']).toEqual([
+      {
+        $ref: '#/schemas/entities/base_entity/fields/created_at',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/role',
+      },
+    ]);
+
+    expect(ir.schemas.field_sets['user.list_filter']).toEqual([
+      {
+        $ref: '#/schemas/entities/base_entity/fields/id',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/role',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/status',
+      },
+    ]);
+  });
+
+  it('emits public and admin field sets with inherited refs when requested', () => {
+    const ir = compile(v1.snapshot());
+
+    expect(ir.schemas.field_sets['user.public_list_select']).toEqual([
+      {
+        $ref: '#/schemas/entities/base_entity/fields/id',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/name',
+      },
+    ]);
+
+    expect(ir.schemas.field_sets['user.admin_list_select']).toEqual([
+      {
+        $ref: '#/schemas/entities/base_entity/fields/id',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/name',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/email',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/role',
+      },
+      {
+        $ref: '#/schemas/entities/user/fields/status',
+      },
+    ]);
+  });
+
+  it('emits field sets as arrays of refs only', () => {
+    const ir = compile(v1.snapshot());
+
+    for (const [key, fieldSet] of Object.entries(ir.schemas.field_sets)) {
+      expect(Array.isArray(fieldSet)).toBe(true);
+
+      for (const fieldRef of fieldSet) {
+        expect(fieldRef).toHaveProperty('$ref');
+        expect(Object.keys(fieldRef)).toEqual(['$ref']);
+      }
+
+      expect(key).toContain('.');
+    }
+  });
+
+  it('does not duplicate inherited fields inside child entity fields', () => {
+    const ir = compile(v1.snapshot());
+
+    expect(ir.schemas.entities.user.fields.id).toBeUndefined();
+    expect(ir.schemas.entities.user.fields.created_at).toBeUndefined();
+
+    expect(ir.schemas.entities.base_entity.fields.id).toBeDefined();
+    expect(ir.schemas.entities.base_entity.fields.created_at).toBeDefined();
+  });
+
+  it('throws when a field-set references an unknown field', () => {
+    const snapshot = v1.snapshot() as any;
+
+    snapshot.schemas.entities.User.fieldSetOverrides.badSet = {
+      mode: 'only',
+      fields: ['doesNotExist'],
+    };
+
+    expect(() => compile(snapshot)).toThrow('Field set references unknown field "user.does_not_exist".');
+  });
+});

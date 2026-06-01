@@ -14,7 +14,7 @@ import type { Ref } from '@/contract/types/ir/ref';
 
 import type { CompilerContext } from '../context/compiler-context';
 
-import { entityFieldRef, entityRef, modelRef } from './ref-resolver';
+import { entityFieldRef, entityRef, fieldSetRef, modelRef } from './ref-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -79,6 +79,58 @@ function resolveModelExtends(variant: EntityModelVariant, entity: EntityAuthorin
   if (entity.extends === undefined) return undefined;
 
   return modelRef(createEntityModelKey(entity.extends.key, variant));
+}
+
+// ============================================================================
+// MODEL FIELD SETS
+// ============================================================================
+
+/**
+ * Checks whether a compiled field set exists.
+ */
+function hasFieldSet(ctx: CompilerContext, key: string): boolean {
+  return ctx.ir.schemas.field_sets[key] !== undefined;
+}
+
+/**
+ * Resolves model-linked field_set refs.
+ *
+ * This does not replace model fields. It only attaches helper refs for codegen.
+ */
+function resolveModelFieldSets(ctx: CompilerContext, entityKey: string, variant: EntityModelVariant): ModelDefinition['field_sets'] {
+  const output: {
+    select?: Ref;
+    sort?: Ref;
+    filter?: Ref;
+  } = {};
+
+  const listSelectKey = `${entityKey}.list_select`;
+  const listSortKey = `${entityKey}.list_sort`;
+  const listFilterKey = `${entityKey}.list_filter`;
+  const publicListSelectKey = `${entityKey}.public_list_select`;
+  const adminListSelectKey = `${entityKey}.admin_list_select`;
+
+  if ((variant === 'query' || variant === 'publicList') && hasFieldSet(ctx, listSelectKey)) {
+    output.select = fieldSetRef(listSelectKey);
+  }
+
+  if (variant === 'query' && hasFieldSet(ctx, listSortKey)) {
+    output.sort = fieldSetRef(listSortKey);
+  }
+
+  if (variant === 'query' && hasFieldSet(ctx, listFilterKey)) {
+    output.filter = fieldSetRef(listFilterKey);
+  }
+
+  if (variant === 'publicList' && hasFieldSet(ctx, publicListSelectKey)) {
+    output.select = fieldSetRef(publicListSelectKey);
+  }
+
+  if (variant === 'admin' && hasFieldSet(ctx, adminListSelectKey)) {
+    output.select = fieldSetRef(adminListSelectKey);
+  }
+
+  return Object.keys(output).length > 0 ? output : undefined;
 }
 
 // ============================================================================
@@ -149,6 +201,7 @@ function resolveModelFields(
  */
 export function resolveModel(input: ResolveModelInput): ModelDefinition {
   const entityKey = toSnakeCaseKey(input.entityKey);
+  const fieldSets = resolveModelFieldSets(input.ctx, entityKey, input.variant);
 
   return {
     from: entityRef(entityKey),
@@ -162,6 +215,8 @@ export function resolveModel(input: ResolveModelInput): ModelDefinition {
     ...(input.override?.deprecated !== undefined ? { deprecated: input.override.deprecated } : {}),
 
     ...(input.override?.meta !== undefined ? { meta: input.override.meta } : {}),
+
+    ...(fieldSets !== undefined ? { field_sets: fieldSets } : {}),
 
     fields: resolveModelFields(entityKey, input.entity, input.override),
   };

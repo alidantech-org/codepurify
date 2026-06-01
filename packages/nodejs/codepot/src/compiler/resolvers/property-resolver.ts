@@ -14,7 +14,7 @@ import type { EnumDefinition } from '@/contract/types/ir/properties/enum/definit
 import type { PrimitiveDefinition } from '@/contract/types/ir/properties/primitive/definition';
 
 import { propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
-import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
+import { toKebabCase, toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
 // ============================================================================
 // RESOLVER TYPES
@@ -86,6 +86,18 @@ function resolvePrimitiveValidation(validation?: PrimitivePropertySourceInput['v
 // ============================================================================
 
 /**
+ * Normalizes primitive format values from authoring to IR.
+ *
+ * Authoring can use camelCase helper names like `dateTime`; IR should use
+ * stable kebab-case values like `date-time`.
+ */
+function resolvePrimitiveFormat(format: PrimitivePropertySourceInput['format']): PrimitiveDefinition['format'] {
+  if (format === undefined) return undefined;
+
+  return toKebabCase(format) as PrimitiveDefinition['format'];
+}
+
+/**
  * Converts an authoring primitive property into an IR primitive definition.
  */
 export function resolvePrimitiveProperty(input: PrimitivePropertySourceInput): PrimitiveDefinition {
@@ -94,7 +106,7 @@ export function resolvePrimitiveProperty(input: PrimitivePropertySourceInput): P
 
     type: input.type,
 
-    ...(input.format !== undefined ? { format: input.format } : {}),
+    ...(input.format !== undefined ? { format: resolvePrimitiveFormat(input.format) } : {}),
 
     ...(input.validation !== undefined ? { validation: resolvePrimitiveValidation(input.validation) } : {}),
 

@@ -30,10 +30,16 @@ function compileGlobalErrors(ctx: CompilerContext): void {
 // ============================================================================
 
 /**
- * Creates a stable compiled key for resource-scoped errors.
+ * Creates the promoted root key for a resource-scoped error.
+ *
+ * Resource-scoped errors are moved to root `responses.errors` but keep their
+ * origin using dot notation.
+ *
+ * Example:
+ * users.emailTaken -> users.email_taken
  */
 function createResourceErrorKey(resourceKey: string, errorKey: string): string {
-  return toSnakeCaseKey(`${resourceKey}_${errorKey}`);
+  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(errorKey)}`;
 }
 
 /**

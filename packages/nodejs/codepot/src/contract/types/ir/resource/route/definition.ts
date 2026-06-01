@@ -35,6 +35,7 @@ export type RouteSchemaRef = Ref<DtoDefinition> | Ref<ModelDefinition>;
 export interface RouteBodyDefinition extends DefinitionItem {
   schema: RouteSchemaRef;
   content_type: Ref<ContentTypeDefinition>;
+  content_types?: readonly Ref<ContentTypeDefinition>[];
 }
 
 export interface RouteOutputDefinition extends DefinitionItem {
@@ -47,6 +48,7 @@ export interface RouteInlineResponseDefinition extends DefinitionItem {
   status?: number;
   schema?: RouteSchemaRef;
   content_type?: Ref<ContentTypeDefinition>;
+  content_types?: readonly Ref<ContentTypeDefinition>[];
   headers?: Record<string, RouteSchemaRef>;
 }
 

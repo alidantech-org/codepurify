@@ -12,7 +12,7 @@ import type { CompilerContext } from '../context/compiler-context';
 import { entityFieldRef, entityRef } from './ref-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
-
+import { assertAuthoringRefLike, parseEntityFieldRef, parseEntityRef } from './authoring-ref-resolver';
 // ============================================================================
 // INPUT
 // ============================================================================
@@ -63,9 +63,8 @@ function resolveRelationKind(kind: EntityRelationKind): IrEntityRelationKind {
 /**
  * Resolves an authoring entity target into an IR entity ref key.
  *
- * Supports direct entity refs and entity result objects from `schemas.entity()`.
- * Lazy targets should already be evaluated in authoring normalization later;
- * this first compiler version rejects unresolved functions clearly.
+ * Direct entity refs contain the entity in `key`. Entity result objects contain
+ * an inner `.entity.key`.
  */
 function resolveTargetEntityKey(target: RelationFieldSourceInput['target']): string {
   if (typeof target === 'function') {
@@ -76,20 +75,24 @@ function resolveTargetEntityKey(target: RelationFieldSourceInput['target']): str
     return toSnakeCaseKey(target.entity.key);
   }
 
-  if ('key' in target && typeof target.key === 'string') {
-    return toSnakeCaseKey(target.key);
-  }
+  const ref = assertAuthoringRefLike(target);
+  const parsed = parseEntityRef(ref);
 
-  throw new Error('Unable to resolve relation target entity key.');
+  return parsed.entity_key;
 }
 
 /**
  * Resolves an optional inverse field ref into an IR entity field ref.
+ *
+ * Inverse refs must parse the entity from the ref id:
+ * schema:entity:Profile:field:user
  */
 function resolveInverseField(inverse: RelationFieldSourceInput['inverse']) {
   if (inverse === undefined) return undefined;
 
-  return entityFieldRef(toSnakeCaseKey(inverse.key), toSnakeCaseKey(inverse.key));
+  const parsed = parseEntityFieldRef(assertAuthoringRefLike(inverse));
+
+  return entityFieldRef(parsed.entity_key, parsed.field_key);
 }
 
 // ============================================================================
@@ -106,16 +109,21 @@ function resolveThrough(through: RelationFieldSourceInput['through']) {
     throw new Error('Lazy through relation targets must be normalized before relation compilation.');
   }
 
-  const throughEntityKey = 'entity' in through.entity ? toSnakeCaseKey(through.entity.entity.key) : toSnakeCaseKey(through.entity.key);
+  const throughEntityKey =
+    'entity' in through.entity
+      ? toSnakeCaseKey(through.entity.entity.key)
+      : parseEntityRef(assertAuthoringRefLike(through.entity)).entity_key;
 
   if (!through.from || !through.to) {
     throw new Error('Relation through mapping requires both from and to fields.');
   }
+  const from = parseEntityFieldRef(assertAuthoringRefLike(through.from));
+  const to = parseEntityFieldRef(assertAuthoringRefLike(through.to));
 
   return {
     entity: entityRef(throughEntityKey),
-    from: entityFieldRef(throughEntityKey, toSnakeCaseKey(through.from.key)),
-    to: entityFieldRef(throughEntityKey, toSnakeCaseKey(through.to.key)),
+    from: entityFieldRef(from.entity_key, from.field_key),
+    to: entityFieldRef(to.entity_key, to.field_key),
   };
 }
 

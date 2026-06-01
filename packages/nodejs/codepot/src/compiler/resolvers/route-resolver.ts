@@ -21,6 +21,7 @@ import { contentTypeRef, dtoRef, errorResponseRef, modelRef, operationRef, param
 import { resolveSecurityPolicy } from './security-resolver';
 
 import { normalizeContentList, normalizeContentTypeKey, normalizeOptionalContentList, resolveContentType } from './content-type-resolver';
+import { assertAuthoringRefLike, parseModelRef } from './authoring-ref-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -228,6 +229,14 @@ function resolveRequiredContentType(ctx: CompilerContext, content?: ContentDefin
 }
 
 /**
+ * Resolves all content descriptors into refs, defaulting to JSON when content
+ * is missing.
+ */
+function resolveRequiredContentTypes(ctx: CompilerContext, content?: ContentDefinition | readonly ContentDefinition[]): readonly Ref[] {
+  return normalizeContentList(content).map((item) => registerRouteContentType(ctx, item));
+}
+
+/**
  * Resolves optional route content descriptors into content type refs.
  */
 function resolveOptionalContentTypes(
@@ -246,17 +255,35 @@ function resolveOptionalContentTypes(
 // ============================================================================
 
 /**
+ * Creates a promoted resource-scoped schema key.
+ */
+function createScopedSchemaKey(resourceKey: string, schemaKey: string): string {
+  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(schemaKey)}`;
+}
+
+/**
  * Resolves an authoring schema ref into an IR schema ref.
  */
-function resolveRouteSchemaRef(input: object): Ref {
+function resolveRouteSchemaRef(ctx: CompilerContext, resourceKey: string, input: object): Ref {
   const value = unwrapRefInput(input);
 
   if (value.kind === 'schema.dto') {
-    return dtoRef(toSnakeCaseKey(value.key));
+    const globalKey = toSnakeCaseKey(value.key);
+    const scopedKey = createScopedSchemaKey(resourceKey, value.key);
+
+    if (ctx.ir.schemas.dtos[globalKey] !== undefined) {
+      return dtoRef(globalKey);
+    }
+
+    if (ctx.ir.schemas.dtos[scopedKey] !== undefined) {
+      return dtoRef(scopedKey);
+    }
+
+    throw new Error(`Route references unknown DTO "${value.key}". Checked "${globalKey}" and "${scopedKey}".`);
   }
 
   if (value.kind === 'schema.model') {
-    return modelRef(toSnakeCaseKey(value.key));
+    return modelRef(parseModelRef(assertAuthoringRefLike(value)).model_key);
   }
 
   throw new Error(`Unsupported route schema ref kind "${value.kind}".`);
@@ -265,11 +292,22 @@ function resolveRouteSchemaRef(input: object): Ref {
 /**
  * Resolves an authoring params ref into an IR params ref.
  */
-function resolveRouteParamsRef(input: object): Ref {
+function resolveRouteParamsRef(ctx: CompilerContext, resourceKey: string, input: object): Ref {
   const value = unwrapRefInput(input);
 
   if (value.kind === 'schema.params') {
-    return paramsRef(toSnakeCaseKey(value.key));
+    const scopedKey = createScopedSchemaKey(resourceKey, value.key);
+    const globalKey = toSnakeCaseKey(value.key);
+
+    if (ctx.ir.schemas.params[scopedKey] !== undefined) {
+      return paramsRef(scopedKey);
+    }
+
+    if (ctx.ir.schemas.params[globalKey] !== undefined) {
+      return paramsRef(globalKey);
+    }
+
+    throw new Error(`Route references unknown params "${value.key}".`);
   }
 
   throw new Error(`Unsupported route params ref kind "${value.kind}".`);
@@ -311,24 +349,57 @@ function resolveRouteSecurity(input: object): Ref | SecurityPolicyDefinition {
 }
 
 /**
- * Resolves an authoring error ref into an IR error response ref.
+ * Creates the promoted key for a resource-scoped error.
  */
-function resolveRouteErrorRef(resourceKey: string, input: object): Ref {
+function createScopedErrorKey(resourceKey: string, errorKey: string): string {
+  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(errorKey)}`;
+}
+
+/**
+ * Resolves an authoring error ref into an IR error response ref.
+ *
+ * Lookup order:
+ * 1. global error key, e.g. unauthorized
+ * 2. resource-scoped promoted key, e.g. users.email_taken
+ */
+function resolveRouteErrorRef(ctx: CompilerContext, resourceKey: string, input: object): Ref {
   const value = unwrapRefInput(input);
 
   if (value.kind !== 'error') {
     throw new Error(`Unsupported route error ref kind "${value.kind}".`);
   }
 
-  const rawKey = String(value.key);
-  const globalKey = toSnakeCaseKey(rawKey);
-  const resourceScopedKey = toSnakeCaseKey(`${resourceKey}_${rawKey}`);
+  const globalKey = toSnakeCaseKey(value.key);
+  const scopedKey = createScopedErrorKey(resourceKey, value.key);
 
-  if (globalKey in value) {
+  if (ctx.ir.responses.errors[globalKey] !== undefined) {
     return errorResponseRef(globalKey);
   }
 
-  return errorResponseRef(resourceScopedKey);
+  if (ctx.ir.responses.errors[scopedKey] !== undefined) {
+    return errorResponseRef(scopedKey);
+  }
+
+  throw new Error(`Route references unknown error "${value.key}". Checked "${globalKey}" and "${scopedKey}".`);
+}
+
+/**
+ * Reads the HTTP status for a compiled error response ref.
+ */
+function getErrorStatusFromRef(ctx: CompilerContext, ref: Ref): number {
+  const key = ref.$ref.split('/').at(-1);
+
+  if (!key) {
+    throw new Error(`Invalid error response ref "${ref.$ref}".`);
+  }
+
+  const error = ctx.ir.responses.errors[key];
+
+  if (error === undefined) {
+    throw new Error(`Missing compiled error for ref "${ref.$ref}".`);
+  }
+
+  return error.status;
 }
 
 // ============================================================================
@@ -338,12 +409,19 @@ function resolveRouteErrorRef(resourceKey: string, input: object): Ref {
 /**
  * Resolves an authoring route body into an IR route body.
  */
-function resolveRouteBody(ctx: CompilerContext, body: AuthoringRouteBody | null | undefined): RouteBodyDefinition | undefined {
+function resolveRouteBody(
+  ctx: CompilerContext,
+  resourceKey: string,
+  body: AuthoringRouteBody | null | undefined,
+): RouteBodyDefinition | undefined {
   if (!hasBodySchema(body)) return undefined;
 
+  const content = getContent(body);
+
   return {
-    schema: resolveRouteSchemaRef(body.schema),
-    content_type: resolveRequiredContentType(ctx, getContent(body)),
+    schema: resolveRouteSchemaRef(ctx, resourceKey, body.schema),
+    content_type: resolveRequiredContentType(ctx, content),
+    content_types: resolveRequiredContentTypes(ctx, content),
   };
 }
 
@@ -352,6 +430,7 @@ function resolveRouteBody(ctx: CompilerContext, body: AuthoringRouteBody | null 
  */
 function resolveRouteOutput(
   ctx: CompilerContext,
+  resourceKey: string,
   output: AuthoringRouteOutput | null | undefined,
 ): RouteInlineResponseDefinition | undefined {
   if (!hasOutputStatus(output)) return undefined;
@@ -362,31 +441,37 @@ function resolveRouteOutput(
     };
   }
 
+  const content = getContent(output);
+
   return {
     status: output.status,
-    schema: resolveRouteSchemaRef(output.schema),
-    content_type: resolveRequiredContentType(ctx, getContent(output)),
+    schema: resolveRouteSchemaRef(ctx, resourceKey, output.schema),
+    content_type: resolveRequiredContentType(ctx, content),
+    content_types: resolveRequiredContentTypes(ctx, content),
   };
 }
 
 /**
  * Resolves an inline authoring response into an IR route response.
  */
-function resolveInlineResponse(ctx: CompilerContext, response: AuthoringRouteResponse): RouteInlineResponseDefinition {
+function resolveInlineResponse(ctx: CompilerContext, resourceKey: string, response: AuthoringRouteResponse): RouteInlineResponseDefinition {
   const output: RouteInlineResponseDefinition = {
     ...(getInlineResponseStatus(response) !== undefined ? { status: getInlineResponseStatus(response) } : {}),
   };
 
   if (hasInlineResponseSchema(response)) {
-    output.schema = resolveRouteSchemaRef(response.schema);
-    output.content_type = resolveRequiredContentType(ctx, getContent(response));
+    const content = getContent(response);
+
+    output.schema = resolveRouteSchemaRef(ctx, resourceKey, response.schema);
+    output.content_type = resolveRequiredContentType(ctx, content);
+    output.content_types = resolveRequiredContentTypes(ctx, content);
   }
 
   const headers = getInlineResponseHeaders(response);
 
   if (headers !== undefined) {
     output.headers = Object.fromEntries(
-      Object.entries(headers).map(([key, schema]) => [toSnakeCaseKey(key), resolveRouteSchemaRef(schema)]),
+      Object.entries(headers).map(([key, schema]) => [toSnakeCaseKey(key), resolveRouteSchemaRef(ctx, resourceKey, schema)]),
     );
   }
 
@@ -398,10 +483,10 @@ function resolveInlineResponse(ctx: CompilerContext, response: AuthoringRouteRes
  */
 function resolveRouteResponse(ctx: CompilerContext, resourceKey: string, response: AuthoringRouteResponse): RouteResponseDefinition {
   if (response !== null && typeof response === 'object' && isAuthoringRef(response)) {
-    return resolveRouteErrorRef(resourceKey, response);
+    return resolveRouteErrorRef(ctx, resourceKey, response);
   }
 
-  return resolveInlineResponse(ctx, response);
+  return resolveInlineResponse(ctx, resourceKey, response);
 }
 
 // ============================================================================
@@ -418,29 +503,29 @@ export function createRouteOperationKey(routeKey: string): string {
 /**
  * Derives an IR operation definition from an authoring route.
  */
-function resolveOperation(resourceKey: string, route: RoutePathAuthoringDefinition): OperationDefinition {
+function resolveOperation(ctx: CompilerContext, resourceKey: string, route: RoutePathAuthoringDefinition): OperationDefinition {
   const input: OperationDefinition['input'] = {};
   const output: OperationDefinition['output'] = {};
 
   if (route.params !== undefined && route.params !== null) {
-    input.params = resolveRouteParamsRef(route.params as object) as OperationDefinition['input']['params'];
+    input.params = resolveRouteParamsRef(ctx, resourceKey, route.params as object) as OperationDefinition['input']['params'];
   }
 
   if (route.query !== undefined && route.query !== null) {
-    input.query = resolveRouteSchemaRef(route.query as object) as OperationDefinition['input']['query'];
+    input.query = resolveRouteSchemaRef(ctx, resourceKey, route.query as object) as OperationDefinition['input']['query'];
   }
 
   if (hasBodySchema(route.body)) {
-    input.body = resolveRouteSchemaRef(route.body.schema) as OperationDefinition['input']['body'];
+    input.body = resolveRouteSchemaRef(ctx, resourceKey, route.body.schema) as OperationDefinition['input']['body'];
   }
 
   if (hasOutputSchema(route.output)) {
-    output.result = resolveRouteSchemaRef(route.output.schema) as OperationDefinition['output']['result'];
+    output.result = resolveRouteSchemaRef(ctx, resourceKey, route.output.schema) as OperationDefinition['output']['result'];
   }
 
   if (route.errors !== undefined) {
     output.errors = route.errors.map((error) =>
-      resolveRouteErrorRef(resourceKey, error as object),
+      resolveRouteErrorRef(ctx, resourceKey, error as object),
     ) as OperationDefinition['output']['errors'];
   }
 
@@ -465,15 +550,17 @@ function resolveResponses(
 ): RouteMethodDefinition['responses'] {
   const responses: RouteMethodDefinition['responses'] = {};
 
-  const output = resolveRouteOutput(ctx, route.output);
+  const output = resolveRouteOutput(ctx, resourceKey, route.output);
 
   if (output !== undefined) {
     responses[output.status ?? 200] = output;
   }
 
   for (const error of route.errors ?? []) {
-    const errorRef = resolveRouteErrorRef(resourceKey, error as object);
-    responses[400] = errorRef;
+    const errorRef = resolveRouteErrorRef(ctx, resourceKey, error as object);
+    const status = getErrorStatusFromRef(ctx, errorRef);
+
+    responses[status] = errorRef;
   }
 
   for (const [status, response] of Object.entries(route.responses ?? {})) {
@@ -494,20 +581,25 @@ function resolveResponses(
 export function resolveRoute(input: ResolveRouteInput): ResolvedRoute {
   const { ctx, resourceKey, routeKey, route } = input;
   const operationKey = createRouteOperationKey(routeKey);
+  const body = resolveRouteBody(ctx, resourceKey, route.body);
 
   return {
     operationKey,
-    operation: resolveOperation(resourceKey, route),
+    operation: resolveOperation(ctx, resourceKey, route),
     method: {
       operation: operationRef(toSnakeCaseKey(resourceKey), operationKey),
 
       ...(route.security !== undefined && route.security !== null ? { security: resolveRouteSecurity(route.security as object) } : {}),
 
-      ...(route.params !== undefined && route.params !== null ? { params: resolveRouteParamsRef(route.params as object) } : {}),
+      ...(route.params !== undefined && route.params !== null
+        ? { params: resolveRouteParamsRef(ctx, resourceKey, route.params as object) }
+        : {}),
 
-      ...(route.query !== undefined && route.query !== null ? { query: resolveRouteSchemaRef(route.query as object) } : {}),
+      ...(route.query !== undefined && route.query !== null
+        ? { query: resolveRouteSchemaRef(ctx, resourceKey, route.query as object) }
+        : {}),
 
-      ...(resolveRouteBody(ctx, route.body) !== undefined ? { body: resolveRouteBody(ctx, route.body) } : {}),
+      ...(body !== undefined ? { body } : {}),
 
       responses: resolveResponses(ctx, resourceKey, route),
     },

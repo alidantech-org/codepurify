@@ -24,7 +24,7 @@ import type { EntityFieldDefinition } from '@/contract/types/ir/schema/entity/fi
 import type { Ref } from '@/contract/types/ir/ref';
 
 import { dtoRef, entityFieldRef, modelRef, paramsRef, propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
-
+import { assertAuthoringRefLike, parseEntityFieldRef, parseModelRef } from './authoring-ref-resolver';
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
 // ============================================================================
@@ -79,6 +79,13 @@ function isUsageWrapper(input: unknown): input is {
 }
 
 /**
+ * Checks whether a value is a plain object-like record.
+ */
+function isObject(input: unknown): input is Record<string, unknown> {
+  return input !== null && typeof input === 'object';
+}
+
+/**
  * Unwraps usage values into their underlying authoring ref when possible.
  */
 function unwrapDtoFieldInput(input: DtoFieldInput): unknown {
@@ -117,18 +124,9 @@ function resolvePropertyAuthoringRef(input: PropertyAuthoringRef): Ref<RefProper
  * schema:entity:{Entity}:field:{field}
  */
 function resolveEntityFieldAuthoringRef(input: EntityFieldAuthoringRef): Ref<EntityFieldDefinition> {
-  const parts = input.id.split(':');
-  const entityIndex = parts.indexOf('entity');
-  const fieldIndex = parts.indexOf('field');
+  const parsed = parseEntityFieldRef(assertAuthoringRefLike(input));
 
-  if (entityIndex < 0 || fieldIndex < 0) {
-    throw new Error(`Invalid entity field ref id "${input.id}".`);
-  }
-
-  const entityKey = toSnakeCaseKey(parts[entityIndex + 1]);
-  const fieldKey = toSnakeCaseKey(parts[fieldIndex + 1]);
-
-  return entityFieldRef(entityKey, fieldKey);
+  return entityFieldRef(parsed.entity_key, parsed.field_key);
 }
 
 /**
@@ -150,7 +148,7 @@ function resolveDtoFieldRef(input: DtoFieldInput): Ref {
   }
 
   if (value.kind === 'schema.model') {
-    return modelRef(toSnakeCaseKey((value as ModelAuthoringRef).key));
+    return modelRef(parseModelRef(assertAuthoringRefLike(value)).model_key);
   }
 
   if (value.kind === 'schema.dto') {
@@ -162,6 +160,44 @@ function resolveDtoFieldRef(input: DtoFieldInput): Ref {
   }
 
   throw new Error(`Unsupported DTO field ref kind "${value.kind}".`);
+}
+
+/**
+ * Converts DTO field usage metadata into IR DTO field metadata.
+ */
+function resolveDtoFieldUsage(usage: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (usage === undefined) return {};
+
+  return {
+    ...(usage.required !== undefined ? { required: usage.required } : {}),
+    ...(usage.nullable !== undefined ? { nullable: usage.nullable } : {}),
+    ...(usage.array !== undefined ? { array: usage.array } : {}),
+    ...(usage.default !== undefined ? { default: usage.default } : {}),
+  };
+}
+
+/**
+ * Resolves a DTO field input into an IR field with ref + usage metadata.
+ */
+function resolveDtoField(input: DtoFieldInput): DtoDefinition['fields'][string] {
+  const value = unwrapDtoFieldInput(input);
+  const ref = resolveDtoFieldRef(input);
+
+  if (isObject(value) && isObject(value.usage)) {
+    return {
+      ...ref,
+      ...resolveDtoFieldUsage(value.usage),
+    };
+  }
+
+  if (isObject(input) && isObject(input.usage)) {
+    return {
+      ...ref,
+      ...resolveDtoFieldUsage(input.usage),
+    };
+  }
+
+  return ref;
 }
 
 // ============================================================================
@@ -193,7 +229,47 @@ function resolveDtoFields(fields: Record<string, DtoFieldAuthoringDefinition>): 
   const output: DtoDefinition['fields'] = {};
 
   for (const [key, field] of Object.entries(fields)) {
-    output[toSnakeCaseKey(key)] = resolveDtoFieldRef(field.ref);
+    output[toSnakeCaseKey(key)] = {
+      ...resolveDtoField(field.ref),
+      ...resolveDtoFieldUsage(field.usage),
+    };
+  }
+
+  return output;
+}
+
+/**
+ * Extracts DTO extendWith field maps from source usage.
+ *
+ * Supports both:
+ * - usage.extendWith
+ * - usage.extendWith.extendWith
+ */
+function getExtendWithFields(usage: Record<string, unknown> | undefined): Record<string, DtoFieldInput> {
+  if (usage === undefined) return {};
+
+  const direct = usage.extendWith;
+
+  if (isObject(direct) && !('extendWith' in direct)) {
+    return direct as Record<string, DtoFieldInput>;
+  }
+
+  if (isObject(direct) && isObject(direct.extendWith)) {
+    return direct.extendWith as Record<string, DtoFieldInput>;
+  }
+
+  return {};
+}
+
+/**
+ * Resolves source DTO extendWith fields into IR DTO fields.
+ */
+function resolveDtoExtendWithFields(usage: Record<string, unknown> | undefined): DtoDefinition['fields'] {
+  const fields = getExtendWithFields(usage);
+  const output: DtoDefinition['fields'] = {};
+
+  for (const [key, value] of Object.entries(fields)) {
+    output[toSnakeCaseKey(key)] = resolveDtoField(value);
   }
 
   return output;
@@ -215,7 +291,7 @@ export function resolveDto(input: ResolveDtoInput): DtoDefinition {
   if (isDtoSourceDefinition(dto)) {
     return {
       extends: resolveDtoFieldRef(dto.source.ref) as DtoDefinition['extends'],
-      fields: {},
+      fields: resolveDtoExtendWithFields(dto.source.usage),
     };
   }
 
