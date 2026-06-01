@@ -57,7 +57,7 @@ export interface CodepotDefinition extends DefinitionItem {
   /**
    * Reusable content type registry.
    */
-  readonly content_types: ContentTypeDefinition;
+  readonly content_types: Record<string, ContentTypeDefinition>;
 
   /**
    * Reusable low-level properties.

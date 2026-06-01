@@ -31,6 +31,6 @@ export {
   AuthoringRefKind,
 } from './contract';
 
-export { emitDebugPackage, writeDebugPackageJson, writeDebugPackageYaml, writeDebugFiles } from './pipeline';
+export { emitDebugPackage, writeDebugPackageJson, writeDebugPackageYaml, writeDebugFiles } from './compiler';
 
-export type { DebugPackageOutput, WriteDebugFilesResult } from './pipeline';
+export type { DebugPackageOutput, WriteDebugFilesResult } from './compiler';

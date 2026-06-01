@@ -21,13 +21,13 @@ export type PrimitiveType = (typeof PrimitiveType)[keyof typeof PrimitiveType];
 
 export const PrimitiveFormat = {
   date: 'date',
-  date_time: 'date_time',
+  date_time: 'date-time',
   time: 'time',
   email: 'email',
   uri: 'uri',
   url: 'url',
   uuid: 'uuid',
-  object_id: 'object_id',
+  object_id: 'object-id',
   phone: 'phone',
   password: 'password',
   binary: 'binary',
