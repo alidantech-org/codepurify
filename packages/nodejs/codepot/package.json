@@ -16,7 +16,7 @@
     "url": "https://alidantech.org"
   },
   "bin": {
-    "codepot": "./dist/cli.js"
+    "codepot": "./dist/cli/index.js"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -41,6 +41,7 @@
     "build": "npm run clean && tsup && npm run copy:examples",
     "build:bundle": "tsup",
     "watch": "npm run copy:examples && tsup --watch --onSuccess \"npm run copy:examples\"",
+    "dev:cli": "tsx cli/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write .",
@@ -54,7 +55,9 @@
     "test:debug": "vitest run tests/debug",
     "test:watch": "vitest",
     "test:smoke": "vitest run tests/smoke",
-    "test:unit": "vitest run tests/unit"
+    "test:unit": "vitest run tests/unit",
+    "test:cli": "vitest run tests/cli",
+    "check:cli": "npm run typecheck && npm run test:cli"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.1",

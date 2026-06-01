@@ -13,5 +13,7 @@ export {
 } from './emit-ir';
 
 export type { EmitIrPackage, WriteIrPackageOptions, WriteIrPackageResult } from './emit-ir';
+export { AppProgressEventType } from './emit-ir';
+export type { AppProgressEvent, AppProgressReporter } from './emit-ir';
 
 export * from './debug';

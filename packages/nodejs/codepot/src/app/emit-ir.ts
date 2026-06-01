@@ -18,8 +18,31 @@ export interface EmitIrPackage {
   readonly contracts: readonly CodepotDefinition[];
 }
 
+export const AppProgressEventType = {
+  start: 'start',
+  config: 'config',
+  compile: 'compile',
+  write: 'write',
+  success: 'success',
+} as const;
+
+export type AppProgressEventType = (typeof AppProgressEventType)[keyof typeof AppProgressEventType];
+
+export interface AppProgressEvent {
+  readonly type: AppProgressEventType;
+  readonly message: string;
+  readonly file?: string;
+  readonly contract_key?: string;
+  readonly version?: number;
+}
+
+export interface AppProgressReporter {
+  report(event: AppProgressEvent): void;
+}
+
 export interface WriteIrPackageOptions {
   readonly file_system?: FileSystemManager;
+  readonly progress?: AppProgressReporter;
 }
 
 export interface WriteIrPackageResult {
@@ -116,12 +139,26 @@ export async function writeIrPackage(config: CodepotConfig, options: WriteIrPack
 
   const folder = config.output?.folder ?? 'debug';
 
+  options.progress?.report({
+    type: AppProgressEventType.start,
+    message: 'Starting Codepot IR generation',
+  });
+
   await fileSystem.ensureDirectory(folder);
 
   const files: string[] = [];
 
   for (const contract of config.contracts) {
-    const ir = emitIrContract(contract.snapshot());
+    const snapshot = contract.snapshot();
+
+    options.progress?.report({
+      type: AppProgressEventType.compile,
+      message: `Compiling ${snapshot.key} v${snapshot.version}`,
+      contract_key: snapshot.key,
+      version: snapshot.version,
+    });
+
+    const ir = emitIrContract(snapshot);
 
     const jsonPath = fileSystem.joinPath(folder, createIrJsonFileName(ir));
     const yamlPath = fileSystem.joinPath(folder, createIrYamlFileName(ir));
@@ -131,14 +168,31 @@ export async function writeIrPackage(config: CodepotConfig, options: WriteIrPack
       content: serializeIrContractJson(ir),
     });
 
+    options.progress?.report({
+      type: AppProgressEventType.write,
+      message: `Wrote ${fileSystem.toPosixPath(jsonPath)}`,
+      file: fileSystem.toPosixPath(jsonPath),
+    });
+
     await fileSystem.writeTextFile({
       path: yamlPath,
       content: serializeIrContractYaml(ir),
     });
 
+    options.progress?.report({
+      type: AppProgressEventType.write,
+      message: `Wrote ${fileSystem.toPosixPath(yamlPath)}`,
+      file: fileSystem.toPosixPath(yamlPath),
+    });
+
     files.push(fileSystem.toPosixPath(jsonPath));
     files.push(fileSystem.toPosixPath(yamlPath));
   }
+
+  options.progress?.report({
+    type: AppProgressEventType.success,
+    message: 'Codepot IR generation complete',
+  });
 
   return {
     files,

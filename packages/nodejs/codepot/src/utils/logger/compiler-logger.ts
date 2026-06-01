@@ -1,69 +1,34 @@
-import pc from 'picocolors';
-import ora, { type Ora } from 'ora';
+import { createLogger } from './create-logger';
+import { LogLevel } from './log-level';
+import type { Logger, LoggerConfig } from './logger.types';
 
-import type { LogContext, LoggerConfig, LoggerDataOptions, LogLevel, SpinnerHandle } from './logger.types';
+export interface LogContext {
+  readonly scope?: string;
+  readonly version?: string;
+  readonly resource?: string;
+  readonly operation?: string;
+  readonly component?: string;
+  readonly file?: string;
+}
+
+export interface SpinnerHandle {
+  readonly text: (message: string) => void;
+  readonly succeed: (message?: string) => void;
+  readonly fail: (message?: string) => void;
+  readonly warn: (message?: string) => void;
+  readonly stop: () => void;
+}
 
 function resolveLogLevel(config?: LoggerConfig): LogLevel {
-  if (config?.silent === true) return 'silent';
-  if (config?.debug === true) return 'debug';
-  if (config?.verbose === true) return 'verbose';
-  return config?.level ?? 'normal';
-}
+  if (config?.silent === true) return LogLevel.silent;
+  if (config?.debug === true) return LogLevel.debug;
+  if (config?.verbose === true) return LogLevel.debug;
 
-function shouldLog(current: LogLevel, required: LogLevel): boolean {
-  const rank: Record<LogLevel, number> = {
-    silent: 0,
-    normal: 1,
-    verbose: 2,
-    debug: 3,
-  };
-
-  return rank[current] >= rank[required];
-}
-
-function sanitizeLogData(value: unknown, depth = 0, options: LoggerDataOptions = {}, seen = new WeakSet<object>()): unknown {
-  const maxDepth = options.maxDepth ?? 4;
-  const maxArrayLength = options.maxArrayLength ?? 20;
-
-  if (typeof value === 'function') return '[Function]';
-  if (value === null || typeof value !== 'object') return value;
-
-  if (depth >= maxDepth) return '[MaxDepth]';
-
-  if (seen.has(value)) return '[Circular]';
-  seen.add(value);
-
-  if (Array.isArray(value)) {
-    return value.slice(0, maxArrayLength).map((item) => sanitizeLogData(item, depth + 1, options, seen));
-  }
-
-  const record = value as Record<string, unknown>;
-
-  if ('_zod' in record || '_def' in record || 'toJSONSchema' in record) {
-    return '[ZodSchema]';
-  }
-
-  const output: Record<string, unknown> = {};
-
-  for (const [key, child] of Object.entries(record)) {
-    if (key === 'zod') {
-      output[key] = '[ZodSchema]';
-      continue;
-    }
-
-    if (typeof child === 'function') {
-      output[key] = '[Function]';
-      continue;
-    }
-
-    output[key] = sanitizeLogData(child, depth + 1, options, seen);
-  }
-
-  return output;
+  return config?.level ?? LogLevel.info;
 }
 
 function formatContext(context?: LogContext): string {
-  if (!context) return '';
+  if (context === undefined) return '';
 
   const parts = [
     context.scope,
@@ -74,19 +39,25 @@ function formatContext(context?: LogContext): string {
     context.file ? `file:${context.file}` : undefined,
   ].filter(Boolean);
 
-  return parts.length > 0 ? pc.dim(` [${parts.join(' ')}]`) : '';
+  return parts.length > 0 ? ` [${parts.join(' ')}]` : '';
 }
 
+/**
+ * Compatibility logger for older compiler/app call sites.
+ *
+ * New code should prefer `createLogger()` and the `Logger` interface directly.
+ */
 export class CompilerLogger {
+  private readonly logger: Logger;
   private readonly level: LogLevel;
   private readonly context?: LogContext;
-  private readonly interactive: boolean;
-  private activeSpinner?: Ora;
 
   constructor(config?: LoggerConfig, context?: LogContext) {
     this.level = resolveLogLevel(config);
     this.context = context;
-    this.interactive = this.level !== 'silent' && this.level !== 'debug' && config?.interactive !== false && process.stdout.isTTY === true;
+    this.logger = createLogger({
+      level: this.level,
+    });
   }
 
   child(context: LogContext): CompilerLogger {
@@ -101,48 +72,19 @@ export class CompilerLogger {
 
   spinner(message: string, context?: LogContext): SpinnerHandle {
     const fullContext = { ...this.context, ...context };
-    const formattedMessage = `${message}${formatContext(fullContext)}`;
+    let current = message;
 
-    if (!this.interactive) {
-      this.step(message, context);
-      return {
-        text: (next) => this.step(next, context),
-        succeed: (next) => this.success(next ?? message, context),
-        fail: (next) => this.error(next ?? message, context),
-        warn: (next) => this.warn(next ?? message, context),
-        stop: () => undefined,
-      };
-    }
-
-    this.activeSpinner?.stop();
-
-    const spinner = ora({
-      text: formattedMessage,
-      color: 'cyan',
-    }).start();
-
-    this.activeSpinner = spinner;
+    this.info(message, fullContext);
 
     return {
       text: (next) => {
-        spinner.text = `${next}${formatContext(fullContext)}`;
+        current = next;
+        this.info(next, fullContext);
       },
-      succeed: (next) => {
-        spinner.succeed(next ?? message);
-        this.activeSpinner = undefined;
-      },
-      fail: (next) => {
-        spinner.fail(next ?? message);
-        this.activeSpinner = undefined;
-      },
-      warn: (next) => {
-        spinner.warn(next ?? message);
-        this.activeSpinner = undefined;
-      },
-      stop: () => {
-        spinner.stop();
-        this.activeSpinner = undefined;
-      },
+      succeed: (next) => this.success(next ?? current, fullContext),
+      fail: (next) => this.error(next ?? current, fullContext),
+      warn: (next) => this.warn(next ?? current, fullContext),
+      stop: () => undefined,
     };
   }
 
@@ -170,20 +112,19 @@ export class CompilerLogger {
   }
 
   isSilent(): boolean {
-    return this.level === 'silent';
+    return this.level === LogLevel.silent;
   }
 
   isVerbose(): boolean {
-    return shouldLog(this.level, 'verbose');
+    return this.level === LogLevel.debug;
   }
 
   isDebug(): boolean {
-    return shouldLog(this.level, 'debug');
+    return this.level === LogLevel.debug;
   }
 
   info(message: string, context?: LogContext): void {
-    if (!shouldLog(this.level, 'normal')) return;
-    console.log(`${pc.cyan('◼')} ${message}${formatContext({ ...this.context, ...context })}`);
+    this.logger.info(`${message}${formatContext({ ...this.context, ...context })}`);
   }
 
   step(message: string, context?: LogContext): void {
@@ -191,75 +132,42 @@ export class CompilerLogger {
   }
 
   success(message: string, context?: LogContext): void {
-    if (!shouldLog(this.level, 'normal')) return;
-    console.log(`${pc.green('✓')} ${message}${formatContext({ ...this.context, ...context })}`);
+    this.logger.success(`${message}${formatContext({ ...this.context, ...context })}`);
   }
 
   warn(message: string, context?: LogContext): void {
-    if (this.level === 'silent') return;
-    console.warn(`${pc.yellow('⚠')} ${message}${formatContext({ ...this.context, ...context })}`);
+    this.logger.warn(`${message}${formatContext({ ...this.context, ...context })}`);
   }
 
   error(message: string, context?: LogContext): void {
-    console.error(`${pc.red('✗')} ${message}${formatContext({ ...this.context, ...context })}`);
+    this.logger.error(`${message}${formatContext({ ...this.context, ...context })}`);
   }
 
   section(message: string, context?: LogContext): void {
-    if (!shouldLog(this.level, 'normal')) return;
-    console.log('');
-    console.log(`${pc.bold(pc.cyan('◇'))} ${pc.bold(message)}${formatContext({ ...this.context, ...context })}`);
+    this.info(message, context);
   }
 
   item(message: string, context?: LogContext): void {
-    if (!shouldLog(this.level, 'normal')) return;
-    console.log(`  ${pc.cyan('•')} ${message}${formatContext({ ...this.context, ...context })}`);
+    this.info(message, context);
   }
 
   detail(message: string, data?: unknown, context?: LogContext): void {
-    if (!shouldLog(this.level, 'verbose')) return;
-
-    console.log(`    ${pc.dim('-')} ${message}${formatContext({ ...this.context, ...context })}`);
-
-    if (data !== undefined) {
-      console.log(pc.dim(JSON.stringify(sanitizeLogData(data), null, 2)));
-    }
+    this.logger.debug(`${message}${formatContext({ ...this.context, ...context })}`, data);
   }
 
   trace(message: string, data?: unknown, context?: LogContext): void {
-    if (!shouldLog(this.level, 'debug')) return;
-
-    console.log(`${pc.magenta('◆')} ${message}${formatContext({ ...this.context, ...context })}`);
-
-    if (data !== undefined) {
-      console.log(pc.dim(JSON.stringify(sanitizeLogData(data, 0, { maxDepth: 8, maxArrayLength: 100 }), null, 2)));
-    }
+    this.logger.debug(`${message}${formatContext({ ...this.context, ...context })}`, data);
   }
 
   verbose(message: string, data?: unknown, context?: LogContext): void {
-    if (!shouldLog(this.level, 'verbose')) return;
-
-    console.log(`${pc.gray('•')} ${message}${formatContext({ ...this.context, ...context })}`);
-
-    if (data !== undefined) {
-      console.log(pc.dim(JSON.stringify(sanitizeLogData(data), null, 2)));
-    }
+    this.logger.debug(`${message}${formatContext({ ...this.context, ...context })}`, data);
   }
 
   debug(message: string, data?: unknown, context?: LogContext): void {
-    if (!shouldLog(this.level, 'debug')) return;
-
-    console.log(`${pc.magenta('◆')} ${message}${formatContext({ ...this.context, ...context })}`);
-
-    if (data !== undefined) {
-      console.log(pc.dim(JSON.stringify(sanitizeLogData(data, 0, { maxDepth: 8, maxArrayLength: 100 }), null, 2)));
-    }
+    this.logger.debug(`${message}${formatContext({ ...this.context, ...context })}`, data);
   }
 
   time(label: string, context?: LogContext): () => void {
-    if (!shouldLog(this.level, 'debug')) {
-      return () => undefined;
-    }
-
     const startedAt = performance.now();
     this.debug(`Started ${label}`, undefined, context);
 
