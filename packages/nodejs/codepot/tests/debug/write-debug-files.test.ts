@@ -1,14 +1,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { createCodepotCompiler } from '@/index';
+import { writeAuthoringDebugPackage } from '@/app';
 import { demoConfig } from '@/tests/fixtures/contracts/demo.contract';
-
-const compiler = createCodepotCompiler();
 
 describe('writeDebugFiles', () => {
   it('writes authoring debug json and yaml files', async () => {
-    const result = await compiler.writeAuthoringDebugPackage(demoConfig);
+    const result = await writeAuthoringDebugPackage(demoConfig);
 
     expect(result.files).toEqual(['tests/generated/debug/demo.authoring.json', 'tests/generated/debug/demo.authoring.yaml']);
 

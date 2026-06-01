@@ -146,9 +146,31 @@ export function resolveSecurityCredential(input: ResolveSecurityCredentialInput)
 // ============================================================================
 
 /**
+ * Normalizes principal input into a field map.
+ *
+ * Authoring may store principals either as:
+ * - { fields: { id: ref } }
+ * - { id: ref, roles: ref }
+ */
+function getPrincipalFields(principal: SecurityPrincipalInput): Record<string, unknown> {
+  if (
+    principal !== null &&
+    typeof principal === 'object' &&
+    'fields' in principal &&
+    principal.fields !== undefined &&
+    principal.fields !== null
+  ) {
+    return principal.fields as unknown as Record<string, unknown>;
+  }
+
+  return principal as unknown as Record<string, unknown>;
+}
+
+/**
  * Converts authoring principal fields into IR field refs.
  */
-function resolvePrincipalFields(fields: SecurityPrincipalInput['fields']): SecurityPrincipalDefinition['fields'] {
+function resolvePrincipalFields(principal: SecurityPrincipalInput): SecurityPrincipalDefinition['fields'] {
+  const fields = getPrincipalFields(principal);
   const output: SecurityPrincipalDefinition['fields'] = {};
 
   for (const [key, ref] of Object.entries(fields)) {
@@ -168,7 +190,7 @@ function resolvePrincipalFields(fields: SecurityPrincipalInput['fields']): Secur
 export function resolveSecurityPrincipal(input: ResolveSecurityPrincipalInput): SecurityPrincipalDefinition {
   return {
     ...resolveDefinitionItem(input.principal),
-    fields: resolvePrincipalFields(input.principal.fields),
+    fields: resolvePrincipalFields(input.principal),
   };
 }
 

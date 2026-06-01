@@ -59,7 +59,7 @@ export type RouteResponseDefinition = Ref<ErrorResponseDefinition> | RouteInline
 export interface RouteMethodDefinition extends DefinitionItem {
   operation: Ref<OperationDefinition>;
 
-  security?: Ref<SecurityPolicyDefinition>;
+  security?: Ref<SecurityPolicyDefinition> | SecurityPolicyDefinition;
 
   params?: Ref<ParamsDefinition>;
   query?: RouteSchemaRef;

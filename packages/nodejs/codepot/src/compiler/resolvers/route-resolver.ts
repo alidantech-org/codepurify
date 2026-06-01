@@ -13,10 +13,12 @@ import type {
 
 import type { OperationDefinition } from '@/contract/types/ir/resource/operation/definition';
 import type { Ref } from '@/contract/types/ir/ref';
+import type { SecurityPolicyDefinition } from '@/contract/types/ir/security/definition';
 
 import type { CompilerContext } from '../context/compiler-context';
 
 import { contentTypeRef, dtoRef, errorResponseRef, modelRef, operationRef, paramsRef, securityPolicyRef } from './ref-resolver';
+import { resolveSecurityPolicy } from './security-resolver';
 
 import { normalizeContentList, normalizeContentTypeKey, normalizeOptionalContentList, resolveContentType } from './content-type-resolver';
 
@@ -274,16 +276,38 @@ function resolveRouteParamsRef(input: object): Ref {
 }
 
 /**
- * Resolves an authoring security policy ref into an IR security policy ref.
+ * Checks whether a route security value is an inline security policy.
  */
-function resolveRouteSecurityRef(input: object): Ref {
-  const value = unwrapRefInput(input);
+function isInlineSecurityPolicy(input: object | null | undefined): input is { readonly mode: SecurityPolicyDefinition['mode'] } {
+  return input !== null && input !== undefined && 'mode' in input && typeof input.mode === 'string';
+}
 
-  if (value.kind === 'security.policy') {
-    return securityPolicyRef(toSnakeCaseKey(value.key));
+/**
+ * Resolves route security into either a security policy ref or inline policy.
+ *
+ * Authoring supports both:
+ * - security.ref.tenantAdmin
+ * - security.protected()
+ */
+function resolveRouteSecurity(input: object): Ref | SecurityPolicyDefinition {
+  if (isAuthoringRef(input) || isUsageWrapper(input)) {
+    const value = unwrapRefInput(input);
+
+    if (value.kind === 'security.policy') {
+      return securityPolicyRef(toSnakeCaseKey(value.key));
+    }
+
+    throw new Error(`Unsupported route security ref kind "${value.kind}".`);
   }
 
-  throw new Error(`Unsupported route security ref kind "${value.kind}".`);
+  if (isInlineSecurityPolicy(input)) {
+    return resolveSecurityPolicy({
+      key: 'inline',
+      policy: input as never,
+    });
+  }
+
+  throw new Error('Route security must be a security policy ref or inline security policy.');
 }
 
 /**
@@ -477,7 +501,7 @@ export function resolveRoute(input: ResolveRouteInput): ResolvedRoute {
     method: {
       operation: operationRef(toSnakeCaseKey(resourceKey), operationKey),
 
-      ...(route.security !== undefined && route.security !== null ? { security: resolveRouteSecurityRef(route.security as object) } : {}),
+      ...(route.security !== undefined && route.security !== null ? { security: resolveRouteSecurity(route.security as object) } : {}),
 
       ...(route.params !== undefined && route.params !== null ? { params: resolveRouteParamsRef(route.params as object) } : {}),
 

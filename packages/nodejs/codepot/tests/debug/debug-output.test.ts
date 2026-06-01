@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCodepotCompiler } from '@/index';
+import { emitAuthoringDebugPackage, serializeAuthoringDebugPackageJson, serializeAuthoringDebugPackageYaml } from '@/app';
 
 import { demoConfig } from '@/tests/fixtures/contracts/demo.contract';
 
-const compiler = createCodepotCompiler();
-
 describe('debug authoring output', () => {
   it('emits collected authoring intent', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
 
     expect(output.contracts).toHaveLength(1);
 
@@ -48,7 +46,7 @@ describe('debug authoring output', () => {
   });
 
   it('emits promotable inline properties', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
 
     expect(output.contracts).toHaveLength(1);
 
@@ -81,7 +79,7 @@ describe('debug authoring output', () => {
   });
 
   it('applies meaningful defaults without verbose false noise', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
 
     expect(output.contracts).toHaveLength(1);
 
@@ -114,7 +112,7 @@ describe('debug authoring output', () => {
   });
 
   it('refs do not contain name property', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
 
     expect(output.contracts).toHaveLength(1);
 
@@ -136,7 +134,7 @@ describe('debug authoring output', () => {
   });
 
   it('writes debug json string without compiled refs', () => {
-    const json = compiler.serializeAuthoringDebugPackageJson(demoConfig);
+    const json = serializeAuthoringDebugPackageJson(demoConfig);
 
     expect(json).toContain('"contracts"');
     expect(json).toContain('security:credential:bearer');
@@ -145,7 +143,7 @@ describe('debug authoring output', () => {
   });
 
   it('writes debug yaml string without compiled refs', () => {
-    const yaml = compiler.serializeAuthoringDebugPackageYaml(demoConfig);
+    const yaml = serializeAuthoringDebugPackageYaml(demoConfig);
 
     expect(yaml).toContain('contracts:');
     expect(yaml).toContain('security:credential:bearer');
@@ -154,7 +152,7 @@ describe('debug authoring output', () => {
   });
 
   it('emits new security model with credentials, principals, and policies', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const security = contract.security;
 
@@ -209,7 +207,7 @@ describe('debug authoring output', () => {
   });
 
   it('resources accept both inline security policy and policy refs', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
 
     const users = contract.resources.users;
@@ -223,7 +221,7 @@ describe('debug authoring output', () => {
   });
 
   it('adds json content by default when body has schema', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const users = contract.resources.users;
 
@@ -237,7 +235,7 @@ describe('debug authoring output', () => {
   });
 
   it('adds json content by default when output has schema', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const users = contract.resources.users;
 
@@ -251,7 +249,7 @@ describe('debug authoring output', () => {
   });
 
   it('does not add json content for no-content output', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const users = contract.resources.users;
 
@@ -260,7 +258,7 @@ describe('debug authoring output', () => {
   });
 
   it('preserves explicit multipart content', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const users = contract.resources.users;
 
@@ -274,7 +272,7 @@ describe('debug authoring output', () => {
   });
 
   it('preserves multiple explicit output content types', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const users = contract.resources.users;
 
@@ -293,7 +291,7 @@ describe('debug authoring output', () => {
   });
 
   it('content descriptors include key, type, and strategy', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const users = contract.resources.users;
 
@@ -305,7 +303,7 @@ describe('debug authoring output', () => {
   });
 
   it('old security graph is gone', () => {
-    const output = compiler.emitAuthoringDebugPackage(demoConfig);
+    const output = emitAuthoringDebugPackage(demoConfig);
     const contract = output.contracts[0] as any;
     const security = contract.security;
 

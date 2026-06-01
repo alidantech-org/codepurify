@@ -5,7 +5,9 @@ import type {
   CompositePropertySourceInput,
   CompositePropertyValueInput,
   EnumPropertySourceInput,
+  InlinePropertyMemberInput,
   PrimitivePropertySourceInput,
+  PropertyRefMemberInput,
   PropertySourceBuilder,
   PropertySourceInput,
 } from '@/contract/types/authoring/4.properties-builder';
@@ -76,6 +78,38 @@ function isPropertySourceInput(input: CompositePropertyValueInput): input is Pro
   return input !== null && typeof input === 'object' && 'kind' in input;
 }
 
+/**
+ * Checks whether a composite member is a normalized ref member.
+ */
+function isNormalizedRefMember(input: unknown): input is PropertyRefMemberInput {
+  return (
+    input !== null &&
+    typeof input === 'object' &&
+    'source' in input &&
+    input.source !== null &&
+    typeof input.source === 'object' &&
+    'mode' in input.source &&
+    input.source.mode === 'ref' &&
+    'ref' in input.source
+  );
+}
+
+/**
+ * Checks whether a composite member is a normalized inline member.
+ */
+function isNormalizedInlineMember(input: unknown): input is InlinePropertyMemberInput {
+  return (
+    input !== null &&
+    typeof input === 'object' &&
+    'source' in input &&
+    input.source !== null &&
+    typeof input.source === 'object' &&
+    'mode' in input.source &&
+    input.source.mode === 'inline' &&
+    'property' in input.source
+  );
+}
+
 // ============================================================================
 // PROMOTION REGISTRATION
 // ============================================================================
@@ -112,6 +146,19 @@ function registerPromotedProperty(ctx: CompilerContext, promoted: PromotedProper
 function resolveCompositeMember(ctx: CompilerContext, compositeKey: string, memberKey: string, input: CompositePropertyValueInput): Ref {
   if (isPropertyAuthoringRef(input)) {
     return resolvePropertyRef(input).ref;
+  }
+
+  if (isNormalizedRefMember(input)) {
+    return resolvePropertyRef(input.source.ref as PropertyAuthoringRef).ref;
+  }
+
+  if (isNormalizedInlineMember(input)) {
+    const source = unwrapPropertySource(input.source.property);
+    const promoted = promoteInlineProperty(source, compositeKey, memberKey);
+
+    registerPromotedProperty(ctx, promoted);
+
+    return promoted.ref;
   }
 
   if (isPropertySourceBuilder(input)) {

@@ -31,6 +31,5 @@ export {
   AuthoringRefKind,
 } from './contract';
 
-export { compile, CodepotCompiler, createCodepotCompiler } from './compiler';
-
-export type { AuthoringDebugPackage, WriteAuthoringDebugPackageOptions, WriteAuthoringDebugPackageResult } from './compiler';
+export { compile } from './compiler';
+export * from './app';
