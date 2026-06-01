@@ -1,18 +1,17 @@
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
-
-import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
-import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
-import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
-import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
-import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
-
 import type { ResourceAuthoringRef } from './3.authoring-ref';
-import type { PropertiesBuilder } from './4.properties-builder';
-import type { SchemasBuilder } from './5.schemas-builder';
-import type { ErrorInputMap, ErrorsResult } from './8.errors-builder';
-import type { RoutesBuilder } from './7.routes-builder';
+import type { DefinitionItem, PropertiesAuthoringState, PropertiesBuilder } from './4.properties-builder';
+import type { SchemasAuthoringState, SchemasBuilder } from './5.schemas-builder';
+import type { ErrorInputMap, ErrorsResult, ErrorsAuthoringState } from './8.errors-builder';
+import type { RoutesAuthoringState, RoutesBuilder, RoutePathAuthoringDefinition } from './7.routes-builder';
 import type { RouteSecurityInput } from './9.security-builder';
+
+// ============================================================================
+// RESOURCE DEFAULTS
+// ============================================================================
+
+export interface ResourceDefaults {
+  readonly security?: RouteSecurityInput;
+}
 
 // ============================================================================
 // DEFINE RESOURCE OPTIONS
@@ -43,7 +42,7 @@ export interface DefineResourceOptions extends DefinitionItem {
   /**
    * Other resource-level default behavior.
    */
-  readonly defaults?: Partial<Omit<ResourceDefinition['defaults'], 'security'>>;
+  readonly defaults?: Partial<ResourceDefaults>;
 }
 
 // ============================================================================
@@ -55,26 +54,22 @@ export interface ResourceAuthoringState extends DefinitionItem {
 
   readonly folders: readonly string[];
 
-  readonly defaults: {
-    readonly security?: RouteSecurityInput;
-  };
+  readonly defaults: ResourceDefaults;
 
-  readonly properties: Partial<PropertiesDefinition>;
+  readonly properties: Partial<PropertiesAuthoringState>;
 
   /**
    * Resource-scoped schemas:
    * entities, DTOs, params, model overrides, field-set overrides.
    */
-  readonly schemas: Partial<SchemasDefinition>;
+  readonly schemas: Partial<SchemasAuthoringState>;
 
   /**
    * Resource-scoped reusable API errors.
    */
-  readonly errors: Partial<ErrorsDefinition>;
+  readonly errors: Partial<ErrorsAuthoringState>;
 
-  readonly operations: Record<string, OperationDefinition>;
-
-  readonly routes: RoutesDefinition;
+  readonly routes: RoutesAuthoringState;
 }
 
 // ============================================================================
@@ -119,17 +114,12 @@ export interface ResourceBuilder {
   /**
    * Adds/preloads resource-scoped reusable errors while helpers are incomplete.
    */
-  addErrors(errors: Partial<ErrorsDefinition>): ResourceBuilder;
+  addErrors(errors: Partial<ErrorsAuthoringState>): ResourceBuilder;
 
   /**
    * Adds/preloads route data while route helpers are incomplete.
    */
-  addRoute(key: string, route: RoutePathDefinition): ResourceBuilder;
-
-  /**
-   * Adds/preloads operation data while route helpers are incomplete.
-   */
-  addOperation(key: string, operation: OperationDefinition): ResourceBuilder;
+  addRoute(key: string, route: RoutePathAuthoringDefinition): ResourceBuilder;
 
   /**
    * Resource authoring snapshot.

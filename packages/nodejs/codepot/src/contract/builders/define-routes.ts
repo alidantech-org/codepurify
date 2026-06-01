@@ -1,30 +1,28 @@
 // src/contract/builders/define-routes.ts
 
-import { HttpMethod } from '@/contract/types/compiled/resource/route/definition';
+import type { RouteAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
-import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
-import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
-
-import type { OperationAuthoringRef, RouteAuthoringRef } from '@/contract/types/core/3.authoring-ref';
+import { HttpMethod } from '@/contract/types/core/7.routes-builder';
 
 import type {
-  DefineRoutesFactoryInput,
+  RouteContentDefinition,
   RouteDefinitionInput,
   RouteErrorInput,
   RouteHelper,
   RouteMethodChain,
   RouteOutputOptions,
   RouteParamsInput,
+  RoutePathAuthoringDefinition,
   RouteSchemaInput,
+  RoutesAuthoringState,
   RoutesBuilder,
   RoutesBuilderResult,
+  DefineRoutesFactoryInput,
 } from '@/contract/types/core/7.routes-builder';
-
-import type { ContentDefinition } from '@/contract/types/compiled/response/errors/definition';
 
 import { content } from '@/contract/helpers/content/content';
 
-import { operationRef, routeRef } from '@/contract/helpers/refs/authoring-ref-builder';
+import { routeRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
 // ============================================================================
 // OPTIONS
@@ -32,8 +30,7 @@ import { operationRef, routeRef } from '@/contract/helpers/refs/authoring-ref-bu
 
 export interface DefineRoutesOptions {
   readonly resourceKey: string;
-  readonly routes: RoutesDefinition;
-  readonly operations: Record<string, OperationDefinition>;
+  readonly routes: RoutesAuthoringState;
 }
 
 // ============================================================================
@@ -48,22 +45,24 @@ function normalizeRouteParams(params: RouteParamsInput): RouteParamsInput {
   return params;
 }
 
-function normalizeContent(contentValue?: readonly ContentDefinition[] | ContentDefinition): readonly ContentDefinition[] | undefined {
+function normalizeContent(
+  contentValue?: readonly RouteContentDefinition[] | RouteContentDefinition,
+): readonly RouteContentDefinition[] | undefined {
   if (contentValue === undefined) return undefined;
 
-  return (Array.isArray(contentValue) ? contentValue : [contentValue]) as readonly ContentDefinition[];
+  return (Array.isArray(contentValue) ? contentValue : [contentValue]) as readonly RouteContentDefinition[];
 }
 
-function isContentDefinition(value: unknown): value is ContentDefinition {
+function isContentDefinition(value: unknown): value is RouteContentDefinition {
   return !!value && typeof value === 'object' && 'type' in value && typeof (value as { type: unknown }).type === 'string';
 }
 
-function isContentDefinitionList(value: unknown): value is readonly ContentDefinition[] | ContentDefinition {
+function isContentDefinitionList(value: unknown): value is readonly RouteContentDefinition[] | RouteContentDefinition {
   return isContentDefinition(value) || (Array.isArray(value) && value.every(isContentDefinition));
 }
 
 function normalizeOutputOptions(
-  contentOrOptions?: readonly ContentDefinition[] | ContentDefinition | RouteOutputOptions,
+  contentOrOptions?: readonly RouteContentDefinition[] | RouteContentDefinition | RouteOutputOptions,
 ): RouteOutputOptions {
   if (contentOrOptions === undefined) return {};
 
@@ -79,7 +78,7 @@ function normalizeOutputOptions(
 function createOutput(
   schema: RouteSchemaInput | undefined,
   status: number,
-  contentOrOptions?: readonly ContentDefinition[] | ContentDefinition | RouteOutputOptions,
+  contentOrOptions?: readonly RouteContentDefinition[] | RouteContentDefinition | RouteOutputOptions,
 ) {
   const options = normalizeOutputOptions(contentOrOptions);
 
@@ -247,21 +246,7 @@ function writeRoutes<TInput extends DefineRoutesFactoryInput>(options: DefineRou
 }
 
 function writeRoute(options: DefineRoutesOptions, key: string, value: RouteDefinitionInput): void {
-  const operation = value.operation ?? operationRef(options.resourceKey, key);
-
-  options.operations[key] = createOperationState(value, operation);
-  options.routes[key] = value as unknown as RoutePathDefinition;
-}
-
-function createOperationState(value: RouteDefinitionInput, operation: OperationAuthoringRef): OperationDefinition {
-  return {
-    description: value.description,
-    deprecated: value.deprecated,
-    meta: {
-      ...(value.meta ?? {}),
-      operationRef: operation,
-    },
-  } as unknown as OperationDefinition;
+  options.routes[key] = value;
 }
 
 // ============================================================================
@@ -271,10 +256,7 @@ function createOperationState(value: RouteDefinitionInput, operation: OperationA
 export function defineRoutes(options: DefineRoutesOptions): RoutesBuilder {
   const builder: RoutesBuilder = {
     get state() {
-      return {
-        routes: options.routes,
-        operations: options.operations,
-      };
+      return options.routes;
     },
 
     define<TInput extends DefineRoutesFactoryInput>(
@@ -295,16 +277,8 @@ export function defineRoutes(options: DefineRoutesOptions): RoutesBuilder {
       return builder;
     },
 
-    addOperation(key, operation) {
-      options.operations[key] = operation;
-      return builder;
-    },
-
     snapshot() {
-      return {
-        routes: options.routes,
-        operations: options.operations,
-      };
+      return options.routes;
     },
   };
 

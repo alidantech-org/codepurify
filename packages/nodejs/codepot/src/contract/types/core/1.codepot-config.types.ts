@@ -3,7 +3,20 @@ import type { LoggerConfig } from '@/utils/logger';
 import type { CompileOptions } from './0.compile-options.types';
 import type { VersionBuilder } from './2.version-builder';
 
-import type { UrlEnv } from '@/contract/types/compiled/url/definition';
+// ============================================================================
+// URL ENVIRONMENT
+// ============================================================================
+
+export const UrlEnv = {
+  local: 'local',
+  development: 'development',
+  preview: 'preview',
+  staging: 'staging',
+  production: 'production',
+  test: 'test',
+} as const;
+
+export type UrlEnv = (typeof UrlEnv)[keyof typeof UrlEnv];
 
 export const CodepotOutputFormat = {
   json: 'json',

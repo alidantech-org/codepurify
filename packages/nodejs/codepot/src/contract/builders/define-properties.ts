@@ -1,10 +1,5 @@
 // src/contract/builders/define-properties.ts
 
-import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
-import type { PrimitiveDefinition } from '@/contract/types/compiled/properties/primitive/definition';
-import type { EnumDefinition } from '@/contract/types/compiled/properties/enum/definition';
-import type { CompositeDefinition } from '@/contract/types/compiled/properties/composite/definition';
-
 import type {
   CompositeAuthoringRef,
   EnumAuthoringRef,
@@ -25,6 +20,7 @@ import type {
   PrimitivePropertiesResult,
   PrimitivePropertySourceInput,
   PrimitivePropertySourceMap,
+  PropertiesAuthoringState,
   PropertiesBuilder,
   PropertyRefsResult,
   PropertySourceInput,
@@ -45,19 +41,19 @@ import { compositeRef, enumRef, primitiveRef, propertyRefFromSource } from '@/co
 export interface DefinePropertiesOptions {
   readonly scope: 'version' | 'resource';
   readonly resourceKey?: string;
-  readonly state: Partial<PropertiesDefinition>;
+  readonly state: Partial<PropertiesAuthoringState>;
 }
 
 // ============================================================================
 // STATE HELPERS
 // ============================================================================
 
-function ensurePropertiesState(state: Partial<PropertiesDefinition>): PropertiesDefinition {
+function ensurePropertiesState(state: Partial<PropertiesAuthoringState>): PropertiesAuthoringState {
   state.primitives ??= {};
   state.enums ??= {};
   state.composites ??= {};
 
-  return state as PropertiesDefinition;
+  return state as PropertiesAuthoringState;
 }
 
 function isPropertySourceBuilder(value: PropertySourceInputLike): value is { readonly input: PropertySourceInput } {
@@ -142,23 +138,23 @@ function normalizePropertySources<TFields extends PropertySourceMap>(fields: TFi
   return normalized;
 }
 
-function writePrimitiveSource(state: PropertiesDefinition, key: string, source: PrimitivePropertySourceInput): void {
-  state.primitives[key] = source as unknown as PrimitiveDefinition;
+function writePrimitiveSource(state: PropertiesAuthoringState, key: string, source: PrimitivePropertySourceInput): void {
+  state.primitives[key] = source;
 }
 
-function writeEnumSource(state: PropertiesDefinition, key: string, source: EnumPropertySourceInput): void {
-  state.enums[key] = source as unknown as EnumDefinition;
+function writeEnumSource(state: PropertiesAuthoringState, key: string, source: EnumPropertySourceInput): void {
+  state.enums[key] = source;
 }
 
 function writeCompositeSource(
-  state: PropertiesDefinition,
+  state: PropertiesAuthoringState,
   key: string,
   source: CompositePropertySourceInput | NormalizedCompositePropertySourceInput,
 ): void {
-  state.composites[key] = source as unknown as CompositeDefinition;
+  state.composites[key] = source as CompositePropertySourceInput;
 }
 
-function writePropertySource(state: PropertiesDefinition, key: string, source: PropertySourceInput): void {
+function writePropertySource(state: PropertiesAuthoringState, key: string, source: PropertySourceInput): void {
   if (source.kind === 'primitive') {
     writePrimitiveSource(state, key, source);
     return;
@@ -175,7 +171,7 @@ function writePropertySource(state: PropertiesDefinition, key: string, source: P
 }
 
 function writePropertySources<TFields extends PropertySourceMap>(
-  state: PropertiesDefinition,
+  state: PropertiesAuthoringState,
   fields: TFields,
 ): Record<keyof TFields & string, PropertySourceInput> {
   const normalized = normalizePropertySources(fields);
@@ -230,7 +226,7 @@ function createCompositeRefs<TFields extends CompositePropertySourceMap>(fields:
 }
 
 function writePropertyGroup<TFields extends PropertySourceMap>(
-  state: Partial<PropertiesDefinition>,
+  state: Partial<PropertiesAuthoringState>,
   fields: TFields,
 ): PropertyRefsResult<TFields> {
   const propertiesState = ensurePropertiesState(state);

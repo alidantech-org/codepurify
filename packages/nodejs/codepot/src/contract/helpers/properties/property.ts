@@ -2,13 +2,13 @@ import {
   FieldVisibilityLevel,
   FieldPersistenceMode,
   QueryOperator,
+  PrimitiveFormat,
+  PrimitiveType,
   type FieldCapabilityConfig,
   type FieldLifecycleConfig,
   type FieldPersistenceConfig,
   type FieldVisibilityConfig,
-} from '@/contract/types/compiled/schema/entity/field/definition';
-
-import { PrimitiveFormat, PrimitiveType } from '@/contract/types/compiled/properties/primitive/definition';
+} from '@/contract/types/core/4.properties-builder';
 
 import type {
   CapabilityHelper,

@@ -1,16 +1,13 @@
 import {
+  PropertySlotSourceMode,
+  EntityRelationKind,
   FieldPersistenceMode,
+  type EntityFieldInput,
+  type EntityFieldOptions,
   type FieldCapabilityConfig,
   type FieldLifecycleConfig,
   type FieldPersistenceConfig,
   type FieldVisibilityConfig,
-} from '@/contract/types/compiled/schema/entity/field/definition';
-
-import {
-  PropertySlotSourceMode,
-  EntityRelationKind,
-  type EntityFieldInput,
-  type EntityFieldOptions,
 } from '@/contract/types/core/4.properties-builder';
 
 function isRelation(field: EntityFieldInput): boolean {

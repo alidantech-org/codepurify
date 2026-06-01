@@ -1,7 +1,6 @@
-import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/compiled/security/definition';
+import { SecurityCredentialFormat, SecurityCredentialSource, SecurityPolicyMode } from '@/contract/types/core/9.security-builder';
 
 import type {
-  SecurityBuilder,
   SecurityCredentialOptions,
   SecurityCredentialInput,
   SecurityPrincipalInput,
@@ -44,14 +43,14 @@ export function principal(fields: SecurityPrincipalInput): SecurityPrincipalInpu
   return fields;
 }
 
-export function publicPolicy(options = {}): SecurityPolicyInput {
+export function publicPolicy(options: Omit<SecurityPolicyInput, 'mode'> = {}): SecurityPolicyInput {
   return {
     ...options,
     mode: SecurityPolicyMode.public,
   };
 }
 
-export function protectedPolicy(options = {}): SecurityPolicyInput {
+export function protectedPolicy(options: Omit<SecurityPolicyInput, 'mode'> = {}): SecurityPolicyInput {
   return {
     ...options,
     mode: SecurityPolicyMode.protected,

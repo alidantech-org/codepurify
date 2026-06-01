@@ -1,29 +1,21 @@
 // src/contract/types/core/3.authoring-ref.ts
 
-import type { PrimitiveDefinition } from '@/contract/types/compiled/properties/primitive/definition';
-import type { EnumDefinition } from '@/contract/types/compiled/properties/enum/definition';
-import type { CompositeDefinition } from '@/contract/types/compiled/properties/composite/definition';
-import type { RefProperty } from '@/contract/types/compiled/properties/definition';
+import type { DefinitionItem, PrimitiveDefinition, EnumDefinition, CompositeDefinition } from './4.properties-builder';
 
-import type { EntityDefinition } from '@/contract/types/compiled/schema/entity/definition';
-import type { EntityField } from '@/contract/types/compiled/schema/entity/field/definition';
-import type { ModelDefinition } from '@/contract/types/compiled/schema/model/definition';
-import type { DtoDefinition } from '@/contract/types/compiled/schema/dto/definition';
-import type { ParamsDefinition } from '@/contract/types/compiled/schema/params/definition';
-
-import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
-import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
-import type { RoutePathDefinition } from '@/contract/types/compiled/resource/route/definition';
-
-import type { ErrorDefinition } from '@/contract/types/compiled/response/errors/definition';
-
-import type {
-  SecurityCredentialDefinition,
-  SecurityPolicyDefinition,
-  SecurityPrincipalDefinition,
-} from '@/contract/types/compiled/security/definition';
-
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
+// Authoring-layer target types (not compiled IR)
+export type EntityDefinition = unknown;
+export type EntityFieldDefinition = unknown;
+export type ModelDefinition = unknown;
+export type DtoDefinition = unknown;
+export type ParamsDefinition = unknown;
+export type ResourceDefinition = unknown;
+export type OperationDefinition = unknown;
+export type RoutePathDefinition = unknown;
+export type ErrorDefinition = unknown;
+export type SecurityCredentialDefinition = unknown;
+export type SecurityPrincipalDefinition = unknown;
+export type SecurityPolicyDefinition = unknown;
+export type RefProperty = unknown;
 
 // ============================================================================
 // AUTHORING REF KIND
@@ -172,9 +164,8 @@ export type PropertyRefTarget = RefProperty;
 
 export type EntityAuthoringRef = AuthoringRef<EntityDefinition, typeof AuthoringRefKind.schemaEntity>;
 
-export type EntityFieldAuthoringRef = AuthoringRef<EntityField, typeof AuthoringRefKind.schemaEntityField>;
+export type EntityFieldAuthoringRef = AuthoringRef<EntityFieldDefinition, typeof AuthoringRefKind.schemaEntityField>;
 
-// TODO: Add EntityFieldSetDefinition to schema types and use it here.
 export type EntityFieldSetAuthoringRef = AuthoringRef<ModelDefinition, typeof AuthoringRefKind.schemaEntityFieldSet>;
 
 export type ModelAuthoringRef<TExtension = unknown> = ExtendableAuthoringRef<

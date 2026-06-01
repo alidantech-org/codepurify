@@ -1,8 +1,6 @@
 // src/contract/builders/define-errors.ts
 
-import type { ErrorDefinition, ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
-
-import type { ErrorInputMap, ErrorsBuilder, ErrorsResult } from '@/contract/types/core/8.errors-builder';
+import type { ErrorInput, ErrorInputMap, ErrorsAuthoringState, ErrorsBuilder, ErrorsResult } from '@/contract/types/core/8.errors-builder';
 
 import { content } from '@/contract/helpers/content/content';
 import { error } from '@/contract/helpers/errors/error';
@@ -13,15 +11,15 @@ import { errorRef } from '@/contract/helpers/refs/authoring-ref-builder';
 // ============================================================================
 
 export interface DefineErrorsOptions {
-  readonly state: Partial<ErrorsDefinition>;
+  readonly state: Partial<ErrorsAuthoringState>;
 }
 
 // ============================================================================
 // STATE HELPERS
 // ============================================================================
 
-function ensureState(state: Partial<ErrorsDefinition>): ErrorsDefinition {
-  return state as ErrorsDefinition;
+function ensureState(state: Partial<ErrorsAuthoringState>): Partial<ErrorsAuthoringState> {
+  return state;
 }
 
 function createErrorRefs<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput>['ref'] {
@@ -34,9 +32,9 @@ function createErrorRefs<TInput extends ErrorInputMap>(input: TInput): ErrorsRes
   return refs as ErrorsResult<TInput>['ref'];
 }
 
-function writeErrors<TInput extends ErrorInputMap>(state: ErrorsDefinition, input: TInput): void {
+function writeErrors<TInput extends ErrorInputMap>(state: Partial<ErrorsAuthoringState>, input: TInput): void {
   for (const [key, value] of Object.entries(input) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-    state[key] = value as unknown as ErrorDefinition;
+    state[key] = value as ErrorInput;
   }
 }
 

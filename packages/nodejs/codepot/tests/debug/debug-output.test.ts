@@ -29,7 +29,8 @@ describe('debug authoring output', () => {
     expect(json).toContain('security:principal:user');
     expect(json).toContain('security:policy:tenantAdmin');
 
-    expect(json).toContain('resource:users');
+    expect(json).toContain('"users"');
+    expect(json).toContain('"listUsers"');
 
     expect(json).toContain('"routes"');
 
@@ -37,10 +38,11 @@ describe('debug authoring output', () => {
     expect(json).not.toContain('#/schemas');
     expect(json).not.toContain('#/security');
 
-    // Verify operations do not contain duplicated input/output
+    // Verify operations do not exist in authoring (they are compiler output)
     const contract = output.contracts[0] as any;
-    expect(contract.resources.users.operations.listUsers.input).toBeUndefined();
-    expect(contract.resources.users.operations.listUsers.output).toBeUndefined();
+    expect(contract.resources.users.operations).toBeUndefined();
+    expect(contract.resources.users.routes.listUsers).toBeDefined();
+    expect(contract.resources.users.routes.createUser).toBeDefined();
   });
 
   it('emits promotable inline properties', () => {
@@ -170,13 +172,13 @@ describe('debug authoring output', () => {
     // Verify principals
     expect(security.principals).toBeDefined();
     expect(security.principals.user).toBeDefined();
-    expect(security.principals.user.fields.id.id).toBe('schema:entity:BaseEntity:field:id');
-    expect(security.principals.user.fields.roles.id).toBe('schema:entity:User:field:roles');
-    expect(security.principals.user.fields.status.id).toBe('schema:entity:User:field:status');
+    expect(security.principals.user.id.id).toBe('schema:entity:BaseEntity:field:id');
+    expect(security.principals.user.roles.id).toBe('schema:entity:User:field:roles');
+    expect(security.principals.user.status.id).toBe('schema:entity:User:field:status');
 
     expect(security.principals.tenant).toBeDefined();
-    expect(security.principals.tenant.fields.id.id).toBe('schema:entity:BaseEntity:field:id');
-    expect(security.principals.tenant.fields.ownerId.id).toBe('schema:entity:Tenant:field:ownerId');
+    expect(security.principals.tenant.id.id).toBe('schema:entity:BaseEntity:field:id');
+    expect(security.principals.tenant.ownerId.id).toBe('schema:entity:Tenant:field:ownerId');
 
     // Verify policies
     expect(security.policies).toBeDefined();

@@ -1,27 +1,4 @@
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
-
-import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
-
-import type {
-  PrimitiveDefinition,
-  PrimitiveFormat,
-  PrimitiveType,
-  PrimitiveValidationDefinition,
-} from '@/contract/types/compiled/properties/primitive/definition';
-
-import type { EnumDefinition, EnumValuePrimitive } from '@/contract/types/compiled/properties/enum/definition';
-
-import type { CompositeDefinition } from '@/contract/types/compiled/properties/composite/definition';
-
-import type {
-  FieldCapabilityConfig,
-  FieldLifecycleConfig,
-  FieldPersistenceConfig,
-  FieldPersistenceMode,
-  FieldVisibilityConfig,
-  FieldVisibilityLevel,
-  QueryOperator,
-} from '@/contract/types/compiled/schema/entity/field/definition';
+// src/contract/types/core/4.properties-builder.ts
 
 import type {
   ArrayUsageOptions,
@@ -35,26 +12,141 @@ import type {
   PropertyAuthoringRef,
 } from './3.authoring-ref';
 
+import type {
+  EntityFieldSetName,
+  EntityModelVariant,
+  EntityRelationKind,
+  FieldPersistenceMode,
+  FieldVisibilityLevel,
+  PrimitiveFormat,
+  PrimitiveType,
+  PropertySlotSourceMode,
+  PropertySourceKind,
+  QueryOperator,
+  RelationShape,
+  ValueObject,
+} from '@/contract/constants';
+
+// Re-export all constants for backwards compatibility
+export {
+  EntityFieldSetName,
+  EntityFieldSetNameValues,
+  EntityModelVariant,
+  EntityModelVariantValues,
+  EntityRelationKind,
+  EntityRelationKindValues,
+  FieldPersistenceMode,
+  FieldPersistenceModeValues,
+  FieldVisibilityLevel,
+  FieldVisibilityLevelValues,
+  PrimitiveFormat,
+  PrimitiveFormatValues,
+  PrimitiveType,
+  PrimitiveTypeValues,
+  PropertySlotSourceMode,
+  PropertySlotSourceModeValues,
+  PropertySourceKind,
+  PropertySourceKindValues,
+  QueryOperator,
+  QueryOperatorValues,
+  RelationShape,
+  RelationShapeValues,
+  type ValueObject,
+  valueObject,
+} from '@/contract/constants';
+
+// ============================================================================
+// AUTHORING-OWNED BASE TYPES
+// ============================================================================
+
+export interface DefinitionItem {
+  readonly meta?: Record<string, unknown>;
+  readonly description?: string;
+  readonly deprecated?: boolean;
+}
+
+// ============================================================================
+// AUTHORING PRIMITIVE TYPES
+// ============================================================================
+
+export interface PrimitiveValidationDefinition {
+  readonly minimum?: number;
+  readonly maximum?: number;
+  readonly exclusiveMinimum?: number;
+  readonly exclusiveMaximum?: number;
+  readonly multipleOf?: number;
+  readonly minLength?: number;
+  readonly maxLength?: number;
+  readonly pattern?: string;
+}
+
+export interface PrimitiveDefinition extends DefinitionItem {
+  readonly type: PrimitiveType;
+  readonly format?: PrimitiveFormat;
+  readonly validation?: PrimitiveValidationDefinition;
+  readonly example?: unknown;
+}
+
+// ============================================================================
+// AUTHORING ENUM TYPES
+// ============================================================================
+
+export type EnumValuePrimitive = string | number;
+
+export interface EnumValueDefinition extends DefinitionItem {
+  readonly value: EnumValuePrimitive;
+  readonly label?: string;
+}
+
+export type EnumValuesInput = readonly EnumValuePrimitive[] | Record<string, EnumValuePrimitive | EnumValueDefinition>;
+
+export interface EnumDefinition extends DefinitionItem {
+  readonly values: EnumValuesInput;
+}
+
+// ============================================================================
+// AUTHORING COMPOSITE TYPES
+// ============================================================================
+
+export interface CompositeDefinition extends DefinitionItem {
+  readonly extends?: CompositeAuthoringRef;
+  readonly properties: Record<string, unknown>;
+}
+
+// ============================================================================
+// AUTHORING FIELD/QUERY TYPES
+// ============================================================================
+
+export interface FieldCapabilityConfig extends DefinitionItem {
+  readonly filter?: boolean;
+  readonly sort?: boolean;
+  readonly select?: boolean;
+  readonly operators?: readonly QueryOperator[];
+}
+
+export interface FieldVisibilityConfig extends DefinitionItem {
+  readonly read?: FieldVisibilityLevel;
+  readonly write?: FieldVisibilityLevel;
+  readonly sensitive?: boolean;
+}
+
+export interface FieldLifecycleConfig extends DefinitionItem {
+  readonly create?: boolean;
+  readonly update?: boolean;
+  readonly immutable?: boolean;
+  readonly generated?: boolean;
+  readonly readOnly?: boolean;
+}
+
+export interface FieldPersistenceConfig extends DefinitionItem {
+  readonly mode: FieldPersistenceMode;
+  readonly generated?: boolean;
+  readonly immutable?: boolean;
+}
+
 // ============================================================================
 // PROPERTY SOURCE INPUTS
 // ============================================================================
-
-export const PropertySourceKind = {
-  primitive: 'primitive',
-  enum: 'enum',
-  composite: 'composite',
-  ref: 'ref',
-} as const;
-
-export type PropertySourceKind = (typeof PropertySourceKind)[keyof typeof PropertySourceKind];
-
-export const PropertySlotSourceMode = {
-  ref: 'ref',
-  inline: 'inline',
-  relation: 'relation',
-} as const;
-
-export type PropertySlotSourceMode = (typeof PropertySlotSourceMode)[keyof typeof PropertySlotSourceMode];
 
 export interface InlinePropertyPromotionHint {
   readonly ownerKind: 'entity' | 'composite';
@@ -105,7 +197,7 @@ export interface EnumPropertyValueInput extends DefinitionItem {
 
 export interface EnumPropertySourceInput extends BasePropertySourceInput {
   readonly kind: typeof PropertySourceKind.enum;
-  readonly values: readonly EnumValuePrimitive[] | Record<string, EnumValuePrimitive | EnumPropertyValueInput>;
+  readonly values: EnumValuesInput;
 }
 
 export type CompositePropertyValueInput = PropertySourceInput | PropertySourceBuilder<PropertySourceInput> | PropertyAuthoringRef;
@@ -358,7 +450,7 @@ export interface PropertyHelper {
   password(): StringPropertyBuilder;
   binary(): StringPropertyBuilder;
 
-  enum(values: readonly EnumValuePrimitive[] | Record<string, EnumValuePrimitive | EnumPropertyValueInput>): EnumPropertyBuilder;
+  enum(values: EnumValuesInput): EnumPropertyBuilder;
 
   composite(properties: Record<string, CompositePropertyValueInput>): CompositePropertyBuilder;
 
@@ -369,15 +461,6 @@ export interface PropertyHelper {
 // FIELD SOURCES
 // ============================================================================
 
-export const EntityRelationKind = {
-  belongsTo: 'belongs_to',
-  hasOne: 'has_one',
-  hasMany: 'has_many',
-  manyToMany: 'many_to_many',
-} as const;
-
-export type EntityRelationKind = (typeof EntityRelationKind)[keyof typeof EntityRelationKind];
-
 export interface PropertyFieldSourceInput {
   readonly mode: typeof PropertySlotSourceMode.ref;
   readonly ref: PropertyAuthoringRef;
@@ -385,11 +468,7 @@ export interface PropertyFieldSourceInput {
 
 export interface InlinePropertyFieldSourceInput {
   readonly mode: typeof PropertySlotSourceMode.inline;
-
-  // authoring-time before builder normalization
   readonly property?: PropertySourceInputLike;
-
-  // normalized state
   readonly promote?: InlinePropertyPromotionHint;
 }
 
@@ -495,13 +574,6 @@ export interface PropertyFieldBuilder extends BaseFieldBuilder<EntityFieldInput>
   lifecycle(build: (lifecycle: LifecycleHelper) => LifecycleOptionsBuilder): PropertyFieldBuilder;
 }
 
-/**
- * Relation fields are first-class fields.
- *
- * They support the same core option chain as property fields, but their source
- * is a relation edge instead of a property source. Runtime normalization should
- * store relation targets/inverse/through as lightweight refs only.
- */
 export interface RelationFieldBuilder extends BaseFieldBuilder<EntityFieldInput> {
   nullable(value?: boolean): RelationFieldBuilder;
   nonNullable(): RelationFieldBuilder;
@@ -514,9 +586,7 @@ export interface RelationFieldBuilder extends BaseFieldBuilder<EntityFieldInput>
   persistence(build: (persistence: PersistenceHelper) => PersistenceOptionsBuilder): RelationFieldBuilder;
 
   capability(build: (capability: CapabilityHelper) => CapabilityOptionsBuilder): RelationFieldBuilder;
-
   visibility(build: (visibility: VisibilityHelper) => VisibilityOptionsBuilder): RelationFieldBuilder;
-
   lifecycle(build: (lifecycle: LifecycleHelper) => LifecycleOptionsBuilder): RelationFieldBuilder;
 
   inverse(refOrFactory: RelationInverseInput): RelationFieldBuilder;
@@ -530,7 +600,6 @@ export interface RelationFieldBuilder extends BaseFieldBuilder<EntityFieldInput>
   ): RelationFieldBuilder;
 
   expandable(value?: boolean): RelationFieldBuilder;
-
   relationName(name: string): RelationFieldBuilder;
 }
 
@@ -568,7 +637,7 @@ export interface FieldHelper {
   password(): PropertyFieldBuilder;
   binary(): PropertyFieldBuilder;
 
-  enum(values: readonly EnumValuePrimitive[] | Record<string, EnumValuePrimitive | EnumPropertyValueInput>): PropertyFieldBuilder;
+  enum(values: EnumValuesInput): PropertyFieldBuilder;
 
   composite(properties: Record<string, CompositePropertyValueInput>): PropertyFieldBuilder;
 
@@ -601,78 +670,6 @@ export type EntityRelationOverrides<TFields extends EntityFieldInputMap> = Parti
 // ENTITY MODELS / FIELD SETS
 // ============================================================================
 
-export const RelationShape = {
-  expand: 'expand',
-  idOnly: 'id_only',
-  omit: 'omit',
-} as const;
-
-export type RelationShape = (typeof RelationShape)[keyof typeof RelationShape];
-
-export const EntityModelVariant = {
-  read: 'read',
-  create: 'create',
-  patch: 'patch',
-  query: 'query',
-  public: 'public',
-  publicList: 'publicList',
-  admin: 'admin',
-  internal: 'internal',
-  summary: 'summary',
-  option: 'option',
-  relation: 'relation',
-  projection: 'projection',
-  redacted: 'redacted',
-} as const;
-
-export type EntityModelVariant = (typeof EntityModelVariant)[keyof typeof EntityModelVariant];
-
-export const EntityFieldSetName = {
-  all: 'all',
-
-  scalar: 'scalar',
-  relation: 'relation',
-
-  readable: 'readable',
-  writable: 'writable',
-  selectable: 'selectable',
-  sortable: 'sortable',
-  filterable: 'filterable',
-
-  public: 'public',
-  internal: 'internal',
-  secret: 'secret',
-  sensitive: 'sensitive',
-  redacted: 'redacted',
-
-  persisted: 'persisted',
-  virtual: 'virtual',
-  computed: 'computed',
-  generated: 'generated',
-  immutable: 'immutable',
-
-  create: 'create',
-  patch: 'patch',
-  read: 'read',
-  list: 'list',
-  summary: 'summary',
-  option: 'option',
-
-  listSelect: 'list_select',
-  listSort: 'list_sort',
-  listFilter: 'list_filter',
-
-  publicListSelect: 'public_list_select',
-  publicListSort: 'public_list_sort',
-  publicListFilter: 'public_list_filter',
-
-  adminListSelect: 'admin_list_select',
-  adminListSort: 'admin_list_sort',
-  adminListFilter: 'admin_list_filter',
-} as const;
-
-export type EntityFieldSetName = (typeof EntityFieldSetName)[keyof typeof EntityFieldSetName];
-
 export type EntityFieldKey<TFields extends EntityFieldInputMap> = keyof TFields & string;
 
 export type EntityFieldSetMode = 'only' | 'include' | 'exclude';
@@ -686,9 +683,7 @@ export interface EntityFieldSetOverrideBuilder<TFields extends EntityFieldInputM
   readonly input: EntityFieldSetOverrideInput<TFields>;
 
   only(...fields: EntityFieldKey<TFields>[]): EntityFieldSetOverrideBuilder<TFields>;
-
   include(...fields: EntityFieldKey<TFields>[]): EntityFieldSetOverrideBuilder<TFields>;
-
   exclude(...fields: EntityFieldKey<TFields>[]): EntityFieldSetOverrideBuilder<TFields>;
 
   description(value: string): EntityFieldSetOverrideBuilder<TFields>;
@@ -761,65 +756,13 @@ export interface EntityOptions<TParent extends EntityExtendsInput | undefined = 
   readonly tags?: readonly string[];
 }
 
-export interface EntityModelRefs {
-  readonly read: ModelAuthoringRef;
-  readonly create: ModelAuthoringRef;
-  readonly patch: ModelAuthoringRef;
-  readonly query: ModelAuthoringRef;
-  readonly public: ModelAuthoringRef;
-  readonly publicList: ModelAuthoringRef;
-  readonly admin: ModelAuthoringRef;
-  readonly internal: ModelAuthoringRef;
-  readonly summary: ModelAuthoringRef;
-  readonly option: ModelAuthoringRef;
-  readonly relation: ModelAuthoringRef;
-  readonly projection: ModelAuthoringRef;
-  readonly redacted: ModelAuthoringRef;
-}
+export type EntityModelRefs = {
+  readonly [K in EntityModelVariant]: ModelAuthoringRef;
+};
 
-export interface EntityFieldSetRefs {
-  readonly all: EntityFieldSetAuthoringRef;
-
-  readonly scalar: EntityFieldSetAuthoringRef;
-  readonly relation: EntityFieldSetAuthoringRef;
-
-  readonly readable: EntityFieldSetAuthoringRef;
-  readonly writable: EntityFieldSetAuthoringRef;
-  readonly selectable: EntityFieldSetAuthoringRef;
-  readonly sortable: EntityFieldSetAuthoringRef;
-  readonly filterable: EntityFieldSetAuthoringRef;
-
-  readonly public: EntityFieldSetAuthoringRef;
-  readonly internal: EntityFieldSetAuthoringRef;
-  readonly secret: EntityFieldSetAuthoringRef;
-  readonly sensitive: EntityFieldSetAuthoringRef;
-  readonly redacted: EntityFieldSetAuthoringRef;
-
-  readonly persisted: EntityFieldSetAuthoringRef;
-  readonly virtual: EntityFieldSetAuthoringRef;
-  readonly computed: EntityFieldSetAuthoringRef;
-  readonly generated: EntityFieldSetAuthoringRef;
-  readonly immutable: EntityFieldSetAuthoringRef;
-
-  readonly create: EntityFieldSetAuthoringRef;
-  readonly patch: EntityFieldSetAuthoringRef;
-  readonly read: EntityFieldSetAuthoringRef;
-  readonly list: EntityFieldSetAuthoringRef;
-  readonly summary: EntityFieldSetAuthoringRef;
-  readonly option: EntityFieldSetAuthoringRef;
-
-  readonly list_select: EntityFieldSetAuthoringRef;
-  readonly list_sort: EntityFieldSetAuthoringRef;
-  readonly list_filter: EntityFieldSetAuthoringRef;
-
-  readonly public_list_select: EntityFieldSetAuthoringRef;
-  readonly public_list_sort: EntityFieldSetAuthoringRef;
-  readonly public_list_filter: EntityFieldSetAuthoringRef;
-
-  readonly admin_list_select: EntityFieldSetAuthoringRef;
-  readonly admin_list_sort: EntityFieldSetAuthoringRef;
-  readonly admin_list_filter: EntityFieldSetAuthoringRef;
-}
+export type EntityFieldSetRefs = {
+  readonly [K in EntityFieldSetName]: EntityFieldSetAuthoringRef;
+};
 
 export interface EntityPropertiesResult<
   TName extends string,
@@ -893,8 +836,22 @@ export interface PropertyRefsResult<TFields extends PropertySourceMap> {
   };
 }
 
+// ============================================================================
+// PROPERTIES AUTHORING STATE
+// ============================================================================
+
+export interface PropertiesAuthoringState {
+  primitives: Record<string, PrimitivePropertySourceInput>;
+  enums: Record<string, EnumPropertySourceInput>;
+  composites: Record<string, CompositePropertySourceInput>;
+}
+
+// ============================================================================
+// PROPERTIES BUILDER
+// ============================================================================
+
 export interface PropertiesBuilder {
-  readonly state: Partial<PropertiesDefinition>;
+  readonly state: Partial<PropertiesAuthoringState>;
 
   primitives<TFields extends PrimitivePropertySourceMap>(fields: TFields): PrimitivePropertiesResult<TFields>;
 
@@ -904,5 +861,5 @@ export interface PropertiesBuilder {
 
   refs<TFields extends PropertySourceMap>(fields: TFields): PropertyRefsResult<TFields>;
 
-  snapshot(): Partial<PropertiesDefinition>;
+  snapshot(): Partial<PropertiesAuthoringState>;
 }

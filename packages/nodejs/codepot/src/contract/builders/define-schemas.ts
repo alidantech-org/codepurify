@@ -1,11 +1,5 @@
 // src/contract/builders/define-schemas.ts
 
-import type { DtoDefinition } from '@/contract/types/compiled/schema/dto/definition';
-import type { ParamsDefinition } from '@/contract/types/compiled/schema/params/definition';
-import type { EntityDefinition } from '@/contract/types/compiled/schema/entity/definition';
-import type { EntityField } from '@/contract/types/compiled/schema/entity/field/definition';
-import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
-
 import type { DtoAuthoringRef, EntityFieldAuthoringRef, ParamsAuthoringRef } from '@/contract/types/core/3.authoring-ref';
 
 import type {
@@ -34,13 +28,16 @@ import type {
 import { PropertySlotSourceMode } from '@/contract/types/core/4.properties-builder';
 
 import type {
+  DtoAuthoringDefinition,
   DtoFieldInput,
   DtoFieldInputMap,
   DtoSchemaInput,
   DtoSchemaInputMap,
   DtoSchemasResult,
+  EntityAuthoringDefinition,
   ParamsInputMap,
   ParamsResult,
+  SchemasAuthoringState,
   SchemasBuilder,
 } from '@/contract/types/core/5.schemas-builder';
 
@@ -65,14 +62,14 @@ import { normalizeEntityFieldOptions } from '@/contract/helpers/properties/field
 export interface DefineSchemasOptions {
   readonly scope: 'version' | 'resource';
   readonly resourceKey?: string;
-  readonly state: Partial<SchemasDefinition>;
+  readonly state: Partial<SchemasAuthoringState>;
 }
 
 // ============================================================================
 // STATE
 // ============================================================================
 
-function ensureState(state: Partial<SchemasDefinition>): Partial<SchemasDefinition> {
+function ensureState(state: Partial<SchemasAuthoringState>): Partial<SchemasAuthoringState> {
   state.entities ??= {};
   state.models ??= {};
   state.dtos ??= {};
@@ -85,7 +82,7 @@ function ensureState(state: Partial<SchemasDefinition>): Partial<SchemasDefiniti
 // ENTITY FIELD NORMALIZATION
 // ============================================================================
 
-function isEntityFieldBuilder(value: EntityFieldInputLike): value is FieldBuilder {
+function isEntityFieldInputBuilder(value: EntityFieldInputLike): value is FieldBuilder {
   return !!value && typeof value === 'object' && 'input' in value;
 }
 
@@ -162,12 +159,12 @@ function normalizeEntityFieldInput(input: {
 }
 
 function toEntityFieldInput(value: EntityFieldInputLike): EntityFieldInput {
-  const input = isEntityFieldBuilder(value) ? value.input : value;
+  const input = isEntityFieldInputBuilder(value) ? value.input : value;
 
   return input;
 }
 
-function normalizeEntityFields<TFields extends EntityFieldInputMap>(
+function normalizeEntityFieldInputs<TFields extends EntityFieldInputMap>(
   entityName: string,
   fields: TFields,
 ): Record<keyof TFields & string, EntityFieldInput> {
@@ -190,7 +187,7 @@ function normalizeEntityFields<TFields extends EntityFieldInputMap>(
 // ENTITY REFS
 // ============================================================================
 
-function createEntityFieldRefs<TFields extends EntityFieldInputMap>(
+function createEntityFieldInputRefs<TFields extends EntityFieldInputMap>(
   entityName: string,
   fields: TFields,
 ): Record<keyof TFields & string, EntityFieldAuthoringRef> {
@@ -211,14 +208,14 @@ function createInheritedFieldRefs<TParent extends EntityExtendsInput | undefined
   return parent.ref.fields as never;
 }
 
-function createAllEntityFieldRefs<TParent extends EntityExtendsInput | undefined, TOwnFields extends EntityFieldInputMap>(
+function createAllEntityFieldInputRefs<TParent extends EntityExtendsInput | undefined, TOwnFields extends EntityFieldInputMap>(
   entityName: string,
   ownFields: TOwnFields,
   parent: TParent,
 ): Record<keyof MergeEntityFields<TParent, TOwnFields> & string, EntityFieldAuthoringRef> {
   return {
     ...createInheritedFieldRefs(parent),
-    ...createEntityFieldRefs(entityName, ownFields),
+    ...createEntityFieldInputRefs(entityName, ownFields),
   } as Record<keyof MergeEntityFields<TParent, TOwnFields> & string, EntityFieldAuthoringRef>;
 }
 
@@ -277,13 +274,13 @@ function normalizeEntityFieldSetOverrides<TFields extends EntityFieldInputMap>(
 }
 
 function writeEntityModelOverrides<TFields extends EntityFieldInputMap>(
-  schemas: Partial<SchemasDefinition>,
+  schemas: Partial<SchemasAuthoringState>,
   name: string,
   models: EntityModelOverrides<TFields>,
 ): void {
   const state = ensureState(schemas);
   const entity = state.entities?.[name] as
-    | (EntityDefinition & {
+    | (EntityAuthoringDefinition<TFields> & {
         modelOverrides?: Partial<Record<keyof EntityModelOverrides<TFields> & string, EntityModelOverrideInput<TFields>>>;
       })
     | undefined;
@@ -294,13 +291,13 @@ function writeEntityModelOverrides<TFields extends EntityFieldInputMap>(
 }
 
 function writeEntityFieldSetOverrides<TFields extends EntityFieldInputMap>(
-  schemas: Partial<SchemasDefinition>,
+  schemas: Partial<SchemasAuthoringState>,
   name: string,
   overrides: EntityFieldSetOverrides<TFields>,
 ): void {
   const state = ensureState(schemas);
   const entity = state.entities?.[name] as
-    | (EntityDefinition & {
+    | (EntityAuthoringDefinition<TFields> & {
         fieldSetOverrides?: Partial<Record<EntityFieldSetName, EntityFieldSetOverrideInput<TFields>>>;
       })
     | undefined;
@@ -315,40 +312,40 @@ function writeEntityFieldSetOverrides<TFields extends EntityFieldInputMap>(
 // ============================================================================
 
 function writeEntitySource<TFields extends EntityFieldInputMap, TParent extends EntityExtendsInput | undefined>(
-  schemas: Partial<SchemasDefinition>,
+  schemas: Partial<SchemasAuthoringState>,
   name: string,
   fields: TFields,
   options: EntityOptions<TParent>,
 ): void {
   const state = ensureState(schemas);
-  const normalizedFields = normalizeEntityFields(name, fields);
+  const normalizedFields = normalizeEntityFieldInputs(name, fields);
 
   state.entities![name] = {
     abstract: options.abstract,
-    fields: normalizedFields as unknown as Record<string, EntityField>,
+    fields: normalizedFields as unknown as Record<string, EntityFieldInput>,
     extends: options.extends ? normalizeEntityTarget(options.extends) : undefined,
     tags: options.tags,
     description: options.description,
     deprecated: options.deprecated,
     meta: options.meta,
-  } as unknown as EntityDefinition;
+  } as unknown as EntityAuthoringDefinition;
 }
 
 function writeEntityRelations<TFields extends EntityFieldInputMap>(
-  schemas: Partial<SchemasDefinition>,
+  schemas: Partial<SchemasAuthoringState>,
   name: string,
   relations: TFields,
 ): void {
   const state = ensureState(schemas);
-  const entity = state.entities?.[name] as (EntityDefinition & { fields: Record<string, EntityField> }) | undefined;
+  const entity = state.entities?.[name] as (EntityAuthoringDefinition & { fields: Record<string, EntityFieldInput> }) | undefined;
 
   if (!entity) return;
 
-  const normalized = normalizeEntityFields(name, relations);
+  const normalized = normalizeEntityFieldInputs(name, relations);
 
   entity.fields = {
     ...(entity.fields ?? {}),
-    ...(normalized as unknown as Record<string, EntityField>),
+    ...(normalized as unknown as Record<string, EntityFieldInput>),
   };
 }
 
@@ -357,13 +354,13 @@ function normalizeEntityRelationOverride(baseField: EntityFieldInput, value: Ent
 }
 
 function writeEntityRelationOverrides<TFields extends EntityFieldInputMap>(
-  schemas: Partial<SchemasDefinition>,
+  schemas: Partial<SchemasAuthoringState>,
   name: string,
   overrides: EntityRelationOverrides<TFields>,
 ): void {
   const state = ensureState(schemas);
 
-  const entity = state.entities?.[name] as (EntityDefinition & { fields: Record<string, EntityField> }) | undefined;
+  const entity = state.entities?.[name] as (EntityAuthoringDefinition & { fields: Record<string, EntityFieldInput> }) | undefined;
 
   if (!entity) return;
 
@@ -384,12 +381,12 @@ function writeEntityRelationOverrides<TFields extends EntityFieldInputMap>(
       entityName: name,
       fieldKey: key,
       field: linked,
-    }) as unknown as EntityField;
+    }) as unknown as EntityFieldInput;
   }
 }
 
 function createEntityResult<TName extends string, TOwnFields extends EntityFieldInputMap, TParent extends EntityExtendsInput | undefined>(
-  schemas: Partial<SchemasDefinition>,
+  schemas: Partial<SchemasAuthoringState>,
   name: TName,
   fields: TOwnFields,
   parent: TParent,
@@ -524,11 +521,11 @@ function normalizeDtoFields(fields: DtoFieldInputMap): Record<
   return normalized;
 }
 
-function writeDtoSchemas<TSchemas extends DtoSchemaInputMap>(schemasState: Partial<SchemasDefinition>, schemas: TSchemas): void {
+function writeDtoSchemas<TSchemas extends DtoSchemaInputMap>(schemasState: Partial<SchemasAuthoringState>, schemas: TSchemas): void {
   const state = ensureState(schemasState);
 
   for (const [key, value] of Object.entries(schemas) as [keyof TSchemas & string, TSchemas[keyof TSchemas & string]][]) {
-    state.dtos![key] = normalizeDtoSchema(value) as unknown as DtoDefinition;
+    state.dtos![key] = normalizeDtoSchema(value) as unknown as DtoAuthoringDefinition;
   }
 }
 
@@ -546,11 +543,11 @@ function createDtoRefs<TSchemas extends DtoSchemaInputMap>(schemas: TSchemas): R
 // PARAMS
 // ============================================================================
 
-function writeParams<TParams extends ParamsInputMap>(schemasState: Partial<SchemasDefinition>, params: TParams): void {
+function writeParams<TParams extends ParamsInputMap>(schemasState: Partial<SchemasAuthoringState>, params: TParams): void {
   const state = ensureState(schemasState);
 
   for (const [key, value] of Object.entries(params) as [keyof TParams & string, TParams[keyof TParams & string]][]) {
-    state.params![key] = value as unknown as ParamsDefinition;
+    state.params![key] = value;
   }
 }
 
@@ -579,7 +576,7 @@ export function defineSchemas(options: DefineSchemasOptions): SchemasBuilder {
       fields: TOwnFields,
       entityOptions: EntityOptions<TParent> = {},
     ): EntityPropertiesResult<TName, TOwnFields, MergeEntityFields<TParent, TOwnFields>> {
-      const fieldRefs = createAllEntityFieldRefs(name, fields, entityOptions.extends);
+      const fieldRefs = createAllEntityFieldInputRefs(name, fields, entityOptions.extends);
 
       writeEntitySource(options.state, name, fields, entityOptions);
 

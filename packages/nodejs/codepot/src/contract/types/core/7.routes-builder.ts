@@ -1,10 +1,5 @@
 // src/contract/types/core/7.routes-builder.ts
 
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
-
-import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
-import type { HttpMethod, RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
-
 import type {
   DtoAuthoringRef,
   EntityFieldAuthoringRef,
@@ -16,11 +11,56 @@ import type {
   RouteAuthoringRef,
 } from './3.authoring-ref';
 
-import type { ContentHelper, ContentInput, ContentInputList } from './8.errors-builder';
+import type { DefinitionItem } from './4.properties-builder';
 
 import type { ParamSourceRef, ParamsInputMap, ParamsResult } from './5.schemas-builder';
 
+import type { ContentDefinition, ContentHelper, ContentInput } from './8.errors-builder';
+
+// ============================================================================
+// ROUTE CONTENT TYPE ALIASES
+// ============================================================================
+
+export type RouteContentDefinition = ContentDefinition;
+export type RouteContentInput = ContentInput;
+export type ContentInputList = ContentInput;
+
 import type { RouteSecurityInput } from './9.security-builder';
+
+// ============================================================================
+// AUTHORING HTTP METHODS
+// ============================================================================
+
+export const HttpMethod = {
+  get: 'get',
+  post: 'post',
+  put: 'put',
+  patch: 'patch',
+  delete: 'delete',
+  options: 'options',
+  head: 'head',
+} as const;
+
+export type HttpMethod = (typeof HttpMethod)[keyof typeof HttpMethod];
+
+// ============================================================================
+// AUTHORING ROUTE TYPES (mutable state, not compiled IR)
+// ============================================================================
+
+export interface RoutePathAuthoringDefinition extends DefinitionItem {
+  readonly method: HttpMethod;
+  readonly path: string;
+  readonly params?: unknown;
+  readonly query?: unknown;
+  readonly body?: unknown;
+  readonly security?: unknown;
+  readonly output?: unknown;
+  readonly errors?: readonly unknown[];
+  readonly responses?: Record<number, unknown>;
+  readonly operation?: OperationAuthoringRef;
+}
+
+export type RoutesAuthoringState = Record<string, RoutePathAuthoringDefinition>;
 
 // ============================================================================
 // SHARED ROUTE SCHEMA INPUTS
@@ -182,16 +222,6 @@ export interface RouteHelper {
 export type DefineRoutesInput = DefineRoutesFactoryInput | ((route: RouteHelper) => DefineRoutesFactoryInput);
 
 // ============================================================================
-// ROUTES BUILDER STATE
-// ============================================================================
-
-export interface RoutesAuthoringState {
-  readonly routes: RoutesDefinition;
-
-  readonly operations: Record<string, OperationDefinition>;
-}
-
-// ============================================================================
 // ROUTES BUILDER RESULT
 // ============================================================================
 
@@ -214,9 +244,7 @@ export interface RoutesBuilder {
 
   define<TInput extends DefineRoutesFactoryInput>(factory: (route: RouteHelper) => TInput): RoutesBuilderResult<TInput>;
 
-  addRoute(key: string, route: RoutePathDefinition): RoutesBuilder;
-
-  addOperation(key: string, operation: OperationDefinition): RoutesBuilder;
+  addRoute(key: string, route: RoutePathAuthoringDefinition): RoutesBuilder;
 
   snapshot(): RoutesAuthoringState;
 }

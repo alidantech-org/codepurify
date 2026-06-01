@@ -1,10 +1,18 @@
 // src/contract/types/core/8.errors-builder.ts
 
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
-
-import type { ContentDefinition, ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
-
 import type { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from './3.authoring-ref';
+
+import type { DefinitionItem } from './4.properties-builder';
+
+// ============================================================================
+// AUTHORING CONTENT TYPES
+// ============================================================================
+
+export interface ContentDefinition extends DefinitionItem {
+  readonly type: string;
+}
+
+export type ContentInput = ContentDefinition | readonly ContentDefinition[];
 
 // ============================================================================
 // SHARED ERROR INPUTS
@@ -13,21 +21,13 @@ import type { DtoAuthoringRef, ErrorAuthoringRef, MaybeUsage } from './3.authori
 export type ErrorSchemaInput = MaybeUsage<DtoAuthoringRef>;
 
 // ============================================================================
-// CONTENT METADATA
-// ============================================================================
-
-export type ContentInput = ContentDefinition;
-
-export type ContentInputList = ContentInput | readonly ContentInput[];
-
-// ============================================================================
 // ERRORS
 // ============================================================================
 
 export interface ErrorInput extends DefinitionItem {
   readonly status: number;
   readonly schema: ErrorSchemaInput;
-  readonly content?: readonly ContentInput[];
+  readonly content?: readonly ContentDefinition[];
   readonly headers?: Record<string, ErrorSchemaInput>;
   readonly intent?: string;
 }
@@ -43,39 +43,45 @@ export interface ErrorsResult<TInput extends ErrorInputMap> {
 }
 
 // ============================================================================
+// ERRORS AUTHORING STATE (mutable, not compiled IR)
+// ============================================================================
+
+export type ErrorsAuthoringState = Record<string, ErrorInput>;
+
+// ============================================================================
 // CONTENT HELPER
 // ============================================================================
 
 export interface ContentHelper {
-  json(options?: DefinitionItem): ContentInput;
+  json(options?: DefinitionItem): ContentDefinition;
 
-  xml(options?: DefinitionItem): ContentInput;
+  xml(options?: DefinitionItem): ContentDefinition;
 
-  yaml(options?: DefinitionItem): ContentInput;
+  yaml(options?: DefinitionItem): ContentDefinition;
 
-  html(options?: DefinitionItem): ContentInput;
+  html(options?: DefinitionItem): ContentDefinition;
 
-  csv(options?: DefinitionItem): ContentInput;
+  csv(options?: DefinitionItem): ContentDefinition;
 
-  text(options?: DefinitionItem): ContentInput;
+  text(options?: DefinitionItem): ContentDefinition;
 
-  binary(options?: DefinitionItem): ContentInput;
+  binary(options?: DefinitionItem): ContentDefinition;
 
-  stream(options?: DefinitionItem): ContentInput;
+  stream(options?: DefinitionItem): ContentDefinition;
 
-  multipart(options?: DefinitionItem): ContentInput;
+  multipart(options?: DefinitionItem): ContentDefinition;
 
-  form(options?: DefinitionItem): ContentInput;
+  form(options?: DefinitionItem): ContentDefinition;
 
-  graphql(options?: DefinitionItem): ContentInput;
+  graphql(options?: DefinitionItem): ContentDefinition;
 
-  protobuf(options?: DefinitionItem): ContentInput;
+  protobuf(options?: DefinitionItem): ContentDefinition;
 
-  msgpack(options?: DefinitionItem): ContentInput;
+  msgpack(options?: DefinitionItem): ContentDefinition;
 
-  type(type: string, options?: DefinitionItem): ContentInput;
+  type(type: string, options?: DefinitionItem): ContentDefinition;
 
-  types(...types: ContentInput[]): readonly ContentInput[];
+  types(...types: ContentDefinition[]): readonly ContentDefinition[];
 }
 
 // ============================================================================
@@ -83,13 +89,13 @@ export interface ContentHelper {
 // ============================================================================
 
 export interface ErrorsBuilder {
-  readonly state: Partial<ErrorsDefinition>;
+  readonly state: Partial<ErrorsAuthoringState>;
 
   readonly content: ContentHelper;
 
-  error(status: number, schema: ErrorSchemaInput, contentOrOptions?: ContentInputList | Omit<ErrorInput, 'status' | 'schema'>): ErrorInput;
+  error(status: number, schema: ErrorSchemaInput, contentOrOptions?: ContentInput | Omit<ErrorInput, 'status' | 'schema'>): ErrorInput;
 
   define<TInput extends ErrorInputMap>(input: TInput): ErrorsResult<TInput>;
 
-  snapshot(): Partial<ErrorsDefinition>;
+  snapshot(): Partial<ErrorsAuthoringState>;
 }

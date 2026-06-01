@@ -1,11 +1,5 @@
 import type {
-  SecurityCredentialDefinition,
-  SecurityDefinition,
-  SecurityPolicyDefinition,
-  SecurityPrincipalDefinition,
-} from '@/contract/types/compiled/security/definition';
-
-import type {
+  SecurityAuthoringState,
   SecurityBuilder,
   SecurityCredentialInputMap,
   SecurityCredentialsResult,
@@ -29,15 +23,15 @@ import {
 import { securityCredentialRef, securityPolicyRef, securityPrincipalRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
 export interface DefineSecurityOptions {
-  readonly state: Partial<SecurityDefinition>;
+  readonly state: Partial<SecurityAuthoringState>;
 }
 
-function ensureState(state: Partial<SecurityDefinition>): SecurityDefinition {
-  (state as any).credentials ??= {};
-  (state as any).principals ??= {};
-  (state as any).policies ??= {};
+function ensureState(state: Partial<SecurityAuthoringState>): SecurityAuthoringState {
+  state.credentials ??= {};
+  state.principals ??= {};
+  state.policies ??= {};
 
-  return state as SecurityDefinition;
+  return state as SecurityAuthoringState;
 }
 
 function createCredentialRefs<TInput extends SecurityCredentialInputMap>(input: TInput): SecurityCredentialsResult<TInput>['ref'] {
@@ -96,7 +90,7 @@ export function defineSecurity(options: DefineSecurityOptions): SecurityBuilder 
       const state = ensureState(options.state);
 
       for (const [key, value] of Object.entries(credentials) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-        state.credentials[key] = value as unknown as SecurityCredentialDefinition;
+        state.credentials[key] = value;
       }
 
       return {
@@ -109,9 +103,7 @@ export function defineSecurity(options: DefineSecurityOptions): SecurityBuilder 
       const state = ensureState(options.state);
 
       for (const [key, value] of Object.entries(principals) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-        state.principals[key] = {
-          fields: value,
-        } as unknown as SecurityPrincipalDefinition;
+        state.principals[key] = value;
       }
 
       return {
@@ -124,7 +116,7 @@ export function defineSecurity(options: DefineSecurityOptions): SecurityBuilder 
       const state = ensureState(options.state);
 
       for (const [key, value] of Object.entries(policies) as [keyof TInput & string, TInput[keyof TInput & string]][]) {
-        state.policies[key] = value as unknown as SecurityPolicyDefinition;
+        state.policies[key] = value;
       }
 
       return {

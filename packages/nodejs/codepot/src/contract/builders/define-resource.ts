@@ -1,14 +1,10 @@
 // src/contract/builders/define-resource.ts
 
-import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
-import type { OperationDefinition } from '@/contract/types/compiled/resource/operation/definition';
-import type { RoutePathDefinition, RoutesDefinition } from '@/contract/types/compiled/resource/route/definition';
-import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
-
+import type { PropertiesAuthoringState } from '@/contract/types/core/4.properties-builder';
+import type { SchemasAuthoringState } from '@/contract/types/core/5.schemas-builder';
 import type { DefineResourceOptions, ResourceAuthoringState, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
-
-import type { ErrorInputMap, ErrorsResult } from '@/contract/types/core/8.errors-builder';
+import type { RoutesAuthoringState, RoutePathAuthoringDefinition } from '@/contract/types/core/7.routes-builder';
+import type { ErrorsAuthoringState, ErrorInputMap, ErrorsResult } from '@/contract/types/core/8.errors-builder';
 
 import { resourceRef } from '@/contract/helpers/refs/authoring-ref-builder';
 
@@ -21,7 +17,7 @@ import { defineSchemas } from './define-schemas';
 // MERGE HELPERS
 // ============================================================================
 
-function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDefinition>): void {
+function mergeErrors(target: Partial<ErrorsAuthoringState>, source: Partial<ErrorsAuthoringState>): void {
   Object.assign(target, source);
 }
 
@@ -30,11 +26,10 @@ function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDe
 // ============================================================================
 
 export function defineResource(options: DefineResourceOptions): ResourceBuilder {
-  const properties: Partial<PropertiesDefinition> = {};
-  const schemas: Partial<SchemasDefinition> = {};
-  const errors: Partial<ErrorsDefinition> = {};
-  const operations: Record<string, OperationDefinition> = {};
-  const routes: RoutesDefinition = {};
+  const properties: Partial<PropertiesAuthoringState> = {};
+  const schemas: Partial<SchemasAuthoringState> = {};
+  const errors: Partial<ErrorsAuthoringState> = {};
+  const routes: RoutesAuthoringState = {};
 
   let defaultSecurity = options.security;
 
@@ -49,7 +44,6 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       properties,
       schemas,
       errors,
-      operations,
       routes,
       description: options.description,
       deprecated: options.deprecated,
@@ -90,7 +84,6 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       return defineRoutes({
         resourceKey: options.key,
         routes,
-        operations,
       });
     },
 
@@ -99,18 +92,13 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       return builder;
     },
 
-    addErrors(nextErrors) {
+    addErrors(nextErrors: ErrorsAuthoringState) {
       mergeErrors(errors, nextErrors);
       return builder;
     },
 
-    addRoute(key: string, route: RoutePathDefinition) {
+    addRoute(key: string, route: RoutePathAuthoringDefinition) {
       routes[key] = route;
-      return builder;
-    },
-
-    addOperation(key: string, operation: OperationDefinition) {
-      operations[key] = operation;
       return builder;
     },
 

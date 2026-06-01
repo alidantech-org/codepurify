@@ -1,16 +1,25 @@
-import type { InfoDefinition } from '@/contract/types/compiled/info/definition';
-import type { UrlDefinition } from '@/contract/types/compiled/url/definition';
-import type { SecurityDefinition } from '@/contract/types/compiled/security/definition';
-import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
-import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
-import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
+import type { DefinitionItem, PropertiesAuthoringState, PropertiesBuilder } from './4.properties-builder';
+import type { SchemasAuthoringState, SchemasBuilder } from './5.schemas-builder';
+import type { DefineResourceOptions, ResourceBuilder, ResourceAuthoringState } from './6.resource-builder';
+import type { ErrorInputMap, ErrorsResult, ErrorsAuthoringState } from './8.errors-builder';
+import type { SecurityAuthoringState, SecurityBuilder } from './9.security-builder';
 
-import type { PropertiesBuilder } from './4.properties-builder';
-import type { SchemasBuilder } from './5.schemas-builder';
-import type { DefineResourceOptions, ResourceBuilder } from './6.resource-builder';
-import type { ErrorInputMap, ErrorsResult } from './8.errors-builder';
-import type { SecurityBuilder } from './9.security-builder';
+// ============================================================================
+// AUTHORING URL/INFO TYPES
+// ============================================================================
+
+export interface UrlDefinition extends DefinitionItem {
+  readonly key: string;
+  readonly kind: string;
+  readonly env: string;
+  readonly uri: string;
+}
+
+export interface InfoDefinition extends DefinitionItem {
+  readonly title: string;
+  readonly version: string;
+  readonly summary?: string;
+}
 
 export interface DefineVersionContractOptions {
   /**
@@ -39,11 +48,11 @@ export interface DefineVersionContractOptions {
    * Optional prebuilt authoring sections.
    * Useful while some authoring helpers are not implemented yet.
    */
-  readonly properties?: Partial<PropertiesDefinition>;
-  readonly schemas?: Partial<SchemasDefinition>;
-  readonly errors?: Partial<ErrorsDefinition>;
-  readonly security?: Partial<SecurityDefinition>;
-  readonly resources?: Record<string, ResourceDefinition>;
+  readonly properties?: Partial<PropertiesAuthoringState>;
+  readonly schemas?: Partial<SchemasAuthoringState>;
+  readonly errors?: Partial<ErrorsAuthoringState>;
+  readonly security?: Partial<SecurityAuthoringState>;
+  readonly resources?: Record<string, ResourceAuthoringState>;
 
   readonly meta?: Record<string, unknown>;
   readonly description?: string;
@@ -57,11 +66,11 @@ export interface VersionAuthoringState {
   readonly info: InfoDefinition;
   readonly urls: readonly UrlDefinition[];
 
-  readonly properties: Partial<PropertiesDefinition>;
-  readonly schemas: Partial<SchemasDefinition>;
-  readonly errors: Partial<ErrorsDefinition>;
-  readonly security: Partial<SecurityDefinition>;
-  readonly resources: Record<string, ResourceDefinition>;
+  readonly properties: Partial<PropertiesAuthoringState>;
+  readonly schemas: Partial<SchemasAuthoringState>;
+  readonly errors: Partial<ErrorsAuthoringState>;
+  readonly security: Partial<SecurityAuthoringState>;
+  readonly resources: Record<string, ResourceAuthoringState>;
 
   readonly meta?: Record<string, unknown>;
   readonly description?: string;
@@ -106,27 +115,27 @@ export interface VersionBuilder {
   /**
    * Allows adding a prebuilt resource while helpers are incomplete.
    */
-  addResource(key: string, resource: ResourceDefinition): VersionBuilder;
+  addResource(key: string, resource: ResourceAuthoringState): VersionBuilder;
 
   /**
    * Allows adding/preloading properties while helpers are incomplete.
    */
-  addProperties(properties: Partial<PropertiesDefinition>): VersionBuilder;
+  addProperties(properties: Partial<PropertiesAuthoringState>): VersionBuilder;
 
   /**
    * Allows adding/preloading schemas while helpers are incomplete.
    */
-  addSchemas(schemas: Partial<SchemasDefinition>): VersionBuilder;
+  addSchemas(schemas: Partial<SchemasAuthoringState>): VersionBuilder;
 
   /**
    * Allows adding/preloading reusable errors while helpers are incomplete.
    */
-  addErrors(errors: Partial<ErrorsDefinition>): VersionBuilder;
+  addErrors(errors: Partial<ErrorsAuthoringState>): VersionBuilder;
 
   /**
    * Allows adding/preloading security while helpers are incomplete.
    */
-  addSecurity(security: Partial<SecurityDefinition>): VersionBuilder;
+  addSecurity(security: Partial<SecurityAuthoringState>): VersionBuilder;
 
   /**
    * Authoring snapshot.

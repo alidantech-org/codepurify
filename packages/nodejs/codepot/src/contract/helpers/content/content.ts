@@ -1,6 +1,6 @@
 // src/contract/helpers/content/content.ts
 
-import type { ContentDefinition } from '@/contract/types/compiled/response/errors/definition';
+import type { ContentDefinition } from '@/contract/types/core/8.errors-builder';
 
 // ============================================================================
 // INTERNAL

@@ -1,16 +1,20 @@
 // src/contract/builders/define-version-contract.ts
 
-import type { ErrorsDefinition } from '@/contract/types/compiled/response/errors/definition';
-import type { PropertiesDefinition } from '@/contract/types/compiled/properties/definition';
-import type { ResourceDefinition } from '@/contract/types/compiled/resource/definition';
-import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
-import type { SecurityDefinition } from '@/contract/types/compiled/security/definition';
+import type {
+  DefineVersionContractOptions,
+  VersionAuthoringState,
+  VersionBuilder,
+  InfoDefinition,
+  UrlDefinition,
+} from '@/contract/types/core/2.version-builder';
 
-import type { DefineVersionContractOptions, VersionAuthoringState, VersionBuilder } from '@/contract/types/core/2.version-builder';
+import type { DefineResourceOptions, ResourceBuilder, ResourceAuthoringState } from '@/contract/types/core/6.resource-builder';
 
-import type { DefineResourceOptions, ResourceBuilder } from '@/contract/types/core/6.resource-builder';
+import type { ErrorInputMap, ErrorsResult, ErrorsAuthoringState } from '@/contract/types/core/8.errors-builder';
 
-import type { ErrorInputMap, ErrorsResult } from '@/contract/types/core/8.errors-builder';
+import type { PropertiesAuthoringState } from '@/contract/types/core/4.properties-builder';
+import type { SchemasAuthoringState } from '@/contract/types/core/5.schemas-builder';
+import type { SecurityAuthoringState } from '@/contract/types/core/9.security-builder';
 
 import { defineErrors } from './define-errors';
 import { defineProperties } from './define-properties';
@@ -28,7 +32,7 @@ const DEFAULT_CODEPOT_VERSION = '1.0';
 // STATE FACTORIES
 // ============================================================================
 
-function createPropertiesState(initial?: Partial<PropertiesDefinition>): Partial<PropertiesDefinition> {
+function createPropertiesState(initial?: Partial<PropertiesAuthoringState>): Partial<PropertiesAuthoringState> {
   return {
     primitives: initial?.primitives ?? {},
     enums: initial?.enums ?? {},
@@ -36,7 +40,7 @@ function createPropertiesState(initial?: Partial<PropertiesDefinition>): Partial
   };
 }
 
-function createSchemasState(initial?: Partial<SchemasDefinition>): Partial<SchemasDefinition> {
+function createSchemasState(initial?: Partial<SchemasAuthoringState>): Partial<SchemasAuthoringState> {
   return {
     entities: initial?.entities ?? {},
     models: initial?.models ?? {},
@@ -45,13 +49,13 @@ function createSchemasState(initial?: Partial<SchemasDefinition>): Partial<Schem
   };
 }
 
-function createErrorsState(initial?: Partial<ErrorsDefinition>): Partial<ErrorsDefinition> {
+function createErrorsState(initial?: Partial<ErrorsAuthoringState>): Partial<ErrorsAuthoringState> {
   return {
     ...(initial ?? {}),
   };
 }
 
-function createSecurityState(initial?: Partial<SecurityDefinition>): Partial<SecurityDefinition> {
+function createSecurityState(initial?: Partial<SecurityAuthoringState>): Partial<SecurityAuthoringState> {
   return {
     credentials: initial?.credentials ?? {},
     principals: initial?.principals ?? {},
@@ -63,49 +67,41 @@ function createSecurityState(initial?: Partial<SecurityDefinition>): Partial<Sec
 // MERGE HELPERS
 // ============================================================================
 
-type MutableSecurityState = {
-  credentials?: SecurityDefinition['credentials'];
-  principals?: SecurityDefinition['principals'];
-  policies?: SecurityDefinition['policies'];
-};
-
-function mergeProperties(target: Partial<PropertiesDefinition>, source: Partial<PropertiesDefinition>): void {
+function mergeProperties(target: Partial<PropertiesAuthoringState>, source: Partial<PropertiesAuthoringState>): void {
   Object.assign((target.primitives ??= {}), source.primitives ?? {});
   Object.assign((target.enums ??= {}), source.enums ?? {});
   Object.assign((target.composites ??= {}), source.composites ?? {});
 }
 
-function mergeSchemas(target: Partial<SchemasDefinition>, source: Partial<SchemasDefinition>): void {
+function mergeSchemas(target: Partial<SchemasAuthoringState>, source: Partial<SchemasAuthoringState>): void {
   Object.assign((target.entities ??= {}), source.entities ?? {});
   Object.assign((target.models ??= {}), source.models ?? {});
   Object.assign((target.dtos ??= {}), source.dtos ?? {});
   Object.assign((target.params ??= {}), source.params ?? {});
 }
 
-function mergeErrors(target: Partial<ErrorsDefinition>, source: Partial<ErrorsDefinition>): void {
+function mergeErrors(target: Partial<ErrorsAuthoringState>, source: Partial<ErrorsAuthoringState>): void {
   Object.assign(target, source);
 }
 
-function mergeSecurity(target: Partial<SecurityDefinition>, source: Partial<SecurityDefinition>): void {
-  const mutable = target as MutableSecurityState;
+function mergeSecurity(target: Partial<SecurityAuthoringState>, source: Partial<SecurityAuthoringState>): void {
+  target.credentials ??= {};
+  target.principals ??= {};
+  target.policies ??= {};
 
-  mutable.credentials ??= {};
-  mutable.principals ??= {};
-  mutable.policies ??= {};
-
-  Object.assign(mutable.credentials, source.credentials ?? {});
-  Object.assign(mutable.principals, source.principals ?? {});
-  Object.assign(mutable.policies, source.policies ?? {});
+  Object.assign(target.credentials, source.credentials ?? {});
+  Object.assign(target.principals, source.principals ?? {});
+  Object.assign(target.policies, source.policies ?? {});
 }
 
 function snapshotResources(
-  resources: Record<string, ResourceDefinition>,
+  resources: Record<string, ResourceAuthoringState>,
   resourceBuilders: Record<string, ResourceBuilder>,
-): Record<string, ResourceDefinition> {
+): Record<string, ResourceAuthoringState> {
   return {
     ...resources,
     ...Object.fromEntries(
-      Object.entries(resourceBuilders).map(([key, builder]) => [key, builder.snapshot() as unknown as ResourceDefinition]),
+      Object.entries(resourceBuilders).map(([key, builder]) => [key, builder.snapshot() as unknown as ResourceAuthoringState]),
     ),
   };
 }
@@ -120,7 +116,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
   const errors = createErrorsState(options.errors);
   const security = createSecurityState(options.security);
 
-  const resources: Record<string, ResourceDefinition> = {
+  const resources: Record<string, ResourceAuthoringState> = {
     ...(options.resources ?? {}),
   };
 

@@ -1,12 +1,3 @@
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
-
-import type {
-  SecurityCredentialFormat,
-  SecurityCredentialSource,
-  SecurityDefinition,
-  SecurityPolicyDefinition,
-} from '@/contract/types/compiled/security/definition';
-
 import type {
   EntityFieldAuthoringRef,
   PropertyAuthoringRef,
@@ -14,6 +5,30 @@ import type {
   SecurityPolicyAuthoringRef,
   SecurityPrincipalAuthoringRef,
 } from './3.authoring-ref';
+
+import type { DefinitionItem } from './4.properties-builder';
+
+// ============================================================================
+// AUTHORING SECURITY TYPES
+// ============================================================================
+
+export const SecurityCredentialSource = {
+  header: 'header',
+  cookie: 'cookie',
+  query: 'query',
+} as const;
+
+export type SecurityCredentialSource = (typeof SecurityCredentialSource)[keyof typeof SecurityCredentialSource];
+
+export const SecurityCredentialFormat = {
+  raw: 'raw',
+  bearer: 'bearer',
+  basic: 'basic',
+  apiKey: 'api_key',
+  session: 'session',
+} as const;
+
+export type SecurityCredentialFormat = (typeof SecurityCredentialFormat)[keyof typeof SecurityCredentialFormat];
 
 // ============================================================================
 // CREDENTIAL INPUTS
@@ -63,6 +78,13 @@ export interface SecurityPrincipalsResult<TInput extends SecurityPrincipalInputM
 // POLICY INPUTS
 // ============================================================================
 
+export const SecurityPolicyMode = {
+  public: 'public',
+  protected: 'protected',
+} as const;
+
+export type SecurityPolicyMode = (typeof SecurityPolicyMode)[keyof typeof SecurityPolicyMode];
+
 export type SecurityPrincipalRefMap = Record<string, SecurityPrincipalAuthoringRef>;
 
 export interface SecurityRequirePolicyInput extends DefinitionItem {
@@ -73,7 +95,14 @@ export interface SecurityRequirePolicyInput extends DefinitionItem {
   readonly intent?: string;
 }
 
-export type SecurityPolicyInput = SecurityPolicyDefinition;
+export interface SecurityPolicyInput extends DefinitionItem {
+  readonly mode: 'public' | 'protected';
+  readonly credential?: SecurityCredentialAuthoringRef;
+  readonly principals?: SecurityPrincipalRefMap;
+  readonly roles?: readonly string[];
+  readonly permissions?: readonly string[];
+  readonly intent?: string;
+}
 
 export type SecurityPolicyInputMap = Record<string, SecurityPolicyInput>;
 
@@ -86,11 +115,21 @@ export interface SecurityPoliciesResult<TInput extends SecurityPolicyInputMap> {
 }
 
 // ============================================================================
+// SECURITY AUTHORING STATE (mutable, not compiled IR)
+// ============================================================================
+
+export interface SecurityAuthoringState {
+  credentials: Record<string, SecurityCredentialInput>;
+  principals: Record<string, SecurityPrincipalInput>;
+  policies: Record<string, SecurityPolicyInput>;
+}
+
+// ============================================================================
 // SECURITY BUILDER
 // ============================================================================
 
 export interface SecurityBuilder {
-  readonly state: Partial<SecurityDefinition>;
+  readonly state: Partial<SecurityAuthoringState>;
 
   header(key: string, options?: SecurityCredentialOptions): SecurityCredentialInput;
 
@@ -114,7 +153,7 @@ export interface SecurityBuilder {
 
   policies<TInput extends SecurityPolicyInputMap>(policies: TInput): SecurityPoliciesResult<TInput>;
 
-  snapshot(): Partial<SecurityDefinition>;
+  snapshot(): Partial<SecurityAuthoringState>;
 }
 
 export type RouteSecurityInput = SecurityPolicyAuthoringRef | SecurityPolicyInput;

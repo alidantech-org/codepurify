@@ -20,9 +20,11 @@ import {
 } from '@/contract/types/core/3.authoring-ref';
 
 import {
-  EntityFieldSetName,
+  EntityFieldSetNameValues,
+  type EntityFieldSetName,
   type EntityFieldSetRefs,
-  EntityModelVariant,
+  EntityModelVariantValues,
+  type EntityModelVariant,
   type EntityModelRefs,
   type PropertySourceInput,
 } from '@/contract/types/core/4.properties-builder';
@@ -98,21 +100,7 @@ export function modelRef(entityName: string, variant: EntityModelVariant): Model
 }
 
 export function modelRefs(entityName: string): EntityModelRefs {
-  return {
-    read: modelRef(entityName, EntityModelVariant.read),
-    create: modelRef(entityName, EntityModelVariant.create),
-    patch: modelRef(entityName, EntityModelVariant.patch),
-    query: modelRef(entityName, EntityModelVariant.query),
-    public: modelRef(entityName, EntityModelVariant.public),
-    publicList: modelRef(entityName, EntityModelVariant.publicList),
-    admin: modelRef(entityName, EntityModelVariant.admin),
-    internal: modelRef(entityName, EntityModelVariant.internal),
-    summary: modelRef(entityName, EntityModelVariant.summary),
-    option: modelRef(entityName, EntityModelVariant.option),
-    relation: modelRef(entityName, EntityModelVariant.relation),
-    projection: modelRef(entityName, EntityModelVariant.projection),
-    redacted: modelRef(entityName, EntityModelVariant.redacted),
-  };
+  return Object.fromEntries(EntityModelVariantValues.map((variant) => [variant, modelRef(entityName, variant)])) as EntityModelRefs;
 }
 
 export function entityFieldSetRef(entityName: string, setName: EntityFieldSetName): EntityFieldSetAuthoringRef {
@@ -126,41 +114,7 @@ export function entityFieldSetRef(entityName: string, setName: EntityFieldSetNam
 }
 
 export function entityFieldSetRefs(entityName: string): EntityFieldSetRefs {
-  return {
-    all: entityFieldSetRef(entityName, EntityFieldSetName.all),
-    scalar: entityFieldSetRef(entityName, EntityFieldSetName.scalar),
-    relation: entityFieldSetRef(entityName, EntityFieldSetName.relation),
-    readable: entityFieldSetRef(entityName, EntityFieldSetName.readable),
-    writable: entityFieldSetRef(entityName, EntityFieldSetName.writable),
-    selectable: entityFieldSetRef(entityName, EntityFieldSetName.selectable),
-    sortable: entityFieldSetRef(entityName, EntityFieldSetName.sortable),
-    filterable: entityFieldSetRef(entityName, EntityFieldSetName.filterable),
-    public: entityFieldSetRef(entityName, EntityFieldSetName.public),
-    internal: entityFieldSetRef(entityName, EntityFieldSetName.internal),
-    secret: entityFieldSetRef(entityName, EntityFieldSetName.secret),
-    sensitive: entityFieldSetRef(entityName, EntityFieldSetName.sensitive),
-    redacted: entityFieldSetRef(entityName, EntityFieldSetName.redacted),
-    persisted: entityFieldSetRef(entityName, EntityFieldSetName.persisted),
-    virtual: entityFieldSetRef(entityName, EntityFieldSetName.virtual),
-    computed: entityFieldSetRef(entityName, EntityFieldSetName.computed),
-    generated: entityFieldSetRef(entityName, EntityFieldSetName.generated),
-    immutable: entityFieldSetRef(entityName, EntityFieldSetName.immutable),
-    create: entityFieldSetRef(entityName, EntityFieldSetName.create),
-    patch: entityFieldSetRef(entityName, EntityFieldSetName.patch),
-    read: entityFieldSetRef(entityName, EntityFieldSetName.read),
-    list: entityFieldSetRef(entityName, EntityFieldSetName.list),
-    summary: entityFieldSetRef(entityName, EntityFieldSetName.summary),
-    option: entityFieldSetRef(entityName, EntityFieldSetName.option),
-    list_select: entityFieldSetRef(entityName, EntityFieldSetName.listSelect),
-    list_sort: entityFieldSetRef(entityName, EntityFieldSetName.listSort),
-    list_filter: entityFieldSetRef(entityName, EntityFieldSetName.listFilter),
-    public_list_select: entityFieldSetRef(entityName, EntityFieldSetName.publicListSelect),
-    public_list_sort: entityFieldSetRef(entityName, EntityFieldSetName.publicListSort),
-    public_list_filter: entityFieldSetRef(entityName, EntityFieldSetName.publicListFilter),
-    admin_list_select: entityFieldSetRef(entityName, EntityFieldSetName.adminListSelect),
-    admin_list_sort: entityFieldSetRef(entityName, EntityFieldSetName.adminListSort),
-    admin_list_filter: entityFieldSetRef(entityName, EntityFieldSetName.adminListFilter),
-  };
+  return Object.fromEntries(EntityFieldSetNameValues.map((name) => [name, entityFieldSetRef(entityName, name)])) as EntityFieldSetRefs;
 }
 
 export function dtoRef(key: string): DtoAuthoringRef {

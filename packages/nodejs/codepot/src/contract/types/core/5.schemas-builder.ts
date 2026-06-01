@@ -1,9 +1,8 @@
-import type { DefinitionItem } from '@/contract/types/compiled/definition';
-
-import type { SchemasDefinition } from '@/contract/types/compiled/schema/definition';
+import type { DefinitionItem } from './4.properties-builder';
 
 import type {
   DtoAuthoringRef,
+  EntityAuthoringRef,
   EntityFieldAuthoringRef,
   MaybeUsage,
   ModelAuthoringRef,
@@ -13,7 +12,12 @@ import type {
 
 import type {
   EntityExtendsInput,
+  EntityFieldInput,
   EntityFieldInputMap,
+  EntityFieldSetName,
+  EntityFieldSetOverrideInput,
+  EntityModelOverrideInput,
+  EntityModelOverrides,
   EntityOptions,
   EntityPropertiesResult,
   MergeEntityFields,
@@ -25,11 +29,11 @@ import type {
 
 export type DtoRef = PropertyAuthoringRef | EntityFieldAuthoringRef | ModelAuthoringRef | DtoAuthoringRef | ParamsAuthoringRef;
 
-export type DtoFieldInput = DtoRef | MaybeUsage<unknown>;
+export type DtoFieldInput = DtoRef | MaybeUsage<DtoRef>;
 
 export type DtoFieldInputMap = Record<string, DtoFieldInput>;
 
-export type DtoSchemaInput = DtoFieldInputMap | DtoRef | MaybeUsage<unknown>;
+export type DtoSchemaInput = DtoFieldInputMap | DtoRef | MaybeUsage<DtoRef>;
 
 export type DtoSchemaInputMap = Record<string, DtoSchemaInput>;
 
@@ -40,6 +44,65 @@ export type DtoSchemaInputMap = Record<string, DtoSchemaInput>;
 export type ParamSourceRef = PropertyAuthoringRef | EntityFieldAuthoringRef;
 
 export type ParamsInputMap = Record<string, ParamSourceRef>;
+
+// ============================================================================
+// AUTHORING STORAGE SHAPES
+// ============================================================================
+
+export interface DtoFieldAuthoringDefinition {
+  readonly ref: DtoFieldInput;
+  readonly usage: Record<string, unknown>;
+}
+
+export interface DtoSourceAuthoringDefinition {
+  readonly source: {
+    readonly ref: DtoFieldInput;
+    readonly usage: Record<string, unknown>;
+  };
+}
+
+export interface DtoFieldsAuthoringDefinition {
+  readonly fields: Record<string, DtoFieldAuthoringDefinition>;
+}
+
+export type DtoAuthoringDefinition = DtoSourceAuthoringDefinition | DtoFieldsAuthoringDefinition;
+
+export interface EntityAuthoringDefinition<TFields extends EntityFieldInputMap = EntityFieldInputMap> extends DefinitionItem {
+  readonly abstract?: boolean;
+  readonly extends?: EntityAuthoringRef;
+  readonly tags?: readonly string[];
+
+  /**
+   * Authoring/debug fields.
+   * These are not compiled IR fields.
+   */
+  fields: Record<keyof TFields & string, EntityFieldInput>;
+
+  /**
+   * Authoring model overrides.
+   * Compiler later turns these into compiled models.
+   */
+  modelOverrides?: Partial<Record<keyof EntityModelOverrides<TFields> & string, EntityModelOverrideInput<TFields>>>;
+
+  /**
+   * Authoring field-set overrides.
+   * Compiler later turns these into compiled field_sets.
+   */
+  fieldSetOverrides?: Partial<Record<EntityFieldSetName, EntityFieldSetOverrideInput<TFields>>>;
+}
+
+export type ParamsAuthoringDefinition = ParamsInputMap;
+
+// ============================================================================
+// SCHEMAS AUTHORING STATE MUTABLE
+// ============================================================================
+
+export interface SchemasAuthoringState {
+  entities: Record<string, EntityAuthoringDefinition>;
+  models: Record<string, unknown>;
+  dtos: Record<string, DtoAuthoringDefinition>;
+  params: ParamsAuthoringDefinition;
+}
 
 // ============================================================================
 // BUILDER RESULTS
@@ -66,42 +129,17 @@ export interface ParamsResult<TParams extends ParamsInputMap> {
 // ============================================================================
 
 export interface SchemasBuilder {
-  readonly state: Partial<SchemasDefinition>;
+  readonly state: Partial<SchemasAuthoringState>;
 
-  /**
-   * Entity authoring.
-   * Entities live under schemas, not properties.
-   */
   entity<TName extends string, TOwnFields extends EntityFieldInputMap, TParent extends EntityExtendsInput | undefined = undefined>(
     name: TName,
     fields: TOwnFields,
     options?: EntityOptions<TParent>,
   ): EntityPropertiesResult<TName, TOwnFields, MergeEntityFields<TParent, TOwnFields>>;
 
-  /**
-   * DTO authoring.
-   *
-   * Supports:
-   * - Direct model/DTO assignment: { Name: modelRef }
-   * - Flat field map: { Name: { fieldA: ref, fieldB: ref } }
-   * - DTO composition via .extendWith(): baseDto.extendWith({ field: ref })
-   *
-   * DTO fields only accept refs/usages, not field(...) builders.
-   */
   dtos<TSchemas extends DtoSchemaInputMap>(schemas: TSchemas): DtoSchemasResult<TSchemas>;
 
-  /**
-   * Flat params authoring.
-   *
-   * Example:
-   * params({
-   *   id: user.ref.fields.id,
-   * })
-   *
-   * Returned refs are accessed as:
-   * params.ref.id
-   */
   params<TParams extends ParamsInputMap>(params: TParams): ParamsResult<TParams>;
 
-  snapshot(): Partial<SchemasDefinition>;
+  snapshot(): Partial<SchemasAuthoringState>;
 }

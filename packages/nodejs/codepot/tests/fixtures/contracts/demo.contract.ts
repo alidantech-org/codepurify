@@ -197,11 +197,11 @@ export const user = schemas
     },
   )
   .fieldSets({
-    list_select: (s) => s.only('id', 'name', 'role'),
-    list_sort: (s) => s.only('createdAt', 'role'),
-    list_filter: (s) => s.only('id', 'role', 'status'),
-    public_list_select: (s) => s.only('id', 'name'),
-    admin_list_select: (s) => s.only('id', 'name', 'email', 'role', 'status'),
+    listSelect: (s) => s.only('id', 'name', 'role'),
+    listSort: (s) => s.only('createdAt', 'role'),
+    listFilter: (s) => s.only('id', 'role', 'status'),
+    publicListSelect: (s) => s.only('id', 'name'),
+    adminListSelect: (s) => s.only('id', 'name', 'email', 'role', 'status'),
   })
   .models({
     read: (m) => m.relations('expand'),
