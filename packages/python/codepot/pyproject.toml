@@ -1,5 +1,5 @@
 [project]
-name = "generator"
+name = "codepot"
 version = "0.1.0"
 description = "General OpenAPI inference and multi-language code generation engine"
 requires-python = ">=3.11"
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-openapi-generator = "cli.main:app"
+codepotgen = "cli.main:app"
 
 [tool.setuptools.package-dir]
 "" = "src"
@@ -24,7 +24,9 @@ cli = "cli"
 [tool.setuptools.packages.find]
 where = ["src", "."]
 include = [
+  "app*",
   "cli*",
+  "codepot*",
   "constants*",
   "core*",
   "emission*",
