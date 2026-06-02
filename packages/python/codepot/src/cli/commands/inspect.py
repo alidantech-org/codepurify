@@ -1,73 +1,52 @@
+"""Inspect command."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import typer
 
-from cli.constants.constants import (
-    HELP_DEBUG,
-    HELP_INPUT,
-    HELP_INTERACTIVE,
-    HELP_QUIET,
-    HELP_VERBOSE,
-    OPT_DEBUG,
-    OPT_INPUT,
-    OPT_INTERACTIVE,
-    OPT_QUIET,
-    OPT_VERBOSE,
-)
-from cli.presentation.core.console import print_error, print_header
-from cli.presentation.core.interactive import ask_input_path, should_prompt
-from cli.presentation.inspect.renderer import render_inspect_result
-
 
 def inspect_command(
     ctx: typer.Context,
-    input_file: Path | None = typer.Option(
-        None,
-        f"--{OPT_INPUT}",
-        "-i",
-        help=HELP_INPUT,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=True,
-    ),
-    interactive: bool = typer.Option(
-        False,
-        f"--{OPT_INTERACTIVE}",
-        "-I",
-        help=HELP_INTERACTIVE,
-    ),
-    debug: bool = typer.Option(False, f"--{OPT_DEBUG}", help=HELP_DEBUG),
-    verbose: bool = typer.Option(False, f"--{OPT_VERBOSE}", "-v", help=HELP_VERBOSE),
-    quiet: bool = typer.Option(False, f"--{OPT_QUIET}", "-q", help=HELP_QUIET),
+    spec_path: Path = typer.Argument(Path("codepot.v1.yaml"), help="Path to Codepot spec."),
+    schemas: bool = typer.Option(False, "--schemas", help="Inspect schemas."),
+    resources: bool = typer.Option(False, "--resources", help="Inspect resources."),
+    refs: bool = typer.Option(False, "--refs", help="Inspect refs."),
+    content_types: bool = typer.Option(False, "--content-types", help="Inspect content types."),
+    json_output: bool = typer.Option(False, "--json", help="Output machine-readable JSON."),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress normal output."),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show extra details."),
+    debug: bool = typer.Option(False, "--debug", help="Raise errors with traceback."),
 ) -> None:
-    """Inspect an OpenAPI document."""
+    """Inspect a Codepot spec."""
+
     try:
         from cli.main import get_runtime
 
-        resolved_input = input_file
+        what = "overview"
+        if schemas:
+            what = "schemas"
+        elif resources:
+            what = "resources"
+        elif refs:
+            what = "refs"
+        elif content_types:
+            what = "content_types"
 
-        prompt = should_prompt(interactive)
+        result = get_runtime(ctx).inspect(spec_path=spec_path, what=what)
 
-        if resolved_input is None and prompt:
-            resolved_input = ask_input_path()
+        if quiet:
+            return
 
-        if resolved_input is None:
-            raise ValueError("missing required option: --input")
+        typer.echo(f"Inspect  {result.spec_path}")
+        typer.echo("")
 
-        if not quiet:
-            print_header("Inspect", str(resolved_input))
-
-        runtime = get_runtime(ctx)
-        result = runtime.inspect(input_path=resolved_input)
-
-        if not quiet:
-            render_inspect_result(result, verbose=verbose)
+        for key, value in result.summary.items():
+            typer.echo(f"{key:16} {value}")
 
     except Exception as exc:
-        print_error(str(exc))
+        typer.echo(f"Error: {exc}", err=True)
         if debug:
             raise
         raise typer.Exit(1) from exc
