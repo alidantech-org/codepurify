@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from codepot.ir.shared.document import CodepotDefinition
+from spec.ir.shared.document import CodepotDefinition
 
 
 def load_yaml_data(path: Path) -> dict[str, Any]:

@@ -1,0 +1,5 @@
+CMD_VALIDATE = "validate"
+CMD_INSPECT = "inspect"
+CMD_INFER = "infer"
+CMD_EMIT = "emit"
+CMD_VERSION = "version"

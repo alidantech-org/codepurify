@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Generic, TypeVar
+from typing import Generic, TypeVar
 
 RecordT = TypeVar("RecordT")
 
@@ -19,7 +20,7 @@ class RecordSet(Generic[RecordT]):
 
         return self.records
 
-    def where(self, predicate: Callable[[RecordT], bool]) -> "RecordSet[RecordT]":
+    def where(self, predicate: Callable[[RecordT], bool]) -> RecordSet[RecordT]:
         """Return records matching a typed predicate."""
 
         return RecordSet(tuple(record for record in self.records if predicate(record)))

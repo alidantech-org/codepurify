@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from codepot.ir.shared.ref import Ref
+from spec.ir.shared.ref import Ref
 
 
 class DefinitionItem(BaseModel):

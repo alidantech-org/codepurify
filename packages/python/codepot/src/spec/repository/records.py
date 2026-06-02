@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-from codepot.ir.shared.ref import Ref
+from spec.ir.shared.ref import Ref
 
 ValueT = TypeVar("ValueT")
 

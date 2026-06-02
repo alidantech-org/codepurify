@@ -6,8 +6,8 @@ from typing import Any, Literal
 
 from pydantic import ConfigDict, Field
 
-from codepot.ir.shared.base import DefinitionItem
-from codepot.ir.shared.ref import Ref
+from spec.ir.shared.base import DefinitionItem
+from spec.ir.shared.ref import Ref
 
 
 class DtoArrayFieldDefinition(DefinitionItem):

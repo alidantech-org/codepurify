@@ -1,1 +1,1 @@
-"""CLI command implementations for Codepot."""
+"""CLI command implementations for spec."""

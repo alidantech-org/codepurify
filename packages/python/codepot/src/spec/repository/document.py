@@ -5,15 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from codepot.ir.shared.document import CodepotDefinition
-from codepot.ir.shared.ref import Ref
-from codepot.repository.graph import RefGraph
-from codepot.repository.record_sets import RecordSet
-from codepot.repository.records import IrRecord
+from spec.ir.shared.document import CodepotDefinition
+from spec.ir.shared.ref import Ref
+from spec.repository.graph import RefGraph
+from spec.repository.record_sets import RecordSet
+from spec.repository.records import IrRecord
 
 
 def _ref(path: str) -> Ref[Any]:
-    return Ref[Any](ref=path)
+    return Ref[Any](**{"$ref": path})
 
 
 @dataclass(frozen=True)
@@ -34,7 +34,7 @@ class CodepotRepository:
     graph: RefGraph
 
     @classmethod
-    def from_document(cls, document: CodepotDefinition) -> "CodepotRepository":
+    def from_document(cls, document: CodepotDefinition) -> CodepotRepository:
         """Normalize map-shaped IR sections into typed record sets."""
 
         return cls(
@@ -54,5 +54,8 @@ class CodepotRepository:
 
 
 def _records(prefix: str, values: dict[str, Any]) -> RecordSet[IrRecord[Any]]:
-    records = tuple(IrRecord(key=key, ref=_ref(f"{prefix}/{key}"), value=value) for key, value in values.items())
+    records = tuple(
+        IrRecord(key=key, ref=_ref(f"{prefix}/{key}"), value=value)
+        for key, value in values.items()
+    )
     return RecordSet(records)

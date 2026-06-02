@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from pydantic import ConfigDict
 
-from codepot.ir.properties.definition import PropertiesDefinition
-from codepot.ir.resource.definition import ResourceDefinition
-from codepot.ir.response.definition import ResponsesDefinition
-from codepot.ir.schema.definition import SchemasDefinition
-from codepot.ir.security.definition import SecurityDefinition
-from codepot.ir.shared.base import DefinitionItem
-from codepot.ir.shared.content import ContentTypeDefinition
-from codepot.ir.shared.info import InfoDefinition
-from codepot.ir.shared.url import UrlDefinition
+from spec.ir.properties.definition import PropertiesDefinition
+from spec.ir.resource.definition import ResourceDefinition
+from spec.ir.response.definition import ResponsesDefinition
+from spec.ir.schema.definition import SchemasDefinition
+from spec.ir.security.definition import SecurityDefinition
+from spec.ir.shared.base import DefinitionItem
+from spec.ir.shared.content import ContentTypeDefinition
+from spec.ir.shared.info import InfoDefinition
+from spec.ir.shared.url import UrlDefinition
 
 
 class CodepotDefinition(DefinitionItem):

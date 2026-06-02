@@ -4,14 +4,20 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from codepot.ir.schema.dto.definition import DtoDefinition
-from codepot.ir.schema.entity.definition import EntityDefinition
-from codepot.ir.schema.entity.field.definition import EntityFieldDefinition
-from codepot.ir.schema.field_set.definition import FieldSetDefinition
-from codepot.ir.schema.model.definition import ModelDefinition
-from codepot.ir.schema.params.definition import ParamsDefinition
+from spec.ir.schema.dto.definition import DtoDefinition
+from spec.ir.schema.entity.definition import EntityDefinition
+from spec.ir.schema.entity.field.definition import EntityFieldDefinition
+from spec.ir.schema.field_set.definition import FieldSetDefinition
+from spec.ir.schema.model.definition import ModelDefinition
+from spec.ir.schema.params.definition import ParamsDefinition
 
-RefSchema = EntityDefinition | EntityFieldDefinition | FieldSetDefinition | ModelDefinition | DtoDefinition
+RefSchema = (
+    EntityDefinition
+    | EntityFieldDefinition
+    | FieldSetDefinition
+    | ModelDefinition
+    | DtoDefinition
+)
 
 
 class SchemasDefinition(BaseModel):

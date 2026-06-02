@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from codepot.languages.contracts import LanguagePlan
-from codepot.planning.records import GenerationPlan
+from spec.languages.contracts import LanguagePlan
+from spec.planning.records import GenerationPlan
 
 
 class PythonLanguagePipeline:

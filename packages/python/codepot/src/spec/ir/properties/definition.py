@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from codepot.ir.properties.composite.definition import CompositeDefinition
-from codepot.ir.properties.enum.definition import EnumDefinition
-from codepot.ir.properties.primitive.definition import PrimitiveDefinition
+from spec.ir.properties.composite.definition import CompositeDefinition
+from spec.ir.properties.enum.definition import EnumDefinition
+from spec.ir.properties.primitive.definition import PrimitiveDefinition
 
 RefProperty = PrimitiveDefinition | EnumDefinition | CompositeDefinition
 

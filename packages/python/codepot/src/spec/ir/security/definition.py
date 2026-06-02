@@ -7,8 +7,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from codepot.ir.shared.base import DefinitionItem
-from codepot.ir.shared.ref import Ref
+from spec.ir.shared.base import DefinitionItem
+from spec.ir.shared.ref import Ref
 
 
 class SecurityCredentialSource(StrEnum):

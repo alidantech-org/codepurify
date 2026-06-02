@@ -1,73 +1,56 @@
+"""Validate command."""
+
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
-from cli.constants.constants import (
-    HELP_DEBUG,
-    HELP_INPUT,
-    HELP_INTERACTIVE,
-    HELP_QUIET,
-    HELP_VERBOSE,
-    OPT_DEBUG,
-    OPT_INPUT,
-    OPT_INTERACTIVE,
-    OPT_QUIET,
-    OPT_VERBOSE,
-)
-from cli.presentation.core.console import print_error, print_header
-from cli.presentation.core.interactive import ask_input_path, should_prompt
-from cli.presentation.validate.renderer import render_validate_result
+from app import ValidateRequest
+from cli import options
+from cli.constants.defaults import DEFAULT_SPEC_PATH
+from cli.constants.exit_codes import EXIT_VALIDATION_ERROR
+from cli.errors import CliError
+from cli.presentation.console import print_error, print_header
+from cli.presentation.json import print_json_result
+from cli.presentation.validate import render_validate_result
+from cli.state import get_runtime
 
 
 def validate_command(
     ctx: typer.Context,
-    input_file: Path | None = typer.Option(
-        None,
-        f"--{OPT_INPUT}",
-        "-i",
-        help=HELP_INPUT,
-        exists=False,
-        file_okay=True,
-        dir_okay=False,
-        readable=True,
-    ),
-    interactive: bool = typer.Option(
-        False,
-        f"--{OPT_INTERACTIVE}",
-        "-I",
-        help=HELP_INTERACTIVE,
-    ),
-    debug: bool = typer.Option(False, f"--{OPT_DEBUG}", help=HELP_DEBUG),
-    verbose: bool = typer.Option(False, f"--{OPT_VERBOSE}", "-v", help=HELP_VERBOSE),
-    quiet: bool = typer.Option(False, f"--{OPT_QUIET}", "-q", help=HELP_QUIET),
+    spec_path: Annotated[Path, options.spec_argument()] = DEFAULT_SPEC_PATH,
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Enable strict validation checks."),
+    ] = False,
+    json_output: Annotated[bool, options.json_option()] = False,
+    quiet: Annotated[bool, options.quiet_option()] = False,
+    verbose: Annotated[bool, options.verbose_option()] = False,
+    debug: Annotated[bool, options.debug_option()] = False,
 ) -> None:
-    """Validate an OpenAPI document."""
+    """Validate a Codepot spec."""
+
     try:
-        from cli.main import get_runtime
-
-        resolved_input = input_file
-
-        prompt = should_prompt(interactive)
-
-        if resolved_input is None and prompt:
-            resolved_input = ask_input_path()
-
-        if resolved_input is None:
-            raise ValueError("missing required option: --input")
-
-        if not quiet:
-            print_header("Validate", str(resolved_input))
-
-        runtime = get_runtime(ctx)
-        result = runtime.validate(input_path=resolved_input)
-
-        if not quiet:
+        request = ValidateRequest(spec_path=spec_path, strict=strict, verbose=verbose)
+        result = get_runtime(ctx).validate(request)
+        if json_output and not quiet:
+            print_json_result(result)
+        elif not quiet:
+            print_header("Validate", str(result.spec_path))
             render_validate_result(result, verbose=verbose)
-
+        if not result.ok:
+            raise typer.Exit(EXIT_VALIDATION_ERROR)
+    except CliError as exc:
+        print_error(str(exc))
+        if debug:
+            raise
+        raise typer.Exit(exc.exit_code) from exc
+    except typer.Exit:
+        raise
     except Exception as exc:
         print_error(str(exc))
         if debug:
             raise
-        raise typer.Exit(1) from exc
+        raise typer.Exit(EXIT_VALIDATION_ERROR) from exc

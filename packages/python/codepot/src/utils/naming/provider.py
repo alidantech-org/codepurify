@@ -163,7 +163,14 @@ class NameProvider:
             "number": last.kind,
         }
 
-    def _case(self, original: str, singular: str, plural: str, number: NumberKind, converter) -> PluralizedName:
+    def _case(
+        self,
+        original: str,
+        singular: str,
+        plural: str,
+        number: NumberKind,
+        converter,
+    ) -> PluralizedName:
         return PluralizedName(
             original=converter(original),
             singular=converter(singular),

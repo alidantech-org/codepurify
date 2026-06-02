@@ -1,7 +1,7 @@
 [project]
 name = "codepot"
 version = "0.1.0"
-description = "General OpenAPI inference and multi-language code generation engine"
+description = "Universal code generator powered by compiled Codepot specs"
 requires-python = ">=3.11"
 dependencies = [
   "typer>=0.12.5",
@@ -14,26 +14,27 @@ dependencies = [
   "pluralizer>=2.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.8.0",
+]
+
 [project.scripts]
 codepotgen = "cli.main:app"
 
 [tool.setuptools.package-dir]
 "" = "src"
-cli = "cli"
 
 [tool.setuptools.packages.find]
-where = ["src", "."]
+where = ["src"]
 include = [
   "app*",
   "cli*",
-  "codepot*",
-  "constants*",
-  "core*",
-  "emission*",
-  "inference*",
+  "contracts*",
   "languages*",
-  "openapi*",
-  "runtime*",
+  "pipeline*",
+  "spec*",
   "utils*",
 ]
 
@@ -47,4 +48,4 @@ ignore = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "."]
+pythonpath = ["src"]

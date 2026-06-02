@@ -6,10 +6,10 @@ from typing import Any
 
 from pydantic import ConfigDict
 
-from codepot.ir.resource.operation.definition import OperationDefinition
-from codepot.ir.resource.route.definition import RoutesDefinition
-from codepot.ir.shared.base import DefinitionItem
-from codepot.ir.shared.ref import Ref
+from spec.ir.resource.operation.definition import OperationDefinition
+from spec.ir.resource.route.definition import RoutesDefinition
+from spec.ir.shared.base import DefinitionItem
+from spec.ir.shared.ref import Ref
 
 
 class ResourceDefaultsDefinition(DefinitionItem):

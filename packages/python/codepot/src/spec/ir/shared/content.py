@@ -6,7 +6,7 @@ from enum import StrEnum
 
 from pydantic import ConfigDict
 
-from codepot.ir.shared.base import DefinitionItem
+from spec.ir.shared.base import DefinitionItem
 
 
 class ContentStrategy(StrEnum):

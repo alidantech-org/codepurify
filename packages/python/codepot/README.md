@@ -2,7 +2,7 @@ Here is the **final recommended file structure**.
 
 ```text
 codepot/
-  codepot.v1.yaml
+  spec.v1.yaml
   pyproject.toml
   README.md
 
@@ -201,14 +201,14 @@ codepot/
 ### 1. Root files
 
 ```text
-codepot.v1.yaml
+spec.v1.yaml
 pyproject.toml
 README.md
 ```
 
 These are project-level files.
 
-`codepot.v1.yaml` is only a sample/test compiled spec.
+`spec.v1.yaml` is only a sample/test compiled spec.
 
 ---
 
@@ -543,6 +543,7 @@ languages/
 unless your packaging intentionally supports them. Since this is a Python package, keeping importable code under `src/` is simpler.
 
 # Root-level folders
+
 mkdir -p pipeline
 mkdir -p templates/python
 mkdir -p tests/spec
@@ -550,6 +551,7 @@ mkdir -p tests/app
 mkdir -p tests/languages
 
 # Pipeline package folders
+
 mkdir -p src/cli/commands
 mkdir -p src/cli/constants
 mkdir -p src/cli/presentation/core
@@ -591,7 +593,8 @@ mkdir -p src/utils/templates
 mkdir -p src/utils/types
 
 # Root files
-touch codepot.v1.yaml
+
+touch spec.v1.yaml
 touch pyproject.toml
 touch README.md
 touch templates/paths.template.yaml
@@ -599,51 +602,53 @@ touch templates/python/enum.py.j2
 touch templates/python/model.py.j2
 touch templates/python/dto.py.j2
 touch templates/python/resource.py.j2
-touch templates/python/__init__.py.j2
-touch tests/__init__.py
+touch templates/python/**init**.py.j2
+touch tests/**init**.py
 touch tests/conftest.py
 
 # Package root
-touch src/__init__.py
+
+touch src/**init**.py
 touch src/app.py
 
 # CLI
-touch src/cli/__init__.py
+
+touch src/cli/**init**.py
 touch src/cli/main.py
 touch src/cli/bootstrap.py
-touch src/cli/commands/__init__.py
+touch src/cli/commands/**init**.py
 touch src/cli/commands/inspect.py
 touch src/cli/commands/validate.py
 touch src/cli/commands/infer.py
 touch src/cli/commands/emit.py
-touch src/cli/constants/__init__.py
+touch src/cli/constants/**init**.py
 touch src/cli/constants/constants.py
 touch src/cli/constants/defaults.py
-touch src/cli/presentation/__init__.py
-touch src/cli/presentation/core/__init__.py
+touch src/cli/presentation/**init**.py
+touch src/cli/presentation/core/**init**.py
 touch src/cli/presentation/core/console.py
 touch src/cli/presentation/core/diagnostics.py
 touch src/cli/presentation/core/interactive.py
 touch src/cli/presentation/core/tables.py
-touch src/cli/presentation/inspect/__init__.py
+touch src/cli/presentation/inspect/**init**.py
 touch src/cli/presentation/inspect/diagnostics.py
 touch src/cli/presentation/inspect/renderer.py
 touch src/cli/presentation/inspect/resources.py
 touch src/cli/presentation/inspect/status.py
 touch src/cli/presentation/inspect/summary.py
-touch src/cli/presentation/validate/__init__.py
+touch src/cli/presentation/validate/**init**.py
 touch src/cli/presentation/validate/diagnostics.py
 touch src/cli/presentation/validate/issues.py
 touch src/cli/presentation/validate/renderer.py
 touch src/cli/presentation/validate/summary.py
-touch src/cli/presentation/infer/__init__.py
+touch src/cli/presentation/infer/**init**.py
 touch src/cli/presentation/infer/diagnostics.py
 touch src/cli/presentation/infer/files.py
 touch src/cli/presentation/infer/renderer.py
 touch src/cli/presentation/infer/schemas.py
 touch src/cli/presentation/infer/status.py
 touch src/cli/presentation/infer/summary.py
-touch src/cli/presentation/emit/__init__.py
+touch src/cli/presentation/emit/**init**.py
 touch src/cli/presentation/emit/diagnostics.py
 touch src/cli/presentation/emit/files.py
 touch src/cli/presentation/emit/renderer.py
@@ -651,7 +656,8 @@ touch src/cli/presentation/emit/status.py
 touch src/cli/presentation/emit/summary.py
 
 # Contracts
-touch src/contracts/__init__.py
+
+touch src/contracts/**init**.py
 touch src/contracts/repository.py
 touch src/contracts/planning.py
 touch src/contracts/language.py
@@ -660,10 +666,11 @@ touch src/contracts/templates.py
 touch src/contracts/files.py
 
 # Spec public layer
-touch src/spec/__init__.py
-touch src/spec/loader/__init__.py
+
+touch src/spec/**init**.py
+touch src/spec/loader/**init**.py
 touch src/spec/loader/yaml_loader.py
-touch src/spec/repository/__init__.py
+touch src/spec/repository/**init**.py
 touch src/spec/repository/document.py
 touch src/spec/repository/records.py
 touch src/spec/repository/record_sets.py
@@ -672,9 +679,10 @@ touch src/spec/repository/refs.py
 touch src/spec/repository/graph.py
 
 # Spec IR
-touch src/spec/ir/__init__.py
 
-touch src/spec/ir/shared/__init__.py
+touch src/spec/ir/**init**.py
+
+touch src/spec/ir/shared/**init**.py
 touch src/spec/ir/shared/ref.py
 touch src/spec/ir/shared/base.py
 touch src/spec/ir/shared/info.py
@@ -682,77 +690,79 @@ touch src/spec/ir/shared/url.py
 touch src/spec/ir/shared/content.py
 touch src/spec/ir/shared/document.py
 
-touch src/spec/ir/properties/__init__.py
+touch src/spec/ir/properties/**init**.py
 touch src/spec/ir/properties/definition.py
-touch src/spec/ir/properties/primitive/__init__.py
+touch src/spec/ir/properties/primitive/**init**.py
 touch src/spec/ir/properties/primitive/definition.py
-touch src/spec/ir/properties/enum/__init__.py
+touch src/spec/ir/properties/enum/**init**.py
 touch src/spec/ir/properties/enum/definition.py
-touch src/spec/ir/properties/composite/__init__.py
+touch src/spec/ir/properties/composite/**init**.py
 touch src/spec/ir/properties/composite/definition.py
 
-touch src/spec/ir/schema/__init__.py
+touch src/spec/ir/schema/**init**.py
 touch src/spec/ir/schema/definition.py
-touch src/spec/ir/schema/entity/__init__.py
+touch src/spec/ir/schema/entity/**init**.py
 touch src/spec/ir/schema/entity/definition.py
-touch src/spec/ir/schema/entity/field/__init__.py
+touch src/spec/ir/schema/entity/field/**init**.py
 touch src/spec/ir/schema/entity/field/definition.py
-touch src/spec/ir/schema/field_set/__init__.py
+touch src/spec/ir/schema/field_set/**init**.py
 touch src/spec/ir/schema/field_set/definition.py
-touch src/spec/ir/schema/model/__init__.py
+touch src/spec/ir/schema/model/**init**.py
 touch src/spec/ir/schema/model/definition.py
-touch src/spec/ir/schema/dto/__init__.py
+touch src/spec/ir/schema/dto/**init**.py
 touch src/spec/ir/schema/dto/definition.py
-touch src/spec/ir/schema/params/__init__.py
+touch src/spec/ir/schema/params/**init**.py
 touch src/spec/ir/schema/params/definition.py
 
-touch src/spec/ir/resource/__init__.py
+touch src/spec/ir/resource/**init**.py
 touch src/spec/ir/resource/definition.py
-touch src/spec/ir/resource/operation/__init__.py
+touch src/spec/ir/resource/operation/**init**.py
 touch src/spec/ir/resource/operation/definition.py
-touch src/spec/ir/resource/route/__init__.py
+touch src/spec/ir/resource/route/**init**.py
 touch src/spec/ir/resource/route/definition.py
 
-touch src/spec/ir/response/__init__.py
+touch src/spec/ir/response/**init**.py
 touch src/spec/ir/response/definition.py
-touch src/spec/ir/response/errors/__init__.py
+touch src/spec/ir/response/errors/**init**.py
 touch src/spec/ir/response/errors/definition.py
 
-touch src/spec/ir/security/__init__.py
+touch src/spec/ir/security/**init**.py
 touch src/spec/ir/security/definition.py
 
 # App orchestration
-touch src/pipeline/__init__.py
+
+touch src/pipeline/**init**.py
 touch src/pipeline/pipeline.py
 
-touch src/pipeline/selection/__init__.py
+touch src/pipeline/selection/**init**.py
 touch src/pipeline/selection/kinds.py
 touch src/pipeline/selection/config.py
 touch src/pipeline/selection/resolver.py
 
-touch src/pipeline/pathing/__init__.py
+touch src/pipeline/pathing/**init**.py
 touch src/pipeline/pathing/identity.py
 touch src/pipeline/pathing/branch.py
 touch src/pipeline/pathing/variables.py
 touch src/pipeline/pathing/planner.py
 
-touch src/pipeline/planning/__init__.py
+touch src/pipeline/planning/**init**.py
 touch src/pipeline/planning/records.py
 touch src/pipeline/planning/pipeline.py
 
-touch src/pipeline/adapter/__init__.py
+touch src/pipeline/adapter/**init**.py
 touch src/pipeline/adapter/languages.py
 
-touch src/pipeline/emission/__init__.py
+touch src/pipeline/emission/**init**.py
 touch src/pipeline/emission/file_plan.py
 touch src/pipeline/emission/renderer.py
 touch src/pipeline/emission/writer.py
 
 # Languages
-touch src/languages/__init__.py
+
+touch src/languages/**init**.py
 touch src/languages/contracts.py
 touch src/languages/registry.py
-touch src/languages/python/__init__.py
+touch src/languages/python/**init**.py
 touch src/languages/python/adapter.py
 touch src/languages/python/names.py
 touch src/languages/python/types.py
@@ -760,14 +770,15 @@ touch src/languages/python/imports.py
 touch src/languages/python/keywords.py
 
 # Utils
-touch src/utils/__init__.py
-touch src/utils/naming/__init__.py
+
+touch src/utils/**init**.py
+touch src/utils/naming/**init**.py
 touch src/utils/naming/aliases.py
 touch src/utils/naming/cases.py
 touch src/utils/naming/number.py
 touch src/utils/naming/plurality.py
 touch src/utils/naming/provider.py
-touch src/utils/collections/__init__.py
-touch src/utils/files/__init__.py
-touch src/utils/templates/__init__.py
-touch src/utils/types/__init__.py
+touch src/utils/collections/**init**.py
+touch src/utils/files/**init**.py
+touch src/utils/templates/**init**.py
+touch src/utils/types/**init**.py

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from codepot.ir.shared.ref import Ref
+from spec.ir.shared.ref import Ref
 
 
 @dataclass
@@ -17,7 +17,10 @@ class RefGraph:
     def dependencies_of(self, ref: Ref[Any]) -> tuple[Ref[Any], ...]:
         """Return direct dependencies for a ref."""
 
-        return tuple(Ref[Any](ref=value) for value in sorted(self.edges.get(ref.ref, set())))
+        return tuple(
+            Ref[Any](**{"$ref": value})
+            for value in sorted(self.edges.get(ref.ref, set()))
+        )
 
     def ordered_refs(self) -> tuple[str, ...]:
         """Return refs in stable placeholder order."""

@@ -1,0 +1,1 @@
+"""Codepot command-line interface."""

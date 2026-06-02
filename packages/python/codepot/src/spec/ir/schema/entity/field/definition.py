@@ -7,8 +7,8 @@ from typing import Any
 
 from pydantic import ConfigDict, Field
 
-from codepot.ir.shared.base import DefinitionItem
-from codepot.ir.shared.ref import Ref
+from spec.ir.shared.base import DefinitionItem
+from spec.ir.shared.ref import Ref
 
 
 class QueryOperator(StrEnum):
