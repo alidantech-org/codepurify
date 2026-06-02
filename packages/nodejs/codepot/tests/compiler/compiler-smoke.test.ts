@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { compile } from '@/compiler';
-import { v1 } from '../fixtures/contracts/demo.contract';
+import { v1 } from '../fixtures/contract/v1-demo';
 
 describe('compiler smoke test', () => {
   it('compiles demo authoring contract into Codepot IR', () => {

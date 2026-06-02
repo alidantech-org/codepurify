@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compile } from '@/compiler';
 import { validateIrRefs } from '@/compiler/validators';
-import { v1 } from '../fixtures/contracts/demo.contract';
+import { v1 } from '../fixtures/contract/v1-demo';
 
 describe('compiler IR ref validator', () => {
   it('emits no broken refs for the demo contract', () => {

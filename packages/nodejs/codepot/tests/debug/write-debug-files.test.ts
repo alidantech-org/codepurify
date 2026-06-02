@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { writeAuthoringDebugPackage } from '@/app';
-import { demoConfig } from '@/tests/fixtures/contracts/demo.contract';
+import { demoConfig } from '../fixtures/contract/v1-demo';
 
 describe('writeDebugFiles', () => {
   it('writes authoring debug json and yaml files', async () => {
