@@ -1,0 +1,1 @@
+"""Shared root-level Codepot IR model definitions."""

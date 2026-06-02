@@ -1,0 +1,81 @@
+"""Security definition models for compiled Codepot IR."""
+
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+
+from codepot.ir.shared.base import DefinitionItem
+from codepot.ir.shared.ref import Ref
+
+
+class SecurityCredentialSource(StrEnum):
+    """Supported credential locations."""
+
+    HEADER = "header"
+    COOKIE = "cookie"
+    QUERY = "query"
+
+
+class SecurityCredentialFormat(StrEnum):
+    """Supported credential formats."""
+
+    RAW = "raw"
+    BEARER = "bearer"
+    BASIC = "basic"
+    API_KEY = "api_key"
+    SESSION = "session"
+
+
+class SecurityCredentialDefinition(DefinitionItem):
+    """Credential extraction definition."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source: SecurityCredentialSource
+    key: str
+    format: SecurityCredentialFormat | None = None
+    value_type: Ref[Any] | None = None
+
+
+SecurityPrincipalFields = dict[str, Ref[Any]]
+
+
+class SecurityPrincipalDefinition(DefinitionItem):
+    """Typed authenticated principal definition."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    fields: SecurityPrincipalFields
+
+
+class SecurityPolicyMode(StrEnum):
+    """Supported security policy modes."""
+
+    PUBLIC = "public"
+    PROTECTED = "protected"
+
+
+class SecurityPolicyDefinition(DefinitionItem):
+    """Compiled route/resource security policy."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    mode: SecurityPolicyMode
+    credential: Ref[Any] | None = None
+    principals: dict[str, Ref[Any]] | None = None
+    roles: list[str] | None = None
+    permissions: list[str] | None = None
+    intent: str | None = None
+
+
+class SecurityDefinition(BaseModel):
+    """Compiled security registry."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    credentials: dict[str, SecurityCredentialDefinition]
+    principals: dict[str, SecurityPrincipalDefinition]
+    policies: dict[str, SecurityPolicyDefinition]

@@ -1,0 +1,90 @@
+"""Route definition models for compiled Codepot IR resources."""
+
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import Any
+
+from pydantic import ConfigDict
+
+from codepot.ir.security.definition import SecurityPolicyDefinition
+from codepot.ir.shared.base import DefinitionItem
+from codepot.ir.shared.ref import Ref
+
+
+class HttpMethod(StrEnum):
+    """Supported HTTP methods."""
+
+    GET = "get"
+    POST = "post"
+    PUT = "put"
+    PATCH = "patch"
+    DELETE = "delete"
+    OPTIONS = "options"
+    HEAD = "head"
+
+
+RouteSchemaRef = Ref[Any]
+
+
+class RouteBodyDefinition(DefinitionItem):
+    """Compiled route request body definition."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema: RouteSchemaRef
+    content_type: Ref[Any]
+    content_types: tuple[Ref[Any], ...] | None = None
+
+
+class RouteOutputDefinition(DefinitionItem):
+    """Compiled route success output definition."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: int
+    schema: RouteSchemaRef | None = None
+    content_type: Ref[Any] | None = None
+
+
+class RouteInlineResponseDefinition(DefinitionItem):
+    """Inline route response definition."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: int | None = None
+    schema: RouteSchemaRef | None = None
+    content_type: Ref[Any] | None = None
+    content_types: tuple[Ref[Any], ...] | None = None
+    headers: dict[str, RouteSchemaRef] | None = None
+
+
+RouteResponseDefinition = Ref[Any] | RouteInlineResponseDefinition
+
+
+class RouteMethodDefinition(DefinitionItem):
+    """Compiled route method binding."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    operation: Ref[Any]
+    security: Ref[Any] | SecurityPolicyDefinition | None = None
+
+    params: Ref[Any] | None = None
+    query: RouteSchemaRef | None = None
+    body: RouteBodyDefinition | None = None
+
+    responses: dict[int, RouteResponseDefinition]
+
+
+class RoutePathDefinition(DefinitionItem):
+    """Compiled route path definition."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    path: str
+    parameters: dict[str, Ref[Any]] | None = None
+    methods: dict[HttpMethod, RouteMethodDefinition]
+
+
+RoutesDefinition = dict[str, RoutePathDefinition]

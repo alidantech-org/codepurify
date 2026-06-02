@@ -1,1 +1,1 @@
-"""Utility modules for the generator."""
+"""Utility modules for the codepot generator."""
