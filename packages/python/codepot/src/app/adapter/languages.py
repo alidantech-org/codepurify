@@ -1,1 +1,0 @@
-"adapts all language pipelines to the unified interface"
