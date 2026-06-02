@@ -39,16 +39,22 @@ function resolveUrls(input: CompilerContext['authoring']['urls']): UrlDefinition
  * Copies optional root metadata from authoring to IR.
  */
 function resolveRootDefinitionItem(ctx: CompilerContext): void {
+  const ir = ctx.ir as {
+    description?: string;
+    deprecated?: boolean;
+    meta?: Record<string, unknown>;
+  };
+
   if (ctx.authoring.description !== undefined) {
-    ctx.ir.description = ctx.authoring.description;
+    ir.description = ctx.authoring.description;
   }
 
   if (ctx.authoring.deprecated !== undefined) {
-    ctx.ir.deprecated = ctx.authoring.deprecated;
+    ir.deprecated = ctx.authoring.deprecated;
   }
 
   if (ctx.authoring.meta !== undefined) {
-    ctx.ir.meta = ctx.authoring.meta;
+    ir.meta = ctx.authoring.meta;
   }
 }
 

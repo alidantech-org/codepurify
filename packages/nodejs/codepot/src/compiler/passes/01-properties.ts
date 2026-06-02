@@ -18,7 +18,7 @@ import type { CompilerContext } from '../context/compiler-context';
 
 import {
   CompiledPropertyKind,
-  promoteInlineProperty,
+  promoteCompositeInlineProperty,
   resolveEnumProperty,
   resolvePrimitiveProperty,
   resolvePropertyRef,
@@ -154,7 +154,7 @@ function resolveCompositeMember(ctx: CompilerContext, compositeKey: string, memb
 
   if (isNormalizedInlineMember(input)) {
     const source = unwrapPropertySource(input.source.property);
-    const promoted = promoteInlineProperty(source, compositeKey, memberKey);
+    const promoted = promoteCompositeInlineProperty(source, compositeKey, memberKey);
 
     registerPromotedProperty(ctx, promoted);
 
@@ -163,7 +163,7 @@ function resolveCompositeMember(ctx: CompilerContext, compositeKey: string, memb
 
   if (isPropertySourceBuilder(input)) {
     const source = unwrapPropertySource(input);
-    const promoted = promoteInlineProperty(source, compositeKey, memberKey);
+    const promoted = promoteCompositeInlineProperty(source, compositeKey, memberKey);
 
     registerPromotedProperty(ctx, promoted);
 
@@ -171,7 +171,7 @@ function resolveCompositeMember(ctx: CompilerContext, compositeKey: string, memb
   }
 
   if (isPropertySourceInput(input)) {
-    const promoted = promoteInlineProperty(input, compositeKey, memberKey);
+    const promoted = promoteCompositeInlineProperty(input, compositeKey, memberKey);
 
     registerPromotedProperty(ctx, promoted);
 

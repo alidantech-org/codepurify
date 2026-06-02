@@ -2,7 +2,9 @@
 
 import type { CompilerContext } from '../context/compiler-context';
 
+import { createOwnedKey } from '../naming/owned-key';
 import { getErrorsState, resolveErrorResponse } from '../resolvers/error-resolver';
+import { resourceRef } from '../resolvers/ref-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -32,14 +34,11 @@ function compileGlobalErrors(ctx: CompilerContext): void {
 /**
  * Creates the promoted root key for a resource-scoped error.
  *
- * Resource-scoped errors are moved to root `responses.errors` but keep their
- * origin using dot notation.
- *
- * Example:
- * users.emailTaken -> users.email_taken
+ * Format:
+ * resource.resource_key.error_key
  */
 function createResourceErrorKey(resourceKey: string, errorKey: string): string {
-  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(errorKey)}`;
+  return createOwnedKey('resource', resourceKey, errorKey);
 }
 
 /**
@@ -55,11 +54,14 @@ function compileResourceErrors(ctx: CompilerContext): void {
     for (const [errorKey, error] of Object.entries(errors)) {
       const compiledKey = createResourceErrorKey(resourceKey, errorKey);
 
-      ctx.ir.responses.errors[compiledKey] = resolveErrorResponse({
-        ctx,
-        key: compiledKey,
-        error,
-      });
+      ctx.ir.responses.errors[compiledKey] = {
+        ...resolveErrorResponse({
+          ctx,
+          key: compiledKey,
+          error,
+        }),
+        ownership: resourceRef(toSnakeCaseKey(resourceKey)),
+      };
     }
   }
 }

@@ -1,5 +1,6 @@
 // src/contract/types/ir/schema/field-set/definition.ts
 
+import type { DefinitionItem } from '../../definition';
 import type { Ref } from '../../ref';
 import type { EntityFieldDefinition } from '../entity/field/definition';
 
@@ -7,4 +8,6 @@ import type { EntityFieldDefinition } from '../entity/field/definition';
 // FIELD SET
 // ============================================================================
 
-export type FieldSetDefinition = readonly Ref<EntityFieldDefinition>[];
+export interface FieldSetDefinition extends DefinitionItem {
+  readonly fields: readonly Ref<EntityFieldDefinition>[];
+}

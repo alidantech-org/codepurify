@@ -17,6 +17,7 @@ import type { SecurityPolicyDefinition } from '@/contract/types/ir/security/defi
 
 import type { CompilerContext } from '../context/compiler-context';
 
+import { createOwnedKey } from '../naming/owned-key';
 import { contentTypeRef, dtoRef, errorResponseRef, modelRef, operationRef, paramsRef, securityPolicyRef } from './ref-resolver';
 import { resolveSecurityPolicy } from './security-resolver';
 
@@ -255,10 +256,10 @@ function resolveOptionalContentTypes(
 // ============================================================================
 
 /**
- * Creates a promoted resource-scoped schema key.
+ * Creates a resource-owned schema key.
  */
 function createScopedSchemaKey(resourceKey: string, schemaKey: string): string {
-  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(schemaKey)}`;
+  return createOwnedKey('resource', resourceKey, schemaKey);
 }
 
 /**
@@ -296,10 +297,11 @@ function resolveRouteParamsRef(ctx: CompilerContext, resourceKey: string, input:
   const value = unwrapRefInput(input);
 
   if (value.kind === 'schema.params') {
-    const scopedKey = createScopedSchemaKey(resourceKey, value.key);
     const globalKey = toSnakeCaseKey(value.key);
+    const scopedKey = createScopedSchemaKey(resourceKey, value.key);
+    const hasResourceLocalParam = ctx.authoring.resources?.[resourceKey]?.schemas.params?.[value.key] !== undefined;
 
-    if (ctx.ir.schemas.params[scopedKey] !== undefined) {
+    if (hasResourceLocalParam && ctx.ir.schemas.params[scopedKey] !== undefined) {
       return paramsRef(scopedKey);
     }
 
@@ -307,7 +309,11 @@ function resolveRouteParamsRef(ctx: CompilerContext, resourceKey: string, input:
       return paramsRef(globalKey);
     }
 
-    throw new Error(`Route references unknown params "${value.key}".`);
+    if (ctx.ir.schemas.params[scopedKey] !== undefined) {
+      return paramsRef(scopedKey);
+    }
+
+    throw new Error(`Route references unknown params "${value.key}". Checked "${globalKey}" and "${scopedKey}".`);
   }
 
   throw new Error(`Unsupported route params ref kind "${value.kind}".`);
@@ -352,7 +358,7 @@ function resolveRouteSecurity(input: object): Ref | SecurityPolicyDefinition {
  * Creates the promoted key for a resource-scoped error.
  */
 function createScopedErrorKey(resourceKey: string, errorKey: string): string {
-  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(errorKey)}`;
+  return createOwnedKey('resource', resourceKey, errorKey);
 }
 
 /**
@@ -360,7 +366,7 @@ function createScopedErrorKey(resourceKey: string, errorKey: string): string {
  *
  * Lookup order:
  * 1. global error key, e.g. unauthorized
- * 2. resource-scoped promoted key, e.g. users.email_taken
+ * 2. resource-scoped promoted key, e.g. resource.users.email_taken
  */
 function resolveRouteErrorRef(ctx: CompilerContext, resourceKey: string, input: object): Ref {
   const value = unwrapRefInput(input);

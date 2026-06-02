@@ -16,7 +16,7 @@ export interface SchemasDefinition {
   field_sets: Record<string, FieldSetDefinition>;
   models: Record<string, ModelDefinition>;
   dtos: Record<string, DtoDefinition>;
-  params: ParamsDefinition;
+  params: Record<string, ParamsDefinition>;
 }
 
 export type RefSchema = EntityDefinition | EntityFieldDefinition | FieldSetDefinition | ModelDefinition | DtoDefinition;

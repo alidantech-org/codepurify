@@ -13,7 +13,9 @@ import type { CompositeDefinition } from '@/contract/types/ir/properties/composi
 import type { EnumDefinition } from '@/contract/types/ir/properties/enum/definition';
 import type { PrimitiveDefinition } from '@/contract/types/ir/properties/primitive/definition';
 
-import { propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
+import { createOwnedKey } from '../naming/owned-key';
+
+import { entityRef, propertyCompositeRef, propertyEnumRef, propertyPrimitiveRef } from './ref-resolver';
 import { toKebabCase, toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
 // ============================================================================
@@ -214,28 +216,22 @@ export function resolvePropertyRef(input: PropertyAuthoringRef): ResolvedPropert
 // ============================================================================
 
 /**
- * Creates the compiled key for an inline property promoted into reusable IR.
- */
-function createPromotedPropertyKey(ownerKey: string, fieldKey: string): string {
-  return toSnakeCaseKey(`${ownerKey}_${fieldKey}`);
-}
-
-/**
  * Promotes an inline authoring primitive/enum property into a reusable IR
  * property definition and returns the promoted `$ref`.
  *
  * Composite inline promotion is intentionally not supported here yet because
  * nested composites need recursive ownership naming.
  */
-export function promoteInlineProperty(input: PropertySourceInput, ownerKey: string, fieldKey: string): PromotedPropertyDefinition {
-  const key = createPromotedPropertyKey(ownerKey, fieldKey);
-
+function promoteInlinePropertyWithOwnership(input: PropertySourceInput, key: string, ownership: Ref): PromotedPropertyDefinition {
   if (input.kind === CompiledPropertyKind.primitive) {
     return {
       kind: CompiledPropertyKind.primitive,
       key,
       ref: propertyPrimitiveRef(key),
-      definition: resolvePrimitiveProperty(input),
+      definition: {
+        ...resolvePrimitiveProperty(input),
+        ownership,
+      },
     };
   }
 
@@ -244,9 +240,34 @@ export function promoteInlineProperty(input: PropertySourceInput, ownerKey: stri
       kind: CompiledPropertyKind.enum,
       key,
       ref: propertyEnumRef(key),
-      definition: resolveEnumProperty(input),
+      definition: {
+        ...resolveEnumProperty(input),
+        ownership,
+      },
     };
   }
 
   throw new Error(`Inline property kind "${input.kind}" is not supported for promotion yet.`);
+}
+
+/**
+ * Promotes an entity field inline property using entity-owned keys.
+ */
+export function promoteEntityInlineProperty(input: PropertySourceInput, entityKey: string, fieldKey: string): PromotedPropertyDefinition {
+  return promoteInlinePropertyWithOwnership(input, createOwnedKey('entity', entityKey, fieldKey), entityRef(toSnakeCaseKey(entityKey)));
+}
+
+/**
+ * Promotes a composite member inline property using composite-owned keys.
+ */
+export function promoteCompositeInlineProperty(
+  input: PropertySourceInput,
+  compositeKey: string,
+  memberKey: string,
+): PromotedPropertyDefinition {
+  return promoteInlinePropertyWithOwnership(
+    input,
+    createOwnedKey('composite', compositeKey, memberKey),
+    propertyCompositeRef(toSnakeCaseKey(compositeKey)),
+  );
 }

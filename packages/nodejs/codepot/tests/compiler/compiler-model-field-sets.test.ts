@@ -9,13 +9,13 @@ describe('compiler model field sets', () => {
 
     expect(ir.schemas.models.user_query.field_sets).toEqual({
       select: {
-        $ref: '#/schemas/field_sets/user.list_select',
+        $ref: '#/schemas/field_sets/entity.user.list_select',
       },
       sort: {
-        $ref: '#/schemas/field_sets/user.list_sort',
+        $ref: '#/schemas/field_sets/entity.user.list_sort',
       },
       filter: {
-        $ref: '#/schemas/field_sets/user.list_filter',
+        $ref: '#/schemas/field_sets/entity.user.list_filter',
       },
     });
   });
@@ -24,7 +24,7 @@ describe('compiler model field sets', () => {
     const ir = compile(v1.snapshot());
 
     expect(ir.schemas.models.user_public_list.field_sets?.select).toEqual({
-      $ref: '#/schemas/field_sets/user.public_list_select',
+      $ref: '#/schemas/field_sets/entity.user.public_list_select',
     });
   });
 
@@ -32,7 +32,7 @@ describe('compiler model field sets', () => {
     const ir = compile(v1.snapshot());
 
     expect(ir.schemas.models.user_admin.field_sets?.select).toEqual({
-      $ref: '#/schemas/field_sets/user.admin_list_select',
+      $ref: '#/schemas/field_sets/entity.user.admin_list_select',
     });
   });
 });

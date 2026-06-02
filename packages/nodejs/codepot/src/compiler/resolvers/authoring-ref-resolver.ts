@@ -1,5 +1,7 @@
 // src/compiler/resolvers/authoring-ref-resolver.ts
 
+import { createOwnedKey } from '../naming/owned-key';
+
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
 // ============================================================================
@@ -59,7 +61,7 @@ export interface ParsedModelRef {
  * Into:
  * - entity_key: user
  * - variant_key: public
- * - model_key: user_public
+ * - model_key: entity.user.user_public
  */
 export function parseModelRef(input: AuthoringRefLike): ParsedModelRef {
   if (input.kind !== 'schema.model') {
@@ -76,11 +78,12 @@ export function parseModelRef(input: AuthoringRefLike): ParsedModelRef {
 
   const entityKey = toSnakeCaseKey(entityName);
   const variantKey = toSnakeCaseKey(variantName);
+  const localModelKey = toSnakeCaseKey(`${entityKey}_${variantKey}`);
 
   return {
     entity_key: entityKey,
     variant_key: variantKey,
-    model_key: `${entityKey}_${variantKey}`,
+    model_key: createOwnedKey('entity', entityKey, localModelKey),
   };
 }
 

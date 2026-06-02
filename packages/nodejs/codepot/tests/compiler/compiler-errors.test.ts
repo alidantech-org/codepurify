@@ -22,9 +22,12 @@ describe('compiler errors', () => {
   it('promotes resource-scoped errors to root responses with dotted keys', () => {
     const ir = compile(v1.snapshot());
 
-    expect(ir.responses.errors['users.email_taken']).toBeDefined();
+    expect(ir.responses.errors['resource.users.email_taken']).toBeDefined();
 
-    expect(ir.responses.errors['users.email_taken']).toMatchObject({
+    expect(ir.responses.errors['resource.users.email_taken']).toMatchObject({
+      ownership: {
+        $ref: '#/resources/users',
+      },
       status: 409,
       schema: {
         $ref: '#/schemas/dtos/error_response',
@@ -34,6 +37,7 @@ describe('compiler errors', () => {
       },
     });
 
+    expect(ir.responses.errors['users.email_taken']).toBeUndefined();
     expect(ir.responses.errors.users_email_taken).toBeUndefined();
   });
 
@@ -51,7 +55,7 @@ describe('compiler errors', () => {
     const createUser = expectRouteMethod(ir.resources.users.routes, '/', 'post');
 
     expect(createUser.responses[409]).toEqual({
-      $ref: '#/responses/errors/users.email_taken',
+      $ref: '#/responses/errors/resource.users.email_taken',
     });
   });
 
@@ -74,7 +78,7 @@ describe('compiler errors', () => {
     });
 
     expect(createUser.responses[409]).toEqual({
-      $ref: '#/responses/errors/users.email_taken',
+      $ref: '#/responses/errors/resource.users.email_taken',
     });
 
     expect(listUsers.responses[400]).toBeUndefined();

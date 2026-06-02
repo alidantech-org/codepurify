@@ -50,10 +50,10 @@ function getModelOverride(entity: EntityAuthoringDefinition, variant: EntityMode
 /**
  * Compiles entity model variants into top-level IR schemas.models.
  *
- * Models are not nested under entities in IR. Each model gets a stable key like:
- * - user_read
- * - user_create
- * - user_public_list
+ * Models are not nested under entities in IR. Each model gets a stable owned key like:
+ * - entity.user.user_read
+ * - entity.user.user_create
+ * - entity.user.user_public_list
  */
 export function compileModels(ctx: CompilerContext): void {
   for (const [entityKey, entity] of Object.entries(ctx.authoring.schemas.entities ?? {})) {

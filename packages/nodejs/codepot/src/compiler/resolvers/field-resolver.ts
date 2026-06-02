@@ -24,7 +24,12 @@ import type {
 
 import type { CompilerContext } from '../context/compiler-context';
 
-import { CompiledPropertyKind, promoteInlineProperty, resolvePropertyRef, type PromotedPropertyDefinition } from './property-resolver';
+import {
+  CompiledPropertyKind,
+  promoteEntityInlineProperty,
+  resolvePropertyRef,
+  type PromotedPropertyDefinition,
+} from './property-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -259,7 +264,7 @@ function resolveInlineFieldSource(
     throw new Error(`Inline field "${entityKey}.${fieldKey}" must use a property source.`);
   }
 
-  const promoted = promoteInlineProperty(rawSource, entityKey, fieldKey);
+  const promoted = promoteEntityInlineProperty(rawSource, entityKey, fieldKey);
 
   registerPromotedProperty(ctx, promoted);
 

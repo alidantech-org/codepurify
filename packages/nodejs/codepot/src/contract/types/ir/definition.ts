@@ -12,15 +12,29 @@ import type { ResponsesDefinition } from './response/definition';
 import type { SchemasDefinition } from './schema/definition';
 import type { SecurityDefinition } from './security/definition';
 import type { UrlDefinition } from './url/definition';
+import type { Ref } from './ref';
 
 // ============================================================================
 // SHARED DEFINITION ITEM
 // ============================================================================
 
 export interface DefinitionItem {
-  meta?: Record<string, unknown>;
-  description?: string;
-  deprecated?: boolean;
+  readonly meta?: Record<string, unknown>;
+  readonly description?: string;
+  readonly deprecated?: boolean;
+
+  /**
+   * Single validated source/owner link for promoted or source-linked IR items.
+   *
+   * The registry key carries searchable ownership:
+   * identity.owner_key.original_key
+   *
+   * This ref carries validated ownership:
+   * - #/resources/users
+   * - #/schemas/entities/user
+   * - #/properties/composites/inline_money
+   */
+  readonly ownership?: Ref;
 }
 
 // ============================================================================

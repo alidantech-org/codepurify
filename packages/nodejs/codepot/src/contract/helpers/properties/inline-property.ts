@@ -17,7 +17,7 @@ export function createInlinePropertyPromotionHint(input: {
     ownerKind: input.ownerKind,
     ownerKey: input.ownerKey,
     fieldKey: input.fieldKey,
-    suggestedKey: `${toSnake(input.ownerKey)}_${toSnake(input.fieldKey)}`,
+    suggestedKey: `${toSnake(input.ownerKind)}.${toSnake(input.ownerKey)}.${toSnake(input.fieldKey)}`,
   };
 }
 

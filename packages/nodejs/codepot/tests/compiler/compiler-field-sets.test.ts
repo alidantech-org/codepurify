@@ -8,47 +8,62 @@ import { v1 } from '../fixtures/contracts/demo.contract';
 // ============================================================================
 
 describe('compiler field sets', () => {
-  it('emits entity field-set overrides as root field_sets with dotted keys', () => {
+  it('emits entity field-set overrides as owned root field_sets with dotted keys', () => {
     const ir = compile(v1.snapshot());
 
-    expect(ir.schemas.field_sets['user.list_select']).toEqual([
-      {
-        $ref: '#/schemas/entities/base_entity/fields/id',
+    expect(ir.schemas.field_sets['entity.user.list_select']).toEqual({
+      ownership: {
+        $ref: '#/schemas/entities/user',
       },
-      {
-        $ref: '#/schemas/entities/user/fields/name',
-      },
-      {
-        $ref: '#/schemas/entities/user/fields/role',
-      },
-    ]);
+      fields: [
+        {
+          $ref: '#/schemas/entities/base_entity/fields/id',
+        },
+        {
+          $ref: '#/schemas/entities/user/fields/name',
+        },
+        {
+          $ref: '#/schemas/entities/user/fields/role',
+        },
+      ],
+    });
 
-    expect(ir.schemas.field_sets['user.list_sort']).toEqual([
-      {
-        $ref: '#/schemas/entities/base_entity/fields/created_at',
+    expect(ir.schemas.field_sets['entity.user.list_sort']).toMatchObject({
+      ownership: {
+        $ref: '#/schemas/entities/user',
       },
-      {
-        $ref: '#/schemas/entities/user/fields/role',
-      },
-    ]);
+      fields: [
+        {
+          $ref: '#/schemas/entities/base_entity/fields/created_at',
+        },
+        {
+          $ref: '#/schemas/entities/user/fields/role',
+        },
+      ],
+    });
 
-    expect(ir.schemas.field_sets['user.list_filter']).toEqual([
-      {
-        $ref: '#/schemas/entities/base_entity/fields/id',
+    expect(ir.schemas.field_sets['entity.user.list_filter']).toMatchObject({
+      ownership: {
+        $ref: '#/schemas/entities/user',
       },
-      {
-        $ref: '#/schemas/entities/user/fields/role',
-      },
-      {
-        $ref: '#/schemas/entities/user/fields/status',
-      },
-    ]);
+      fields: [
+        {
+          $ref: '#/schemas/entities/base_entity/fields/id',
+        },
+        {
+          $ref: '#/schemas/entities/user/fields/role',
+        },
+        {
+          $ref: '#/schemas/entities/user/fields/status',
+        },
+      ],
+    });
   });
 
   it('emits public and admin field sets with inherited refs when requested', () => {
     const ir = compile(v1.snapshot());
 
-    expect(ir.schemas.field_sets['user.public_list_select']).toEqual([
+    expect(ir.schemas.field_sets['entity.user.public_list_select']?.fields).toEqual([
       {
         $ref: '#/schemas/entities/base_entity/fields/id',
       },
@@ -57,7 +72,7 @@ describe('compiler field sets', () => {
       },
     ]);
 
-    expect(ir.schemas.field_sets['user.admin_list_select']).toEqual([
+    expect(ir.schemas.field_sets['entity.user.admin_list_select']?.fields).toEqual([
       {
         $ref: '#/schemas/entities/base_entity/fields/id',
       },
@@ -76,18 +91,21 @@ describe('compiler field sets', () => {
     ]);
   });
 
-  it('emits field sets as arrays of refs only', () => {
+  it('emits field sets as owned objects containing field refs', () => {
     const ir = compile(v1.snapshot());
 
     for (const [key, fieldSet] of Object.entries(ir.schemas.field_sets)) {
-      expect(Array.isArray(fieldSet)).toBe(true);
+      expect(key.split('.')).toHaveLength(3);
+      expect(key.startsWith('entity.')).toBe(true);
 
-      for (const fieldRef of fieldSet) {
+      expect(fieldSet).toHaveProperty('ownership');
+      expect(fieldSet.ownership).toHaveProperty('$ref');
+      expect(Array.isArray(fieldSet.fields)).toBe(true);
+
+      for (const fieldRef of fieldSet.fields) {
         expect(fieldRef).toHaveProperty('$ref');
         expect(Object.keys(fieldRef)).toEqual(['$ref']);
       }
-
-      expect(key).toContain('.');
     }
   });
 

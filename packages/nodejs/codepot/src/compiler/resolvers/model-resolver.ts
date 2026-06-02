@@ -14,7 +14,9 @@ import type { Ref } from '@/contract/types/ir/ref';
 
 import type { CompilerContext } from '../context/compiler-context';
 
+import { createOwnedKey } from '../naming/owned-key';
 import { entityFieldRef, entityRef, fieldSetRef, modelRef } from './ref-resolver';
+import { createFieldSetKey } from './field-set-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -64,16 +66,30 @@ function shouldIncludeRelation(relationShape: EntityModelOverrideInput<any>['rel
 // ============================================================================
 
 /**
+ * Creates the owned model key for an entity model.
+ *
+ * Format:
+ * entity.entity_key.model_key
+ */
+export function createModelKey(entityKey: string, modelKey: string): string {
+  return createOwnedKey('entity', entityKey, modelKey);
+}
+
+/**
  * Creates the compiled model key for an entity model variant.
  */
 export function createEntityModelKey(entityKey: string, variant: EntityModelVariant): string {
-  return toSnakeCaseKey(`${entityKey}_${variant}`);
+  const compiledEntityKey = toSnakeCaseKey(entityKey);
+  const localModelKey = toSnakeCaseKey(`${compiledEntityKey}_${variant}`);
+
+  return createModelKey(compiledEntityKey, localModelKey);
 }
 
 /**
  * Resolves the parent model ref when the entity extends another entity.
  *
- * If `User extends BaseEntity`, then `user_read` extends `base_entity_read`.
+ * If `User extends BaseEntity`, then `entity.user.user_read` extends
+ * `entity.base_entity.base_entity_read`.
  */
 function resolveModelExtends(variant: EntityModelVariant, entity: EntityAuthoringDefinition): Ref | undefined {
   if (entity.extends === undefined) return undefined;
@@ -102,32 +118,39 @@ function resolveModelFieldSets(ctx: CompilerContext, entityKey: string, variant:
     select?: Ref;
     sort?: Ref;
     filter?: Ref;
+    create?: Ref;
+    update?: Ref;
+    relations?: Ref;
   } = {};
 
-  const listSelectKey = `${entityKey}.list_select`;
-  const listSortKey = `${entityKey}.list_sort`;
-  const listFilterKey = `${entityKey}.list_filter`;
-  const publicListSelectKey = `${entityKey}.public_list_select`;
-  const adminListSelectKey = `${entityKey}.admin_list_select`;
+  const selectKey = createFieldSetKey(entityKey, 'select_fields');
+  const sortKey = createFieldSetKey(entityKey, 'sort_fields');
+  const filterKey = createFieldSetKey(entityKey, 'filter_fields');
+  const createKey = createFieldSetKey(entityKey, 'create_fields');
+  const updateKey = createFieldSetKey(entityKey, 'update_fields');
+  const relationKey = createFieldSetKey(entityKey, 'relation_fields');
+  const publicKey = createFieldSetKey(entityKey, 'public_fields');
 
-  if ((variant === 'query' || variant === 'publicList') && hasFieldSet(ctx, listSelectKey)) {
-    output.select = fieldSetRef(listSelectKey);
+  if (variant === 'query') {
+    if (hasFieldSet(ctx, selectKey)) output.select = fieldSetRef(selectKey);
+    if (hasFieldSet(ctx, sortKey)) output.sort = fieldSetRef(sortKey);
+    if (hasFieldSet(ctx, filterKey)) output.filter = fieldSetRef(filterKey);
   }
 
-  if (variant === 'query' && hasFieldSet(ctx, listSortKey)) {
-    output.sort = fieldSetRef(listSortKey);
+  if ((variant === 'public' || variant === 'publicList') && hasFieldSet(ctx, publicKey)) {
+    output.select = fieldSetRef(publicKey);
   }
 
-  if (variant === 'query' && hasFieldSet(ctx, listFilterKey)) {
-    output.filter = fieldSetRef(listFilterKey);
+  if (variant === 'create' && hasFieldSet(ctx, createKey)) {
+    output.create = fieldSetRef(createKey);
   }
 
-  if (variant === 'publicList' && hasFieldSet(ctx, publicListSelectKey)) {
-    output.select = fieldSetRef(publicListSelectKey);
+  if (variant === 'patch' && hasFieldSet(ctx, updateKey)) {
+    output.update = fieldSetRef(updateKey);
   }
 
-  if (variant === 'admin' && hasFieldSet(ctx, adminListSelectKey)) {
-    output.select = fieldSetRef(adminListSelectKey);
+  if (hasFieldSet(ctx, relationKey)) {
+    output.relations = fieldSetRef(relationKey);
   }
 
   return Object.keys(output).length > 0 ? output : undefined;
@@ -204,6 +227,7 @@ export function resolveModel(input: ResolveModelInput): ModelDefinition {
   const fieldSets = resolveModelFieldSets(input.ctx, entityKey, input.variant);
 
   return {
+    ownership: entityRef(entityKey),
     from: entityRef(entityKey),
 
     ...(input.entity.extends !== undefined ? { extends: resolveModelExtends(input.variant, input.entity) } : {}),

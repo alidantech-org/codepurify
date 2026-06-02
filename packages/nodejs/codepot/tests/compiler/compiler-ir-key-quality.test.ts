@@ -36,6 +36,12 @@ function expectNoUnderscoreScopedKeys(registryName: string, registry: Record<str
   }
 }
 
+function expectOwnedKeyHasThreeParts(registryName: string, key: string, identity: string): void {
+  if (!key.startsWith(`${identity}.`)) return;
+
+  expect(key.split('.'), `${registryName} owned key "${key}" must have identity.owner.item`).toHaveLength(3);
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -75,8 +81,31 @@ describe('compiler IR key quality', () => {
   it('uses dotted keys for scoped root registries', () => {
     const ir = compile(v1.snapshot());
 
-    expect(ir.responses.errors['users.email_taken']).toBeDefined();
-    expect(ir.schemas.params['users.id']).toBeDefined();
-    expect(ir.schemas.field_sets['user.list_select']).toBeDefined();
+    expect(ir.responses.errors['resource.users.email_taken']).toBeDefined();
+    expect(ir.schemas.params['resource.users.id']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.list_select']).toBeDefined();
+    expect(ir.properties.primitives['entity.user.nickname']).toBeDefined();
+    expect(ir.properties.primitives['composite.inline_money.amount']).toBeDefined();
+  });
+
+  it('uses three-part owned keys for owned registries', () => {
+    const ir = compile(v1.snapshot());
+
+    for (const key of Object.keys(ir.responses.errors)) {
+      expectOwnedKeyHasThreeParts('responses.errors', key, 'resource');
+    }
+
+    for (const key of Object.keys(ir.schemas.params)) {
+      expectOwnedKeyHasThreeParts('schemas.params', key, 'resource');
+    }
+
+    for (const key of Object.keys(ir.schemas.field_sets)) {
+      expectOwnedKeyHasThreeParts('schemas.field_sets', key, 'entity');
+    }
+
+    for (const key of Object.keys(ir.properties.primitives)) {
+      expectOwnedKeyHasThreeParts('properties.primitives', key, 'entity');
+      expectOwnedKeyHasThreeParts('properties.primitives', key, 'composite');
+    }
   });
 });

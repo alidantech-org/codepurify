@@ -77,12 +77,29 @@ export interface RouteMethodDefinition extends DefinitionItem {
 // ROUTES
 // ============================================================================
 
+export interface RoutePathDefinition extends DefinitionItem {
+  /**
+   * Full route path including the resource base path.
+   *
+   * Example:
+   * /users/:id
+   */
+  readonly path: string;
+
+  /**
+   * Path-level parameters for this path.
+   *
+   * This avoids scanning every method to discover route params.
+   */
+  readonly parameters?: Record<string, Ref<ParamsDefinition>>;
+
+  /**
+   * HTTP methods available for this full path.
+   */
+  readonly methods: Partial<Record<HttpMethod, RouteMethodDefinition>>;
+}
+
 /**
- * Route map:
- *
- * routes:
- *   /users:
- *     get: ...
- *     post: ...
+ * Route map keyed by full absolute path.
  */
-export type RoutesDefinition = Record<string, Partial<Record<HttpMethod, RouteMethodDefinition>>>;
+export type RoutesDefinition = Record<string, RoutePathDefinition>;

@@ -2,7 +2,7 @@
 
 import type { CompilerContext } from '../context/compiler-context';
 
-import { createFieldSetKey, resolveFieldSet } from '../resolvers/field-set-resolver';
+import { createFieldSetKey, resolveFieldSet, resolveGeneratedFieldSets } from '../resolvers/field-set-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -11,14 +11,19 @@ import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 // ============================================================================
 
 /**
- * Compiles entity field-set overrides into IR field_sets.
+ * Compiles generated entity field sets and field-set overrides into IR field_sets.
  *
- * Field sets are emitted as arrays of entity field refs. They are root schema
- * artifacts and use dotted keys like `user.list_select`.
+ * Field sets are emitted as owned root schema artifacts using keys like
+ * `entity.user.list_select`.
  */
 export function compileFieldSets(ctx: CompilerContext): void {
   for (const [entityKey, entity] of Object.entries(ctx.authoring.schemas.entities ?? {})) {
     const compiledEntityKey = toSnakeCaseKey(entityKey);
+    const generatedFieldSets = resolveGeneratedFieldSets(ctx, compiledEntityKey);
+
+    for (const [fieldSetKey, fieldSet] of Object.entries(generatedFieldSets)) {
+      ctx.ir.schemas.field_sets[fieldSetKey] = fieldSet;
+    }
 
     for (const [fieldSetKey, override] of Object.entries(entity.fieldSetOverrides ?? {})) {
       const compiledFieldSetKey = createFieldSetKey(compiledEntityKey, fieldSetKey);

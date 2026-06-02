@@ -18,10 +18,23 @@ describe('compiler resource-scoped schemas', () => {
   it('promotes resource params to root schemas.params with dotted keys', () => {
     const ir = compile(v1.snapshot());
 
-    expect(ir.schemas.params['users.id']).toBeDefined();
+    expect(ir.schemas.params['resource.users.id']).toMatchObject({
+      ownership: {
+        $ref: '#/resources/users',
+      },
+      ref: {
+        $ref: '#/schemas/entities/base_entity/fields/id',
+      },
+    });
+    expect(ir.schemas.params['users.id']).toBeUndefined();
     expect(ir.schemas.params.users_id).toBeUndefined();
 
-    expect(ir.schemas.params['posts.id']).toBeDefined();
+    expect(ir.schemas.params['resource.posts.id']).toMatchObject({
+      ownership: {
+        $ref: '#/resources/posts',
+      },
+    });
+    expect(ir.schemas.params['posts.id']).toBeUndefined();
     expect(ir.schemas.params.posts_id).toBeUndefined();
   });
 
@@ -30,7 +43,7 @@ describe('compiler resource-scoped schemas', () => {
     const route = expectRouteMethod(ir.resources.users.routes, '/:id', 'get');
 
     expect(route.params).toEqual({
-      $ref: '#/schemas/params/users.id',
+      $ref: '#/schemas/params/resource.users.id',
     });
   });
 
@@ -47,6 +60,6 @@ describe('compiler resource-scoped schemas', () => {
     const ir = compile(v1.snapshot());
 
     expect(ir.schemas.dtos.api_response).toBeDefined();
-    expect(ir.schemas.dtos['users.api_response']).toBeUndefined();
+    expect(ir.schemas.dtos['resource.users.api_response']).toBeUndefined();
   });
 });

@@ -65,8 +65,8 @@ describe('debug authoring output', () => {
     expect(json).toContain('"ownerKind":"entity"');
 
     // Verify suggested keys are generated
-    expect(json).toContain('"suggestedKey":"inline_money_amount"');
-    expect(json).toContain('"suggestedKey":"user_nickname"');
+    expect(json).toContain('"suggestedKey":"composite.inline_money.amount"');
+    expect(json).toContain('"suggestedKey":"entity.user.nickname"');
 
     // Verify direct primitive members are no longer nested directly
     expect(json).not.toContain('"amount":{"kind":"primitive"');

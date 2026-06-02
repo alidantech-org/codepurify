@@ -96,13 +96,25 @@ describe('writeIrPackage', () => {
   it('writes emitted JSON with dotted scoped keys and no old underscore scoped keys', async () => {
     const ir = await writeAndReadDemoIr();
 
-    expect(ir.responses.errors['users.email_taken']).toBeDefined();
+    expect(ir.responses.errors['resource.users.email_taken']).toBeDefined();
+    expect(ir.responses.errors['resource.users.email_taken'].ownership).toEqual({
+      $ref: '#/resources/users',
+    });
+    expect(ir.responses.errors['users.email_taken']).toBeUndefined();
     expect(ir.responses.errors.users_email_taken).toBeUndefined();
 
-    expect(ir.schemas.params['users.id']).toBeDefined();
+    expect(ir.schemas.params['resource.users.id']).toBeDefined();
+    expect(ir.schemas.params['resource.users.id'].ownership).toEqual({
+      $ref: '#/resources/users',
+    });
+    expect(ir.schemas.params['users.id']).toBeUndefined();
     expect(ir.schemas.params.users_id).toBeUndefined();
 
-    expect(ir.schemas.field_sets['user.list_select']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.list_select']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.list_select'].ownership).toEqual({
+      $ref: '#/schemas/entities/user',
+    });
+    expect(ir.schemas.field_sets['user.list_select']).toBeUndefined();
     expect(ir.schemas.field_sets.user_list_select).toBeUndefined();
   });
 

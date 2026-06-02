@@ -3,15 +3,23 @@
 import type { ResourceAuthoringState } from '@/contract/types/authoring/6.resource-builder';
 
 import type { ResourceDefinition } from '@/contract/types/ir/resource/definition';
+import type { RouteMethodDefinition } from '@/contract/types/ir/resource/route/definition';
 import type { RoutesDefinition } from '@/contract/types/ir/resource/route/definition';
 
 import type { CompilerContext } from '../context/compiler-context';
 
 import { resolveRoute } from '../resolvers/route-resolver';
+import { extractPathParameterNames, joinRoutePath } from '../resolvers/route-path-resolver';
 
 import { securityPolicyRef } from '../resolvers/ref-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
+
+type MutableRoutePathDefinition = {
+  path: RoutesDefinition[string]['path'];
+  parameters?: NonNullable<RoutesDefinition[string]['parameters']>;
+  methods: RoutesDefinition[string]['methods'];
+};
 
 // ============================================================================
 // RESOURCE DEFAULTS
@@ -37,6 +45,34 @@ function resolveResourceDefaultSecurity(
 // ============================================================================
 
 /**
+ * Returns the resource base path.
+ *
+ * If no explicit base path exists, use /resource_key.
+ */
+function resolveResourceBasePath(resourceKey: string, resource: ResourceAuthoringState): string {
+  const resourceWithPath = resource as ResourceAuthoringState & {
+    readonly basePath?: string;
+    readonly base_path?: string;
+  };
+
+  return resourceWithPath.basePath ?? resourceWithPath.base_path ?? `/${resourceKey}`;
+}
+
+/**
+ * Resolves path-level params for a full route path.
+ */
+function resolvePathLevelParameters(fullPath: string, method: RouteMethodDefinition): NonNullable<RoutesDefinition[string]['parameters']> {
+  const names = extractPathParameterNames(fullPath);
+
+  if (names.length === 0) return {};
+  if (method.params === undefined) return {};
+
+  const params = method.params;
+
+  return Object.fromEntries(names.map((name) => [name, params]));
+}
+
+/**
  * Creates a route path map grouped by URL path and HTTP method.
  */
 function resolveResourceRoutes(
@@ -49,6 +85,7 @@ function resolveResourceRoutes(
 } {
   const operations: ResourceDefinition['operations'] = {};
   const routes: RoutesDefinition = {};
+  const basePath = resolveResourceBasePath(resourceKey, resource);
 
   for (const [routeKey, route] of Object.entries(resource.routes ?? {})) {
     const resolved = resolveRoute({
@@ -60,8 +97,24 @@ function resolveResourceRoutes(
 
     operations[resolved.operationKey] = resolved.operation;
 
-    routes[route.path] ??= {};
-    routes[route.path][route.method] = resolved.method;
+    const fullPath = joinRoutePath(basePath, route.path);
+    const pathParameters = resolvePathLevelParameters(fullPath, resolved.method);
+
+    routes[fullPath] ??= {
+      path: fullPath,
+      methods: {},
+    };
+
+    const routePath = routes[fullPath] as MutableRoutePathDefinition;
+
+    routePath.methods[route.method] = resolved.method;
+
+    if (Object.keys(pathParameters).length > 0) {
+      routePath.parameters = {
+        ...(routePath.parameters ?? {}),
+        ...pathParameters,
+      };
+    }
   }
 
   return {
@@ -80,13 +133,14 @@ function resolveResourceRoutes(
 function resolveResource(ctx: CompilerContext, key: string, resource: ResourceAuthoringState): ResourceDefinition {
   const compiledKey = toSnakeCaseKey(key);
   const resolvedRoutes = resolveResourceRoutes(ctx, compiledKey, resource);
+  const basePath = resolveResourceBasePath(compiledKey, resource);
 
   return {
     ...(resource.description !== undefined ? { description: resource.description } : {}),
     ...(resource.deprecated !== undefined ? { deprecated: resource.deprecated } : {}),
     ...(resource.meta !== undefined ? { meta: resource.meta } : {}),
 
-    base_path: `/${compiledKey}`,
+    base_path: basePath,
     folders: [...resource.folders],
 
     defaults: {

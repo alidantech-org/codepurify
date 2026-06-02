@@ -44,6 +44,9 @@ export interface ModelDefinition extends DefinitionItem {
     readonly select?: Ref<FieldSetDefinition>;
     readonly sort?: Ref<FieldSetDefinition>;
     readonly filter?: Ref<FieldSetDefinition>;
+    readonly create?: Ref<FieldSetDefinition>;
+    readonly update?: Ref<FieldSetDefinition>;
+    readonly relations?: Ref<FieldSetDefinition>;
   };
 
   /**

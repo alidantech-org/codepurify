@@ -2,7 +2,9 @@
 
 import type { CompilerContext } from '../context/compiler-context';
 
+import { createOwnedKey } from '../naming/owned-key';
 import { resolveDto, resolveParams } from '../resolvers/dto-resolver';
+import { resourceRef } from '../resolvers/ref-resolver';
 
 import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 
@@ -13,11 +15,11 @@ import { toSnakeCaseKey } from '@/utils/naming/normalize-key';
 /**
  * Creates a promoted root key for a resource-scoped schema.
  *
- * Example:
- * users + CreateUserBody -> users.create_user_body
+ * Format:
+ * resource.resource_key.schema_key
  */
 function createResourceScopedSchemaKey(resourceKey: string, schemaKey: string): string {
-  return `${toSnakeCaseKey(resourceKey)}.${toSnakeCaseKey(schemaKey)}`;
+  return createOwnedKey('resource', resourceKey, schemaKey);
 }
 
 // ============================================================================
@@ -44,10 +46,13 @@ function compileResourceDtos(ctx: CompilerContext): void {
     for (const [dtoKey, dto] of Object.entries(resource.schemas.dtos ?? {})) {
       const compiledKey = createResourceScopedSchemaKey(resourceKey, dtoKey);
 
-      ctx.ir.schemas.dtos[compiledKey] = resolveDto({
-        key: compiledKey,
-        dto,
-      });
+      ctx.ir.schemas.dtos[compiledKey] = {
+        ...resolveDto({
+          key: compiledKey,
+          dto,
+        }),
+        ownership: resourceRef(toSnakeCaseKey(resourceKey)),
+      };
     }
   }
 }
@@ -64,7 +69,7 @@ function compileParams(ctx: CompilerContext): void {
     ctx.ir.schemas.params[toSnakeCaseKey(key)] = resolveParams({
       key,
       ref,
-    }).ref;
+    });
   }
 }
 
@@ -76,10 +81,13 @@ function compileResourceParams(ctx: CompilerContext): void {
     for (const [paramKey, ref] of Object.entries(resource.schemas.params ?? {})) {
       const compiledKey = createResourceScopedSchemaKey(resourceKey, paramKey);
 
-      ctx.ir.schemas.params[compiledKey] = resolveParams({
-        key: compiledKey,
-        ref,
-      }).ref;
+      ctx.ir.schemas.params[compiledKey] = {
+        ...resolveParams({
+          key: compiledKey,
+          ref,
+        }),
+        ownership: resourceRef(toSnakeCaseKey(resourceKey)),
+      };
     }
   }
 }
