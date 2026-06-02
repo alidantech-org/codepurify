@@ -91,6 +91,52 @@ describe('compiler field sets', () => {
     ]);
   });
 
+  it('generates default metadata-based field sets for every entity', () => {
+    const ir = compile(v1.snapshot());
+
+    expect(ir.schemas.field_sets['entity.user.all_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.owned_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.inherited_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.stored_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.relation_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.filter_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.sort_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.select_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.public_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.create_fields']).toBeDefined();
+    expect(ir.schemas.field_sets['entity.user.update_fields']).toBeDefined();
+  });
+
+  it('generated field sets use ownership and field refs', () => {
+    const ir = compile(v1.snapshot());
+
+    expect(ir.schemas.field_sets['entity.user.filter_fields']).toMatchObject({
+      ownership: {
+        $ref: '#/schemas/entities/user',
+      },
+    });
+
+    expect(ir.schemas.field_sets['entity.user.filter_fields'].fields).toEqual(
+      expect.arrayContaining([
+        { $ref: '#/schemas/entities/base_entity/fields/id' },
+        { $ref: '#/schemas/entities/user/fields/role' },
+        { $ref: '#/schemas/entities/user/fields/status' },
+      ]),
+    );
+  });
+
+  it('generated relation field sets include relation fields', () => {
+    const ir = compile(v1.snapshot());
+
+    expect(ir.schemas.field_sets['entity.user.relation_fields'].fields).toEqual(
+      expect.arrayContaining([
+        { $ref: '#/schemas/entities/user/fields/tenant' },
+        { $ref: '#/schemas/entities/user/fields/profile' },
+        { $ref: '#/schemas/entities/user/fields/posts' },
+      ]),
+    );
+  });
+
   it('emits field sets as owned objects containing field refs', () => {
     const ir = compile(v1.snapshot());
 

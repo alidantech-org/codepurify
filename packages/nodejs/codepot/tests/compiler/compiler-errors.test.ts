@@ -8,7 +8,7 @@ function expectRouteMethod(routes: RoutesDefinition, path: string, method: HttpM
   const pathRoute = routes[path];
   expect(pathRoute).toBeDefined();
 
-  const routeMethod = pathRoute?.[method];
+  const routeMethod = pathRoute?.methods[method];
   expect(routeMethod).toBeDefined();
 
   return routeMethod as RouteMethodDefinition;
@@ -52,7 +52,7 @@ describe('compiler errors', () => {
 
   it('uses compiled error statuses in route responses', () => {
     const ir = compile(v1.snapshot());
-    const createUser = expectRouteMethod(ir.resources.users.routes, '/', 'post');
+    const createUser = expectRouteMethod(ir.resources.users.routes, '/users', 'post');
 
     expect(createUser.responses[409]).toEqual({
       $ref: '#/responses/errors/resource.users.email_taken',
@@ -62,8 +62,8 @@ describe('compiler errors', () => {
   it('does not place route errors under status 400', () => {
     const ir = compile(v1.snapshot());
 
-    const listUsers = expectRouteMethod(ir.resources.users.routes, '/', 'get');
-    const createUser = expectRouteMethod(ir.resources.users.routes, '/', 'post');
+    const listUsers = expectRouteMethod(ir.resources.users.routes, '/users', 'get');
+    const createUser = expectRouteMethod(ir.resources.users.routes, '/users', 'post');
 
     expect(listUsers.responses[401]).toEqual({
       $ref: '#/responses/errors/unauthorized',

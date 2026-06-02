@@ -122,7 +122,7 @@ describe('writeIrPackage', () => {
     const ir = await writeAndReadDemoIr();
 
     expect(ir.schemas.dtos.user_response.fields.user).toMatchObject({
-      $ref: '#/schemas/models/user_public',
+      $ref: '#/schemas/models/entity.user.user_public',
       required: true,
     });
 

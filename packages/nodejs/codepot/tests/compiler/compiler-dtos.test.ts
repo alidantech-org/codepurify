@@ -16,7 +16,7 @@ describe('compiler DTOs', () => {
     });
 
     expect(ir.schemas.dtos.user_response.fields.user).toEqual({
-      $ref: '#/schemas/models/user_public',
+      $ref: '#/schemas/models/entity.user.user_public',
       required: true,
     });
 
@@ -25,7 +25,7 @@ describe('compiler DTOs', () => {
     });
 
     expect(ir.schemas.dtos.user_list_response.fields.items).toEqual({
-      $ref: '#/schemas/models/user_public',
+      $ref: '#/schemas/models/entity.user.user_public',
       array: true,
       required: true,
     });

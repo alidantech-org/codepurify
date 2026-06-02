@@ -12,15 +12,15 @@ describe('compiler schema refs', () => {
     const ir = compile(v1.snapshot());
 
     expect(ir.schemas.dtos.user_public.extends).toEqual({
-      $ref: '#/schemas/models/user_public',
+      $ref: '#/schemas/models/entity.user.user_public',
     });
 
     expect(ir.schemas.dtos.user_patch_body.extends).toEqual({
-      $ref: '#/schemas/models/user_patch',
+      $ref: '#/schemas/models/entity.user.user_patch',
     });
 
     expect(ir.schemas.dtos.post_public.extends).toEqual({
-      $ref: '#/schemas/models/post_public',
+      $ref: '#/schemas/models/entity.post.post_public',
     });
   });
 

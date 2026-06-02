@@ -8,7 +8,7 @@ function expectRouteMethod(routes: RoutesDefinition, path: string, method: HttpM
   const pathRoute = routes[path];
   expect(pathRoute).toBeDefined();
 
-  const routeMethod = pathRoute?.[method];
+  const routeMethod = pathRoute?.methods[method];
   expect(routeMethod).toBeDefined();
 
   return routeMethod as RouteMethodDefinition;
@@ -40,7 +40,7 @@ describe('compiler resource-scoped schemas', () => {
 
   it('routes reference promoted resource params when params are resource-local', () => {
     const ir = compile(v1.snapshot());
-    const route = expectRouteMethod(ir.resources.users.routes, '/:id', 'get');
+    const route = expectRouteMethod(ir.resources.users.routes, '/users/:id', 'get');
 
     expect(route.params).toEqual({
       $ref: '#/schemas/params/resource.users.id',
@@ -49,7 +49,7 @@ describe('compiler resource-scoped schemas', () => {
 
   it('keeps routes that use global params on global refs', () => {
     const ir = compile(v1.snapshot());
-    const route = expectRouteMethod(ir.resources.tenants.routes, '/:tenantId', 'get');
+    const route = expectRouteMethod(ir.resources.tenants.routes, '/tenants/:tenantId', 'get');
 
     expect(route.params).toEqual({
       $ref: '#/schemas/params/tenant_id',
