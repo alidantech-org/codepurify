@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from contracts.spec import SpecCounts, SpecMetadata
+from spec.loader import load_spec
+from spec.repository import SpecRepository
+from utils.files.metadata import get_file_metadata
 
 
 class AppModel(BaseModel):
@@ -68,13 +73,23 @@ class IssueResult(AppModel):
 
 
 class InspectSummary(AppModel):
-    version: str = "fake-v1"
+    version: str = "unknown"
+    content_types: int = 0
+    primitives: int = 0
+    enums: int = 0
+    composites: int = 0
     schemas: int = 0
+    entities: int = 0
+    field_sets: int = 0
+    models: int = 0
+    dtos: int = 0
+    params: int = 0
     resources: int = 0
     properties: int = 0
     responses: int = 0
     operations: int = 0
-    content_types: int = 0
+    routes: int = 0
+    security: int = 0
 
 
 class PlannedFileResult(AppModel):
@@ -95,6 +110,8 @@ class ValidateResult(AppModel):
     spec_path: Path
     ok: bool
     checks: tuple[CheckResult, ...]
+    metadata: SpecMetadata | None = None
+    counts: SpecCounts | None = None
     warnings: tuple[IssueResult, ...] = ()
     errors: tuple[IssueResult, ...] = ()
 
@@ -103,7 +120,10 @@ class InspectResult(AppModel):
     spec_path: Path
     mode: str
     summary: InspectSummary
+    metadata: SpecMetadata | None = None
+    counts: SpecCounts | None = None
     rows: tuple[dict[str, Any], ...] = ()
+    errors: tuple[IssueResult, ...] = ()
 
 
 class InferResult(AppModel):
@@ -125,58 +145,87 @@ class EmitResult(AppModel):
 
 
 class GeneratorApp:
-    """Fake public app shell for wiring the CLI before the real pipeline is connected."""
+    """Public app shell used by the CLI."""
 
     def validate(self, request: ValidateRequest) -> ValidateResult:
-        checks = (
-            CheckResult(name="Spec path received", detail=str(request.spec_path)),
-            CheckResult(name="Fake YAML load passed"),
-            CheckResult(name="Fake required sections found"),
-            CheckResult(name="Fake refs resolved"),
-        )
-        warnings = (
-            IssueResult(severity="warning", message="Strict mode is using fake checks only."),
-        ) if request.strict else ()
+        checks: list[CheckResult] = []
+        try:
+            file_metadata = get_file_metadata(request.spec_path)
+            checks.append(CheckResult(name="Spec file found", detail=file_metadata.size_label))
+
+            document = load_spec(request.spec_path)
+            checks.append(
+                CheckResult(name="YAML parsed", detail=f"{file_metadata.line_count:,} lines"),
+            )
+
+            repository = SpecRepository.from_document(document, file_metadata=file_metadata)
+            metadata = repository.metadata()
+            counts = repository.counts()
+            checks.extend(
+                (
+                    CheckResult(
+                        name="Pydantic validation passed",
+                        detail=f"Codepot IR {metadata.codepot_version}",
+                    ),
+                    CheckResult(name="Repository built", detail=f"{counts.records:,} records"),
+                    CheckResult(
+                        name="Required sections present",
+                        detail="info, properties, schemas, resources",
+                    ),
+                ),
+            )
+        except Exception as exc:
+            checks.append(CheckResult(name="Spec load and validation failed", ok=False))
+            return ValidateResult(
+                spec_path=request.spec_path,
+                ok=False,
+                checks=tuple(checks),
+                errors=_issues_from_exception(exc),
+            )
+
+        warnings = ()
+        if request.strict:
+            warnings = (
+                IssueResult(
+                    severity="warning",
+                    message="Strict mode currently uses the same repository validation checks.",
+                ),
+            )
         return ValidateResult(
             spec_path=request.spec_path,
             ok=True,
-            checks=checks,
+            checks=tuple(checks),
+            metadata=metadata,
+            counts=counts,
             warnings=warnings,
         )
 
     def inspect(self, request: InspectRequest) -> InspectResult:
-        rows_by_mode: dict[str, tuple[dict[str, Any], ...]] = {
-            "overview": (
-                {"name": "models", "count": 1, "detail": "fake user model"},
-                {"name": "dtos", "count": 1, "detail": "fake user DTO"},
-                {"name": "resources", "count": 1, "detail": "fake users resource"},
-            ),
-            "schemas": (
-                {"name": "User", "kind": "model", "properties": 5},
-                {"name": "UserDto", "kind": "dto", "properties": 4},
-            ),
-            "resources": (
-                {"name": "users", "routes": 2, "operations": 4},
-            ),
-            "refs": (
-                {"name": "#/schemas/User", "status": "resolved", "target": "User"},
-                {"name": "#/schemas/UserDto", "status": "resolved", "target": "UserDto"},
-            ),
-            "content_types": (
-                {"name": "application/json", "status": "supported", "uses": 3},
-            ),
+        try:
+            repository = SpecRepository.from_file(request.spec_path)
+            metadata = repository.metadata()
+            counts = repository.counts()
+        except Exception as exc:
+            return InspectResult(
+                spec_path=request.spec_path,
+                mode=request.mode,
+                summary=InspectSummary(),
+                errors=_issues_from_exception(exc),
+            )
+
+        rows_by_mode = {
+            "overview": (),
+            "schemas": repository.schema_rows(),
+            "resources": repository.resource_rows(),
+            "refs": ({"name": "refs", "status": "not implemented yet"},),
+            "content_types": repository.content_type_rows(),
         }
         return InspectResult(
             spec_path=request.spec_path,
             mode=request.mode,
-            summary=InspectSummary(
-                schemas=2,
-                resources=1,
-                properties=9,
-                responses=3,
-                operations=4,
-                content_types=1,
-            ),
+            summary=InspectSummary(**repository.summary()),
+            metadata=metadata,
+            counts=counts,
             rows=rows_by_mode.get(request.mode, ()),
         )
 
@@ -201,10 +250,7 @@ class GeneratorApp:
             planned = tuple(file for file in planned if file.group in allowed or "once" in allowed)
 
         if request.dry_run:
-            files = tuple(
-                WriteFileResult(path=request.output_path / file.path, status="planned")
-                for file in planned
-            )
+            files = tuple(WriteFileResult(path=request.output_path / file.path, status="planned") for file in planned)
         else:
             statuses = ("created", "created", "unchanged")
             files = tuple(
@@ -288,3 +334,42 @@ def _planned_files() -> tuple[PlannedFileResult, ...]:
             context={"kind": "package", "exports": ["User", "UserDto"]},
         ),
     )
+
+
+def _issues_from_exception(exc: Exception) -> tuple[IssueResult, ...]:
+    if isinstance(exc, ValidationError):
+        errors = exc.errors()
+        issues = tuple(
+            IssueResult(
+                severity="error",
+                message=str(error.get("msg", "Validation error")),
+                path=_format_error_path(error.get("loc", ())),
+                hint=str(error.get("type", "")) or None,
+            )
+            for error in errors[:20]
+        )
+        if len(errors) > 20:
+            issues += (
+                IssueResult(
+                    severity="warning",
+                    message=f"{len(errors) - 20} additional validation errors hidden.",
+                ),
+            )
+        return issues
+
+    return (
+        IssueResult(
+            severity="error",
+            message=str(exc),
+            path=None,
+            hint=type(exc).__name__,
+        ),
+    )
+
+
+def _format_error_path(location: object) -> str:
+    if not isinstance(location, tuple):
+        return str(location)
+    if not location:
+        return "."
+    return ".".join(str(part) for part in location)

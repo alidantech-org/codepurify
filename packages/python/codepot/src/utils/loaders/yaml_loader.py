@@ -7,8 +7,6 @@ from typing import Any
 
 import yaml
 
-from spec.ir.shared.document import CodepotDefinition
-
 
 def load_yaml_data(path: Path) -> dict[str, Any]:
     """Load YAML data from disk."""
@@ -20,9 +18,3 @@ def load_yaml_data(path: Path) -> dict[str, Any]:
         raise ValueError("Codepot YAML root must be an object.")
 
     return data
-
-
-def load_codepot_yaml(path: Path) -> CodepotDefinition:
-    """Load and validate a compiled Codepot IR document."""
-
-    return CodepotDefinition.model_validate(load_yaml_data(path))

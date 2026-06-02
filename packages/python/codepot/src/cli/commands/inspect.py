@@ -10,7 +10,7 @@ import typer
 from app import InspectRequest
 from cli import options
 from cli.constants.defaults import DEFAULT_SPEC_PATH
-from cli.constants.exit_codes import EXIT_CONFIG_ERROR
+from cli.constants.exit_codes import EXIT_CONFIG_ERROR, EXIT_VALIDATION_ERROR
 from cli.errors import CliError, ConfigError
 from cli.presentation.console import print_error, print_header
 from cli.presentation.inspect import render_inspect_result
@@ -44,6 +44,8 @@ def inspect_command(
         elif not quiet:
             print_header("Inspect", str(result.spec_path))
             render_inspect_result(result)
+        if result.errors:
+            raise typer.Exit(EXIT_VALIDATION_ERROR)
     except CliError as exc:
         print_error(str(exc))
         if debug:
