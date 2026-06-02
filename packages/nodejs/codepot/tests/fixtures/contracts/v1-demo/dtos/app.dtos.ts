@@ -1,7 +1,7 @@
-import { commonDtos } from '..';
-import { user, post } from '../entities';
+import { post, user } from '../entities';
 import { primitives } from '../properties';
 import { schemas } from '../version';
+import { commonDtos } from './common.dtos';
 
 export const dtos = schemas.dtos({
   // Mode 1: direct model-backed DTOs

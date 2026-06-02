@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { emitAuthoringDebugPackage, serializeAuthoringDebugPackageJson, serializeAuthoringDebugPackageYaml } from '@/app';
-import { demoConfig } from '../fixtures/contract/v1-demo';
+import { demoConfig } from '../fixtures/contracts/v1-demo';
 
 describe('debug authoring output', () => {
   it('emits collected authoring intent', () => {

@@ -16,13 +16,13 @@ export const users = v1.defineResource({
   security: security.protected(),
 });
 
-const userSchemas = users.defineSchemas();
+export const userSchemas = users.defineSchemas();
 
-const userParams = userSchemas.params({
+export const userParams = userSchemas.params({
   id: user.ref.fields.id,
 });
 
-const userErrors = users.defineErrors({
+export const userErrors = users.defineErrors({
   emailTaken: error(409, commonDtos.ref.ErrorResponse, {
     intent: 'conflict',
     meta: { reason: 'email_taken' },

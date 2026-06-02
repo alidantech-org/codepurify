@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compile } from '@/compiler';
 import type { HttpMethod, RouteMethodDefinition, RoutesDefinition } from '@/contract/types/ir/resource/route/definition';
-import { v1 } from '../fixtures/contract/v1-demo';
+import { v1 } from '../fixtures/contracts/v1-demo';
 
 function expectRouteMethod(routes: RoutesDefinition, path: string, method: HttpMethod): RouteMethodDefinition {
   const pathRoute = routes[path];

@@ -9,7 +9,7 @@ import { createIrJsonFileName, emitIrContract, writeIrPackage } from '@/app';
 import { validateIrRefs } from '@/compiler/validators';
 import type { CodepotDefinition } from '@/contract/types/ir/definition';
 
-import { demoConfig as config, v1 } from '../fixtures/contract/v1-demo';
+import { demoConfig as config, v1 } from '../fixtures/contracts/v1-demo';
 
 // ============================================================================
 // OUTPUT

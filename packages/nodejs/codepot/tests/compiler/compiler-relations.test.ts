@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compile } from '@/compiler';
 import type { EntityFieldDefinition, EntityRelationFieldDefinition } from '@/contract/types/ir/schema/entity/field/definition';
-import { v1 } from '../fixtures/contract/v1-demo';
+import { v1 } from '../fixtures/contracts/v1-demo';
 
 function expectRelationField(field: EntityFieldDefinition): EntityRelationFieldDefinition {
   expect(field).toHaveProperty('relation');

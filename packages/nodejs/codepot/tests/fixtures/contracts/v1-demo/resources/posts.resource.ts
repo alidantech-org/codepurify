@@ -16,9 +16,9 @@ export const posts = v1.defineResource({
   security: security.protected(),
 });
 
-const postSchemas = posts.defineSchemas();
+export const postSchemas = posts.defineSchemas();
 
-const postParams = postSchemas.params({
+export const postParams = postSchemas.params({
   id: post.ref.fields.id,
 });
 
