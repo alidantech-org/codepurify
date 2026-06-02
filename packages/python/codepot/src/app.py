@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from contracts.spec import SpecCounts, SpecMetadata
+from contracts.spec import SpecContentType, SpecCounts, SpecMetadata, SpecResource
 from spec.loader import load_spec
 from spec.repository import SpecRepository
 from utils.files.metadata import get_file_metadata
@@ -158,16 +158,19 @@ class GeneratorApp:
                 CheckResult(name="YAML parsed", detail=f"{file_metadata.line_count:,} lines"),
             )
 
-            repository = SpecRepository.from_document(document, file_metadata=file_metadata)
+            repository = SpecRepository.from_data(document, file_metadata=file_metadata)
             metadata = repository.metadata()
             counts = repository.counts()
             checks.extend(
                 (
                     CheckResult(
                         name="Pydantic validation passed",
-                        detail=f"Codepot IR {metadata.codepot_version}",
+                        detail=f"Codepot IR {metadata.project.codepot_version}",
                     ),
-                    CheckResult(name="Repository built", detail=f"{counts.records:,} records"),
+                    CheckResult(
+                        name="Repository built",
+                        detail=f"{counts.records_total:,} records",
+                    ),
                     CheckResult(
                         name="Required sections present",
                         detail="info, properties, schemas, resources",
@@ -203,8 +206,9 @@ class GeneratorApp:
     def inspect(self, request: InspectRequest) -> InspectResult:
         try:
             repository = SpecRepository.from_file(request.spec_path)
-            metadata = repository.metadata()
-            counts = repository.counts()
+            context = repository.context()
+            metadata = context.metadata
+            counts = context.counts
         except Exception as exc:
             return InspectResult(
                 spec_path=request.spec_path,
@@ -215,10 +219,10 @@ class GeneratorApp:
 
         rows_by_mode = {
             "overview": (),
-            "schemas": repository.schema_rows(),
-            "resources": repository.resource_rows(),
+            "schemas": _schema_rows(counts),
+            "resources": _resource_rows(context.resources),
             "refs": ({"name": "refs", "status": "not implemented yet"},),
-            "content_types": repository.content_type_rows(),
+            "content_types": _content_type_rows(context.content_types),
         }
         return InspectResult(
             spec_path=request.spec_path,
@@ -250,7 +254,10 @@ class GeneratorApp:
             planned = tuple(file for file in planned if file.group in allowed or "once" in allowed)
 
         if request.dry_run:
-            files = tuple(WriteFileResult(path=request.output_path / file.path, status="planned") for file in planned)
+            files = tuple(
+                WriteFileResult(path=request.output_path / file.path, status="planned")
+                for file in planned
+            )
         else:
             statuses = ("created", "created", "unchanged")
             files = tuple(
@@ -333,6 +340,39 @@ def _planned_files() -> tuple[PlannedFileResult, ...]:
             source="fake:init",
             context={"kind": "package", "exports": ["User", "UserDto"]},
         ),
+    )
+
+
+def _schema_rows(counts: SpecCounts) -> tuple[dict[str, Any], ...]:
+    return (
+        {"name": "entities", "count": counts.entities},
+        {"name": "field_sets", "count": counts.field_sets},
+        {"name": "models", "count": counts.models},
+        {"name": "dtos", "count": counts.dtos},
+        {"name": "params", "count": counts.params},
+    )
+
+
+def _resource_rows(resources: tuple[SpecResource, ...]) -> tuple[dict[str, Any], ...]:
+    return tuple(
+        {
+            "name": resource.record.key,
+            "base_path": resource.base_path,
+            "routes": len(resource.routes),
+            "operations": len(resource.operations),
+        }
+        for resource in resources
+    )
+
+
+def _content_type_rows(content_types: tuple[SpecContentType, ...]) -> tuple[dict[str, Any], ...]:
+    return tuple(
+        {
+            "name": content_type.record.key,
+            "type": content_type.media_type,
+            "strategy": content_type.strategy.value,
+        }
+        for content_type in content_types
     )
 
 

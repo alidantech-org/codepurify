@@ -1,0 +1,10 @@
+{% if enum.doc.description %}
+/**
+ * {{ enum.doc.description }}
+ */
+{% endif %}
+export enum {{ enum.name.class_name }} {
+{% for value in enum.values %}
+  {{ value.name.constant_name }} = {{ value.value | tojson }},
+{% endfor %}
+}

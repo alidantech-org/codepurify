@@ -24,20 +24,20 @@ def render_inspect_result(result: InspectResult) -> None:
         make_key_value_table(
             "Codepot Spec",
             (
-                ("Title", metadata.title),
-                ("Project key", metadata.project_key),
-                ("Spec version", metadata.spec_version),
-                ("API version", metadata.api_version),
-                ("Codepot IR", metadata.codepot_version),
-                ("File", metadata.file_path),
-                ("Size", metadata.file_size_label),
-                ("Lines", f"{metadata.line_count:,}"),
-                ("URLs", metadata.urls_count),
+                ("Title", metadata.project.title),
+                ("Project key", metadata.project.project_key),
+                ("Spec version", metadata.project.spec_version),
+                ("API version", metadata.project.api_version),
+                ("Codepot IR", metadata.project.codepot_version),
+                ("File", metadata.file.path),
+                ("Size", metadata.file.size_label),
+                ("Lines", f"{metadata.file.line_count:,}"),
+                ("URLs", counts.urls),
             ),
         ),
     )
-    if metadata.summary:
-        console.print(f"[dim]{metadata.summary}[/dim]")
+    if metadata.project.summary:
+        console.print(f"[dim]{metadata.project.summary}[/dim]")
     console.print()
     console.print(
         make_key_value_table(
@@ -54,9 +54,9 @@ def render_inspect_result(result: InspectResult) -> None:
                 ("Params", counts.params),
                 ("Resources", counts.resources),
                 ("Operations", counts.operations),
-                ("Routes", counts.routes),
-                ("Responses", counts.responses),
-                ("Security", counts.security),
+                ("Routes", counts.routes_total),
+                ("Responses", counts.responses_total),
+                ("Security", counts.security_total),
                 ("URLs", counts.urls),
             ),
         ),
@@ -67,7 +67,7 @@ def render_inspect_result(result: InspectResult) -> None:
 
     console.print()
     if result.mode == "schemas":
-        _render_schema_rows(result, counts.schemas)
+        _render_schema_rows(result, counts.schemas_total)
     elif result.mode == "resources":
         _render_resource_rows(result, counts.resources)
     elif result.mode == "content_types":

@@ -1,0 +1,86 @@
+version: 1
+
+groups:
+  - id: package_json
+    select: once
+    branch: once
+    template: package.json.j2
+    output: package.json
+    kind: package
+
+  - id: tsconfig
+    select: once
+    branch: once
+    template: tsconfig.json.j2
+    output: tsconfig.json
+    kind: config
+
+  - id: eslint_config
+    select: once
+    branch: once
+    template: eslint.config.mjs.j2
+    output: eslint.config.mjs
+    kind: config
+
+  - id: readme
+    select: once
+    branch: once
+    template: README.md.j2
+    output: README.md
+    kind: docs
+
+  - id: gitignore
+    select: once
+    branch: once
+    copy: .gitignore
+    output: .gitignore
+    kind: config
+
+  - id: prettier_config
+    select: once
+    branch: once
+    copy: .prettierrc
+    output: .prettierrc
+    kind: config
+
+  - id: enums
+    select: enums
+    branch: by_owner
+    template: enum/enum.ts.j2
+    output: src/enums/{item.name.path}.ts
+    kind: source
+
+  - id: models
+    select: models
+    branch: by_owner
+    template: model/model.ts.j2
+    output: src/models/{item.name.path}.ts
+    kind: source
+
+  - id: dtos
+    select: dtos
+    branch: by_owner
+    template: dto/dto.ts.j2
+    output: src/dtos/{item.name.path}.ts
+    kind: source
+
+  - id: resources
+    select: resources
+    branch: by_folder
+    template: resource/resource.ts.j2
+    output: src/resources/{item.name.path}.ts
+    kind: source
+
+  - id: operations
+    select: operations
+    branch: by_resource
+    template: operation/operation.ts.j2
+    output: src/operations/{owner.name.path}/{item.name.path}.ts
+    kind: source
+
+  - id: index
+    select: once
+    branch: once
+    template: src/index.ts.j2
+    output: src/index.ts
+    kind: barrel

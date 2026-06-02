@@ -1,0 +1,14 @@
+{% for import in dto.imports %}
+{{ import.rendered }}
+{% endfor %}
+
+{% if dto.doc.description %}
+/**
+ * {{ dto.doc.description }}
+ */
+{% endif %}
+export interface {{ dto.name.class_name }}{% if dto.extends %} extends {{ dto.extends.display }}{% endif %} {
+{% for field in dto.fields %}
+  {{ field.name.field_name }}{% if field.type.optional %}?{% endif %}: {{ field.type.annotation }};
+{% endfor %}
+}

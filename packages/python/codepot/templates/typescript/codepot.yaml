@@ -1,0 +1,50 @@
+version: 1
+
+name: typescript
+label: TypeScript package
+description: General TypeScript output package for Codepot specs.
+
+language:
+  name: typescript
+  extension: ts
+  package_manager: pnpm
+
+defaults:
+  output: generated/typescript
+  paths: paths.yaml
+
+static:
+  copy_if_changed: true
+  skip_if_same: true
+
+formatting:
+  enabled: true
+  command: pnpm prettier --write .
+  check_command: pnpm prettier --check .
+
+commands:
+  install: pnpm install
+  format: pnpm prettier --write .
+  lint: pnpm eslint .
+  typecheck: pnpm tsc --noEmit
+  test: pnpm test
+
+hooks:
+  after_emit:
+    - message: Install dependencies
+      command: pnpm install
+      run_by_default: false
+
+    - message: Format generated TypeScript
+      command: pnpm prettier --write .
+      run_by_default: false
+
+    - message: Type-check generated package
+      command: pnpm tsc --noEmit
+      run_by_default: false
+
+messages:
+  success:
+    - Generated TypeScript package.
+    - Run `pnpm install` inside the output folder.
+    - Run `pnpm tsc --noEmit` to type-check.

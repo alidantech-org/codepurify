@@ -9,8 +9,8 @@ import typer
 
 from app import ValidateRequest
 from cli import options
-from cli.constants.defaults import DEFAULT_SPEC_PATH
 from cli.constants.exit_codes import EXIT_VALIDATION_ERROR
+from cli.constants.options import HELP_STRICT
 from cli.errors import CliError
 from cli.presentation.console import print_error, print_header
 from cli.presentation.json import print_json_result
@@ -20,11 +20,12 @@ from cli.state import get_runtime
 
 def validate_command(
     ctx: typer.Context,
-    spec_path: Annotated[Path, options.spec_argument()] = DEFAULT_SPEC_PATH,
+    spec_path: Annotated[Path | None, options.spec_argument()] = None,
     strict: Annotated[
         bool,
-        typer.Option("--strict", help="Enable strict validation checks."),
+        typer.Option("--strict", help=HELP_STRICT),
     ] = False,
+    interactive: Annotated[bool, options.interactive_option()] = False,
     json_output: Annotated[bool, options.json_option()] = False,
     quiet: Annotated[bool, options.quiet_option()] = False,
     verbose: Annotated[bool, options.verbose_option()] = False,
@@ -33,7 +34,13 @@ def validate_command(
     """Validate a Codepot spec."""
 
     try:
-        request = ValidateRequest(spec_path=spec_path, strict=strict, verbose=verbose)
+        resolved_spec_path = options.resolve_spec_path(spec_path, interactive=interactive)
+        resolved_strict = options.resolve_strict(strict, interactive=interactive)
+        request = ValidateRequest(
+            spec_path=resolved_spec_path,
+            strict=resolved_strict,
+            verbose=verbose,
+        )
         result = get_runtime(ctx).validate(request)
         if json_output and not quiet:
             print_json_result(result)

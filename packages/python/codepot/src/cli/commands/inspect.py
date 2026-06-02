@@ -9,7 +9,6 @@ import typer
 
 from app import InspectRequest
 from cli import options
-from cli.constants.defaults import DEFAULT_SPEC_PATH
 from cli.constants.exit_codes import EXIT_CONFIG_ERROR, EXIT_VALIDATION_ERROR
 from cli.errors import CliError, ConfigError
 from cli.presentation.console import print_error, print_header
@@ -20,7 +19,7 @@ from cli.state import get_runtime
 
 def inspect_command(
     ctx: typer.Context,
-    spec_path: Annotated[Path, options.spec_argument()] = DEFAULT_SPEC_PATH,
+    spec_path: Annotated[Path | None, options.spec_argument()] = None,
     schemas: Annotated[bool, typer.Option("--schemas", help="Inspect schemas.")] = False,
     resources: Annotated[bool, typer.Option("--resources", help="Inspect resources.")] = False,
     refs: Annotated[bool, typer.Option("--refs", help="Inspect refs.")] = False,
@@ -28,6 +27,7 @@ def inspect_command(
         bool,
         typer.Option("--content-types", help="Inspect content types."),
     ] = False,
+    interactive: Annotated[bool, options.interactive_option()] = False,
     json_output: Annotated[bool, options.json_option()] = False,
     quiet: Annotated[bool, options.quiet_option()] = False,
     verbose: Annotated[bool, options.verbose_option()] = False,
@@ -37,7 +37,8 @@ def inspect_command(
 
     try:
         mode = _resolve_mode(schemas, resources, refs, content_types)
-        request = InspectRequest(spec_path=spec_path, mode=mode, verbose=verbose)
+        resolved_spec_path = options.resolve_spec_path(spec_path, interactive=interactive)
+        request = InspectRequest(spec_path=resolved_spec_path, mode=mode, verbose=verbose)
         result = get_runtime(ctx).inspect(request)
         if json_output and not quiet:
             print_json_result(result)

@@ -1,0 +1,15 @@
+{% for import in model.imports %}
+{{ import.rendered }}
+{% endfor %}
+
+{% if model.doc.description %}
+/**
+ * {{ model.doc.description }}
+ */
+{% endif %}
+export interface {{ model.name.class_name }}{% if model.extends %} extends {{ model.extends.display }}{% endif %} {
+{% for field in model.fields %}
+  {% if field.doc.description %}/** {{ field.doc.description }} */{% endif %}
+  {{ field.name.field_name }}{% if field.type.optional %}?{% endif %}: {{ field.type.annotation }};
+{% endfor %}
+}
