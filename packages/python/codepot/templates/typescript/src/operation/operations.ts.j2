@@ -1,0 +1,22 @@
+{# @codepot.select operations.by_resource #}
+{%- for import in imports %}
+{{ import.rendered }}
+{%- endfor %}
+
+{%- for operation in operations %}
+export interface {{ operation.lang.class_name }}Input {
+{%- if operation.input.params_type %}
+  params: {{ operation.input.params_type.lang.annotation }};
+{%- endif %}
+{%- if operation.input.query_type %}
+  query: {{ operation.input.query_type.lang.annotation }};
+{%- endif %}
+{%- if operation.input.body_type %}
+  body: {{ operation.input.body_type.lang.annotation }};
+{%- endif %}
+}
+
+export type {{ operation.lang.class_name }}Result =
+  {%- if operation.output.result_type %}{{ operation.output.result_type.lang.annotation }}{%- else %}void{%- endif %};
+
+{%- endfor %}

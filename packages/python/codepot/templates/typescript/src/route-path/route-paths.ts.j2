@@ -1,0 +1,16 @@
+{# @codepot.select route_paths.by_resource #}
+export const {{ resource.lang.constant_name }}_ROUTE_PATHS = {
+{%- for route_path in route_paths %}
+  {{ route_path.lang.constant_name }}: {{ route_path.path | tojson }},
+{%- endfor %}
+} as const;
+
+export const {{ resource.lang.constant_name }}_ROUTE_METHODS = {
+{%- for route_path in route_paths %}
+  {{ route_path.lang.constant_name }}: [
+{%- for method in route_path.method_names %}
+    {{ method | tojson }},
+{%- endfor %}
+  ],
+{%- endfor %}
+} as const;

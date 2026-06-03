@@ -71,16 +71,16 @@ export const user = schemas
       description: 'Application user',
     },
   )
-  .fieldSets({
-    listSelect: (s) => s.only('id', 'name', 'role'),
-    listSort: (s) => s.only('createdAt', 'role'),
-    listFilter: (s) => s.only('id', 'role', 'status'),
-    publicListSelect: (s) => s.only('id', 'name'),
-    adminListSelect: (s) => s.only('id', 'name', 'email', 'role', 'status'),
-  })
-  .models({
-    read: (m) => m.relations('expand'),
-    create: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'profile', 'posts'),
-    patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'profile', 'posts'),
-    public: (m) => m.pick('id', 'name', 'bio', 'role'),
-  });
+  // .fieldSets({
+  //   listSelect: (s) => s.only('id', 'name', 'role'),
+  //   listSort: (s) => s.only('createdAt', 'role'),
+  //   listFilter: (s) => s.only('id', 'role', 'status'),
+  //   publicListSelect: (s) => s.only('id', 'name'),
+  //   adminListSelect: (s) => s.only('id', 'name', 'email', 'role', 'status'),
+  // })
+  // .models({
+  //   read: (m) => m.relations('expand'),
+  //   create: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'profile', 'posts'),
+  //   patch: (m) => m.partial().omit('id', 'createdAt', 'updatedAt', 'deletedAt', 'profile', 'posts'),
+  //   public: (m) => m.pick('id', 'name', 'bio', 'role'),
+  // });

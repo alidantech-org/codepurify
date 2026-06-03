@@ -7,10 +7,11 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from contracts.spec import SpecContentType, SpecCounts, SpecMetadata, SpecResource
 from spec.loader import load_spec
 from spec.repository import SpecRepository
 from utils.files.metadata import get_file_metadata
+
+from .spec2 import SpecContentType, SpecCounts, SpecMetadata, SpecResource
 
 
 class AppModel(BaseModel):

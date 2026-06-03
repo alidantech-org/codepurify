@@ -1,11 +1,15 @@
-# {{ project.title }}
+# {{ project.title }} TypeScript Client
 
-Generated TypeScript package for `{{ project.key }}`.
+Generated from Codepot spec:
+
+- Project: `{{ project.key }}`
+- API version: `{{ project.api_version }}`
+- Spec version: `{{ project.spec_version }}`
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm tsc --noEmit
-pnpm prettier --check .
+pnpm typecheck
+pnpm build
 ```

@@ -6,7 +6,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from contracts.spec import (
+from spec.ir.shared.document import CodepotDefinition
+from spec.ir.shared.ref import Ref
+from spec.loader import load_spec
+from spec.repository.graph import RefGraph
+from spec.repository.record_sets import RecordSet
+from spec.repository.records import IrRecord
+from spec2 import (
     SpecContentStrategy,
     SpecContentType,
     SpecContext,
@@ -27,12 +33,6 @@ from contracts.spec import (
     SpecResourceDefaults,
     SpecRoutePath,
 )
-from spec.ir.shared.document import CodepotDefinition
-from spec.ir.shared.ref import Ref
-from spec.loader import load_spec
-from spec.repository.graph import RefGraph
-from spec.repository.record_sets import RecordSet
-from spec.repository.records import IrRecord
 from utils.files.metadata import FileMetadata, get_file_metadata
 
 
