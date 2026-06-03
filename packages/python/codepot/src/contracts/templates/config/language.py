@@ -1,0 +1,51 @@
+"""Template language config contracts."""
+
+from __future__ import annotations
+
+from pydantic import BaseModel, ConfigDict
+
+
+class TemplateLanguageNamingConfig(BaseModel):
+    """User-configurable naming cases for a language."""
+
+    model_config = ConfigDict(frozen=True)
+
+    class_name: str = "pascal"
+    interface: str = "pascal"
+    enum: str = "pascal"
+    enum_value: str = "constant"
+    field: str = "camel"
+    method: str = "camel"
+    function: str = "camel"
+    constant: str = "screaming_snake"
+    variable: str = "camel"
+    file: str = "path"
+    module: str = "path"
+    package: str = "snake"
+
+
+class TemplateLanguageImportConfig(BaseModel):
+    """User-configurable import strategy."""
+
+    model_config = ConfigDict(frozen=True)
+
+    strategy: str = "relative"
+    root: str | None = None
+    alias: str | None = None
+    package: str | None = None
+    type_only: bool = False
+    extension: bool = False
+
+
+class TemplateLanguageConfig(BaseModel):
+    """Language block in ``codepotx`` config."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    extension: str
+    package_manager: str | None = None
+    package_name: str | None = None
+    source_root: str = "src"
+    naming: TemplateLanguageNamingConfig = TemplateLanguageNamingConfig()
+    imports: TemplateLanguageImportConfig = TemplateLanguageImportConfig()
