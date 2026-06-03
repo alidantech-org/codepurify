@@ -15,6 +15,7 @@ class ParsedIdentity:
     local_key: str
     owner_identity: str | None = None
     owner_key: str | None = None
+    owner_path: tuple[str, ...] = ()
 
 
 def parse_identity(raw: str) -> ParsedIdentity:
@@ -23,10 +24,13 @@ def parse_identity(raw: str) -> ParsedIdentity:
     Dot notation is identity metadata, not a filesystem path.
 
     Supported shapes:
-    - ``local``
-    - ``owner_identity.owner_key.local``
-    - Longer values keep the final part as local key and the first two parts
-      as ownership metadata.
+    - local
+    - owner_identity.owner_key.local
+    - owner_identity.owner_key.nested.local
+
+    The final local key is always the last part.
+    The owner key is always the second part.
+    Any middle parts after owner key are retained as owner_path metadata.
     """
 
     parts = tuple(part for part in raw.split(IDENTITY_SEPARATOR) if part)
@@ -38,6 +42,7 @@ def parse_identity(raw: str) -> ParsedIdentity:
         raw=raw,
         owner_identity=parts[0],
         owner_key=parts[1],
+        owner_path=parts[2:-1],
         local_key=parts[-1],
     )
 

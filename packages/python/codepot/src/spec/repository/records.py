@@ -25,6 +25,7 @@ def create_spec_record(
 ) -> SpecRecord[TData]:
     """Create a normalized spec record around typed IR data."""
 
+    identity = create_spec_identity(key)
     normalized_owner = owner or create_global_owner()
 
     return SpecRecord(
@@ -32,8 +33,8 @@ def create_spec_record(
         kind=subject_to_record_kind(subject),
         key=key,
         ref=create_spec_ref(subject=subject, key=key),
-        identity=create_spec_identity(key),
-        name=create_spec_name(key),
+        identity=identity,
+        name=create_spec_name(identity.local_key),
         data=data,
         owner=normalized_owner,
         dependencies=(),

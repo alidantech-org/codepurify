@@ -30,6 +30,8 @@ from spec.ir.shared.document import CodepotDefinition
 from spec.ir.shared.url import UrlDefinition
 from spec.repository.counts import build_counts
 from spec.repository.metadata import build_metadata
+from spec.repository.owner_index import OwnerFolderIndex, build_owner_folder_index
+from spec.repository.ownership import create_owner_from_identity
 from spec.repository.records import create_spec_record
 from spec.repository.subjects import subject_to_record_kind
 from spec.utils.enums import SpecSubject
@@ -70,11 +72,20 @@ TData = TypeVar("TData")
 def _records_from_map(
     subject: SpecSubject,
     values: dict[str, TData],
+    owner_index: OwnerFolderIndex,
 ) -> tuple[SpecRecord[TData], ...]:
     """Create normalized records from a typed IR map."""
 
     return tuple(
-        create_spec_record(subject=subject, key=key, data=value)
+        create_spec_record(
+            subject=subject,
+            key=key,
+            data=value,
+            owner=create_owner_from_identity(
+                key=key,
+                owner_index=owner_index,
+            ),
+        )
         for key, value in values.items()
     )
 
@@ -109,6 +120,7 @@ def _record_set(
 
 def _resource_operations(
     resources: dict[str, ResourceDefinition],
+    owner_index: OwnerFolderIndex,
 ) -> tuple[SpecRecord[OperationDefinition], ...]:
     """Create operation records from typed resources."""
 
@@ -117,11 +129,16 @@ def _resource_operations(
     for resource_key, resource in resources.items():
         for operation_key, operation in resource.operations.items():
             key = f"{resource_key}.{operation_key}"
+            owner = create_owner_from_identity(
+                key=f"resource.{resource_key}.{operation_key}",
+                owner_index=owner_index,
+            )
             records.append(
                 create_spec_record(
                     subject=SpecSubject.OPERATIONS,
                     key=key,
                     data=operation,
+                    owner=owner,
                 )
             )
 
@@ -130,6 +147,7 @@ def _resource_operations(
 
 def _resource_route_paths(
     resources: dict[str, ResourceDefinition],
+    owner_index: OwnerFolderIndex,
 ) -> tuple[SpecRecord[RoutePathDefinition], ...]:
     """Create route path records from typed resources."""
 
@@ -138,11 +156,16 @@ def _resource_route_paths(
     for resource_key, resource in resources.items():
         for route_path_key, route_path in resource.routes.items():
             key = f"{resource_key}.{route_path_key}"
+            owner = create_owner_from_identity(
+                key=f"resource.{resource_key}.{route_path_key}",
+                owner_index=owner_index,
+            )
             records.append(
                 create_spec_record(
                     subject=SpecSubject.ROUTE_PATHS,
                     key=key,
                     data=route_path,
+                    owner=owner,
                 )
             )
 
@@ -151,6 +174,7 @@ def _resource_route_paths(
 
 def _resource_routes(
     resources: dict[str, ResourceDefinition],
+    owner_index: OwnerFolderIndex,
 ) -> tuple[SpecRecord[RouteMethodDefinition], ...]:
     """Create route method records from typed resources."""
 
@@ -160,11 +184,16 @@ def _resource_routes(
         for route_path_key, route_path in resource.routes.items():
             for method, route_method in route_path.methods.items():
                 key = f"{resource_key}.{route_path_key}.{method}"
+                owner = create_owner_from_identity(
+                    key=f"resource.{resource_key}.{method}",
+                    owner_index=owner_index,
+                )
                 records.append(
                     create_spec_record(
                         subject=SpecSubject.ROUTES,
                         key=key,
                         data=route_method,
+                        owner=owner,
                     )
                 )
 
@@ -174,45 +203,57 @@ def _resource_routes(
 def build_repository_records(document: CodepotDefinition) -> RepositoryRecords:
     """Build all normalized repository records from a typed document."""
 
+    owner_index = build_owner_folder_index(
+        resources=document.resources,
+        entities=document.schemas.entities,
+    )
+
     return RepositoryRecords(
         urls=_records_from_list(SpecSubject.URLS, document.urls),
         content_types=_records_from_map(
             SpecSubject.CONTENT_TYPES,
             document.content_types,
+            owner_index,
         ),
         primitives=_records_from_map(
             SpecSubject.PRIMITIVES,
             document.properties.primitives,
+            owner_index,
         ),
-        enums=_records_from_map(SpecSubject.ENUMS, document.properties.enums),
+        enums=_records_from_map(SpecSubject.ENUMS, document.properties.enums, owner_index),
         composites=_records_from_map(
             SpecSubject.COMPOSITES,
             document.properties.composites,
+            owner_index,
         ),
-        entities=_records_from_map(SpecSubject.ENTITIES, document.schemas.entities),
+        entities=_records_from_map(SpecSubject.ENTITIES, document.schemas.entities, owner_index),
         field_sets=_records_from_map(
             SpecSubject.FIELD_SETS,
             document.schemas.field_sets,
+            owner_index,
         ),
-        models=_records_from_map(SpecSubject.MODELS, document.schemas.models),
-        dtos=_records_from_map(SpecSubject.DTOS, document.schemas.dtos),
-        params=_records_from_map(SpecSubject.PARAMS, document.schemas.params),
-        resources=_records_from_map(SpecSubject.RESOURCES, document.resources),
-        operations=_resource_operations(document.resources),
-        route_paths=_resource_route_paths(document.resources),
-        routes=_resource_routes(document.resources),
-        errors=_records_from_map(SpecSubject.ERRORS, document.responses.errors),
+        models=_records_from_map(SpecSubject.MODELS, document.schemas.models, owner_index),
+        dtos=_records_from_map(SpecSubject.DTOS, document.schemas.dtos, owner_index),
+        params=_records_from_map(SpecSubject.PARAMS, document.schemas.params, owner_index),
+        resources=_records_from_map(SpecSubject.RESOURCES, document.resources, owner_index),
+        operations=_resource_operations(document.resources, owner_index),
+        route_paths=_resource_route_paths(document.resources, owner_index),
+        routes=_resource_routes(document.resources, owner_index),
+        errors=_records_from_map(SpecSubject.ERRORS, document.responses.errors, owner_index),
         security_credentials=_records_from_map(
             SpecSubject.SECURITY_CREDENTIALS,
             document.security.credentials,
+            owner_index,
         ),
         security_principals=_records_from_map(
             SpecSubject.SECURITY_PRINCIPALS,
             document.security.principals,
+            owner_index,
         ),
         security_policies=_records_from_map(
             SpecSubject.SECURITY_POLICIES,
             document.security.policies,
+            owner_index,
         ),
     )
 

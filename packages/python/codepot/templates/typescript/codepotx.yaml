@@ -115,6 +115,7 @@ templates:
           - folders:
               - src
               - models
+              - $[owner.name.path]
             file: index.$[language.extension]
   dto_files:
     kind: source
