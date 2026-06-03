@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import typer
 
-from cli.commands import emit, infer, inspect, template, validate
+from cli.commands.emit import emit_command
+from cli.commands.infer import plan_command
+from cli.commands.inspect import inspect_command
+from cli.commands.template import app as template_app
+from cli.commands.validate import validate_command
 
 app = typer.Typer(
     name="cpx",
@@ -12,11 +16,12 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-app.add_typer(validate.app, name="validate")
-app.add_typer(inspect.app, name="inspect")
-app.add_typer(infer.app, name="plan")
-app.add_typer(emit.app, name="emit")
-app.add_typer(template.app, name="template")
+app.command("validate")(validate_command)
+app.command("inspect")(inspect_command)
+app.command("plan")(plan_command)
+app.command("emit")(emit_command)
+
+app.add_typer(template_app, name="template")
 
 
 def main() -> None:

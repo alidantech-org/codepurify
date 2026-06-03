@@ -12,7 +12,7 @@ def print_validate_result(context: SpecContext) -> None:
     metadata = context.metadata
     counts = context.counts
 
-    console.print("[green]✓ Spec validated.[/green]")
+    console.print("[green]OK[/green] Spec validated.")
     console.print(f"Project: [bold]{metadata.project.project_key}[/bold]")
     console.print(f"Version: {metadata.project.version}")
     console.print(f"Records: {counts.records_total}")

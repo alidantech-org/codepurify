@@ -10,14 +10,9 @@ from app import codepotx
 from cli.presentation.console import print_error
 from cli.presentation.validate import print_validate_result
 
-app = typer.Typer(help="Validate Codepot specs.")
 
-SPEC_PATH_ARGUMENT = typer.Argument(..., help="Path to compiled Codepot spec.")
-
- 
-@app.callback(invoke_without_command=True)
-def validate(
-    spec_path: Path = SPEC_PATH_ARGUMENT,
+def validate_command(
+    spec_path: Path = typer.Argument(..., help="Path to compiled Codepot spec."),
 ) -> None:
     """Validate a compiled Codepot spec."""
 

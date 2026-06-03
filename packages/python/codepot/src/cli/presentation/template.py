@@ -10,9 +10,9 @@ def print_template_validation_result(result: TemplateValidationResult) -> None:
     """Print template validation result."""
 
     if result.is_valid:
-        console.print("[green]✓ Template package is valid.[/green]")
+        console.print("[green]OK[/green] Template package is valid.")
     else:
-        console.print("[red]✗ Template package is invalid.[/red]")
+        console.print("[red]X[/red] Template package is invalid.")
 
     for error in result.errors:
         prefix = f"{error.template_id}: " if error.template_id else ""

@@ -18,11 +18,11 @@ def _status_icon(status: PassStatus) -> str:
     """Return display icon for pass status."""
 
     if status == PassStatus.SUCCESS:
-        return "[green]✓[/green]"
+        return "[green]OK[/green]"
     if status == PassStatus.WARNING:
         return "[yellow]![/yellow]"
     if status == PassStatus.FAILED:
-        return "[red]✗[/red]"
+        return "[red]X[/red]"
     if status == PassStatus.SKIPPED:
         return "[dim]-[/dim]"
 

@@ -9,17 +9,11 @@ import typer
 from app import codepotx
 from cli.presentation.console import print_error
 from cli.presentation.inspect import print_inspect_result
- 
-app = typer.Typer(help="Inspect Codepot specs.")
-
-SPEC_PATH_ARGUMENT = typer.Argument(..., help="Path to compiled Codepot spec.")
-MODE_OPTION = typer.Option("overview", "--mode", "-m", help="Inspection mode.")
 
 
-@app.callback(invoke_without_command=True)
-def inspect(
-    spec_path: Path = SPEC_PATH_ARGUMENT,
-    mode: str = MODE_OPTION,
+def inspect_command(
+    spec_path: Path = typer.Argument(..., help="Path to compiled Codepot spec."),
+    mode: str = typer.Option("overview", "--mode", "-m"),
 ) -> None:
     """Inspect a compiled Codepot spec."""
 

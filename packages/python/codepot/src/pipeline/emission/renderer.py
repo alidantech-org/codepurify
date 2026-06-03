@@ -54,6 +54,7 @@ def _template_context(context: TemplateFileContext) -> dict[str, Any]:
         "template": _to_template_value(context.template),
         "language": _to_template_value(context.language),
         "spec": _to_template_value(context.spec),
+        "project": _to_template_value(context.spec.metadata.project),
         "records": _to_template_value(context.records),
         "imports": _to_template_value(context.imports),
         "exports": _to_template_value(context.exports),

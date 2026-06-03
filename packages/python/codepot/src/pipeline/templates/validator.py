@@ -82,14 +82,14 @@ def validate_template_package(
                 )
             )
 
-        if template.copy is not None and not _template_file_exists(
+        if template.copy_file is not None and not _template_file_exists(
             package_path=package.package_path,
-            relative_path=template.copy,
+            relative_path=template.copy_file,
         ):
             errors.append(
                 TemplateValidationError(
                     template_id=template_id,
-                    message=f"Static copy file does not exist: {template.copy}",
+                    message=f"Static copy file does not exist: {template.copy_file}",
                 )
             )
 

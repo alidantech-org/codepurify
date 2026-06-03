@@ -136,11 +136,16 @@ def _plan_file(
         template_package=template_package,
     )
 
-    folders = expand_path_parts(path_config.folders, variables)
-    file_parts: tuple[ExpandedPathPart, ...] = expand_path_parts(
-        (path_config.file,),
-        variables,
-    )
+    try:
+        folders = expand_path_parts(path_config.folders, variables)
+        file_parts: tuple[ExpandedPathPart, ...] = expand_path_parts(
+            (path_config.file,),
+            variables,
+        )
+    except ValueError as error:
+        raise ValueError(
+            f"Failed to expand output path for template '{selection.template_id}': {error}"
+        ) from error
     if len(file_parts) != 1:
         raise ValueError(f"Output file path did not expand correctly: {path_config.file}")
 

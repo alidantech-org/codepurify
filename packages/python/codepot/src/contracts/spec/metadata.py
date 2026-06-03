@@ -37,7 +37,7 @@ class SpecProjectMetadata:
     project_key: str
     spec_version: int
     title: str
-    api_version: str
+    version: str
     summary: str | None
     terms_of_service: str | None
 

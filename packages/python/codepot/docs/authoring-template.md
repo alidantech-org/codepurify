@@ -310,7 +310,7 @@ Always available:
 ```text
 project.key
 project.title
-project.api_version
+project.version
 project.spec_version
 project.codepot_version
 
