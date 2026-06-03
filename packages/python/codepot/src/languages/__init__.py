@@ -1,1 +1,4 @@
-"""Language pipeline contracts and registry."""
+"""Language adapter runtime package.
+
+This package contains concrete language adapters and the adapter registry.
+"""
