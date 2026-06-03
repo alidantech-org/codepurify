@@ -2,30 +2,10 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
-
 from pydantic import ConfigDict
 
 from spec.ir.shared.base import DefinitionItem
-
-
-class ContentStrategy(StrEnum):
-    """Supported content serialization strategies."""
-
-    JSON = "json"
-    XML = "xml"
-    YAML = "yaml"
-    HTML = "html"
-    CSV = "csv"
-    MULTIPART = "multipart"
-    FORM = "form"
-    TEXT = "text"
-    BINARY = "binary"
-    STREAM = "stream"
-    GRAPHQL = "graphql"
-    PROTOBUF = "protobuf"
-    MSGPACK = "msgpack"
-    CUSTOM = "custom"
+from spec.kinds.content import ContentStrategy
 
 
 class ContentTypeDefinition(DefinitionItem):

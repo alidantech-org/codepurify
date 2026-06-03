@@ -2,31 +2,18 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
 from typing import Any
 
 from pydantic import ConfigDict, Field
 
 from spec.ir.shared.base import DefinitionItem
 from spec.ir.shared.ref import Ref
-
-
-class QueryOperator(StrEnum):
-    """Supported field query operators."""
-
-    EQ = "eq"
-    NEQ = "neq"
-    IN = "in"
-    NOT_IN = "not_in"
-    CONTAINS = "contains"
-    STARTS_WITH = "starts_with"
-    ENDS_WITH = "ends_with"
-    GT = "gt"
-    GTE = "gte"
-    LT = "lt"
-    LTE = "lte"
-    BETWEEN = "between"
-    EXISTS = "exists"
+from spec.kinds.fields import (
+    EntityRelationKind,
+    FieldPersistenceMode,
+    FieldVisibilityLevel,
+    QueryOperator,
+)
 
 
 class FieldCapabilityConfig(DefinitionItem):
@@ -38,15 +25,6 @@ class FieldCapabilityConfig(DefinitionItem):
     sort: bool | None = None
     select: bool | None = None
     operators: list[QueryOperator] | None = None
-
-
-class FieldVisibilityLevel(StrEnum):
-    """Supported field visibility levels."""
-
-    PUBLIC = "public"
-    INTERNAL = "internal"
-    SECRET = "secret"
-    AUTH = "auth"
 
 
 class FieldVisibilityConfig(DefinitionItem):
@@ -71,14 +49,6 @@ class FieldLifecycleConfig(DefinitionItem):
     read_only: bool | None = None
 
 
-class FieldPersistenceMode(StrEnum):
-    """Supported persistence modes for entity fields."""
-
-    STORED = "stored"
-    VIRTUAL = "virtual"
-    COMPUTED = "computed"
-
-
 class FieldPersistenceConfig(DefinitionItem):
     """Field persistence configuration."""
 
@@ -97,15 +67,6 @@ class ArrayDefinition(DefinitionItem):
     min_items: int | None = None
     max_items: int | None = None
     unique_items: bool | None = None
-
-
-class EntityRelationKind(StrEnum):
-    """Supported entity relation kinds."""
-
-    BELONGS_TO = "belongs_to"
-    HAS_ONE = "has_one"
-    HAS_MANY = "has_many"
-    MANY_TO_MANY = "many_to_many"
 
 
 class EntityRelationThroughDefinition(DefinitionItem):

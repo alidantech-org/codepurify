@@ -2,31 +2,17 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
 from spec.ir.shared.base import DefinitionItem
 from spec.ir.shared.ref import Ref
-
-
-class SecurityCredentialSource(StrEnum):
-    """Supported credential locations."""
-
-    HEADER = "header"
-    COOKIE = "cookie"
-    QUERY = "query"
-
-
-class SecurityCredentialFormat(StrEnum):
-    """Supported credential formats."""
-
-    RAW = "raw"
-    BEARER = "bearer"
-    BASIC = "basic"
-    API_KEY = "api_key"
-    SESSION = "session"
+from spec.kinds.security import (
+    SecurityCredentialFormat,
+    SecurityCredentialSource,
+    SecurityPolicyMode,
+)
 
 
 class SecurityCredentialDefinition(DefinitionItem):
@@ -49,13 +35,6 @@ class SecurityPrincipalDefinition(DefinitionItem):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     fields: SecurityPrincipalFields
-
-
-class SecurityPolicyMode(StrEnum):
-    """Supported security policy modes."""
-
-    PUBLIC = "public"
-    PROTECTED = "protected"
 
 
 class SecurityPolicyDefinition(DefinitionItem):

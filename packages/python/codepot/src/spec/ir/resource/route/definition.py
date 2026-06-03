@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
 from typing import Any
 
 from pydantic import ConfigDict, Field
@@ -10,19 +9,7 @@ from pydantic import ConfigDict, Field
 from spec.ir.security.definition import SecurityPolicyDefinition
 from spec.ir.shared.base import DefinitionItem
 from spec.ir.shared.ref import Ref
-
-
-class HttpMethod(StrEnum):
-    """Supported HTTP methods."""
-
-    GET = "get"
-    POST = "post"
-    PUT = "put"
-    PATCH = "patch"
-    DELETE = "delete"
-    OPTIONS = "options"
-    HEAD = "head"
-
+from spec.kinds.routes import HttpMethod
 
 RouteSchemaRef = Ref[Any]
 
