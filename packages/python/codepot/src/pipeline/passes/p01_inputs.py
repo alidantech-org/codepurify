@@ -48,24 +48,12 @@ class InputResolutionPass:
         status = PassStatus.FAILED if diagnostics else PassStatus.SUCCESS
         message = "Input validation failed." if diagnostics else "Inputs resolved."
 
-        finished_at = utc_now()
         report = make_report(
             name=self.name,
             title=self.title,
             status=status,
             message=message,
             started_at=started_at,
-            finished_at=finished_at,
-        )
-
-        report = report.__class__(
-            name=report.name,
-            title=report.title,
-            status=report.status,
-            message=report.message,
-            started_at=report.started_at,
-            finished_at=report.finished_at,
-            duration_ms=report.duration_ms,
             diagnostics=tuple(diagnostics),
         )
 

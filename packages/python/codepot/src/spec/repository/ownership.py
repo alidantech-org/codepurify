@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contracts.spec.refs import SpecIdentity, SpecOwner
+from spec.repository.names import create_spec_name
 from spec.repository.refs import create_spec_ref
 from spec.utils.enums import SpecSubject
 from spec.utils.identity import has_owner_identity, parse_identity
@@ -42,9 +43,12 @@ def create_owner_from_identity(
         owner_identity=parsed.owner_identity,
         owner_key=parsed.owner_key,
     )
+    owner_name = create_spec_name(parsed.owner_key)
 
     return SpecOwner(
         key=parsed.owner_key,
         ref=create_spec_ref(subject=owner_subject, key=parsed.owner_key),
         identity=owner_identity,
+        name=owner_name,
+        folders=(owner_name.path,),
     )

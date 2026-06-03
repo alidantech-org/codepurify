@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from pipeline.contracts.results import PassStatus, ReportCounter
+from pipeline.contracts.results import ReportCounter
 from pipeline.contracts.state import PipelineState
-from pipeline.passes.base import PassResult, make_report, utc_now
+from pipeline.passes.base import PassResult, success_result, utc_now
 from spec.repository import SpecRepository
 
 
@@ -31,24 +31,12 @@ class SpecRepositoryPass:
             spec_context=context,
         )
 
-        finished_at = utc_now()
-        report = make_report(
+        return success_result(
+            state=next_state,
             name=self.name,
             title=self.title,
-            status=PassStatus.SUCCESS,
             message="Spec repository loaded.",
             started_at=started_at,
-            finished_at=finished_at,
-        )
-
-        report = report.__class__(
-            name=report.name,
-            title=report.title,
-            status=report.status,
-            message=report.message,
-            started_at=report.started_at,
-            finished_at=report.finished_at,
-            duration_ms=report.duration_ms,
             counters=(
                 ReportCounter("records", counts.records_total),
                 ReportCounter("resources", counts.resources),
@@ -57,5 +45,3 @@ class SpecRepositoryPass:
                 ReportCounter("routes", counts.routes),
             ),
         )
-
-        return PassResult(state=next_state, report=report)

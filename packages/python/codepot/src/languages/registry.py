@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from contracts.language.interface import LanguageAdapter
+from languages.dart.adapter import dart_language_adapter
+from languages.python.adapter import python_language_adapter
+from languages.typescript.adapter import typescript_language_adapter
 
 
 @dataclass
@@ -25,7 +28,9 @@ class LanguageRegistry:
             return self._adapters[key]
         except KeyError as exc:
             available = ", ".join(sorted(self._adapters)) or "none"
-            raise ValueError(f"Unknown language '{key}'. Available languages: {available}.") from exc  # noqa: E501
+            raise ValueError(
+                f"Unknown language '{key}'. Available languages: {available}."
+            ) from exc
 
     def keys(self) -> tuple[str, ...]:
         """Return registered language keys."""
@@ -38,4 +43,15 @@ class LanguageRegistry:
         return key in self._adapters
 
 
-language_registry = LanguageRegistry()
+def create_language_registry() -> LanguageRegistry:
+    """Create language registry with built-in adapters."""
+
+    registry = LanguageRegistry()
+    registry.register(typescript_language_adapter)
+    registry.register(python_language_adapter)
+    registry.register(dart_language_adapter)
+
+    return registry
+
+
+language_registry = create_language_registry()

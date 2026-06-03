@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from contracts.spec.names import SpecName
+
 
 @dataclass(frozen=True)
 class SpecRef:
@@ -45,3 +47,5 @@ class SpecOwner:
     key: str
     ref: SpecRef
     identity: SpecIdentity
+    name: SpecName
+    folders: tuple[str, ...] = ()
