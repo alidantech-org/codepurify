@@ -9,6 +9,8 @@ from contracts.language.runtime import LanguageRuntime
 from contracts.spec.names import SpecName
 from contracts.spec.records import SpecRecord
 from pipeline.planning.selections import PlannedSelection
+from spec.repository.names import create_spec_name
+from spec.utils.constants import GLOBAL_OWNER_KEY
 
 
 @dataclass(frozen=True)
@@ -130,11 +132,8 @@ def item_variables(record: SpecRecord[object]) -> PathItemVariables:
     )
 
 
-def owner_variables(record: SpecRecord[object]) -> PathOwnerVariables | None:
+def owner_variables(record: SpecRecord[object]) -> PathOwnerVariables:
     """Create owner path variables from a selected record."""
-
-    if record.owner is None:
-        return None
 
     return PathOwnerVariables(
         key=record.owner.key,
@@ -160,4 +159,42 @@ def template_variables(selection: PlannedSelection) -> PathTemplateVariables:
         id=selection.template_id,
         select=selection.select.raw,
         kind=selection.template.kind.value,
+    )
+
+
+def global_owner_variables(
+    *,
+    alias: str,
+    folders: tuple[str, ...],
+) -> PathOwnerVariables:
+    """Create global owner variables from template config."""
+
+    name = create_spec_name(alias)
+
+    return PathOwnerVariables(
+        key=GLOBAL_OWNER_KEY,
+        name=name_variables(name),
+        folders=folders,
+    )
+
+
+def resource_variables(record: SpecRecord[object]) -> PathResourceVariables:
+    """Create resource path variables from a selected record."""
+
+    return PathResourceVariables(
+        key=record.key,
+        name=name_variables(record.name),
+        folders=record.owner.folders,
+    )
+
+
+def owner_variables_from_key(owner_key: str) -> PathOwnerVariables:
+    """Create owner path variables from a selection bucket key."""
+
+    name = create_spec_name(owner_key)
+
+    return PathOwnerVariables(
+        key=owner_key,
+        name=name_variables(name),
+        folders=(name.path,),
     )

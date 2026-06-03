@@ -55,7 +55,7 @@ class SpecRecord(Generic[TData]):
     identity: SpecIdentity
     name: SpecName
     data: TData
-    owner: SpecOwner | None = None
+    owner: SpecOwner
     dependencies: tuple[SpecDependency, ...] = ()
 
 

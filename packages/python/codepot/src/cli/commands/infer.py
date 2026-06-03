@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 
 from app import codepotx
-from cli.constants.defaults import DEFAULT_OUTPUT_PATH, DEFAULT_TEMPLATE_PACKAGE_PATH
+from cli.options import (
+    DEFAULT_OUTPUT_OPTION,
+    DEFAULT_TEMPLATE_PACKAGE_OPTION,
+    DebugOption,
+    LanguageOption,
+    OutputPathOption,
+    SelectOption,
+    SpecPathArg,
+    TemplateIdsOption,
+    TemplatePackageOption,
+    VerboseOption,
+)
 from cli.presentation.console import print_error
 from cli.presentation.pipeline import print_pipeline_event, print_pipeline_report
 from pipeline.contracts.options import PipelineOptions
@@ -15,18 +24,14 @@ from pipeline.contracts.results import PassStatus
 
 
 def plan_command(
-    spec_path: Path = typer.Argument(..., help="Path to compiled Codepot spec."),
-    template_package_path: Path = typer.Option(
-        DEFAULT_TEMPLATE_PACKAGE_PATH,
-        "--template-package",
-        "-t",
-    ),
-    output_path: Path = typer.Option(DEFAULT_OUTPUT_PATH, "--output", "-o"),
-    language: str | None = typer.Option(None, "--language", "-l"),
-    select: list[str] = typer.Option([], "--select"),
-    template_ids: list[str] = typer.Option([], "--template"),
-    debug: bool = typer.Option(False, "--debug"),
-    verbose: bool = typer.Option(False, "--verbose", "-v"),
+    spec_path: SpecPathArg,
+    template_package_path: TemplatePackageOption = DEFAULT_TEMPLATE_PACKAGE_OPTION,
+    output_path: OutputPathOption = DEFAULT_OUTPUT_OPTION,
+    language: LanguageOption = None,
+    select: SelectOption = (),
+    template_ids: TemplateIdsOption = (),
+    debug: DebugOption = False,
+    verbose: VerboseOption = False,
 ) -> None:
     """Plan generated files without rendering or writing."""
 

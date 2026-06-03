@@ -102,7 +102,7 @@ def owner_buckets(
     grouped: dict[str, list[SpecRecord[object]]] = {}
 
     for record in records:
-        owner_key = "global" if record.owner is None else record.owner.key
+        owner_key = record.owner.key
         grouped.setdefault(owner_key, []).append(record)
 
     return tuple(

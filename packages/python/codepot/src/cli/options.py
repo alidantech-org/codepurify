@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -283,3 +284,78 @@ def resolve_inspect_mode(interactive: bool) -> str | None:
     if interactive:
         return ask_inspect_mode()
     return None
+
+"""Shared CLI option annotations."""
+
+
+SpecPathArg = Annotated[
+    Path,
+    typer.Argument(help="Path to compiled Codepot spec."),
+]
+
+TemplatePackageOption = Annotated[
+    Path,
+    typer.Option(
+        "--template-package",
+        "-t",
+        help="Path to template package folder or codepotx config file.",
+    ),
+]
+
+OutputPathOption = Annotated[
+    Path,
+    typer.Option("--output", "-o", help="Output directory."),
+]
+
+LanguageOption = Annotated[
+    str | None,
+    typer.Option("--language", "-l", help="Override template package language."),
+]
+
+SelectOption = Annotated[
+    list[str],
+    typer.Option("--select", help="Only run templates matching this select expression."),
+]
+
+TemplateIdsOption = Annotated[
+    list[str],
+    typer.Option("--template", help="Only run specific template ids."),
+]
+
+DryRunOption = Annotated[
+    bool,
+    typer.Option("--dry-run", help="Plan writes without writing files."),
+]
+
+DebugOption = Annotated[
+    bool,
+    typer.Option("--debug", help="Enable debug output."),
+]
+
+VerboseOption = Annotated[
+    bool,
+    typer.Option("--verbose", "-v", help="Verbose output."),
+]
+
+NoRenderOption = Annotated[
+    bool,
+    typer.Option("--no-render", help="Skip rendering."),
+]
+
+NoWriteOption = Annotated[
+    bool,
+    typer.Option("--no-write", help="Skip file writing."),
+]
+
+NoGraphOption = Annotated[
+    bool,
+    typer.Option("--no-graph", help="Skip emission graph artifact."),
+]
+
+InspectModeOption = Annotated[
+    str,
+    typer.Option("--mode", "-m", help="Inspection mode."),
+]
+
+DEFAULT_TEMPLATE_PACKAGE_OPTION = DEFAULT_TEMPLATE_PACKAGE_PATH
+DEFAULT_OUTPUT_OPTION = DEFAULT_OUTPUT_PATH

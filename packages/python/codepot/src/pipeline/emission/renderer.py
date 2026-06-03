@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -28,36 +27,23 @@ class RenderedFiles:
     files: tuple[RenderedFile, ...]
 
 
-def _to_template_value(value: Any) -> Any:
-    """Convert typed context values into Jinja-friendly data."""
+def _template_context(context: TemplateFileContext) -> dict[str, object]:
+    """Build shallow Jinja context for one planned template file.
 
-    if is_dataclass(value) and not isinstance(value, type):
-        return {key: _to_template_value(item) for key, item in asdict(value).items()}
-
-    if isinstance(value, tuple | list):
-        return [_to_template_value(item) for item in value]
-
-    if isinstance(value, Path):
-        return value.as_posix()
-
-    if isinstance(value, dict):
-        return {str(key): _to_template_value(item) for key, item in value.items()}
-
-    return value
-
-
-def _template_context(context: TemplateFileContext) -> dict[str, Any]:
-    """Build Jinja context for one planned template file."""
+    Keep this intentionally shallow. Jinja can access dataclass attributes
+    directly, so we should not recursively convert the full SpecContext for
+    every rendered file.
+    """
 
     return {
-        "file": _to_template_value(context),
-        "template": _to_template_value(context.template),
-        "language": _to_template_value(context.language),
-        "spec": _to_template_value(context.spec),
-        "project": _to_template_value(context.spec.metadata.project),
-        "records": _to_template_value(context.records),
-        "imports": _to_template_value(context.imports),
-        "exports": _to_template_value(context.exports),
+        "file": context,
+        "template": context.template,
+        "language": context.language,
+        "spec": context.spec,
+        "project": context.spec.metadata.project,
+        "records": context.records,
+        "imports": context.imports,
+        "exports": context.exports,
     }
 
 

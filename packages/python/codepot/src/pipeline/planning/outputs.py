@@ -21,12 +21,16 @@ from pipeline.planning.path_variables import (
     OutputPathVariables,
     PathGlobalVariables,
     PathProjectVariables,
+    global_owner_variables,
     item_variables,
     language_variables,
     owner_variables,
+    owner_variables_from_key,
+    resource_variables,
     template_variables,
 )
 from pipeline.planning.selections import PlannedSelection
+from spec.utils.constants import GLOBAL_OWNER_KEY
 
 
 def _relative_output_path(
@@ -97,6 +101,30 @@ def _path_variables(
 
     first_record = source.records[0] if source.records else None
 
+    record_owner = owner_variables(first_record) if first_record is not None else None
+
+    source_owner = (
+        owner_variables_from_key(source.bucket_key)
+        if source.bucket_key is not None
+        else None
+    )
+
+    owner = source_owner or record_owner
+
+    if owner is not None and owner.key == GLOBAL_OWNER_KEY:
+        owner = global_owner_variables(
+            alias=template_package.config.defaults.global_alias,
+            folders=template_package.config.defaults.global_folders,
+        )
+
+    resource = None
+    if (source.bucket_key is not None and first_record is not None) or (
+        selection.select.subject is not None
+        and selection.select.subject.value == "resources"
+        and first_record is not None
+    ):
+        resource = resource_variables(first_record)
+
     return OutputPathVariables(
         global_context=PathGlobalVariables(
             alias=template_package.config.defaults.global_alias,
@@ -110,8 +138,8 @@ def _path_variables(
         language=language_variables(runtime),
         template=template_variables(selection),
         item=item_variables(first_record) if first_record is not None else None,
-        owner=owner_variables(first_record) if first_record is not None else None,
-        resource=None,
+        owner=owner,
+        resource=resource,
     )
 
 

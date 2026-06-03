@@ -12,3 +12,4 @@ class TemplateDefaultsConfig(BaseModel):
 
     output: str = "generated"
     global_alias: str = "shared"
+    global_folders: tuple[str, ...] = ()

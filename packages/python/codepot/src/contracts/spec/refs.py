@@ -45,7 +45,8 @@ class SpecOwner:
     """Normalized owner metadata for an owned spec item."""
 
     key: str
-    ref: SpecRef
+    ref: SpecRef | None
     identity: SpecIdentity
     name: SpecName
     folders: tuple[str, ...] = ()
+    is_global: bool = False

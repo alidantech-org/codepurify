@@ -10,6 +10,7 @@ from contracts.language.runtime import LanguageRuntime
 from contracts.spec.context import SpecContext
 from contracts.templates.config.package import LoadedTemplatePackageConfig
 from pipeline.contracts.options import PipelineOptions
+from pipeline.emission.graph import EmissionGraph
 from pipeline.emission.renderer import RenderedFiles
 from pipeline.emission.writer import FileWriteResults
 from pipeline.planning.contexts import PlannedTemplateContexts
@@ -48,3 +49,4 @@ class PipelineState:
     template_contexts: PlannedTemplateContexts | None = None
     rendered_files: RenderedFiles | None = None
     write_results: FileWriteResults | None = None
+    emission_graph: EmissionGraph | None = None
