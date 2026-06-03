@@ -48,33 +48,20 @@ def pascal_case(value: str) -> str:
     return "".join(word.capitalize() for word in split_words(value))
 
 
-def screaming_case(value: str) -> str:
+def screaming_snake_case(value: str) -> str:
     """Return SCREAMING_SNAKE_CASE."""
     return snake_case(value).upper()
 
 
 def constant_case(value: str) -> str:
-    """Return lower constant-style identifier."""
-    return snake_case(value)
+    """Return CONSTANT_STYLE identifier."""
 
-
-def dot_case(value: str) -> str:
-    """Return dot.case."""
-    return ".".join(split_words(value))
+    return snake_case(value).upper()
 
 
 def path_case(value: str) -> str:
-    """Return a safe path segment."""
-    safe = _SAFE_SEGMENT_PATTERN.sub("_", snake_case(value))
+    """Return a safe kebab-case path segment."""
+
+    safe = _SAFE_SEGMENT_PATTERN.sub("-", kebab_case(value))
     safe = safe.strip("._-/")
     return safe or "unnamed"
-
-
-def lower_case(value: str) -> str:
-    """Return lower case."""
-    return clean_name(value).lower()
-
-
-def upper_case(value: str) -> str:
-    """Return upper case."""
-    return clean_name(value).upper()

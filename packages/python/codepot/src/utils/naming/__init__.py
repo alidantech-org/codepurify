@@ -1,15 +1,33 @@
-"""Shared naming utilities for generator contexts.
+"""Unified naming utilities for generator contexts.
 
-The naming package exposes a unified NameProvider used by language planners,
-emission planners, template path expansion, and debug rendering. Access order
-is case-first and pluralisation-second, for example name.snake.s or name.path.p.
+Access pattern: case-first, plurality-second.
+
+    name.snake              → "upload_avatar"
+    name.singular.snake     → "upload_avatar"
+    name.plural.snake       → "upload_avatars"
+    name.pascal             → "UploadAvatar"
+    name.plural.pascal      → "UploadAvatars"
+
+Short aliases are also supported:
+
+    name.sn  → name.snake
+    name.pc  → name.pascal
+    name.cm  → name.camel
 """
 
-from utils.naming.provider import NameProvider, NameSet, PluralizedName, build_name
+from contracts.spec.names import (
+    SpecName,
+    SpecNameCase,
+    SpecNameCases,
+    resolve_name_case,
+)
+from utils.naming.provider import NameProvider, build_name
 
 __all__ = [
     "NameProvider",
-    "NameSet",
-    "PluralizedName",
     "build_name",
+    "SpecName",
+    "SpecNameCases",
+    "SpecNameCase",
+    "resolve_name_case",
 ]

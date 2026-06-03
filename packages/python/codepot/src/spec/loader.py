@@ -5,10 +5,18 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from utils.loaders.yaml_loader import load_yaml_data
+import yaml
+
+from spec.ir.shared.document import CodepotDefinition
 
 
-def load_spec(path: Path) -> dict[str, Any]:
-    """Load a compiled Codepot spec YAML document as raw data."""
+def load_spec(path: Path) -> CodepotDefinition:
+    """Load a compiled Codepot spec file into a typed IR document."""
 
-    return load_yaml_data(path)
+    with path.open("r", encoding="utf-8") as file:
+        loaded: Any = yaml.safe_load(file)
+
+    if not isinstance(loaded, dict):
+        raise ValueError(f"Expected spec file to contain an object: {path}")
+
+    return CodepotDefinition.model_validate(loaded)

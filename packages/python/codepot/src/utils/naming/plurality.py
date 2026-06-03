@@ -1,8 +1,4 @@
-"""Pluralisation adapter for generated names.
-
-This module is the only place that imports the third-party pluralizer package.
-The rest of the generator consumes categorize_word() only.
-"""
+"""Pluralization adapter for generated names."""
 
 from __future__ import annotations
 
@@ -54,7 +50,6 @@ def categorize_word(value: str) -> NumberForms:
 
     singular = _safe_singularize(word)
     plural = _safe_pluralize(singular)
-
     kind = _detect_number(word, singular, plural)
 
     if kind is NumberKind.PLURAL:
@@ -84,7 +79,6 @@ def categorize_word(value: str) -> NumberForms:
 def _safe_singularize(word: str) -> str:
     if _is_protected(word):
         return word
-
     result = str(_engine().singular(word))
     return result or word
 
@@ -92,23 +86,18 @@ def _safe_singularize(word: str) -> str:
 def _safe_pluralize(word: str) -> str:
     if _is_protected(word):
         return word
-
     result = str(_engine().plural(word))
     return result or word
 
 
 def _detect_number(word: str, singular: str, plural: str) -> NumberKind:
     lowered = word.lower()
-
     if singular.lower() == plural.lower() == lowered:
         return NumberKind.INVARIANT
-
     if lowered == plural.lower() and lowered != singular.lower():
         return NumberKind.PLURAL
-
     if lowered == singular.lower():
         return NumberKind.SINGULAR
-
     return NumberKind.UNKNOWN
 
 
@@ -119,8 +108,6 @@ def _is_protected(word: str) -> bool:
 def _match_style(source: str, target: str) -> str:
     if source.isupper():
         return target.upper()
-
     if source[:1].isupper():
         return target.capitalize()
-
     return target

@@ -35,6 +35,7 @@ class SpecFileMetadata:
     size_bytes: int
     size_label: str
     line_count: int
+    hash: str
 
 
 @dataclass(frozen=True)
@@ -43,9 +44,9 @@ class SpecProjectMetadata:
 
     codepot_version: str
     project_key: str
-    spec_version: int
+    version: int
     title: str
-    api_version: str
+    project_version: str | None
     summary: str | None
     terms_of_service: str | None
 

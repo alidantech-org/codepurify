@@ -17,7 +17,7 @@ class NumberKind(StrEnum):
 
 @dataclass(frozen=True)
 class NumberForms:
-    """Original, singular, and plural forms for a token."""
+    """Singular and plural forms for a token."""
 
     original: str
     singular: str

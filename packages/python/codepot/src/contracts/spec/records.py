@@ -10,7 +10,7 @@ from contracts.spec.dependencies import SpecDependency
 from contracts.spec.names import SpecName
 from contracts.spec.refs import SpecIdentity, SpecOwner, SpecRef
 
-TData = TypeVar("TData")
+TData = TypeVar("TData", covariant=True)
 
 
 class SpecRecordKind(StrEnum):
@@ -48,7 +48,7 @@ class SpecRecord(Generic[TData]):
     ``data`` is the original typed IR object. The repository adds the runtime
     metadata around it: key, ref, name, identity, owner, and dependencies.
     """
-
+    id: str
     kind: SpecRecordKind
     key: str
     ref: SpecRef

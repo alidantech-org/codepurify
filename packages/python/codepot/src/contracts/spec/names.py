@@ -34,6 +34,60 @@ class SpecNameCases:
     constant: str
     path: str
 
+    @property
+    def rw(self) -> str:
+        """Short alias for ``raw``."""
+
+        return self.raw
+
+    @property
+    def cl(self) -> str:
+        """Short alias for ``clean``."""
+
+        return self.clean
+
+    @property
+    def pc(self) -> str:
+        """Short alias for ``pascal``."""
+
+        return self.pascal
+
+    @property
+    def cm(self) -> str:
+        """Short alias for ``camel``."""
+
+        return self.camel
+
+    @property
+    def sn(self) -> str:
+        """Short alias for ``snake``."""
+
+        return self.snake
+
+    @property
+    def kb(self) -> str:
+        """Short alias for ``kebab``."""
+
+        return self.kebab
+
+    @property
+    def ss(self) -> str:
+        """Short alias for ``screaming_snake``."""
+
+        return self.screaming_snake
+
+    @property
+    def cn(self) -> str:
+        """Short alias for ``constant``."""
+
+        return self.constant
+
+    @property
+    def pt(self) -> str:
+        """Short alias for ``path``."""
+
+        return self.path
+
 
 @dataclass(frozen=True)
 class SpecName:
@@ -61,6 +115,60 @@ class SpecName:
     path: str
     singular: SpecNameCases
     plural: SpecNameCases
+
+    @property
+    def rw(self) -> str:
+        """Short alias for ``raw``."""
+
+        return self.raw
+
+    @property
+    def cl(self) -> str:
+        """Short alias for ``clean``."""
+
+        return self.clean
+
+    @property
+    def pc(self) -> str:
+        """Short alias for ``pascal``."""
+
+        return self.pascal
+
+    @property
+    def cm(self) -> str:
+        """Short alias for ``camel``."""
+
+        return self.camel
+
+    @property
+    def sn(self) -> str:
+        """Short alias for ``snake``."""
+
+        return self.snake
+
+    @property
+    def kb(self) -> str:
+        """Short alias for ``kebab``."""
+
+        return self.kebab
+
+    @property
+    def ss(self) -> str:
+        """Short alias for ``screaming_snake``."""
+
+        return self.screaming_snake
+
+    @property
+    def cn(self) -> str:
+        """Short alias for ``constant``."""
+
+        return self.constant
+
+    @property
+    def pt(self) -> str:
+        """Short alias for ``path``."""
+
+        return self.path
 
 
 def resolve_name_case(name: SpecName, case: SpecNameCase) -> str:

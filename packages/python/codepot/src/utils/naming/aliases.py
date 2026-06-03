@@ -1,18 +1,14 @@
-"""Alias constants for naming case and pluralisation access."""
+"""Alias constants for SpecName case access."""
 
-CASE_ALIAS_TO_FIELD = {
+# Short aliases mapping to SpecNameCase field names on SpecName / SpecNameCases.
+CASE_ALIASES: dict[str, str] = {
     "sn": "snake",
     "kb": "kebab",
     "cm": "camel",
     "pc": "pascal",
-    "ss": "screaming",
+    "ss": "screaming_snake",
     "cn": "constant",
-    "dt": "dot",
     "pt": "path",
-}
-
-PLURAL_ALIAS_TO_FIELD = {
-    "o": "original",
-    "s": "singular",
-    "p": "plural",
+    "cl": "clean",
+    "rw": "raw",
 }
