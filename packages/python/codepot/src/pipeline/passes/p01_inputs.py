@@ -1,0 +1,72 @@
+"""Pass 01: input resolution."""
+
+from __future__ import annotations
+
+from pipeline.contracts.diagnostics import PipelineDiagnostic, PipelineDiagnosticLevel
+from pipeline.contracts.results import PassStatus
+from pipeline.contracts.state import PipelineState
+from pipeline.passes.base import PassResult, make_report, utc_now
+
+
+class InputResolutionPass:
+    """Validate and resolve input paths/options."""
+
+    name = "p01_inputs"
+    title = "Resolve inputs"
+
+    def run(self, state: PipelineState) -> PassResult:
+        """Validate required input paths."""
+
+        started_at = utc_now()
+        diagnostics: list[PipelineDiagnostic] = []
+
+        options = state.options
+
+        if not options.spec_path.is_file():
+            diagnostics.append(
+                PipelineDiagnostic(
+                    level=PipelineDiagnosticLevel.ERROR,
+                    pass_name=self.name,
+                    code="spec_file_missing",
+                    message=f"Spec file does not exist: {options.spec_path}",
+                )
+            )
+
+        if not options.template_package_path.exists():
+            diagnostics.append(
+                PipelineDiagnostic(
+                    level=PipelineDiagnosticLevel.ERROR,
+                    pass_name=self.name,
+                    code="template_package_missing",
+                    message=(
+                        "Template package path does not exist: "
+                        f"{options.template_package_path}"
+                    ),
+                )
+            )
+
+        status = PassStatus.FAILED if diagnostics else PassStatus.SUCCESS
+        message = "Input validation failed." if diagnostics else "Inputs resolved."
+
+        finished_at = utc_now()
+        report = make_report(
+            name=self.name,
+            title=self.title,
+            status=status,
+            message=message,
+            started_at=started_at,
+            finished_at=finished_at,
+        )
+
+        report = report.__class__(
+            name=report.name,
+            title=report.title,
+            status=report.status,
+            message=report.message,
+            started_at=report.started_at,
+            finished_at=report.finished_at,
+            duration_ms=report.duration_ms,
+            diagnostics=tuple(diagnostics),
+        )
+
+        return PassResult(state=state, report=report)
