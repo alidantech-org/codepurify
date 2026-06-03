@@ -1,52 +1,56 @@
-"""Python naming helpers."""
+"""TypeScript naming helpers."""
 
 from __future__ import annotations
 
 from contracts.language.names import LanguageName
 from contracts.spec.names import SpecName
-from languages.python.constants import RESERVED_WORD_ESCAPE_REASON, RESERVED_WORD_SUFFIX
-from languages.python.keywords import is_python_reserved
-from languages.python.utils import get_case_value
+from languages.typescript.constants import (
+    RESERVED_WORD_ESCAPE_REASON,
+    RESERVED_WORD_SUFFIX,
+)
+from languages.typescript.keywords import is_typescript_reserved
+from languages.typescript.utils import get_case_value
 
 
 def _escape(value: str) -> tuple[str, bool, str | None]:
-    """Escape a Python name if needed."""
+    """Escape a TypeScript name if needed."""
 
-    if is_python_reserved(value):
+    if is_typescript_reserved(value):
         return f"{value}{RESERVED_WORD_SUFFIX}", True, RESERVED_WORD_ESCAPE_REASON
 
     return value, False, None
 
 
-def make_python_name(
+def make_typescript_name(
     name: SpecName,
     *,
     class_case: str = "pascal",
     interface_case: str = "pascal",
     enum_case: str = "pascal",
     enum_value_case: str = "constant",
-    field_case: str = "snake",
-    method_case: str = "snake",
-    function_case: str = "snake",
+    field_case: str = "camel",
+    method_case: str = "camel",
+    function_case: str = "camel",
     constant_case: str = "screaming_snake",
-    file_case: str = "snake",
-    module_case: str = "snake",
+    file_case: str = "path",
+    module_case: str = "path",
     package_case: str = "snake",
 ) -> LanguageName:
-    """Create Python-safe language names."""
+    """Create TypeScript-safe language names."""
 
     class_name, class_escaped, class_reason = _escape(get_case_value(name, class_case))
-    field_name, field_escaped, field_reason = _escape(get_case_value(name, field_case))
-    method_name, method_escaped, method_reason = _escape(
-        get_case_value(name, method_case)
+    interface_name, interface_escaped, interface_reason = _escape(
+        get_case_value(name, interface_case)
     )
+    field_name, field_escaped, field_reason = _escape(get_case_value(name, field_case))
+    method_name, method_escaped, method_reason = _escape(get_case_value(name, method_case))
 
-    escaped = class_escaped or field_escaped or method_escaped
-    reason = class_reason or field_reason or method_reason
+    escaped = class_escaped or interface_escaped or field_escaped or method_escaped
+    reason = class_reason or interface_reason or field_reason or method_reason
 
     return LanguageName(
         class_name=class_name,
-        interface_name=get_case_value(name, interface_case),
+        interface_name=interface_name,
         enum_name=get_case_value(name, enum_case),
         enum_value_name=get_case_value(name, enum_value_case),
         field_name=field_name,

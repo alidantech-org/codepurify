@@ -1,4 +1,4 @@
-"""Python language adapter."""
+"""TypeScript language adapter."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from contracts.language.runtime import (
     LanguageRuntime,
 )
 from contracts.spec.records import SpecRecord
-from languages.python.constants import (
+from languages.typescript.constants import (
     DEFAULT_CLASS_CASE,
     DEFAULT_CONSTANT_CASE,
     DEFAULT_ENUM_CASE,
@@ -36,22 +36,22 @@ from languages.python.constants import (
     DEFAULT_MODULE_CASE,
     DEFAULT_PACKAGE_CASE,
     DEFAULT_TYPE_ONLY_IMPORTS,
-    PYTHON_LANGUAGE_KEY,
+    TYPESCRIPT_LANGUAGE_KEY,
 )
-from languages.python.exports import create_python_exports
-from languages.python.imports import create_python_imports
-from languages.python.names import make_python_name
-from languages.python.types import make_python_type
-from languages.python.utils import safe_getattr
+from languages.typescript.exports import create_typescript_exports
+from languages.typescript.imports import create_typescript_imports
+from languages.typescript.names import make_typescript_name
+from languages.typescript.types import make_typescript_type
+from languages.typescript.utils import safe_getattr
 
 
-class PythonLanguageAdapter:
-    """Python implementation of the Codepotx language adapter contract."""
+class TypeScriptLanguageAdapter:
+    """TypeScript implementation of the Codepotx language adapter contract."""
 
-    key = PYTHON_LANGUAGE_KEY
+    key = TYPESCRIPT_LANGUAGE_KEY
 
     def create_runtime(self, request: LanguageRuntimeRequest) -> LanguageRuntime:
-        """Create Python runtime context."""
+        """Create TypeScript runtime context."""
 
         naming = request.naming
         imports = request.imports
@@ -64,21 +64,15 @@ class PythonLanguageAdapter:
             source_root=request.source_root,
             naming=LanguageNamingRules(
                 class_case=str(safe_getattr(naming, "class_name", DEFAULT_CLASS_CASE)),
-                interface_case=str(
-                    safe_getattr(naming, "interface", DEFAULT_INTERFACE_CASE)
-                ),
+                interface_case=str(safe_getattr(naming, "interface", DEFAULT_INTERFACE_CASE)),
                 enum_case=str(safe_getattr(naming, "enum", DEFAULT_ENUM_CASE)),
                 enum_value_case=str(
                     safe_getattr(naming, "enum_value", DEFAULT_ENUM_VALUE_CASE)
                 ),
                 field_case=str(safe_getattr(naming, "field", DEFAULT_FIELD_CASE)),
                 method_case=str(safe_getattr(naming, "method", DEFAULT_METHOD_CASE)),
-                function_case=str(
-                    safe_getattr(naming, "function", DEFAULT_FUNCTION_CASE)
-                ),
-                constant_case=str(
-                    safe_getattr(naming, "constant", DEFAULT_CONSTANT_CASE)
-                ),
+                function_case=str(safe_getattr(naming, "function", DEFAULT_FUNCTION_CASE)),
+                constant_case=str(safe_getattr(naming, "constant", DEFAULT_CONSTANT_CASE)),
                 file_case=str(safe_getattr(naming, "file", DEFAULT_FILE_CASE)),
                 module_case=str(safe_getattr(naming, "module", DEFAULT_MODULE_CASE)),
                 package_case=str(safe_getattr(naming, "package", DEFAULT_PACKAGE_CASE)),
@@ -93,18 +87,16 @@ class PythonLanguageAdapter:
                 include_extension=bool(
                     safe_getattr(imports, "extension", DEFAULT_INCLUDE_IMPORT_EXTENSION)
                 ),
-                type_only=bool(
-                    safe_getattr(imports, "type_only", DEFAULT_TYPE_ONLY_IMPORTS)
-                ),
+                type_only=bool(safe_getattr(imports, "type_only", DEFAULT_TYPE_ONLY_IMPORTS)),
             ),
         )
 
     def enrich_item(
         self, record: SpecRecord[object], runtime: LanguageRuntime
     ) -> LanguageItem:
-        """Create generic Python item `.lang` context."""
+        """Create generic TypeScript item `.lang` context."""
 
-        lang_name = make_python_name(
+        lang_name = make_typescript_name(
             record.name,
             class_case=runtime.naming.class_case,
             interface_case=runtime.naming.interface_case,
@@ -122,13 +114,13 @@ class PythonLanguageAdapter:
         return LanguageItem(name=lang_name)
 
     def enrich_field(self, field: object, runtime: LanguageRuntime) -> LanguageField:
-        """Create Python field `.lang` context."""
+        """Create TypeScript field `.lang` context."""
 
         name = getattr(field, "name", None)
         if name is None and getattr(field, "record", None) is not None:
             name = field.record.name
 
-        lang_name = make_python_name(name, field_case=runtime.naming.field_case)
+        lang_name = make_typescript_name(name, field_case=runtime.naming.field_case)
         is_nullable = bool(getattr(field, "is_nullable", False))
         is_array = bool(getattr(field, "is_array", False))
         is_required = bool(getattr(field, "is_required", False))
@@ -155,7 +147,7 @@ class PythonLanguageAdapter:
     def enrich_operation(
         self, operation: object, runtime: LanguageRuntime
     ) -> LanguageOperation:
-        """Create Python operation `.lang` context."""
+        """Create TypeScript operation `.lang` context."""
 
         record = (
             getattr(operation, "record", None)
@@ -165,16 +157,16 @@ class PythonLanguageAdapter:
         return LanguageOperation(name=item.name)
 
     def enrich_route(self, route: object, runtime: LanguageRuntime) -> LanguageRoute:
-        """Create Python route `.lang` context."""
+        """Create TypeScript route `.lang` context."""
 
         record = getattr(route, "record", None) or getattr(route, "item", None).record
         item = self.enrich_item(record, runtime)
         return LanguageRoute(name=item.name, method_name=item.name.method_name)
 
     def create_type(self, request: LanguageTypeRequest, runtime: LanguageRuntime):
-        """Create a Python type annotation."""
+        """Create a TypeScript type annotation."""
 
-        return make_python_type(
+        return make_typescript_type(
             request.source,
             is_array=request.is_array,
             is_nullable=request.is_nullable,
@@ -183,14 +175,14 @@ class PythonLanguageAdapter:
         )
 
     def create_imports(self, request: LanguageImportRequest):
-        """Create Python file-level imports."""
+        """Create TypeScript file-level imports."""
 
-        return create_python_imports(request)
+        return create_typescript_imports(request)
 
     def create_exports(self, request: LanguageExportRequest):
-        """Create Python file-level exports."""
+        """Create TypeScript file-level exports."""
 
-        return create_python_exports(request)
+        return create_typescript_exports(request)
 
 
-python_language_adapter = PythonLanguageAdapter()
+typescript_language_adapter = TypeScriptLanguageAdapter()

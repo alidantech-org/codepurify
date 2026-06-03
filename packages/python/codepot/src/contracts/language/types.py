@@ -41,5 +41,5 @@ class LanguageType:
     is_dynamic: bool = False
     is_void: bool = False
 
-    item: "LanguageType | None" = None
-    members: tuple["LanguageType", ...] = ()
+    item: LanguageType | None = None
+    members: tuple[LanguageType, ...] = ()

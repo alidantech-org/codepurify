@@ -1,43 +1,40 @@
-"""Python type helpers."""
+"""TypeScript type helpers."""
 
 from __future__ import annotations
 
 from contracts.language.types import LanguageType, LanguageTypeKind
-from languages.python.constants import (
+from languages.typescript.constants import (
     PRIMITIVE_BOOLEAN,
     PRIMITIVE_INTEGER,
     PRIMITIVE_NUMBER,
     PRIMITIVE_STRING,
-    PY_ANY,
-    PY_BOOL,
-    PY_FLOAT,
-    PY_INT,
-    PY_NONE,
-    PY_STR,
+    TS_BOOLEAN,
+    TS_NUMBER,
+    TS_STRING,
+    TS_UNKNOWN,
+    TS_VOID,
 )
-from languages.python.syntax import array as py_array
-from languages.python.syntax import nullable as py_nullable
-from languages.python.utils import enum_or_value
+from languages.typescript.syntax import array as ts_array
+from languages.typescript.syntax import nullable as ts_nullable
+from languages.typescript.utils import enum_or_value
 
 
 def _primitive_annotation(source: object) -> str:
-    """Map primitive-like source to Python annotation."""
+    """Map primitive-like source to TypeScript annotation."""
 
     source_type = enum_or_value(getattr(source, "type", None))
 
     if source_type == PRIMITIVE_STRING:
-        return PY_STR
-    if source_type == PRIMITIVE_NUMBER:
-        return PY_FLOAT
-    if source_type == PRIMITIVE_INTEGER:
-        return PY_INT
+        return TS_STRING
+    if source_type in {PRIMITIVE_NUMBER, PRIMITIVE_INTEGER}:
+        return TS_NUMBER
     if source_type == PRIMITIVE_BOOLEAN:
-        return PY_BOOL
+        return TS_BOOLEAN
 
-    return PY_ANY
+    return TS_UNKNOWN
 
 
-def make_python_type(
+def make_typescript_type(
     source: object,
     *,
     is_array: bool = False,
@@ -45,21 +42,21 @@ def make_python_type(
     is_dynamic: bool = False,
     is_void: bool = False,
 ) -> LanguageType:
-    """Create a Python type annotation."""
+    """Create a TypeScript type annotation."""
 
     if is_void:
         return LanguageType(
             kind=LanguageTypeKind.VOID,
-            annotation=PY_NONE,
-            display=PY_NONE,
+            annotation=TS_VOID,
+            display=TS_VOID,
             is_void=True,
         )
 
     if is_dynamic:
         base = LanguageType(
             kind=LanguageTypeKind.DYNAMIC,
-            annotation=PY_ANY,
-            display=PY_ANY,
+            annotation=TS_UNKNOWN,
+            display=TS_UNKNOWN,
             is_dynamic=True,
         )
     else:
@@ -81,8 +78,8 @@ def make_python_type(
     if is_array:
         current = LanguageType(
             kind=LanguageTypeKind.ARRAY,
-            annotation=py_array(current.annotation),
-            display=py_array(current.display),
+            annotation=ts_array(current.annotation),
+            display=ts_array(current.display),
             is_array=True,
             item=current,
         )
@@ -90,8 +87,8 @@ def make_python_type(
     if is_nullable:
         current = LanguageType(
             kind=LanguageTypeKind.NULLABLE,
-            annotation=py_nullable(current.annotation),
-            display=py_nullable(current.display),
+            annotation=ts_nullable(current.annotation),
+            display=ts_nullable(current.display),
             is_nullable=True,
             item=current,
         )

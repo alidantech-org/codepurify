@@ -1,1 +1,1 @@
-"""Python language pipeline."""
+"""Python language adapter package."""

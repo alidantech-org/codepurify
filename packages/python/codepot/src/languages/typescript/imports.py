@@ -1,4 +1,4 @@
-"""Python import helpers."""
+"""TypeScript import helpers."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from contracts.language.imports import (
 )
 from contracts.language.interface import LanguageImportRequest, LanguageImportTarget
 from contracts.language.runtime import LanguageImportStrategy, LanguageRuntime
-from languages.python.syntax import (
+from languages.typescript.syntax import (
     alias,
     alias_module_path,
     import_line,
@@ -34,7 +34,7 @@ def _module_for_target(
         return (
             LanguageImportKind.ALIAS,
             alias_module_path(
-                alias_name=rules.alias,
+                alias=rules.alias,
                 target_path=target.target_path,
                 root=rules.root,
                 include_extension=rules.include_extension,
@@ -61,10 +61,12 @@ def _module_for_target(
     )
 
 
-def create_python_imports(request: LanguageImportRequest) -> tuple[LanguageImport, ...]:
-    """Create Python file-level imports."""
+def create_typescript_imports(
+    request: LanguageImportRequest,
+) -> tuple[LanguageImport, ...]:
+    """Create TypeScript file-level imports."""
 
-    grouped: dict[tuple[LanguageImportKind, str], list[LanguageImportSymbol]] = {}
+    grouped: dict[tuple[LanguageImportKind, str, bool], list[LanguageImportSymbol]] = {}
 
     for target in request.targets:
         if target.source_path == target.target_path:
@@ -75,21 +77,27 @@ def create_python_imports(request: LanguageImportRequest) -> tuple[LanguageImpor
             request.runtime,
             source_path=request.source_path,
         )
-
-        key = (kind, module)
+        is_type_only = target.is_type_only or request.runtime.imports.type_only
+        key = (kind, module, is_type_only)
         grouped.setdefault(key, []).append(
             LanguageImportSymbol(
                 name=target.symbol,
                 alias=target.alias,
-                is_type_only=target.is_type_only,
+                is_type_only=is_type_only,
             )
         )
 
     imports: list[LanguageImport] = []
 
-    for (kind, module), symbols in sorted(grouped.items(), key=lambda item: item[0][1]):
+    for (kind, module, is_type_only), symbols in sorted(
+        grouped.items(), key=lambda item: item[0][1]
+    ):
         rendered_symbols = tuple(alias(symbol.name, symbol.alias) for symbol in symbols)
-        rendered = import_line(module=module, symbols=rendered_symbols)
+        rendered = import_line(
+            module=module,
+            symbols=rendered_symbols,
+            type_only=is_type_only,
+        )
 
         imports.append(
             LanguageImport(
@@ -98,7 +106,7 @@ def create_python_imports(request: LanguageImportRequest) -> tuple[LanguageImpor
                 symbols=tuple(symbols),
                 rendered=rendered,
                 source_path=request.source_path,
-                is_type_only=False,
+                is_type_only=is_type_only,
             )
         )
 

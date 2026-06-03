@@ -25,7 +25,7 @@ class LanguageRegistry:
             return self._adapters[key]
         except KeyError as exc:
             available = ", ".join(sorted(self._adapters)) or "none"
-            raise ValueError(f"Unknown language '{key}'. Available languages: {available}.") from exc
+            raise ValueError(f"Unknown language '{key}'. Available languages: {available}.") from exc  # noqa: E501
 
     def keys(self) -> tuple[str, ...]:
         """Return registered language keys."""
