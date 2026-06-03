@@ -1,1 +1,1 @@
-"""CLI command implementations for spec."""
+"""CLI command modules."""

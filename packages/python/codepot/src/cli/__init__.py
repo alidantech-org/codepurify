@@ -1,1 +1,1 @@
-"""Codepot command-line interface."""
+"""Codepotx CLI package."""

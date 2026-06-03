@@ -1,104 +1,76 @@
-"""Infer command."""
+"""Plan command.
+
+This replaces the old fake infer command. It runs the pipeline in planning mode.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
 
 import typer
 
-from app import InferRequest
-from cli import options
-from cli.constants.exit_codes import EXIT_GENERATION_ERROR
-from cli.constants.options import (
-    HELP_SHOW_CONTEXT,
-    HELP_SHOW_DEPENDENCIES,
-    HELP_SHOW_IMPORTS,
-    HELP_SHOW_PATHS,
-)
-from cli.errors import CliError
+from app import codepotx
+from cli.constants.defaults import DEFAULT_OUTPUT_PATH, DEFAULT_TEMPLATE_PACKAGE_PATH
 from cli.presentation.console import print_error
-from cli.presentation.infer import render_infer_result
-from cli.presentation.json import print_json_result
-from cli.state import get_runtime
+from cli.presentation.pipeline import print_pipeline_event, print_pipeline_report
+from pipeline.contracts.options import PipelineOptions
+from pipeline.contracts.results import PassStatus
+
+app = typer.Typer(help="Plan generated files without rendering or writing.")
+
+SPEC_PATH_ARGUMENT = typer.Argument(..., help="Path to compiled Codepot spec.")
+TEMPLATE_PACKAGE_OPTION = typer.Option(
+    DEFAULT_TEMPLATE_PACKAGE_PATH,
+    "--template-package",
+    "-t",
+    help="Path to template package folder or codepotx config file.",
+)
+OUTPUT_PATH_OPTION = typer.Option(DEFAULT_OUTPUT_PATH, "--output", "-o")
+LANGUAGE_OPTION = typer.Option(None, "--language", "-l")
+SELECT_OPTION = typer.Option([], "--select")
+TEMPLATE_IDS_OPTION = typer.Option([], "--template")
+DEBUG_OPTION = typer.Option(False, "--debug")
+VERBOSE_OPTION = typer.Option(False, "--verbose", "-v")
 
 
-def infer_command(
-    ctx: typer.Context,
-    spec_path: Annotated[Path | None, options.spec_argument()] = None,
-    language: Annotated[str | None, options.language_option()] = None,
-    template_package_path: Annotated[Path | None, options.templates_option()] = None,
-    output_path: Annotated[Path | None, options.output_option()] = None,
-    select: Annotated[str | None, options.select_option()] = None,
-    template: Annotated[list[str] | None, options.template_option()] = None,
-    only: Annotated[str | None, options.only_option()] = None,
-    show_context: Annotated[
-        bool,
-        typer.Option("--show-context", help=HELP_SHOW_CONTEXT),
-    ] = False,
-    show_paths: Annotated[
-        bool,
-        typer.Option("--show-paths", help=HELP_SHOW_PATHS),
-    ] = False,
-    show_imports: Annotated[bool, typer.Option("--show-imports", help=HELP_SHOW_IMPORTS)] = False,
-    show_dependencies: Annotated[
-        bool,
-        typer.Option("--show-dependencies", help=HELP_SHOW_DEPENDENCIES),
-    ] = False,
-    interactive: Annotated[bool, options.interactive_option()] = False,
-    json_output: Annotated[bool, options.json_option()] = False,
-    quiet: Annotated[bool, options.quiet_option()] = False,
-    verbose: Annotated[bool, options.verbose_option()] = False,
-    debug: Annotated[bool, options.debug_option()] = False,
+@app.callback(invoke_without_command=True)
+def plan(
+    spec_path: Path = SPEC_PATH_ARGUMENT,
+    template_package_path: Path = TEMPLATE_PACKAGE_OPTION,
+    output_path: Path = OUTPUT_PATH_OPTION,
+    language: str | None = LANGUAGE_OPTION,
+    select: list[str] = SELECT_OPTION,
+    template_ids: list[str] = TEMPLATE_IDS_OPTION,
+    debug: bool = DEBUG_OPTION,
+    verbose: bool = VERBOSE_OPTION,
 ) -> None:
-    """Show what would be generated."""
+    """Run planning pipeline."""
+
+    options = PipelineOptions(
+        spec_path=spec_path,
+        template_package_path=template_package_path,
+        output_path=output_path,
+        language=language,
+        select=tuple(select),
+        template_ids=tuple(template_ids),
+        dry_run=True,
+        debug=debug,
+        verbose=verbose,
+        render=False,
+        write=False,
+        write_graph=False,
+    )
 
     try:
-        resolved_spec_path = options.resolve_spec_path(spec_path, interactive=interactive)
-        resolved_language = options.resolve_language(language, interactive=interactive)
-        resolved_template_package_path = options.resolve_template_package_path(
-            template_package_path,
-            interactive=interactive,
+        result = codepotx.plan(
+            options,
+            reporter=print_pipeline_event if verbose or debug else None,
         )
-        resolved_output_path = options.resolve_output_path(output_path, interactive=interactive)
-        resolved_select = options.resolve_select(select, interactive=interactive)
-        resolved_template_ids = options.resolve_template_ids(
-            template,
-            only,
-            interactive=interactive,
-        )
-        resolved_show_paths = options.resolve_show_paths(show_paths, interactive=interactive)
-        resolved_show_context = options.resolve_show_context(show_context, interactive=interactive)
-        resolved_show_imports = options.resolve_show_imports(show_imports, interactive=interactive)
-        resolved_show_dependencies = options.resolve_show_dependencies(
-            show_dependencies,
-            interactive=interactive,
-        )
-        request = InferRequest(
-            spec_path=resolved_spec_path,
-            language=resolved_language,
-            template_package_path=resolved_template_package_path,
-            output_path=resolved_output_path,
-            select=resolved_select,
-            template_ids=resolved_template_ids,
-            show_context=resolved_show_context,
-            show_paths=resolved_show_paths,
-            show_imports=resolved_show_imports,
-            show_dependencies=resolved_show_dependencies,
-            verbose=verbose,
-        )
-        result = get_runtime(ctx).infer(request)
-        if json_output and not quiet:
-            print_json_result(result)
-        elif not quiet:
-            render_infer_result(result)
-    except CliError as exc:
-        print_error(str(exc))
-        if debug:
-            raise
-        raise typer.Exit(exc.exit_code) from exc
-    except Exception as exc:
-        print_error(str(exc))
-        if debug:
-            raise
-        raise typer.Exit(EXIT_GENERATION_ERROR) from exc
+    except Exception as error:
+        print_error(str(error))
+        raise typer.Exit(code=1) from error
+
+    print_pipeline_report(result.report)
+
+    if result.report.status == PassStatus.FAILED:
+        raise typer.Exit(code=1)
