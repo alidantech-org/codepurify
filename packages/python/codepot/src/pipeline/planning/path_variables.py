@@ -35,6 +35,7 @@ class PathOwnerVariables:
     key: str
     name: PathNameVariables
     folders: tuple[str, ...] = ()
+    is_global: bool = False
 
 
 @dataclass(frozen=True)
@@ -139,6 +140,7 @@ def owner_variables(record: SpecRecord[object]) -> PathOwnerVariables:
         key=record.owner.key,
         name=name_variables(record.owner.name),
         folders=record.owner.folders,
+        is_global=record.owner.is_global,
     )
 
 
@@ -175,6 +177,7 @@ def global_owner_variables(
         key=GLOBAL_OWNER_KEY,
         name=name_variables(name),
         folders=folders,
+        is_global=True,
     )
 
 
@@ -197,4 +200,5 @@ def owner_variables_from_key(owner_key: str) -> PathOwnerVariables:
         key=owner_key,
         name=name_variables(name),
         folders=(name.path,),
+        is_global=False,
     )

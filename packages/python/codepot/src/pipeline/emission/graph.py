@@ -20,6 +20,12 @@ class EmissionGraphFile:
     output_path: str
     records: tuple[str, ...]
     write_status: FileWriteStatus | None = None
+    owner_key: str | None = None
+    owner_folders: tuple[str, ...] = ()
+    resource_key: str | None = None
+    resource_folders: tuple[str, ...] = ()
+    expanded_folders: tuple[str, ...] = ()
+    expanded_file: str | None = None
 
 
 @dataclass(frozen=True)
@@ -69,6 +75,8 @@ def _graph_file(
 ) -> EmissionGraphFile:
     """Create one graph file record."""
 
+    debug = file.path_debug
+
     return EmissionGraphFile(
         file_id=file.id,
         template_id=file.template_id,
@@ -78,6 +86,12 @@ def _graph_file(
             file_id=file.id,
             state_write_results=write_results,
         ),
+        owner_key=debug.owner_key if debug else None,
+        owner_folders=debug.owner_folders if debug else (),
+        resource_key=debug.resource_key if debug else None,
+        resource_folders=debug.resource_folders if debug else (),
+        expanded_folders=debug.expanded_folders if debug else (),
+        expanded_file=debug.expanded_file if debug else None,
     )
 
 

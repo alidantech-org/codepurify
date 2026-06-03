@@ -95,11 +95,42 @@ class OutputPlanningPass:
                 ),
             )
 
+        debug = ()
+        if state.options.debug:
+            debug = tuple(
+                (
+                    file.id,
+                    (
+                        f"{file.relative_output_path} | "
+                        f"owner={file.path_debug.owner_key if file.path_debug else None} "
+                        f"owner_folders={file.path_debug.owner_folders if file.path_debug else ()} "
+                        f"resource={file.path_debug.resource_key if file.path_debug else None} "
+                        f"resource_folders={file.path_debug.resource_folders if file.path_debug else ()}"  # noqa: E501
+                    ),
+                )
+                for file in files[:25]
+            )
+
+        owner_folder_count = sum(
+            1 for file in files
+            if file.path_debug is not None and file.path_debug.owner_folders
+        )
+
+        resource_folder_count = sum(
+            1 for file in files
+            if file.path_debug is not None and file.path_debug.resource_folders
+        )
+
         return success_result(
             state=replace(state, output_files=files),
             name=self.name,
             title=self.title,
             message="Output files planned.",
             started_at=started_at,
-            counters=(ReportCounter("files", len(files)),),
+            counters=(
+                ReportCounter("files", len(files)),
+                ReportCounter("owner_folder_paths", owner_folder_count),
+                ReportCounter("resource_folder_paths", resource_folder_count),
+            ),
+            debug=debug,
         )

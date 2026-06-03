@@ -9,11 +9,11 @@ from contracts.spec.context import SpecContext
 from contracts.spec.records import SpecRecord
 from contracts.templates.config.output import TemplateOutputPathConfig
 from contracts.templates.config.package import LoadedTemplatePackageConfig
-from contracts.templates.config.selection import TemplateSelectMode
+from contracts.templates.config.selection import TemplateSelectMode, TemplateSelectSubject
 from contracts.templates.config.template import TemplateEntryKind
 from pipeline.planning.files import PlannedOutputFile, PlannedOutputSource
+from pipeline.planning.path_debug import PathPlanningDebug
 from pipeline.planning.path_expander import (
-    ExpandedPathPart,
     expand_path_parts,
     join_expanded_path,
 )
@@ -21,15 +21,18 @@ from pipeline.planning.path_variables import (
     OutputPathVariables,
     PathGlobalVariables,
     PathProjectVariables,
+    PathResourceVariables,
     global_owner_variables,
     item_variables,
     language_variables,
+    name_variables,
     owner_variables,
     owner_variables_from_key,
-    resource_variables,
     template_variables,
 )
 from pipeline.planning.selections import PlannedSelection
+from spec.ir.resource.definition import ResourceDefinition
+from spec.repository.names import create_spec_name
 from spec.utils.constants import GLOBAL_OWNER_KEY
 
 
@@ -82,11 +85,54 @@ def _sources_for_selection(
         TemplateSelectMode.BY_RESOURCE,
     }:
         return tuple(
-            PlannedOutputSource(records=bucket.records, bucket_key=bucket.key)
+            PlannedOutputSource(
+                records=bucket.records,
+                bucket_key=bucket.key,
+                resource_key=(
+                    bucket.key
+                    if selection.select.mode == TemplateSelectMode.BY_RESOURCE
+                    else None
+                ),
+            )
             for bucket in selection.buckets
         )
 
     raise ValueError(f"Unsupported selection mode: {selection.select.mode}")
+
+
+def _resource_variables(
+    *,
+    selection: PlannedSelection,
+    source: PlannedOutputSource,
+    first_record: SpecRecord[object] | None,
+) -> PathResourceVariables | None:
+    """Create resource variables for output paths."""
+
+    if selection.select.subject == TemplateSelectSubject.RESOURCES:
+        if first_record is None:
+            return None
+        if not isinstance(first_record.data, ResourceDefinition):
+            raise ValueError(f"Expected resource record data: {first_record.key}")
+        return PathResourceVariables(
+            key=first_record.key,
+            name=name_variables(first_record.name),
+            folders=tuple(first_record.data.folders),
+        )
+
+    if source.resource_key is not None:
+        name = create_spec_name(source.resource_key)
+        folders = first_record.owner.folders if first_record is not None else ()
+        if not folders:
+            raise ValueError(
+                f"Resource folders were not resolved for resource '{source.resource_key}'."
+            )
+        return PathResourceVariables(
+            key=source.resource_key,
+            name=name_variables(name),
+            folders=folders,
+        )
+
+    return None
 
 
 def _path_variables(
@@ -117,13 +163,11 @@ def _path_variables(
             folders=template_package.config.defaults.global_folders,
         )
 
-    resource = None
-    if (source.bucket_key is not None and first_record is not None) or (
-        selection.select.subject is not None
-        and selection.select.subject.value == "resources"
-        and first_record is not None
-    ):
-        resource = resource_variables(first_record)
+    resource = _resource_variables(
+        selection=selection,
+        source=source,
+        first_record=first_record,
+    )
 
     return OutputPathVariables(
         global_context=PathGlobalVariables(
@@ -165,15 +209,17 @@ def _plan_file(
     )
 
     try:
-        folders = expand_path_parts(path_config.folders, variables)
-        file_parts: tuple[ExpandedPathPart, ...] = expand_path_parts(
-            (path_config.file,),
-            variables,
-        )
+        folder_result = expand_path_parts(path_config.folders, variables)
+        file_result = expand_path_parts((path_config.file,), variables)
     except ValueError as error:
         raise ValueError(
             f"Failed to expand output path for template '{selection.template_id}': {error}"
         ) from error
+
+    folders = folder_result.parts
+    file_parts = file_result.parts
+    reads = folder_result.reads + file_result.reads
+
     if len(file_parts) != 1:
         raise ValueError(f"Output file path did not expand correctly: {path_config.file}")
 
@@ -184,6 +230,20 @@ def _plan_file(
     )
 
     record = source.records[0] if len(source.records) == 1 else None
+
+    path_debug = PathPlanningDebug(
+        template_id=selection.template_id,
+        source_key=source.bucket_key or (source.records[0].key if source.records else None),
+        original_folders=path_config.folders,
+        original_file=path_config.file,
+        expanded_folders=tuple(folder.value for folder in folders),
+        expanded_file=file_parts[0].value,
+        variable_reads=reads,
+        owner_key=variables.owner.key if variables.owner is not None else None,
+        owner_folders=variables.owner.folders if variables.owner is not None else (),
+        resource_key=variables.resource.key if variables.resource is not None else None,
+        resource_folders=variables.resource.folders if variables.resource is not None else (),
+    )
 
     return PlannedOutputFile(
         id=_file_id(
@@ -202,6 +262,7 @@ def _plan_file(
         ),
         source=source,
         is_barrel=selection.template.kind == TemplateEntryKind.BARREL,
+        path_debug=path_debug,
     )
 
 

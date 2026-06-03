@@ -8,6 +8,7 @@ from pathlib import Path
 from contracts.spec.records import SpecRecord
 from contracts.templates.config.selection import TemplateSelect
 from contracts.templates.config.template import TemplateEntryConfig
+from pipeline.planning.path_debug import PathPlanningDebug
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,7 @@ class PlannedOutputSource:
 
     records: tuple[SpecRecord[object], ...]
     bucket_key: str | None = None
+    resource_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -33,3 +35,4 @@ class PlannedOutputFile:
     source: PlannedOutputSource
     is_barrel: bool = False
     parent_template_id: str | None = None
+    path_debug: PathPlanningDebug | None = None

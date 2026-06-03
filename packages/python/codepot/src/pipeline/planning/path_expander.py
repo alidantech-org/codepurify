@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from pipeline.planning.path_debug import PathVariableRead
 from pipeline.planning.path_variables import OutputPathVariables
 
 VARIABLE_PATTERN = re.compile(
@@ -21,6 +22,14 @@ class ExpandedPathPart:
     """One expanded output path part."""
 
     value: str
+
+
+@dataclass(frozen=True)
+class PathExpansionResult:
+    """Expanded path parts plus variable debug reads."""
+
+    parts: tuple[ExpandedPathPart, ...]
+    reads: tuple[PathVariableRead, ...]
 
 
 def _split_variable_path(path: str) -> tuple[str, ...]:
@@ -163,6 +172,8 @@ def _read_owner(variables: OutputPathVariables, raw_variable: str, parts: tuple[
         if parts[1] == "key":
             return variables.owner.key
         if parts[1] == "folders":
+            if not variables.owner.folders and not variables.owner.is_global:
+                raise ValueError(f"Owner folders are empty for non-global owner $[{raw_variable}]")
             return "/".join(variables.owner.folders)
 
     if len(parts) == 3 and parts[1] == "name":
@@ -185,6 +196,8 @@ def _read_resource(
         if parts[1] == "key":
             return variables.resource.key
         if parts[1] == "folders":
+            if not variables.resource.folders:
+                raise ValueError(f"Resource folders are empty for $[{raw_variable}]")
             return "/".join(variables.resource.folders)
 
     if len(parts) == 3 and parts[1] == "name":
@@ -239,13 +252,20 @@ def _validate_variable_syntax(text: str) -> None:
         )
 
 
-def expand_path_text(text: str, variables: OutputPathVariables) -> str:
+def expand_path_text(
+    text: str,
+    variables: OutputPathVariables,
+    reads: list[PathVariableRead],
+) -> str:
     """Expand all output path variables in one text segment."""
 
     _validate_variable_syntax(text)
 
     def replace(match: re.Match[str]) -> str:
-        return _read_variable(variables, match.group(1))
+        variable = match.group(1)
+        value = _read_variable(variables, variable)
+        reads.append(PathVariableRead(variable=variable, value=value))
+        return value
 
     return VARIABLE_PATTERN.sub(replace, text)
 
@@ -268,17 +288,21 @@ def safe_path_part(value: str) -> str:
 def expand_path_parts(
     parts: tuple[str, ...],
     variables: OutputPathVariables,
-) -> tuple[ExpandedPathPart, ...]:
+) -> PathExpansionResult:
     """Expand path parts into safe output path parts."""
 
     expanded: list[ExpandedPathPart] = []
+    reads: list[PathVariableRead] = []
 
     for part in parts:
-        value = safe_path_part(expand_path_text(part, variables))
+        value = safe_path_part(expand_path_text(part, variables, reads))
         if value:
             expanded.append(ExpandedPathPart(value=value))
 
-    return tuple(expanded)
+    return PathExpansionResult(
+        parts=tuple(expanded),
+        reads=tuple(reads),
+    )
 
 
 def join_expanded_path(
