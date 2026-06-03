@@ -9,6 +9,7 @@ runner = CliRunner()
 
 def test_inspect_interactive_short_option(monkeypatch) -> None:
     monkeypatch.setattr("cli.options.ask_spec_path", lambda default: Path("codepot.v1.yaml"))
+    monkeypatch.setattr("cli.options.ask_inspect_mode", lambda: "overview")
 
     result = runner.invoke(app, ["inspect", "-I"])
 

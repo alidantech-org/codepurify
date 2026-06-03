@@ -13,6 +13,14 @@ from app import (
     InferResult,
     InspectRequest,
     InspectResult,
+    TemplateInspectRequest,
+    TemplateInspectResult,
+    TemplateSelectionsRequest,
+    TemplateSelectionsResult,
+    TemplateValidateRequest,
+    TemplateValidateResult,
+    TemplateVarsRequest,
+    TemplateVarsResult,
     ValidateRequest,
     ValidateResult,
 )
@@ -28,6 +36,17 @@ class RuntimeApi(Protocol):
     def infer(self, request: InferRequest) -> InferResult: ...
 
     def emit(self, request: EmitRequest) -> EmitResult: ...
+
+    def template_validate(self, request: TemplateValidateRequest) -> TemplateValidateResult: ...
+
+    def template_inspect(self, request: TemplateInspectRequest) -> TemplateInspectResult: ...
+
+    def template_vars(self, request: TemplateVarsRequest) -> TemplateVarsResult: ...
+
+    def template_selections(
+        self,
+        request: TemplateSelectionsRequest,
+    ) -> TemplateSelectionsResult: ...
 
 
 def set_runtime(ctx: typer.Context, runtime: RuntimeApi) -> None:

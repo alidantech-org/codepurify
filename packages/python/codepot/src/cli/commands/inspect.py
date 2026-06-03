@@ -37,6 +37,8 @@ def inspect_command(
 
     try:
         mode = _resolve_mode(schemas, resources, refs, content_types)
+        if interactive and mode == "overview":
+            mode = options.resolve_inspect_mode(interactive) or mode
         resolved_spec_path = options.resolve_spec_path(spec_path, interactive=interactive)
         request = InspectRequest(spec_path=resolved_spec_path, mode=mode, verbose=verbose)
         result = get_runtime(ctx).inspect(request)

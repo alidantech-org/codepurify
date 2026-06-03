@@ -24,14 +24,22 @@ class BaseRequest(AppModel):
 
     spec_path: Path
     language: str | None = None
+    template_package_path: Path | None = None
     templates_path: Path | None = None
     output_path: Path | None = None
+    select: str | None = None
+    template_ids: tuple[str, ...] = ()
     only: tuple[str, ...] = ()
     strict: bool = False
     dry_run: bool = False
     force: bool = False
+    format: bool = False
+    run_hooks: bool = False
+    skip_static: bool = False
     show_context: bool = False
     show_paths: bool = False
+    show_imports: bool = False
+    show_dependencies: bool = False
     verbose: bool = False
 
 
@@ -48,15 +56,34 @@ class InspectRequest(BaseRequest):
 class InferRequest(BaseRequest):
     """Request to infer generated files."""
 
-    language: str = "python"
-    output_path: Path = Path("generated")
+    language: str = "typescript"
+    template_package_path: Path = Path("templates/typescript")
+    output_path: Path = Path("generated/typescript")
 
 
 class EmitRequest(BaseRequest):
     """Request to emit generated files."""
 
-    language: str = "python"
-    output_path: Path = Path("generated")
+    language: str = "typescript"
+    template_package_path: Path = Path("templates/typescript")
+    output_path: Path = Path("generated/typescript")
+
+
+class TemplateValidateRequest(AppModel):
+    template_package_path: Path
+
+
+class TemplateInspectRequest(AppModel):
+    template_package_path: Path
+
+
+class TemplateVarsRequest(AppModel):
+    template_package_path: Path
+    select: str
+
+
+class TemplateSelectionsRequest(AppModel):
+    verbose: bool = False
 
 
 class CheckResult(AppModel):
@@ -97,12 +124,15 @@ class PlannedFileResult(AppModel):
     template: str
     group: str
     source: str
+    select: str = "once"
+    status: str = "planned"
     context: dict[str, Any] = Field(default_factory=dict)
 
 
 class WriteFileResult(AppModel):
     path: Path
     status: str
+    template_id: str | None = None
     reason: str | None = None
 
 
@@ -129,19 +159,74 @@ class InspectResult(AppModel):
 class InferResult(AppModel):
     spec_path: Path
     language: str
+    template_package_path: Path
     output_path: Path
+    select: str | None = None
+    template_ids: tuple[str, ...] = ()
     files: tuple[PlannedFileResult, ...]
     show_context: bool = False
     show_paths: bool = False
+    show_imports: bool = False
+    show_dependencies: bool = False
+    imports: tuple[dict[str, str], ...] = ()
+    dependencies: tuple[dict[str, str], ...] = ()
 
 
 class EmitResult(AppModel):
     spec_path: Path
     language: str
+    template_package_path: Path
     output_path: Path
     dry_run: bool
+    format: bool = False
+    run_hooks: bool = False
+    skip_static: bool = False
     files: tuple[WriteFileResult, ...]
+    formatter_command: str | None = None
+    hook_commands: tuple[str, ...] = ()
     errors: tuple[IssueResult, ...] = ()
+
+
+class TemplateValidateResult(AppModel):
+    template_package_path: Path
+    ok: bool
+    checks: tuple[CheckResult, ...]
+    warnings: tuple[IssueResult, ...] = ()
+    errors: tuple[IssueResult, ...] = ()
+
+
+class TemplateEntryResult(AppModel):
+    id: str
+    kind: str
+    select: str
+    template: str
+
+
+class TemplateBarrelResult(AppModel):
+    id: str
+    template: str
+    export: str
+
+
+class TemplateInspectResult(AppModel):
+    template_package_path: Path
+    name: str
+    language: str
+    extension: str
+    templates: tuple[TemplateEntryResult, ...]
+    barrels: tuple[TemplateBarrelResult, ...]
+
+
+class TemplateVarsResult(AppModel):
+    template_package_path: Path
+    select: str
+    output_path_variables: tuple[str, ...]
+    template_variables: tuple[str, ...]
+
+
+class TemplateSelectionsResult(AppModel):
+    selections: tuple[str, ...]
+    hidden_subjects: tuple[str, ...] = ()
 
 
 class GeneratorApp:
@@ -235,43 +320,116 @@ class GeneratorApp:
 
     def infer(self, request: InferRequest) -> InferResult:
         files = _planned_files()
-        if request.only:
-            allowed = set(request.only)
-            files = tuple(file for file in files if file.group in allowed or "once" in allowed)
+        if request.select:
+            files = tuple(file for file in files if file.select == request.select)
+        if request.template_ids:
+            allowed = set(request.template_ids)
+            files = tuple(file for file in files if file.group in allowed)
         return InferResult(
             spec_path=request.spec_path,
             language=request.language,
+            template_package_path=request.template_package_path,
             output_path=request.output_path,
+            select=request.select,
+            template_ids=request.template_ids,
             files=files,
             show_context=request.show_context,
             show_paths=request.show_paths,
+            show_imports=request.show_imports,
+            show_dependencies=request.show_dependencies,
+            imports=_fake_imports(),
+            dependencies=_fake_dependencies(),
         )
 
     def emit(self, request: EmitRequest) -> EmitResult:
         planned = _planned_files()
-        if request.only:
-            allowed = set(request.only)
-            planned = tuple(file for file in planned if file.group in allowed or "once" in allowed)
+        if request.select:
+            planned = tuple(file for file in planned if file.select == request.select)
+        if request.template_ids:
+            allowed = set(request.template_ids)
+            planned = tuple(file for file in planned if file.group in allowed)
 
         if request.dry_run:
             files = tuple(
-                WriteFileResult(path=request.output_path / file.path, status="planned")
+                WriteFileResult(
+                    path=request.output_path / file.path,
+                    status="planned",
+                    template_id=file.group,
+                )
                 for file in planned
             )
         else:
             statuses = ("created", "created", "unchanged")
             files = tuple(
-                WriteFileResult(path=request.output_path / file.path, status=status)
+                WriteFileResult(
+                    path=request.output_path / file.path,
+                    status=status,
+                    template_id=file.group,
+                )
                 for file, status in zip(planned, statuses, strict=False)
             )
 
         return EmitResult(
             spec_path=request.spec_path,
             language=request.language,
+            template_package_path=request.template_package_path,
             output_path=request.output_path,
             dry_run=request.dry_run,
+            format=request.format,
+            run_hooks=request.run_hooks,
+            skip_static=request.skip_static,
             files=files,
+            formatter_command="pnpm prettier --write .",
+            hook_commands=("pnpm install", "pnpm tsc --noEmit"),
         )
+
+    def template_validate(self, request: TemplateValidateRequest) -> TemplateValidateResult:
+        checks = (
+            CheckResult(name="Config file found", detail="codepot.yaml"),
+            CheckResult(name="Template map valid", detail="11 templates"),
+            CheckResult(name="Select declarations valid", detail="fake check"),
+            CheckResult(name="Output paths valid", detail="fake check"),
+            CheckResult(name="Resolves valid", detail="fake check"),
+            CheckResult(name="Barrel refs valid", detail="fake check"),
+        )
+        return TemplateValidateResult(
+            template_package_path=request.template_package_path,
+            ok=True,
+            checks=checks,
+        )
+
+    def template_inspect(self, request: TemplateInspectRequest) -> TemplateInspectResult:
+        return TemplateInspectResult(
+            template_package_path=request.template_package_path,
+            name="typescript",
+            language="typescript",
+            extension="ts",
+            templates=_fake_template_entries(),
+            barrels=(
+                TemplateBarrelResult(
+                    id="enum_files/barrel",
+                    template="enum/index.ts.j2",
+                    export="named",
+                ),
+                TemplateBarrelResult(
+                    id="model_files/barrel",
+                    template="model/index.ts.j2",
+                    export="named",
+                ),
+            ),
+        )
+
+    def template_vars(self, request: TemplateVarsRequest) -> TemplateVarsResult:
+        return TemplateVarsResult(
+            template_package_path=request.template_package_path,
+            select=request.select,
+            output_path_variables=_output_path_variables(),
+            template_variables=_template_variables(request.select),
+        )
+
+    def template_selections(self, request: TemplateSelectionsRequest) -> TemplateSelectionsResult:
+        hidden = ("primitives", "params") if request.verbose else ()
+        return TemplateSelectionsResult(selections=_valid_selections(), hidden_subjects=hidden)
 
 
 def validate_spec(
@@ -320,26 +478,184 @@ def emit_spec(
 def _planned_files() -> tuple[PlannedFileResult, ...]:
     return (
         PlannedFileResult(
-            path=Path("models/user.py"),
-            template="model.py.j2",
-            group="models",
+            path=Path("src/models/user.ts"),
+            template="model/model.ts.j2",
+            group="model_files",
             source="fake:user",
+            select="models.each",
             context={"kind": "model", "name": "User", "fields": 5},
         ),
         PlannedFileResult(
-            path=Path("dtos/user_dto.py"),
-            template="dto.py.j2",
-            group="dtos",
+            path=Path("src/dtos/users/dtos.ts"),
+            template="dto/dto.ts.j2",
+            group="dto_files",
             source="fake:user_dto",
+            select="dtos.by_owner",
             context={"kind": "dto", "name": "UserDto", "fields": 4},
         ),
         PlannedFileResult(
-            path=Path("__init__.py"),
-            template="__init__.py.j2",
-            group="once",
+            path=Path("src/index.ts"),
+            template="src/index.ts.j2",
+            group="index",
             source="fake:init",
+            select="once",
             context={"kind": "package", "exports": ["User", "UserDto"]},
         ),
+    )
+
+
+def _fake_imports() -> tuple[dict[str, str], ...]:
+    return (
+        {
+            "path": "src/models/user.ts",
+            "symbol": "UserRole",
+            "source": "src/enums/index.ts",
+        },
+    )
+
+
+def _fake_dependencies() -> tuple[dict[str, str], ...]:
+    return (
+        {
+            "template": "model_files",
+            "kind": "resolves enums",
+            "target": "#/templates/enum_files/barrel",
+        },
+        {
+            "template": "model_files",
+            "kind": "resolves composites",
+            "target": "#/templates/composite_files",
+        },
+    )
+
+
+def _fake_template_entries() -> tuple[TemplateEntryResult, ...]:
+    return (
+        TemplateEntryResult(
+            id="package_json",
+            kind="package",
+            select="once",
+            template="package.json.j2",
+        ),
+        TemplateEntryResult(
+            id="enum_files",
+            kind="source",
+            select="enums.each",
+            template="enum/enum.ts.j2",
+        ),
+        TemplateEntryResult(
+            id="model_files",
+            kind="source",
+            select="models.each",
+            template="model/model.ts.j2",
+        ),
+        TemplateEntryResult(
+            id="dto_files",
+            kind="source",
+            select="dtos.by_owner",
+            template="dto/dto.ts.j2",
+        ),
+        TemplateEntryResult(
+            id="resource_files",
+            kind="source",
+            select="resources.each",
+            template="resource/resource.ts.j2",
+        ),
+    )
+
+
+def _output_path_variables() -> tuple[str, ...]:
+    return (
+        "project.key",
+        "project.title",
+        "language.name",
+        "language.extension",
+        "template.id",
+        "template.kind",
+        "template.select",
+        "item.key",
+        "item.name.path",
+        "item.name.pascal",
+        "owner.key",
+        "owner.name.path",
+        "owner.folders",
+        "global.alias",
+    )
+
+
+def _template_variables(select: str) -> tuple[str, ...]:
+    common = (
+        "global",
+        "project",
+        "spec",
+        "language",
+        "template",
+        "path",
+    )
+    if select.startswith("models"):
+        return common + (
+            "model",
+            "model.name.*",
+            "model.fields[]",
+            "model.fields[].name.*",
+            "model.fields[].type",
+            "model.fields[].format",
+            "model.fields[].validation",
+            "model.fields[].required",
+            "model.fields[].nullable",
+            "model.fields[].array",
+            "model.fields[].lang.annotation",
+            "model.fields[].lang.field_name",
+            "model.imports[]",
+            "dependencies.enums[]",
+            "dependencies.composites[]",
+            "dependencies.models[]",
+        )
+    return common + ("item", "item.name.*", "dependencies[]")
+
+
+def _valid_selections() -> tuple[str, ...]:
+    return (
+        "content_types.all",
+        "enums.each",
+        "enums.all",
+        "enums.by_owner",
+        "composites.each",
+        "composites.all",
+        "composites.by_owner",
+        "entities.each",
+        "entities.all",
+        "entities.by_owner",
+        "field_sets.each",
+        "field_sets.all",
+        "field_sets.by_owner",
+        "models.each",
+        "models.all",
+        "models.by_owner",
+        "dtos.each",
+        "dtos.all",
+        "dtos.by_owner",
+        "resources.each",
+        "resources.all",
+        "operations.each",
+        "operations.all",
+        "operations.by_resource",
+        "route_paths.each",
+        "route_paths.all",
+        "route_paths.by_resource",
+        "routes.each",
+        "routes.all",
+        "routes.by_resource",
+        "errors.each",
+        "errors.all",
+        "errors.by_owner",
+        "security_credentials.each",
+        "security_credentials.all",
+        "security_principals.each",
+        "security_principals.all",
+        "security_policies.each",
+        "security_policies.all",
+        "once",
     )
 
 

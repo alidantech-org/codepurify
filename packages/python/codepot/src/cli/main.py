@@ -8,9 +8,17 @@ from app import GeneratorApp
 from cli.commands.emit import emit_command
 from cli.commands.infer import infer_command
 from cli.commands.inspect import inspect_command
+from cli.commands.template import template_app
 from cli.commands.validate import validate_command
 from cli.constants.app import APP_DESCRIPTION, APP_NAME, APP_VERSION
-from cli.constants.commands import CMD_EMIT, CMD_INFER, CMD_INSPECT, CMD_VALIDATE, CMD_VERSION
+from cli.constants.commands import (
+    CMD_EMIT,
+    CMD_INFER,
+    CMD_INSPECT,
+    CMD_TEMPLATE,
+    CMD_VALIDATE,
+    CMD_VERSION,
+)
 from cli.state import set_runtime
 
 app = typer.Typer(
@@ -39,6 +47,7 @@ app.command(CMD_VALIDATE, help="Validate a Codepot spec.")(validate_command)
 app.command(CMD_INSPECT, help="Inspect a Codepot spec.")(inspect_command)
 app.command(CMD_INFER, help="Show what would be generated.")(infer_command)
 app.command(CMD_EMIT, help="Generate files.")(emit_command)
+app.add_typer(template_app, name=CMD_TEMPLATE)
 
 
 if __name__ == "__main__":

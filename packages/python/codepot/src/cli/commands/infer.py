@@ -10,6 +10,12 @@ import typer
 from app import InferRequest
 from cli import options
 from cli.constants.exit_codes import EXIT_GENERATION_ERROR
+from cli.constants.options import (
+    HELP_SHOW_CONTEXT,
+    HELP_SHOW_DEPENDENCIES,
+    HELP_SHOW_IMPORTS,
+    HELP_SHOW_PATHS,
+)
 from cli.errors import CliError
 from cli.presentation.console import print_error
 from cli.presentation.infer import render_infer_result
@@ -21,16 +27,23 @@ def infer_command(
     ctx: typer.Context,
     spec_path: Annotated[Path | None, options.spec_argument()] = None,
     language: Annotated[str | None, options.language_option()] = None,
-    templates_path: Annotated[Path | None, options.templates_option()] = None,
+    template_package_path: Annotated[Path | None, options.templates_option()] = None,
     output_path: Annotated[Path | None, options.output_option()] = None,
+    select: Annotated[str | None, options.select_option()] = None,
+    template: Annotated[list[str] | None, options.template_option()] = None,
     only: Annotated[str | None, options.only_option()] = None,
     show_context: Annotated[
         bool,
-        typer.Option("--show-context", help="Show generation context summaries."),
+        typer.Option("--show-context", help=HELP_SHOW_CONTEXT),
     ] = False,
     show_paths: Annotated[
         bool,
-        typer.Option("--show-paths", help="Print planned paths only."),
+        typer.Option("--show-paths", help=HELP_SHOW_PATHS),
+    ] = False,
+    show_imports: Annotated[bool, typer.Option("--show-imports", help=HELP_SHOW_IMPORTS)] = False,
+    show_dependencies: Annotated[
+        bool,
+        typer.Option("--show-dependencies", help=HELP_SHOW_DEPENDENCIES),
     ] = False,
     interactive: Annotated[bool, options.interactive_option()] = False,
     json_output: Annotated[bool, options.json_option()] = False,
@@ -43,21 +56,35 @@ def infer_command(
     try:
         resolved_spec_path = options.resolve_spec_path(spec_path, interactive=interactive)
         resolved_language = options.resolve_language(language, interactive=interactive)
-        resolved_templates_path = options.resolve_templates_path(
-            templates_path,
-            language=resolved_language,
+        resolved_template_package_path = options.resolve_template_package_path(
+            template_package_path,
             interactive=interactive,
         )
         resolved_output_path = options.resolve_output_path(output_path, interactive=interactive)
-        resolved_only = options.resolve_only(only, interactive=interactive)
+        resolved_select = options.resolve_select(select, interactive=interactive)
+        resolved_template_ids = options.resolve_template_ids(
+            template,
+            only,
+            interactive=interactive,
+        )
+        resolved_show_paths = options.resolve_show_paths(show_paths, interactive=interactive)
+        resolved_show_context = options.resolve_show_context(show_context, interactive=interactive)
+        resolved_show_imports = options.resolve_show_imports(show_imports, interactive=interactive)
+        resolved_show_dependencies = options.resolve_show_dependencies(
+            show_dependencies,
+            interactive=interactive,
+        )
         request = InferRequest(
             spec_path=resolved_spec_path,
             language=resolved_language,
-            templates_path=resolved_templates_path,
+            template_package_path=resolved_template_package_path,
             output_path=resolved_output_path,
-            only=resolved_only,
-            show_context=show_context,
-            show_paths=show_paths,
+            select=resolved_select,
+            template_ids=resolved_template_ids,
+            show_context=resolved_show_context,
+            show_paths=resolved_show_paths,
+            show_imports=resolved_show_imports,
+            show_dependencies=resolved_show_dependencies,
             verbose=verbose,
         )
         result = get_runtime(ctx).infer(request)

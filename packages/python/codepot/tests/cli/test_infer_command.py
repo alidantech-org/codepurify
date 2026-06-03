@@ -9,10 +9,11 @@ def test_infer_lists_planned_files() -> None:
     result = runner.invoke(app, ["infer"])
 
     assert result.exit_code == 0
-    assert "Inferred 3 files (python)" in result.output
-    assert "models/user.py" in result.output
-    assert "dtos/user_dto.py" in result.output
-    assert "__init__.py" in result.output
+    assert "Infer  codepot.v1.yaml" in result.output
+    assert "typescript" in result.output
+    assert "src/models/user.ts" in result.output
+    assert "src/dtos/users/dtos.ts" in result.output
+    assert "src/index.ts" in result.output
     assert "No files written. Run emit to generate." in result.output
 
 
@@ -21,7 +22,37 @@ def test_infer_show_paths_outputs_paths_only() -> None:
 
     assert result.exit_code == 0
     assert result.output.splitlines() == [
-        "models/user.py",
-        "dtos/user_dto.py",
-        "__init__.py",
+        "src/models/user.ts",
+        "src/dtos/users/dtos.ts",
+        "src/index.ts",
     ]
+
+
+def test_infer_filters_by_select() -> None:
+    result = runner.invoke(app, ["infer", "--select", "models.each"])
+
+    assert result.exit_code == 0
+    assert "src/models/user.ts" in result.output
+    assert "src/dtos/users/dtos.ts" not in result.output
+
+
+def test_infer_filters_by_template_aliases() -> None:
+    result = runner.invoke(
+        app,
+        ["infer", "--template", "model_files", "--only", "index"],
+    )
+
+    assert result.exit_code == 0
+    assert "src/models/user.ts" in result.output
+    assert "src/index.ts" in result.output
+    assert "src/dtos/users/dtos.ts" not in result.output
+
+
+def test_infer_shows_imports_and_dependencies() -> None:
+    result = runner.invoke(app, ["infer", "--show-imports", "--show-dependencies"])
+
+    assert result.exit_code == 0
+    assert "Imports" in result.output
+    assert "UserRole" in result.output
+    assert "Dependencies" in result.output
+    assert "resolves enums" in result.output
