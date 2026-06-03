@@ -104,16 +104,25 @@ def validate_template_package(
                     )
                 )
 
-        if template.barrel is not None and not _template_file_exists(
-            package_path=package.package_path,
-            relative_path=template.barrel.template,
-        ):
-            errors.append(
-                TemplateValidationError(
-                    template_id=template_id,
-                    message=f"Barrel template file does not exist: {template.barrel.template}",
+        if template.barrel is not None and template.barrel.enabled:
+            if not _template_file_exists(
+                package_path=package.package_path,
+                relative_path=template.barrel.template,
+            ):
+                errors.append(
+                    TemplateValidationError(
+                        template_id=template_id,
+                        message=f"Barrel template file does not exist: {template.barrel.template}",
+                    )
                 )
-            )
+
+            if not template.barrel.output.paths:
+                errors.append(
+                    TemplateValidationError(
+                        template_id=template_id,
+                        message="Barrel output must define at least one path when enabled.",
+                    )
+                )
 
         if not template.output.paths:
             errors.append(

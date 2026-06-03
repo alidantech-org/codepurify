@@ -192,13 +192,33 @@ def resource_variables(record: SpecRecord[object]) -> PathResourceVariables:
 
 
 def owner_variables_from_key(owner_key: str) -> PathOwnerVariables:
-    """Create owner path variables from a selection bucket key."""
+    """Create owner path variables from a selection bucket key.
+
+    Returns empty folders since bucket keys don't have folder information.
+    The actual owner folders should come from the record's owner if available.
+    """
 
     name = create_spec_name(owner_key)
 
     return PathOwnerVariables(
         key=owner_key,
         name=name_variables(name),
-        folders=(name.path,),
+        folders=(),
+        is_global=False,
+    )
+
+
+def owner_variables_from_key_with_folders(
+    owner_key: str,
+    folders: tuple[str, ...],
+) -> PathOwnerVariables:
+    """Create owner path variables from a selection bucket key with folders."""
+
+    name = create_spec_name(owner_key)
+
+    return PathOwnerVariables(
+        key=owner_key,
+        name=name_variables(name),
+        folders=folders,
         is_global=False,
     )

@@ -172,8 +172,6 @@ def _read_owner(variables: OutputPathVariables, raw_variable: str, parts: tuple[
         if parts[1] == "key":
             return variables.owner.key
         if parts[1] == "folders":
-            if not variables.owner.folders and not variables.owner.is_global:
-                raise ValueError(f"Owner folders are empty for non-global owner $[{raw_variable}]")
             return "/".join(variables.owner.folders)
 
     if len(parts) == 3 and parts[1] == "name":
@@ -196,8 +194,6 @@ def _read_resource(
         if parts[1] == "key":
             return variables.resource.key
         if parts[1] == "folders":
-            if not variables.resource.folders:
-                raise ValueError(f"Resource folders are empty for $[{raw_variable}]")
             return "/".join(variables.resource.folders)
 
     if len(parts) == 3 and parts[1] == "name":

@@ -67,10 +67,11 @@ def render_template_file(
 ) -> RenderedFile:
     """Render one planned template file."""
 
-    if context.template.template is None:
+    template_file = context.template_file or context.template.template
+    if template_file is None:
         raise ValueError(f"Template entry has no template file: {context.template_id}")
 
-    template = environment.get_template(context.template.template)
+    template = environment.get_template(template_file)
     content = template.render(_template_context(context))
 
     return RenderedFile(

@@ -1,27 +1,28 @@
 version: 1
-name: typescript
-label: TypeScript package
-description: General TypeScript package generated from a compiled Codepot spec.
+name: typescript-basic
+
+defaults:
+  global_alias: shared
+  global_folders: []
+
 language:
   name: typescript
   extension: ts
-  package_manager: pnpm
-defaults:
-  output: generated/typescript
-  global_alias: shared
-settings:
-  require_template_select: true
-  validate_unique_outputs: true
-  validate_resolves: true
-commands:
-  install: pnpm install
-  format: pnpm prettier --write .
-  typecheck: pnpm tsc --noEmit
-messages:
-  success:
-    - Generated TypeScript package.
-    - Run `pnpm install`.
-    - Run `pnpm tsc --noEmit`.
+  source_root: src
+  package_name: codepotx-generated
+  package_manager: npm
+  naming:
+    classes: pascal
+    interfaces: pascal
+    enums: pascal
+    fields: camel
+    methods: camel
+    constants: screaming_snake
+    files: kebab
+  imports:
+    strategy: relative
+    include_extension: false
+
 templates:
   package_json:
     kind: package
@@ -30,6 +31,7 @@ templates:
     output:
       paths:
         - file: package.json
+
   tsconfig:
     kind: config
     select: once
@@ -37,6 +39,7 @@ templates:
     output:
       paths:
         - file: tsconfig.json
+
   readme:
     kind: docs
     select: once
@@ -44,6 +47,28 @@ templates:
     output:
       paths:
         - file: README.md
+
+  root_index:
+    kind: barrel
+    select: once
+    template: src/index.ts.j2
+    output:
+      paths:
+        - folders:
+            - src
+          file: index.$[language.extension]
+
+  version_marker:
+    kind: config
+    select: once
+    template: version.txt.j2
+    output:
+      paths:
+        - folders:
+            - versions
+            - v$[project.version]
+          file: marker.txt
+
   enum_files:
     kind: source
     select: enums.each
@@ -53,6 +78,8 @@ templates:
         - folders:
             - src
             - enums
+            - $[owner.folders]
+            - $[owner.name.path]
           file: $[item.name.path].$[language.extension]
     barrel:
       enabled: true
@@ -63,7 +90,10 @@ templates:
           - folders:
               - src
               - enums
+              - $[owner.folders]
+              - $[owner.name.path]
             file: index.$[language.extension]
+
   composite_files:
     kind: source
     select: composites.each
@@ -73,12 +103,9 @@ templates:
         - folders:
             - src
             - composites
+            - $[owner.folders]
+            - $[owner.name.path]
           file: $[item.name.path].$[language.extension]
-    resolves:
-      enums:
-        $ref: "#/templates/enum_files/barrel"
-      composites:
-        $ref: "#/templates/composite_files"
     barrel:
       enabled: true
       template: src/composites/index.ts.j2
@@ -88,7 +115,10 @@ templates:
           - folders:
               - src
               - composites
+              - $[owner.folders]
+              - $[owner.name.path]
             file: index.$[language.extension]
+
   model_files:
     kind: source
     select: models.each
@@ -98,14 +128,16 @@ templates:
         - folders:
             - src
             - models
+            - $[owner.folders]
+            - $[owner.name.path]
           file: $[item.name.path].$[language.extension]
     resolves:
       enums:
-        $ref: "#/templates/enum_files/barrel"
+        ref: "#/templates/enum_files/barrel"
       composites:
-        $ref: "#/templates/composite_files/barrel"
+        ref: "#/templates/composite_files/barrel"
       models:
-        $ref: "#/templates/model_files"
+        ref: "#/templates/model_files/barrel"
     barrel:
       enabled: true
       template: src/models/index.ts.j2
@@ -115,8 +147,10 @@ templates:
           - folders:
               - src
               - models
+              - $[owner.folders]
               - $[owner.name.path]
             file: index.$[language.extension]
+
   dto_files:
     kind: source
     select: dtos.by_owner
@@ -125,27 +159,30 @@ templates:
       paths:
         - folders:
             - src
+            - dtos
+            - $[owner.folders]
             - $[owner.name.path]
           file: dtos.$[language.extension]
     resolves:
       enums:
-        $ref: "#/templates/enum_files/barrel"
+        ref: "#/templates/enum_files/barrel"
       composites:
-        $ref: "#/templates/composite_files/barrel"
+        ref: "#/templates/composite_files/barrel"
       models:
-        $ref: "#/templates/model_files/barrel"
-      dtos:
-        $ref: "#/templates/dto_files"
+        ref: "#/templates/model_files/barrel"
     barrel:
       enabled: true
       template: src/dtos/index.ts.j2
-      export: star
+      export: named
       output:
         paths:
           - folders:
               - src
               - dtos
+              - $[owner.folders]
+              - $[owner.name.path]
             file: index.$[language.extension]
+
   error_files:
     kind: source
     select: errors.each
@@ -155,12 +192,9 @@ templates:
         - folders:
             - src
             - errors
+            - $[owner.folders]
+            - $[owner.name.path]
           file: $[item.name.path].$[language.extension]
-    resolves:
-      dtos:
-        $ref: "#/templates/dto_files"
-      errors:
-        $ref: "#/templates/error_files"
     barrel:
       enabled: true
       template: src/errors/index.ts.j2
@@ -170,7 +204,10 @@ templates:
           - folders:
               - src
               - errors
+              - $[owner.folders]
+              - $[owner.name.path]
             file: index.$[language.extension]
+
   route_path_files:
     kind: source
     select: route_paths.by_resource
@@ -183,6 +220,19 @@ templates:
             - $[resource.folders]
             - $[resource.name.path]
           file: route-paths.$[language.extension]
+    barrel:
+      enabled: false
+      template: src/resources/index.ts.j2
+      export: named
+      output:
+        paths:
+          - folders:
+              - src
+              - resources
+              - $[resource.folders]
+              - $[resource.name.path]
+            file: index.$[language.extension]
+
   route_files:
     kind: source
     select: routes.by_resource
@@ -195,23 +245,19 @@ templates:
             - $[resource.folders]
             - $[resource.name.path]
           file: routes.$[language.extension]
-    resolves:
-      enums:
-        $ref: "#/templates/enum_files/barrel"
-      composites:
-        $ref: "#/templates/composite_files/barrel"
-      models:
-        $ref: "#/templates/model_files/barrel"
-      dtos:
-        $ref: "#/templates/dto_files"
-      errors:
-        $ref: "#/templates/error_files/barrel"
-      operations:
-        $ref: "#/templates/operation_files"
-      route_paths:
-        $ref: "#/templates/route_path_files"
-      routes:
-        $ref: "#/templates/route_files"
+    barrel:
+      enabled: false
+      template: src/resources/index.ts.j2
+      export: named
+      output:
+        paths:
+          - folders:
+              - src
+              - resources
+              - $[resource.folders]
+              - $[resource.name.path]
+            file: index.$[language.extension]
+
   operation_files:
     kind: source
     select: operations.by_resource
@@ -224,19 +270,19 @@ templates:
             - $[resource.folders]
             - $[resource.name.path]
           file: operations.$[language.extension]
-    resolves:
-      enums:
-        $ref: "#/templates/enum_files/barrel"
-      composites:
-        $ref: "#/templates/composite_files/barrel"
-      models:
-        $ref: "#/templates/model_files/barrel"
-      dtos:
-        $ref: "#/templates/dto_files"
-      errors:
-        $ref: "#/templates/error_files/barrel"
-      operations:
-        $ref: "#/templates/operation_files"
+    barrel:
+      enabled: false
+      template: src/resources/index.ts.j2
+      export: named
+      output:
+        paths:
+          - folders:
+              - src
+              - resources
+              - $[resource.folders]
+              - $[resource.name.path]
+            file: index.$[language.extension]
+
   resource_files:
     kind: source
     select: resources.each
@@ -250,43 +296,21 @@ templates:
             - $[resource.name.path]
           file: index.$[language.extension]
     resolves:
-      enums:
-        $ref: "#/templates/enum_files/barrel"
-      composites:
-        $ref: "#/templates/composite_files/barrel"
-      models:
-        $ref: "#/templates/model_files/barrel"
-      dtos:
-        $ref: "#/templates/dto_files"
-      errors:
-        $ref: "#/templates/error_files/barrel"
-      operations:
-        $ref: "#/templates/operation_files"
       route_paths:
-        $ref: "#/templates/route_path_files"
+        ref: "#/templates/route_path_files"
       routes:
-        $ref: "#/templates/route_files"
-      resources:
-        $ref: "#/templates/resource_files"
-  root_index:
-    kind: barrel
-    select: once
-    template: src/index.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-          file: index.$[language.extension]
-    resolves:
-      enums:
-        $ref: "#/templates/enum_files/barrel"
-      composites:
-        $ref: "#/templates/composite_files/barrel"
-      models:
-        $ref: "#/templates/model_files/barrel"
-      dtos:
-        $ref: "#/templates/dto_files/barrel"
-      errors:
-        $ref: "#/templates/error_files/barrel"
-      resources:
-        $ref: "#/templates/resource_files"
+        ref: "#/templates/route_files"
+      operations:
+        ref: "#/templates/operation_files"
+    barrel:
+      enabled: false
+      template: src/resources/index.ts.j2
+      export: named
+      output:
+        paths:
+          - folders:
+              - src
+              - resources
+              - $[resource.folders]
+              - $[resource.name.path]
+            file: index.$[language.extension]

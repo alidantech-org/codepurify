@@ -42,6 +42,7 @@ class TemplateFileContext:
     records: tuple[TemplateRecordContext, ...]
     imports: tuple[LanguageImport, ...]
     exports: tuple[LanguageExport, ...]
+    template_file: str | None = None
 
 
 @dataclass(frozen=True)
@@ -125,6 +126,7 @@ def build_template_file_context(
         file_id=file.id,
         template_id=file.template_id,
         template=file.template,
+        template_file=file.template_file,
         output_path=file.output_path,
         relative_output_path=file.relative_output_path,
         language=language,

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from spec.ir.resource.definition import ResourceDefinition
 from spec.ir.schema.entity.definition import EntityDefinition
-from spec.repository.names import create_spec_name
 from spec.utils.enums import SpecSubject
 
 
@@ -62,16 +61,15 @@ def _entity_folder_info(
 ) -> OwnerFolderInfo:
     """Create folder info for an entity.
 
-    EntityDefinition does not expose folders directly, so we use
-    the entity's path name as fallback folder.
+    Entity folders must represent parent/container folders only.
+    Do not fallback to the entity name because owner.name.path already exposes
+    the leaf folder.
     """
-
-    name = create_spec_name(key)
 
     return OwnerFolderInfo(
         key=key,
         subject=SpecSubject.ENTITIES,
-        folders=(name.path,),
+        folders=(),
     )
 
 

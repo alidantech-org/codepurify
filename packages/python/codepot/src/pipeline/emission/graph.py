@@ -26,6 +26,9 @@ class EmissionGraphFile:
     resource_folders: tuple[str, ...] = ()
     expanded_folders: tuple[str, ...] = ()
     expanded_file: str | None = None
+    is_barrel: bool = False
+    parent_template_id: str | None = None
+    barrel_source_file_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -92,6 +95,9 @@ def _graph_file(
         resource_folders=debug.resource_folders if debug else (),
         expanded_folders=debug.expanded_folders if debug else (),
         expanded_file=debug.expanded_file if debug else None,
+        is_barrel=file.is_barrel,
+        parent_template_id=file.parent_template_id,
+        barrel_source_file_ids=file.barrel_source_file_ids,
     )
 
 

@@ -36,3 +36,5 @@ class PlannedOutputFile:
     is_barrel: bool = False
     parent_template_id: str | None = None
     path_debug: PathPlanningDebug | None = None
+    template_file: str | None = None
+    barrel_source_file_ids: tuple[str, ...] = ()
