@@ -4,24 +4,26 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
+from contracts.spec.names import SpecNameCase
+
 
 class TemplateLanguageNamingConfig(BaseModel):
     """User-configurable naming cases for a language."""
 
     model_config = ConfigDict(frozen=True)
 
-    class_name: str = "pascal"
-    interface: str = "pascal"
-    enum: str = "pascal"
-    enum_value: str = "constant"
-    field: str = "camel"
-    method: str = "camel"
-    function: str = "camel"
-    constant: str = "screaming_snake"
-    variable: str = "camel"
-    file: str = "path"
-    module: str = "path"
-    package: str = "snake"
+    class_name: SpecNameCase = SpecNameCase.PASCAL
+    interface: SpecNameCase = SpecNameCase.PASCAL
+    enum: SpecNameCase = SpecNameCase.PASCAL
+    enum_value: SpecNameCase = SpecNameCase.CONSTANT
+    field: SpecNameCase = SpecNameCase.CAMEL
+    method: SpecNameCase = SpecNameCase.CAMEL
+    function: SpecNameCase = SpecNameCase.CAMEL
+    constant: SpecNameCase = SpecNameCase.SCREAMING_SNAKE
+    variable: SpecNameCase = SpecNameCase.CAMEL
+    file: SpecNameCase = SpecNameCase.PATH
+    module: SpecNameCase = SpecNameCase.PATH
+    package: SpecNameCase = SpecNameCase.SNAKE
 
 
 class TemplateLanguageImportConfig(BaseModel):

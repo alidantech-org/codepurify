@@ -1,51 +1,51 @@
-"""Python type helpers."""
+"""Dart type helpers."""
 
 from __future__ import annotations
 
 from contracts.language.interface import LanguageTypeFacts, LanguageTypeSourceKind
 from contracts.language.types import LanguageType, LanguageTypeKind
-from languages.python.constants import (
+from languages.dart.constants import (
+    DART_BOOL,
+    DART_DOUBLE,
+    DART_DYNAMIC,
+    DART_INT,
+    DART_STRING,
+    DART_VOID,
     PRIMITIVE_BOOLEAN,
     PRIMITIVE_INTEGER,
     PRIMITIVE_NUMBER,
     PRIMITIVE_STRING,
-    PY_ANY,
-    PY_BOOL,
-    PY_FLOAT,
-    PY_INT,
-    PY_NONE,
-    PY_STR,
 )
-from languages.python.syntax import array as py_array
-from languages.python.syntax import nullable as py_nullable
+from languages.dart.syntax import array as dart_array
+from languages.dart.syntax import nullable as dart_nullable
 
 
 def _primitive_annotation(facts: LanguageTypeFacts) -> str:
-    """Map primitive facts to Python annotation."""
+    """Map primitive facts to Dart annotation."""
 
     if facts.primitive_type == PRIMITIVE_STRING:
-        return PY_STR
+        return DART_STRING
     if facts.primitive_type == PRIMITIVE_NUMBER:
-        return PY_FLOAT
+        return DART_DOUBLE
     if facts.primitive_type == PRIMITIVE_INTEGER:
-        return PY_INT
+        return DART_INT
     if facts.primitive_type == PRIMITIVE_BOOLEAN:
-        return PY_BOOL
+        return DART_BOOL
 
-    return PY_ANY
+    return DART_DYNAMIC
 
 
 def _named_annotation(facts: LanguageTypeFacts) -> str:
-    """Map named type facts to Python annotation."""
+    """Map named type facts to Dart annotation."""
 
     if facts.name is None:
-        return PY_ANY
+        return DART_DYNAMIC
 
     return facts.name.pascal
 
 
 def _base_annotation(facts: LanguageTypeFacts) -> tuple[LanguageTypeKind, str]:
-    """Create base Python annotation from typed facts."""
+    """Create base Dart annotation from typed facts."""
 
     if facts.source_kind == LanguageTypeSourceKind.PRIMITIVE:
         return LanguageTypeKind.PRIMITIVE, _primitive_annotation(facts)
@@ -60,10 +60,10 @@ def _base_annotation(facts: LanguageTypeFacts) -> tuple[LanguageTypeKind, str]:
     }:
         return LanguageTypeKind.CLASS, _named_annotation(facts)
 
-    return LanguageTypeKind.UNKNOWN, PY_ANY
+    return LanguageTypeKind.UNKNOWN, DART_DYNAMIC
 
 
-def make_python_type(
+def make_dart_type(
     facts: LanguageTypeFacts,
     *,
     is_array: bool = False,
@@ -71,21 +71,21 @@ def make_python_type(
     is_dynamic: bool = False,
     is_void: bool = False,
 ) -> LanguageType:
-    """Create a Python type annotation."""
+    """Create a Dart type annotation."""
 
     if is_void:
         return LanguageType(
             kind=LanguageTypeKind.VOID,
-            annotation=PY_NONE,
-            display=PY_NONE,
+            annotation=DART_VOID,
+            display=DART_VOID,
             is_void=True,
         )
 
     if is_dynamic:
         current = LanguageType(
             kind=LanguageTypeKind.DYNAMIC,
-            annotation=PY_ANY,
-            display=PY_ANY,
+            annotation=DART_DYNAMIC,
+            display=DART_DYNAMIC,
             is_dynamic=True,
         )
     else:
@@ -99,8 +99,8 @@ def make_python_type(
     if is_array:
         current = LanguageType(
             kind=LanguageTypeKind.ARRAY,
-            annotation=py_array(current.annotation),
-            display=py_array(current.display),
+            annotation=dart_array(current.annotation),
+            display=dart_array(current.display),
             is_array=True,
             item=current,
         )
@@ -108,8 +108,8 @@ def make_python_type(
     if is_nullable:
         current = LanguageType(
             kind=LanguageTypeKind.NULLABLE,
-            annotation=py_nullable(current.annotation),
-            display=py_nullable(current.display),
+            annotation=dart_nullable(current.annotation),
+            display=dart_nullable(current.display),
             is_nullable=True,
             item=current,
         )

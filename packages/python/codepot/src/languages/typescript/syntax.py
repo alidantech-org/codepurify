@@ -1,6 +1,62 @@
 from pathlib import Path
 
+from languages.typescript.constants import (
+    EXPORT_KEYWORD,
+    FROM_KEYWORD,
+    IMPORT_KEYWORD,
+    IMPORT_TYPE_KEYWORD,
+    TS_NULL,
+)
 from languages.typescript.utils import relative_module_path, remove_known_extension
+
+
+def alias(left: str, right: str | None) -> str:
+    """Create TypeScript alias syntax."""
+
+    if not right:
+        return left
+
+    return f"{left} as {right}"
+
+
+def nullable(annotation: str) -> str:
+    """Create a TypeScript nullable annotation."""
+
+    return union((annotation, TS_NULL))
+
+
+def array(annotation: str) -> str:
+    """Create a TypeScript array annotation."""
+
+    return f"{annotation}[]"
+
+
+def union(values: tuple[str, ...] | list[str]) -> str:
+    """Create a TypeScript union annotation."""
+
+    unique = list(dict.fromkeys(values))
+    return " | ".join(unique)
+
+
+def import_line(*, module: str, symbols: tuple[str, ...], type_only: bool) -> str:
+    """Create a TypeScript named import line."""
+
+    type_keyword = IMPORT_TYPE_KEYWORD if type_only else ""
+    rendered_symbols = ", ".join(symbols)
+    return f"{IMPORT_KEYWORD}{type_keyword} {{ {rendered_symbols} }} {FROM_KEYWORD} {module!r};"
+
+
+def export_named_line(*, module: str, symbols: tuple[str, ...]) -> str:
+    """Create a TypeScript named export line."""
+
+    rendered_symbols = ", ".join(symbols)
+    return f"{EXPORT_KEYWORD} {{ {rendered_symbols} }} {FROM_KEYWORD} {module!r};"
+
+
+def export_star_line(*, module: str) -> str:
+    """Create a TypeScript star export line."""
+
+    return f"{EXPORT_KEYWORD} * {FROM_KEYWORD} {module!r};"
 
 
 def join_path_tokens(tokens: tuple[str, ...] | list[str]) -> str:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contracts.language.interface import LanguageTypeFacts, LanguageTypeSourceKind
 from contracts.language.types import LanguageType, LanguageTypeKind
 from languages.typescript.constants import (
     PRIMITIVE_BOOLEAN,
@@ -16,26 +17,51 @@ from languages.typescript.constants import (
 )
 from languages.typescript.syntax import array as ts_array
 from languages.typescript.syntax import nullable as ts_nullable
-from languages.typescript.utils import enum_or_value
 
 
-def _primitive_annotation(source: object) -> str:
-    """Map primitive-like source to TypeScript annotation."""
+def _primitive_annotation(facts: LanguageTypeFacts) -> str:
+    """Map primitive facts to TypeScript annotation."""
 
-    source_type = enum_or_value(getattr(source, "type", None))
-
-    if source_type == PRIMITIVE_STRING:
+    if facts.primitive_type == PRIMITIVE_STRING:
         return TS_STRING
-    if source_type in {PRIMITIVE_NUMBER, PRIMITIVE_INTEGER}:
+    if facts.primitive_type in {PRIMITIVE_NUMBER, PRIMITIVE_INTEGER}:
         return TS_NUMBER
-    if source_type == PRIMITIVE_BOOLEAN:
+    if facts.primitive_type == PRIMITIVE_BOOLEAN:
         return TS_BOOLEAN
 
     return TS_UNKNOWN
 
 
+def _named_annotation(facts: LanguageTypeFacts) -> str:
+    """Map named type facts to TypeScript annotation."""
+
+    if facts.name is None:
+        return TS_UNKNOWN
+
+    return facts.name.pascal
+
+
+def _base_annotation(facts: LanguageTypeFacts) -> tuple[LanguageTypeKind, str]:
+    """Create base TypeScript annotation from typed facts."""
+
+    if facts.source_kind == LanguageTypeSourceKind.PRIMITIVE:
+        return LanguageTypeKind.PRIMITIVE, _primitive_annotation(facts)
+
+    if facts.source_kind == LanguageTypeSourceKind.ENUM:
+        return LanguageTypeKind.ENUM, _named_annotation(facts)
+
+    if facts.source_kind in {
+        LanguageTypeSourceKind.COMPOSITE,
+        LanguageTypeSourceKind.MODEL,
+        LanguageTypeSourceKind.DTO,
+    }:
+        return LanguageTypeKind.INTERFACE, _named_annotation(facts)
+
+    return LanguageTypeKind.UNKNOWN, TS_UNKNOWN
+
+
 def make_typescript_type(
-    source: object,
+    facts: LanguageTypeFacts,
     *,
     is_array: bool = False,
     is_nullable: bool = False,
@@ -53,27 +79,19 @@ def make_typescript_type(
         )
 
     if is_dynamic:
-        base = LanguageType(
+        current = LanguageType(
             kind=LanguageTypeKind.DYNAMIC,
             annotation=TS_UNKNOWN,
             display=TS_UNKNOWN,
             is_dynamic=True,
         )
     else:
-        annotation = getattr(source, "annotation", None)
-        if not isinstance(annotation, str):
-            annotation = getattr(source, "name", None)
-            annotation = getattr(annotation, "pascal", None) or _primitive_annotation(
-                source
-            )
-
-        base = LanguageType(
-            kind=LanguageTypeKind.PRIMITIVE,
+        kind, annotation = _base_annotation(facts)
+        current = LanguageType(
+            kind=kind,
             annotation=annotation,
             display=annotation,
         )
-
-    current = base
 
     if is_array:
         current = LanguageType(

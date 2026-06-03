@@ -3,6 +3,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
+
+
+class SpecNameCase(StrEnum):
+    """Supported name case selectors."""
+
+    RAW = "raw"
+    CLEAN = "clean"
+    PASCAL = "pascal"
+    CAMEL = "camel"
+    SNAKE = "snake"
+    KEBAB = "kebab"
+    SCREAMING_SNAKE = "screaming_snake"
+    CONSTANT = "constant"
+    PATH = "path"
 
 
 @dataclass(frozen=True)
@@ -46,3 +61,28 @@ class SpecName:
     path: str
     singular: SpecNameCases
     plural: SpecNameCases
+
+
+def resolve_name_case(name: SpecName, case: SpecNameCase) -> str:
+    """Resolve a name case without dynamic attribute access."""
+
+    if case == SpecNameCase.RAW:
+        return name.raw
+    if case == SpecNameCase.CLEAN:
+        return name.clean
+    if case == SpecNameCase.PASCAL:
+        return name.pascal
+    if case == SpecNameCase.CAMEL:
+        return name.camel
+    if case == SpecNameCase.SNAKE:
+        return name.snake
+    if case == SpecNameCase.KEBAB:
+        return name.kebab
+    if case == SpecNameCase.SCREAMING_SNAKE:
+        return name.screaming_snake
+    if case == SpecNameCase.CONSTANT:
+        return name.constant
+    if case == SpecNameCase.PATH:
+        return name.path
+
+    raise ValueError(f"Unsupported name case: {case}")

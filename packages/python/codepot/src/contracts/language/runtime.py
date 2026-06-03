@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+from contracts.spec.names import SpecNameCase
+
 
 class LanguageImportStrategy(StrEnum):
     """Supported import path strategies."""
@@ -36,17 +38,17 @@ class LanguageNameRole(StrEnum):
 class LanguageNamingRules:
     """Resolved naming rule choices for a language runtime."""
 
-    class_case: str
-    interface_case: str
-    enum_case: str
-    enum_value_case: str
-    field_case: str
-    method_case: str
-    function_case: str
-    constant_case: str
-    file_case: str
-    module_case: str
-    package_case: str
+    class_case: SpecNameCase
+    interface_case: SpecNameCase
+    enum_case: SpecNameCase
+    enum_value_case: SpecNameCase
+    field_case: SpecNameCase
+    method_case: SpecNameCase
+    function_case: SpecNameCase
+    constant_case: SpecNameCase
+    file_case: SpecNameCase
+    module_case: SpecNameCase
+    package_case: SpecNameCase
 
 
 @dataclass(frozen=True)

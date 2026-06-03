@@ -21,6 +21,7 @@ Language adapters should not:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
@@ -30,11 +31,18 @@ from contracts.language.context import (
     LanguageOperation,
     LanguageRoute,
 )
-from contracts.language.exports import LanguageExport
+from contracts.language.exports import LanguageExport, LanguageExportStrategy
 from contracts.language.imports import LanguageImport
 from contracts.language.runtime import LanguageRuntime
 from contracts.language.types import LanguageType
+from contracts.spec.names import SpecName
 from contracts.spec.records import SpecRecord
+from contracts.spec.refs import SpecRef
+from contracts.templates.config.language import (
+    TemplateLanguageImportConfig,
+    TemplateLanguageNamingConfig,
+)
+from contracts.templates.shared.flags import TemplateFieldFlags
 
 
 @dataclass(frozen=True)
@@ -46,15 +54,71 @@ class LanguageRuntimeRequest:
     package_name: str | None
     package_manager: str | None
     source_root: Path
-    naming: object
-    imports: object
+    naming: TemplateLanguageNamingConfig
+    imports: TemplateLanguageImportConfig
+
+
+@dataclass(frozen=True)
+class LanguageItemRequest:
+    """Request used to enrich one generic item with `.lang`."""
+
+    record: SpecRecord[object]
+    runtime: LanguageRuntime
+
+
+class LanguageTypeSourceKind(StrEnum):
+    """Normalized source kind for language type creation."""
+
+    PRIMITIVE = "primitive"
+    ENUM = "enum"
+    COMPOSITE = "composite"
+    MODEL = "model"
+    DTO = "dto"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class LanguageTypeFacts:
+    """Typed facts needed to create a language type annotation."""
+
+    source_kind: LanguageTypeSourceKind
+    primitive_type: str | None = None
+    primitive_format: str | None = None
+    name: SpecName | None = None
+    ref: SpecRef | None = None
+
+
+@dataclass(frozen=True)
+class LanguageFieldRequest:
+    """Request used to enrich one field-like item with `.lang`."""
+
+    name: SpecName
+    type_facts: LanguageTypeFacts
+    flags: TemplateFieldFlags
+    runtime: LanguageRuntime
+
+
+@dataclass(frozen=True)
+class LanguageOperationRequest:
+    """Request used to enrich one operation-like item with `.lang`."""
+
+    record: SpecRecord[object]
+    runtime: LanguageRuntime
+
+
+@dataclass(frozen=True)
+class LanguageRouteRequest:
+    """Request used to enrich one route-like item with `.lang`."""
+
+    record: SpecRecord[object]
+    runtime: LanguageRuntime
 
 
 @dataclass(frozen=True)
 class LanguageTypeRequest:
     """Request used to create one language type annotation."""
 
-    source: object
+    facts: LanguageTypeFacts
     is_required: bool = False
     is_nullable: bool = False
     is_array: bool = False
@@ -98,7 +162,7 @@ class LanguageExportRequest:
 
     source_path: Path
     targets: tuple[LanguageExportTarget, ...]
-    strategy: str
+    strategy: LanguageExportStrategy
     runtime: LanguageRuntime
 
 
@@ -110,32 +174,16 @@ class LanguageAdapter(Protocol):
     def create_runtime(self, request: LanguageRuntimeRequest) -> LanguageRuntime:
         """Create global language runtime context."""
 
-    def enrich_item(
-        self,
-        record: SpecRecord[object],
-        runtime: LanguageRuntime,
-    ) -> LanguageItem:
+    def enrich_item(self, request: LanguageItemRequest) -> LanguageItem:
         """Create generic per-item `.lang` context."""
 
-    def enrich_field(
-        self,
-        field: object,
-        runtime: LanguageRuntime,
-    ) -> LanguageField:
+    def enrich_field(self, request: LanguageFieldRequest) -> LanguageField:
         """Create field-level `.lang` context."""
 
-    def enrich_operation(
-        self,
-        operation: object,
-        runtime: LanguageRuntime,
-    ) -> LanguageOperation:
+    def enrich_operation(self, request: LanguageOperationRequest) -> LanguageOperation:
         """Create operation-level `.lang` context."""
 
-    def enrich_route(
-        self,
-        route: object,
-        runtime: LanguageRuntime,
-    ) -> LanguageRoute:
+    def enrich_route(self, request: LanguageRouteRequest) -> LanguageRoute:
         """Create route-level `.lang` context."""
 
     def create_type(
