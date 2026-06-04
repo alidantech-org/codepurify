@@ -39,14 +39,14 @@ class TemplateSelectMode(StrEnum):
     EACH = "each"
     ALL = "all"
     BY_OWNER = "by_owner"
-    BY_RESOURCE = "by_resource"
 
 
 class TemplateSelect(BaseModel):
     """Parsed select expression.
 
     Raw config stores select as a string, for example ``models.each`` or
-    ``once``. The loader/validator later parses it into this type.
+    ``once``. Route paths, routes, and operations should use ``*.by_owner``
+    when they are grouped by their resource owner.
     """
 
     model_config = ConfigDict(frozen=True)

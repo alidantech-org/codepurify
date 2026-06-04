@@ -27,17 +27,17 @@ templates:
   enums:
     select: enums.each
     folders:
+      - enums
       - "[owner.folders]"
       - "[owner.name.path]"
-      - enums
     barrel: true
 
   composites:
     select: composites.each
     folders:
+      - composites
       - "[owner.folders]"
       - "[owner.name.path]"
-      - composites
     barrel: true
     resolves:
       enums:
@@ -45,10 +45,10 @@ templates:
 
   models:
     select: models.each
-    folders:
+    folders: 
+      - models
       - "[owner.folders]"
       - "[owner.name.path]"
-      - models
     barrel: true
     resolves:
       enums:
@@ -61,9 +61,9 @@ templates:
   dtos:
     select: dtos.by_owner
     folders:
+      - dtos
       - "[owner.folders]"
       - "[owner.name.path]"
-      - dtos
     barrel: true
     resolves:
       enums:
@@ -76,17 +76,17 @@ templates:
   errors:
     select: errors.each
     folders:
+      - errors
       - "[owner.folders]"
       - "[owner.name.path]"
-      - errors
     barrel: true
 
   resources:
     select: resources.each
     folders:
+      - resources
       - "[owner.folders]"
       - "[owner.name.path]"
-      - resources
     barrel: false
     resolves:
       route_paths:
@@ -99,23 +99,23 @@ templates:
   route_paths:
     select: route_paths.by_owner
     folders:
+      - resources
       - "[owner.folders]"
       - "[owner.name.path]"
-      - resources
     barrel: false
 
   routes:
     select: routes.by_owner
     folders:
+      - resources
       - "[owner.folders]"
       - "[owner.name.path]"
-      - resources
     barrel: false
 
   operations:
     select: operations.by_owner
     folders:
+      - resources
       - "[owner.folders]"
       - "[owner.name.path]"
-      - resources
     barrel: false

@@ -36,12 +36,13 @@ class TemplatePackageConfig(BaseModel):
     description: str | None = None
 
     language: TemplateLanguageConfig
-    defaults: TemplateDefaultsConfig = TemplateDefaultsConfig()
-    settings: TemplateSettingsConfig = TemplateSettingsConfig()
+    defaults: TemplateDefaultsConfig = Field(default_factory=TemplateDefaultsConfig)
+    settings: TemplateSettingsConfig = Field(default_factory=TemplateSettingsConfig)
 
-    commands: TemplateCommandsConfig = TemplateCommandsConfig()
-    messages: TemplateMessagesConfig = TemplateMessagesConfig()
+    commands: TemplateCommandsConfig = Field(default_factory=TemplateCommandsConfig)
+    messages: TemplateMessagesConfig = Field(default_factory=TemplateMessagesConfig)
 
+    ignore: dict[str, object] = Field(default_factory=dict)
     templates: dict[str, TemplateEntryConfig] = Field(default_factory=dict)
 
 

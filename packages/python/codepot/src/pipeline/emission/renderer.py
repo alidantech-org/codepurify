@@ -18,22 +18,19 @@ class RenderedFile:
     output_path: Path
     relative_output_path: str
     content: str
+    source_path: Path | None = None
+    is_static: bool = False
 
 
 @dataclass(frozen=True)
 class RenderedFiles:
-    """All rendered files."""
+    """All rendered/copied files."""
 
     files: tuple[RenderedFile, ...]
 
 
 def _template_context(context: TemplateFileContext) -> dict[str, object]:
-    """Build shallow Jinja context for one planned template file.
-
-    Keep this intentionally shallow. Jinja can access dataclass attributes
-    directly, so we should not recursively convert the full SpecContext for
-    every rendered file.
-    """
+    """Build shallow Jinja context for one planned template file."""
 
     return {
         "file": context,
@@ -60,6 +57,22 @@ def create_environment(package_path: Path) -> Environment:
     )
 
 
+def render_static_file(context: TemplateFileContext) -> RenderedFile:
+    """Return a static file copy plan."""
+
+    if context.source_template_path is None:
+        raise ValueError(f"Static file has no source path: {context.file_id}")
+
+    return RenderedFile(
+        file_id=context.file_id,
+        output_path=context.output_path,
+        relative_output_path=context.relative_output_path,
+        content="",
+        source_path=context.source_template_path,
+        is_static=True,
+    )
+
+
 def render_template_file(
     *,
     environment: Environment,
@@ -67,11 +80,13 @@ def render_template_file(
 ) -> RenderedFile:
     """Render one planned template file."""
 
-    template_file = context.template_file or context.template.template
-    if template_file is None:
-        raise ValueError(f"Template entry has no template file: {context.template_id}")
+    if context.is_static:
+        return render_static_file(context)
 
-    template = environment.get_template(template_file)
+    if context.template_file is None:
+        raise ValueError(f"Template file is missing: {context.file_id}")
+
+    template = environment.get_template(context.template_file)
     content = template.render(_template_context(context))
 
     return RenderedFile(
@@ -79,6 +94,8 @@ def render_template_file(
         output_path=context.output_path,
         relative_output_path=context.relative_output_path,
         content=content,
+        source_path=context.source_template_path,
+        is_static=False,
     )
 
 
@@ -98,6 +115,5 @@ def render_template_contexts(
                 context=context,
             )
             for context in contexts.files
-            if context.template.template is not None
         )
     )

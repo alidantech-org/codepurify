@@ -27,7 +27,7 @@ class TemplateRecordContext:
 
 @dataclass(frozen=True)
 class TemplateFileContext:
-    """Final context for one file render."""
+    """Final context for one file render/write."""
 
     file_id: str
     template_id: str
@@ -42,12 +42,16 @@ class TemplateFileContext:
     records: tuple[TemplateRecordContext, ...]
     imports: tuple[LanguageImport, ...]
     exports: tuple[LanguageExport, ...]
+
     template_file: str | None = None
+    source_template_path: Path | None = None
+    is_static: bool = False
+    render_once: bool = False
 
 
 @dataclass(frozen=True)
 class PlannedTemplateContexts:
-    """All planned template render contexts."""
+    """All planned template render/write contexts."""
 
     files: tuple[TemplateFileContext, ...]
 
@@ -127,6 +131,7 @@ def build_template_file_context(
         template_id=file.template_id,
         template=file.template,
         template_file=file.template_file,
+        source_template_path=file.source_template_path,
         output_path=file.output_path,
         relative_output_path=file.relative_output_path,
         language=language,
@@ -134,6 +139,8 @@ def build_template_file_context(
         records=_record_contexts(file=file, enrichment=enrichment),
         imports=imports,
         exports=exports,
+        is_static=file.is_static,
+        render_once=file.render_once,
     )
 
 

@@ -2,53 +2,63 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
-
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from contracts.templates.config.barrel import TemplateBarrelConfig
-from contracts.templates.config.output import TemplateOutputConfig
 from contracts.templates.config.resolve import TemplateResolveMap
 
 
-class TemplateEntryKind(StrEnum):
-    """Kinds of template output entries."""
-
-    SOURCE = "source"
-    BARREL = "barrel"
-    PACKAGE = "package"
-    CONFIG = "config"
-    DOCS = "docs"
-    STATIC = "static"
-    TEST = "test"
-    OTHER = "other"
-
-
 class TemplateEntryConfig(BaseModel):
-    """One entry under ``templates.<id>`` in codepotx config."""
+    """One entry under ``templates.<id>`` in codepotx config.
 
-    model_config = ConfigDict(frozen=True, populate_by_name=True)
+    Template files are discovered from filesystem paths containing a literal
+    ``{template_key}`` folder. Config controls selection behavior, dynamic
+    folder insertion, barrel behavior, dependency resolution, and custom
+    template options.
+    """
 
-    kind: TemplateEntryKind
+    model_config = ConfigDict(frozen=True)
+
     select: str
+    folders: tuple[str, ...] = Field(default_factory=tuple)
+    barrel: bool | TemplateBarrelConfig = False
+    resolves: TemplateResolveMap = Field(default_factory=dict)
+    options: dict[str, object] = Field(default_factory=dict)
 
-    template: str | None = None
-    copy_file: str | None = Field(default=None, alias="copy")
+    @field_validator("folders")
+    @classmethod
+    def validate_folders(cls, folders: tuple[str, ...]) -> tuple[str, ...]:
+        """Ensure folder entries are non-empty strings."""
 
-    output: TemplateOutputConfig
-    resolves: TemplateResolveMap = {}
-    barrel: TemplateBarrelConfig | None = None
+        for folder in folders:
+            if not folder.strip():
+                raise ValueError("Template folder entries must not be empty.")
 
-    @model_validator(mode="after")
-    def validate_source(self) -> "TemplateEntryConfig":  # noqa: UP037
-        """Ensure exactly one source mode is configured."""
+        return folders
 
-        has_template = self.template is not None
-        has_copy = self.copy_file is not None
+    @property
+    def barrel_enabled(self) -> bool:
+        """Return true when barrel generation is enabled."""
 
-        if has_template == has_copy:
-            raise ValueError(
-                "Template entry must define exactly one of template or copy."
-            )
+        if isinstance(self.barrel, bool):
+            return self.barrel
 
-        return self
+        return self.barrel.enabled
+
+    @property
+    def barrel_export(self) -> str:
+        """Return barrel export strategy."""
+
+        if isinstance(self.barrel, bool):
+            return "named"
+
+        return self.barrel.export.value
+
+    @property
+    def barrel_folders(self) -> tuple[str, ...]:
+        """Return extra barrel folders."""
+
+        if isinstance(self.barrel, bool):
+            return ()
+
+        return self.barrel.folders

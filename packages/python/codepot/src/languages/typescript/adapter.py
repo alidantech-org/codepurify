@@ -32,6 +32,8 @@ from languages.typescript.imports import create_typescript_imports
 from languages.typescript.names import make_typescript_name
 from languages.typescript.types import make_typescript_type
 
+DEFAULT_TYPESCRIPT_EXTENSIONS = ("ts", "tsx")
+
 
 class TypeScriptLanguageAdapter:
     """TypeScript implementation of the Codepotx language adapter contract."""
@@ -43,10 +45,11 @@ class TypeScriptLanguageAdapter:
 
         naming = request.naming
         imports = request.imports
+        extensions = request.extensions or DEFAULT_TYPESCRIPT_EXTENSIONS
 
         return LanguageRuntime(
             name=request.language,
-            extension=request.extension,
+            extensions=extensions,
             package_name=request.package_name,
             package_manager=request.package_manager,
             source_root=request.source_root,
@@ -59,7 +62,9 @@ class TypeScriptLanguageAdapter:
                 method_case=naming.method,
                 function_case=naming.function,
                 constant_case=naming.constant,
+                variable_case=naming.variable,
                 file_case=naming.file,
+                folder_case=naming.folder,
                 module_case=naming.module,
                 package_case=naming.package,
             ),

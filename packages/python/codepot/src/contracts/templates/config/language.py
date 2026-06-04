@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from contracts.spec.names import SpecNameCase
 
@@ -22,6 +22,7 @@ class TemplateLanguageNamingConfig(BaseModel):
     constant: SpecNameCase = SpecNameCase.SCREAMING_SNAKE
     variable: SpecNameCase = SpecNameCase.CAMEL
     file: SpecNameCase = SpecNameCase.PATH
+    folder: SpecNameCase = SpecNameCase.PATH
     module: SpecNameCase = SpecNameCase.PATH
     package: SpecNameCase = SpecNameCase.SNAKE
 
@@ -45,9 +46,19 @@ class TemplateLanguageConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str
-    extension: str
+    extensions: tuple[str, ...] = Field(default_factory=tuple)
     package_manager: str | None = None
     package_name: str | None = None
     source_root: str = "src"
-    naming: TemplateLanguageNamingConfig = TemplateLanguageNamingConfig()
-    imports: TemplateLanguageImportConfig = TemplateLanguageImportConfig()
+    naming: TemplateLanguageNamingConfig = Field(
+        default_factory=TemplateLanguageNamingConfig
+    )
+    imports: TemplateLanguageImportConfig = Field(
+        default_factory=TemplateLanguageImportConfig
+    )
+
+    @property
+    def primary_extension(self) -> str | None:
+        """Return the first configured language extension."""
+
+        return self.extensions[0] if self.extensions else None

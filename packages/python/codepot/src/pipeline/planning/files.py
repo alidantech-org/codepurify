@@ -17,7 +17,6 @@ class PlannedOutputSource:
 
     records: tuple[SpecRecord[object], ...]
     bucket_key: str | None = None
-    resource_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -36,5 +35,10 @@ class PlannedOutputFile:
     is_barrel: bool = False
     parent_template_id: str | None = None
     path_debug: PathPlanningDebug | None = None
+
     template_file: str | None = None
+    source_template_path: Path | None = None
+
+    is_static: bool = False
+    render_once: bool = False
     barrel_source_file_ids: tuple[str, ...] = ()

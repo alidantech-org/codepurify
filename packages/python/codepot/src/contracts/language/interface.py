@@ -50,7 +50,7 @@ class LanguageRuntimeRequest:
     """Request used to create global language runtime context."""
 
     language: str
-    extension: str
+    extensions: tuple[str, ...]
     package_name: str | None
     package_manager: str | None
     source_root: Path

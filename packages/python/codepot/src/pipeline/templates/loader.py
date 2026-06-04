@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from contracts.templates.config.package import (
     LoadedTemplatePackageConfig,
@@ -31,8 +32,9 @@ def _config_format(path: Path) -> TemplatePackageFormat:
 
 
 def _load_config_data(
-    path: Path, config_format: TemplatePackageFormat
-) -> dict[str, object]:
+    path: Path,
+    config_format: TemplatePackageFormat,
+) -> dict[str, Any]:
     """Load template config data."""
 
     if config_format in {TemplatePackageFormat.YAML, TemplatePackageFormat.YML}:

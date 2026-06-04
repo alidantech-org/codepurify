@@ -39,15 +39,6 @@ class PathOwnerVariables:
 
 
 @dataclass(frozen=True)
-class PathResourceVariables:
-    """Resource variables available during output path expansion."""
-
-    key: str
-    name: PathNameVariables
-    folders: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True)
 class PathItemVariables:
     """Selected item variables available during output path expansion."""
 
@@ -63,7 +54,6 @@ class PathTemplateVariables:
 
     id: str
     select: str
-    kind: str
 
 
 @dataclass(frozen=True)
@@ -71,8 +61,14 @@ class PathLanguageVariables:
     """Language variables available during output path expansion."""
 
     name: str
-    extension: str
+    extensions: tuple[str, ...]
     package_name: str | None
+
+    @property
+    def extension(self) -> str:
+        """Return primary extension for compatibility in path variables."""
+
+        return self.extensions[0] if self.extensions else ""
 
 
 @dataclass(frozen=True)
@@ -103,7 +99,6 @@ class OutputPathVariables:
 
     item: PathItemVariables | None = None
     owner: PathOwnerVariables | None = None
-    resource: PathResourceVariables | None = None
 
 
 def name_variables(name: SpecName) -> PathNameVariables:
@@ -149,7 +144,7 @@ def language_variables(runtime: LanguageRuntime) -> PathLanguageVariables:
 
     return PathLanguageVariables(
         name=runtime.name,
-        extension=runtime.extension,
+        extensions=runtime.extensions,
         package_name=runtime.package_name,
     )
 
@@ -160,7 +155,6 @@ def template_variables(selection: PlannedSelection) -> PathTemplateVariables:
     return PathTemplateVariables(
         id=selection.template_id,
         select=selection.select.raw,
-        kind=selection.template.kind.value,
     )
 
 
@@ -181,33 +175,6 @@ def global_owner_variables(
     )
 
 
-def resource_variables(record: SpecRecord[object]) -> PathResourceVariables:
-    """Create resource path variables from a selected record."""
-
-    return PathResourceVariables(
-        key=record.key,
-        name=name_variables(record.name),
-        folders=record.owner.folders,
-    )
-
-
-def owner_variables_from_key(owner_key: str) -> PathOwnerVariables:
-    """Create owner path variables from a selection bucket key.
-
-    Returns empty folders since bucket keys don't have folder information.
-    The actual owner folders should come from the record's owner if available.
-    """
-
-    name = create_spec_name(owner_key)
-
-    return PathOwnerVariables(
-        key=owner_key,
-        name=name_variables(name),
-        folders=(),
-        is_global=False,
-    )
-
-
 def owner_variables_from_key_with_folders(
     owner_key: str,
     folders: tuple[str, ...],
@@ -220,5 +187,5 @@ def owner_variables_from_key_with_folders(
         key=owner_key,
         name=name_variables(name),
         folders=folders,
-        is_global=False,
+        is_global=owner_key == GLOBAL_OWNER_KEY,
     )

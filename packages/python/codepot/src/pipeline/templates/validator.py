@@ -40,14 +40,22 @@ class TemplateValidationResult:
         return not self.errors
 
 
-def _template_file_exists(
+def _template_key_marker(template_id: str) -> str:
+    """Return the literal folder marker for a configured template key."""
+
+    return f"{{{template_id}}}"
+
+
+def _has_template_key_folder(
     *,
     package_path: Path,
-    relative_path: str,
+    template_id: str,
 ) -> bool:
-    """Return true when a template package file exists."""
+    """Return true when the package has a folder named {template_id}."""
 
-    return (package_path / relative_path).is_file()
+    marker = _template_key_marker(template_id)
+
+    return any(path.is_dir() and path.name == marker for path in package_path.rglob("*"))
 
 
 def validate_template_package(
@@ -71,25 +79,17 @@ def validate_template_package(
                 )
             )
 
-        if template.template is not None and not _template_file_exists(
+        if not _has_template_key_folder(
             package_path=package.package_path,
-            relative_path=template.template,
+            template_id=template_id,
         ):
             errors.append(
                 TemplateValidationError(
                     template_id=template_id,
-                    message=f"Template file does not exist: {template.template}",
-                )
-            )
-
-        if template.copy_file is not None and not _template_file_exists(
-            package_path=package.package_path,
-            relative_path=template.copy_file,
-        ):
-            errors.append(
-                TemplateValidationError(
-                    template_id=template_id,
-                    message=f"Static copy file does not exist: {template.copy_file}",
+                    message=(
+                        f"Configured template key '{template_id}' requires a "
+                        f"filesystem folder named {_template_key_marker(template_id)}."
+                    ),
                 )
             )
 
@@ -104,39 +104,14 @@ def validate_template_package(
                     )
                 )
 
-        if template.barrel is not None and template.barrel.enabled:
-            if not _template_file_exists(
-                package_path=package.package_path,
-                relative_path=template.barrel.template,
-            ):
-                errors.append(
-                    TemplateValidationError(
-                        template_id=template_id,
-                        message=f"Barrel template file does not exist: {template.barrel.template}",
-                    )
-                )
-
-            if not template.barrel.output.paths:
-                errors.append(
-                    TemplateValidationError(
-                        template_id=template_id,
-                        message="Barrel output must define at least one path when enabled.",
-                    )
-                )
-
-        if not template.output.paths:
-            errors.append(
-                TemplateValidationError(
-                    template_id=template_id,
-                    message="Template output must define at least one path.",
-                )
-            )
-
     if not config.templates:
         warnings.append(
             TemplateValidationWarning(
                 template_id=None,
-                message="Template package contains no templates.",
+                message=(
+                    "Template package contains no configured dynamic templates. "
+                    "Only normal filesystem files will be emitted."
+                ),
             )
         )
 

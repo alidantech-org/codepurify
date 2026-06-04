@@ -17,7 +17,7 @@ from pipeline.planning.outputs import plan_output_files
 
 
 class OutputPlanningPass:
-    """Plan output files from template selections."""
+    """Plan output files from template package filesystem and selections."""
 
     name = "p07_output_plan"
     title = "Plan output files"
@@ -90,7 +90,7 @@ class OutputPlanningPass:
                 diagnostic=PipelineDiagnostic(
                     level=PipelineDiagnosticLevel.ERROR,
                     pass_name=self.name,
-                    code="output_path_expansion_failed",
+                    code="output_path_planning_failed",
                     message=str(error),
                 ),
             )
@@ -104,22 +104,22 @@ class OutputPlanningPass:
                         f"{file.relative_output_path} | "
                         f"owner={file.path_debug.owner_key if file.path_debug else None} "
                         f"owner_folders={file.path_debug.owner_folders if file.path_debug else ()} "
-                        f"resource={file.path_debug.resource_key if file.path_debug else None} "
-                        f"resource_folders={file.path_debug.resource_folders if file.path_debug else ()}"  # noqa: E501
+                        f"static={file.is_static} "
+                        f"render_once={file.render_once} "
+                        f"barrel={file.is_barrel}"
                     ),
                 )
                 for file in files[:25]
             )
 
         owner_folder_count = sum(
-            1 for file in files
+            1
+            for file in files
             if file.path_debug is not None and file.path_debug.owner_folders
         )
-
-        resource_folder_count = sum(
-            1 for file in files
-            if file.path_debug is not None and file.path_debug.resource_folders
-        )
+        static_count = sum(1 for file in files if file.is_static)
+        render_once_count = sum(1 for file in files if file.render_once)
+        barrel_count = sum(1 for file in files if file.is_barrel)
 
         return success_result(
             state=replace(state, output_files=files),
@@ -129,8 +129,10 @@ class OutputPlanningPass:
             started_at=started_at,
             counters=(
                 ReportCounter("files", len(files)),
+                ReportCounter("static_files", static_count),
+                ReportCounter("render_once_files", render_once_count),
+                ReportCounter("barrel_files", barrel_count),
                 ReportCounter("owner_folder_paths", owner_folder_count),
-                ReportCounter("resource_folder_paths", resource_folder_count),
             ),
             debug=debug,
         )

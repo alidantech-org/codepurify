@@ -30,6 +30,3 @@ class PathPlanningDebug:
 
     owner_key: str | None = None
     owner_folders: tuple[str, ...] = ()
-
-    resource_key: str | None = None
-    resource_folders: tuple[str, ...] = ()

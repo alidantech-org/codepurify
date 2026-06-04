@@ -22,8 +22,8 @@ def parse_template_ref(value: str) -> ParsedTemplateRef:
     """Parse a template resolver ref.
 
     Supported:
-    - #/templates/model_files
-    - #/templates/model_files/barrel
+    - #/templates/models
+    - #/templates/models/barrel
     """
 
     if not value.startswith(REF_PREFIX):
@@ -67,5 +67,5 @@ def validate_template_ref(
 
     target = config.templates[parsed.template_id]
 
-    if parsed.points_to_barrel and target.barrel is None:
-        raise ValueError(f"Template ref points to missing barrel: {value}")
+    if parsed.points_to_barrel and not target.barrel_enabled:
+        raise ValueError(f"Template ref points to disabled barrel: {value}")

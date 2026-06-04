@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict
-
-from contracts.templates.config.output import TemplateOutputConfig
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TemplateBarrelExportStrategy(StrEnum):
@@ -17,15 +15,15 @@ class TemplateBarrelExportStrategy(StrEnum):
 
 
 class TemplateBarrelConfig(BaseModel):
-    """Optional barrel output for a template entry.
+    """Optional barrel behavior for a template entry.
 
-    A barrel is not a normal selector. It receives the emitted files/symbols
-    from its parent template entry.
+    The barrel template file is discovered from the same filesystem zone as the
+    configured template key. Config controls behavior only, not template paths
+    or output filenames.
     """
 
     model_config = ConfigDict(frozen=True)
 
     enabled: bool = True
-    template: str
-    output: TemplateOutputConfig
     export: TemplateBarrelExportStrategy = TemplateBarrelExportStrategy.NAMED
+    folders: tuple[str, ...] = Field(default_factory=tuple)

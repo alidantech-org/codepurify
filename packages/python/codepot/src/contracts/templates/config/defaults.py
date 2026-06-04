@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TemplateDefaultsConfig(BaseModel):
@@ -12,4 +12,4 @@ class TemplateDefaultsConfig(BaseModel):
 
     output: str = "generated"
     global_alias: str = "shared"
-    global_folders: tuple[str, ...] = ()
+    global_folders: tuple[str, ...] = Field(default_factory=tuple)

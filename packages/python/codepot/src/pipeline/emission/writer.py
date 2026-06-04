@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -91,12 +92,52 @@ def _existing_content(path: Path) -> str | None:
     return path.read_text(encoding="utf-8")
 
 
-def _status_for_file(
+def _existing_bytes(path: Path) -> bytes | None:
+    """Read existing bytes when file exists."""
+
+    if not path.exists():
+        return None
+
+    if not path.is_file():
+        raise ValueError(f"Output path exists but is not a file: {path}")
+
+    return path.read_bytes()
+
+
+def _static_source_bytes(file: RenderedFile) -> bytes:
+    """Read source bytes for a static file."""
+
+    if file.source_path is None:
+        raise ValueError(f"Static file has no source path: {file.file_id}")
+
+    return file.source_path.read_bytes()
+
+
+def _status_for_static_file(
     *,
     file: RenderedFile,
     dry_run: bool,
 ) -> FileWriteStatus:
-    """Determine write status for one rendered file."""
+    """Determine write status for one static copied file."""
+
+    source_bytes = _static_source_bytes(file)
+    existing = _existing_bytes(file.output_path)
+
+    if existing is None:
+        return FileWriteStatus.WOULD_CREATE if dry_run else FileWriteStatus.CREATED
+
+    if existing == source_bytes:
+        return FileWriteStatus.UNCHANGED
+
+    return FileWriteStatus.WOULD_UPDATE if dry_run else FileWriteStatus.UPDATED
+
+
+def _status_for_rendered_file(
+    *,
+    file: RenderedFile,
+    dry_run: bool,
+) -> FileWriteStatus:
+    """Determine write status for one rendered text file."""
 
     existing = _existing_content(file.output_path)
 
@@ -109,11 +150,44 @@ def _status_for_file(
     return FileWriteStatus.WOULD_UPDATE if dry_run else FileWriteStatus.UPDATED
 
 
-def _write_file(file: RenderedFile) -> None:
-    """Write one rendered file to disk."""
+def _status_for_file(
+    *,
+    file: RenderedFile,
+    dry_run: bool,
+) -> FileWriteStatus:
+    """Determine write status for one output file."""
+
+    if file.is_static:
+        return _status_for_static_file(file=file, dry_run=dry_run)
+
+    return _status_for_rendered_file(file=file, dry_run=dry_run)
+
+
+def _write_static_file(file: RenderedFile) -> None:
+    """Copy one static file to disk."""
+
+    if file.source_path is None:
+        raise ValueError(f"Static file has no source path: {file.file_id}")
+
+    file.output_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(file.source_path, file.output_path)
+
+
+def _write_rendered_file(file: RenderedFile) -> None:
+    """Write one rendered text file to disk."""
 
     file.output_path.parent.mkdir(parents=True, exist_ok=True)
     file.output_path.write_text(file.content, encoding="utf-8")
+
+
+def _write_file(file: RenderedFile) -> None:
+    """Write one output file to disk."""
+
+    if file.is_static:
+        _write_static_file(file)
+        return
+
+    _write_rendered_file(file)
 
 
 def write_rendered_file(
@@ -121,7 +195,7 @@ def write_rendered_file(
     file: RenderedFile,
     dry_run: bool,
 ) -> FileWriteResult:
-    """Write one rendered file or return dry-run status."""
+    """Write one rendered/static file or return dry-run status."""
 
     status = _status_for_file(file=file, dry_run=dry_run)
 
@@ -141,7 +215,7 @@ def write_rendered_files(
     rendered: RenderedFiles,
     dry_run: bool,
 ) -> FileWriteResults:
-    """Write all rendered files."""
+    """Write all rendered/static files."""
 
     return FileWriteResults(
         files=tuple(

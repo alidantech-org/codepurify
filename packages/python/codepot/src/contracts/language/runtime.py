@@ -29,7 +29,9 @@ class LanguageNameRole(StrEnum):
     METHOD = "method"
     FUNCTION = "function"
     CONSTANT = "constant"
+    VARIABLE = "variable"
     FILE = "file"
+    FOLDER = "folder"
     MODULE = "module"
     PACKAGE = "package"
 
@@ -46,7 +48,9 @@ class LanguageNamingRules:
     method_case: SpecNameCase
     function_case: SpecNameCase
     constant_case: SpecNameCase
+    variable_case: SpecNameCase
     file_case: SpecNameCase
+    folder_case: SpecNameCase
     module_case: SpecNameCase
     package_case: SpecNameCase
 
@@ -68,9 +72,15 @@ class LanguageRuntime:
     """Global language context available as ``language`` in templates."""
 
     name: str
-    extension: str
+    extensions: tuple[str, ...]
     package_name: str | None
     package_manager: str | None
     source_root: Path
     naming: LanguageNamingRules
     imports: LanguageImportRules
+
+    @property
+    def extension(self) -> str:
+        """Return the primary language extension."""
+
+        return self.extensions[0] if self.extensions else ""

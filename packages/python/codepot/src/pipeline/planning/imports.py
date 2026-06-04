@@ -41,7 +41,8 @@ class RecordOutputIndex:
     items: dict[str, PlannedOutputFile]
 
     def find_file_for_record(
-        self, record: SpecRecord[object]
+        self,
+        record: SpecRecord[object],
     ) -> PlannedOutputFile | None:
         """Find the planned file that emits a record."""
 
@@ -56,6 +57,9 @@ def build_record_output_index(
     index: dict[str, PlannedOutputFile] = {}
 
     for file in files:
+        if file.is_barrel or file.is_static or file.render_once:
+            continue
+
         for record in file.source.records:
             index[record.id] = file
 
@@ -81,11 +85,20 @@ def _export_targets_for_file(
 ) -> tuple[LanguageExportTarget, ...]:
     """Build export targets for records emitted by one file.
 
-    Normal files usually do not need export-from lines. This currently returns
-    no targets. Barrel export planning will add targets later.
+    Normal files usually do not need export-from lines. Barrel export planning
+    will add targets later.
     """
 
     return ()
+
+
+def _export_strategy_for_file(file: PlannedOutputFile) -> LanguageExportStrategy:
+    """Resolve export strategy for one file."""
+
+    if not file.is_barrel:
+        return LanguageExportStrategy.NAMED
+
+    return LanguageExportStrategy(file.template.barrel_export)
 
 
 def plan_file_imports_exports(
@@ -112,11 +125,7 @@ def plan_file_imports_exports(
         LanguageExportRequest(
             source_path=file.output_path,
             targets=export_targets,
-            strategy=LanguageExportStrategy(
-                file.template.barrel.export
-                if file.template.barrel
-                else LanguageExportStrategy.NAMED
-            ),
+            strategy=_export_strategy_for_file(file),
             runtime=runtime,
         )
     )

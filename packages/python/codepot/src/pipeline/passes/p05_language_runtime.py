@@ -66,7 +66,7 @@ class LanguageRuntimePass:
         runtime = adapter.create_runtime(
             LanguageRuntimeRequest(
                 language=language_key,
-                extension=config.language.extension,
+                extensions=config.language.extensions,
                 package_name=config.language.package_name,
                 package_manager=config.language.package_manager,
                 source_root=state.template_package.package_path
@@ -90,6 +90,6 @@ class LanguageRuntimePass:
             started_at=started_at,
             counters=(
                 ReportCounter("language", 1, language_key),
-                ReportCounter("extension", 1, runtime.extension),
+                ReportCounter("extensions", len(runtime.extensions), ",".join(runtime.extensions)),
             ),
         )

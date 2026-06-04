@@ -24,18 +24,14 @@ from contracts.language.runtime import (
     LanguageNamingRules,
     LanguageRuntime,
 )
-from contracts.spec.names import SpecNameCase, resolve_name_case
+from contracts.spec.names import resolve_name_case
 from languages.dart.constants import DART_LANGUAGE_KEY
 from languages.dart.exports import create_dart_exports
 from languages.dart.imports import create_dart_imports
 from languages.dart.names import make_dart_name
 from languages.dart.types import make_dart_type
 
-
-def _case(value: str) -> SpecNameCase:
-    """Convert configured case string into a typed name case."""
-
-    return SpecNameCase(value)
+DEFAULT_DART_EXTENSIONS = ("dart",)
 
 
 class DartLanguageAdapter:
@@ -48,10 +44,11 @@ class DartLanguageAdapter:
 
         naming = request.naming
         imports = request.imports
+        extensions = request.extensions or DEFAULT_DART_EXTENSIONS
 
         return LanguageRuntime(
             name=request.language,
-            extension=request.extension,
+            extensions=extensions,
             package_name=request.package_name,
             package_manager=request.package_manager,
             source_root=request.source_root,
@@ -64,7 +61,9 @@ class DartLanguageAdapter:
                 method_case=naming.method,
                 function_case=naming.function,
                 constant_case=naming.constant,
+                variable_case=naming.variable,
                 file_case=naming.file,
+                folder_case=naming.folder,
                 module_case=naming.module,
                 package_case=naming.package,
             ),
@@ -86,43 +85,31 @@ class DartLanguageAdapter:
 
         lang_name = make_dart_name(
             record.name,
-            class_name=resolve_name_case(
-                record.name, _case(runtime.naming.class_case)
-            ),
+            class_name=resolve_name_case(record.name, runtime.naming.class_case),
             interface_name=resolve_name_case(
                 record.name,
-                _case(runtime.naming.interface_case),
+                runtime.naming.interface_case,
             ),
-            enum_name=resolve_name_case(
-                record.name, _case(runtime.naming.enum_case)
-            ),
+            enum_name=resolve_name_case(record.name, runtime.naming.enum_case),
             enum_value_name=resolve_name_case(
                 record.name,
-                _case(runtime.naming.enum_value_case),
+                runtime.naming.enum_value_case,
             ),
-            field_name=resolve_name_case(
-                record.name, _case(runtime.naming.field_case)
-            ),
-            method_name=resolve_name_case(
-                record.name, _case(runtime.naming.method_case)
-            ),
+            field_name=resolve_name_case(record.name, runtime.naming.field_case),
+            method_name=resolve_name_case(record.name, runtime.naming.method_case),
             function_name=resolve_name_case(
                 record.name,
-                _case(runtime.naming.function_case),
+                runtime.naming.function_case,
             ),
             constant_name=resolve_name_case(
                 record.name,
-                _case(runtime.naming.constant_case),
+                runtime.naming.constant_case,
             ),
-            file_name=resolve_name_case(
-                record.name, _case(runtime.naming.file_case)
-            ),
-            module_name=resolve_name_case(
-                record.name, _case(runtime.naming.module_case)
-            ),
+            file_name=resolve_name_case(record.name, runtime.naming.file_case),
+            module_name=resolve_name_case(record.name, runtime.naming.module_case),
             package_name=resolve_name_case(
                 record.name,
-                _case(runtime.naming.package_case),
+                runtime.naming.package_case,
             ),
         )
 
@@ -136,43 +123,31 @@ class DartLanguageAdapter:
 
         lang_name = make_dart_name(
             request.name,
-            class_name=resolve_name_case(
-                request.name, _case(runtime.naming.class_case)
-            ),
+            class_name=resolve_name_case(request.name, runtime.naming.class_case),
             interface_name=resolve_name_case(
                 request.name,
-                _case(runtime.naming.interface_case),
+                runtime.naming.interface_case,
             ),
-            enum_name=resolve_name_case(
-                request.name, _case(runtime.naming.enum_case)
-            ),
+            enum_name=resolve_name_case(request.name, runtime.naming.enum_case),
             enum_value_name=resolve_name_case(
                 request.name,
-                _case(runtime.naming.enum_value_case),
+                runtime.naming.enum_value_case,
             ),
-            field_name=resolve_name_case(
-                request.name, _case(runtime.naming.field_case)
-            ),
-            method_name=resolve_name_case(
-                request.name, _case(runtime.naming.method_case)
-            ),
+            field_name=resolve_name_case(request.name, runtime.naming.field_case),
+            method_name=resolve_name_case(request.name, runtime.naming.method_case),
             function_name=resolve_name_case(
                 request.name,
-                _case(runtime.naming.function_case),
+                runtime.naming.function_case,
             ),
             constant_name=resolve_name_case(
                 request.name,
-                _case(runtime.naming.constant_case),
+                runtime.naming.constant_case,
             ),
-            file_name=resolve_name_case(
-                request.name, _case(runtime.naming.file_case)
-            ),
-            module_name=resolve_name_case(
-                request.name, _case(runtime.naming.module_case)
-            ),
+            file_name=resolve_name_case(request.name, runtime.naming.file_case),
+            module_name=resolve_name_case(request.name, runtime.naming.module_case),
             package_name=resolve_name_case(
                 request.name,
-                _case(runtime.naming.package_case),
+                runtime.naming.package_case,
             ),
         )
 

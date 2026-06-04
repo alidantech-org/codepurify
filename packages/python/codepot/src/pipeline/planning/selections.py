@@ -111,18 +111,6 @@ def owner_buckets(
     )
 
 
-def resource_buckets(
-    records: tuple[SpecRecord[object], ...],
-) -> tuple[PlannedSelectionBucket, ...]:
-    """Group records by resource owner key.
-
-    This uses normalized record ownership. Records without a resource owner are
-    placed in the global bucket until repository ownership extraction is richer.
-    """
-
-    return owner_buckets(records)
-
-
 def plan_template_selection(
     *,
     template_id: str,
@@ -134,12 +122,7 @@ def plan_template_selection(
     select = parse_template_select(template.select)
     records = selected_records(repository=repository, select=select)
 
-    if select.mode == TemplateSelectMode.BY_OWNER:
-        buckets = owner_buckets(records)
-    elif select.mode == TemplateSelectMode.BY_RESOURCE:
-        buckets = resource_buckets(records)
-    else:
-        buckets = ()
+    buckets = owner_buckets(records) if select.mode == TemplateSelectMode.BY_OWNER else ()
 
     return PlannedSelection(
         template_id=template_id,

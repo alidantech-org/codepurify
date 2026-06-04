@@ -22,14 +22,30 @@ def parse_template_select(value: str) -> TemplateSelect:
     parts = value.split(".")
 
     if len(parts) != 2:
-        raise ValueError(f"Invalid template select expression: {value}")
+        raise ValueError(
+            "Invalid template select expression. Expected 'once' or '<subject>.<mode>', "
+            f"got: {value}"
+        )
 
     subject_value, mode_value = parts
 
+    try:
+        subject = TemplateSelectSubject(subject_value)
+    except ValueError as error:
+        raise ValueError(f"Unsupported template select subject: {subject_value}") from error
+
+    try:
+        mode = TemplateSelectMode(mode_value)
+    except ValueError as error:
+        raise ValueError(
+            "Unsupported template select mode. Use one of: once, each, all, by_owner. "
+            f"Got: {mode_value}"
+        ) from error
+
     return TemplateSelect(
         raw=value,
-        subject=TemplateSelectSubject(subject_value),
-        mode=TemplateSelectMode(mode_value),
+        subject=subject,
+        mode=mode,
     )
 
 

@@ -9,8 +9,8 @@ class TemplateResolveRef(BaseModel):
     """JSON/YAML ref to a template entry or its barrel.
 
     Valid examples:
-    - ``#/templates/enum_files``
-    - ``#/templates/enum_files/barrel``
+    - ``#/templates/enums``
+    - ``#/templates/enums/barrel``
     """
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)

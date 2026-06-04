@@ -22,11 +22,11 @@ class EmissionGraphFile:
     write_status: FileWriteStatus | None = None
     owner_key: str | None = None
     owner_folders: tuple[str, ...] = ()
-    resource_key: str | None = None
-    resource_folders: tuple[str, ...] = ()
     expanded_folders: tuple[str, ...] = ()
     expanded_file: str | None = None
     is_barrel: bool = False
+    is_static: bool = False
+    render_once: bool = False
     parent_template_id: str | None = None
     barrel_source_file_ids: tuple[str, ...] = ()
 
@@ -91,11 +91,11 @@ def _graph_file(
         ),
         owner_key=debug.owner_key if debug else None,
         owner_folders=debug.owner_folders if debug else (),
-        resource_key=debug.resource_key if debug else None,
-        resource_folders=debug.resource_folders if debug else (),
         expanded_folders=debug.expanded_folders if debug else (),
         expanded_file=debug.expanded_file if debug else None,
         is_barrel=file.is_barrel,
+        is_static=file.is_static,
+        render_once=file.render_once,
         parent_template_id=file.parent_template_id,
         barrel_source_file_ids=file.barrel_source_file_ids,
     )

@@ -32,6 +32,8 @@ from languages.python.imports import create_python_imports
 from languages.python.names import make_python_name
 from languages.python.types import make_python_type
 
+DEFAULT_PYTHON_EXTENSIONS = ("py",)
+
 
 class PythonLanguageAdapter:
     """Python implementation of the Codepotx language adapter contract."""
@@ -43,10 +45,11 @@ class PythonLanguageAdapter:
 
         naming = request.naming
         imports = request.imports
+        extensions = request.extensions or DEFAULT_PYTHON_EXTENSIONS
 
         return LanguageRuntime(
             name=request.language,
-            extension=request.extension,
+            extensions=extensions,
             package_name=request.package_name,
             package_manager=request.package_manager,
             source_root=request.source_root,
@@ -59,7 +62,9 @@ class PythonLanguageAdapter:
                 method_case=naming.method,
                 function_case=naming.function,
                 constant_case=naming.constant,
+                variable_case=naming.variable,
                 file_case=naming.file,
+                folder_case=naming.folder,
                 module_case=naming.module,
                 package_case=naming.package,
             ),
