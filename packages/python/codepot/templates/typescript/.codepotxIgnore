@@ -1,0 +1,10 @@
+codepotx.yaml
+codepotx.yml
+codepotx.json
+.codepotxIgnore
+
+.DS_Store
+__pycache__/
+*.tmp
+*.bak
+*.old

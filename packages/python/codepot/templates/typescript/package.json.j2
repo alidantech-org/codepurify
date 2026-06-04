@@ -1,21 +1,6 @@
 {
-  "name": "{{ project.project_key }}-client",
-  "version": "{{ project.version }}",
-  "description": "Generated TypeScript client.",
+  "name": "{{ language.package_name or spec.metadata.project.project_key }}",
+  "version": "{{ spec.metadata.project.version }}",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write ."
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.0.0",
-    "prettier": "^3.0.0"
-  }
+  "private": true
 }

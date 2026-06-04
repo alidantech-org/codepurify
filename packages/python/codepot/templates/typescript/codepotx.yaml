@@ -1,316 +1,121 @@
 version: 1
 name: typescript-basic
 
+language:
+  name: typescript
+  extensions:
+    - ts
+    - tsx
+    - json
+    - md
+    - txt
+
 defaults:
   global_alias: shared
   global_folders: []
 
-language:
-  name: typescript
-  extension: ts
-  source_root: src
-  package_name: codepotx-generated
-  package_manager: npm
-  naming:
-    classes: pascal
-    interfaces: pascal
-    enums: pascal
-    fields: camel
-    methods: camel
-    constants: screaming_snake
-    files: kebab
-  imports:
-    strategy: relative
-    include_extension: false
+ignore:
+  file: .codepotxIgnore
+  patterns:
+    - .DS_Store
+    - __pycache__/
+    - "*.tmp"
+    - "*.bak"
+    - "*.old"
 
 templates:
-  package_json:
-    kind: package
-    select: once
-    template: package.json.j2
-    output:
-      paths:
-        - file: package.json
-
-  tsconfig:
-    kind: config
-    select: once
-    template: tsconfig.json.j2
-    output:
-      paths:
-        - file: tsconfig.json
-
-  readme:
-    kind: docs
-    select: once
-    template: README.md.j2
-    output:
-      paths:
-        - file: README.md
-
-  root_index:
-    kind: barrel
-    select: once
-    template: src/index.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-          file: index.$[language.extension]
-
-  version_marker:
-    kind: config
-    select: once
-    template: version.txt.j2
-    output:
-      paths:
-        - folders:
-            - versions
-            - v$[project.version]
-          file: marker.txt
-
-  enum_files:
-    kind: source
+  enums:
     select: enums.each
-    template: src/enums/enum.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - enums
-            - $[owner.folders]
-            - $[owner.name.path]
-          file: $[item.name.path].$[language.extension]
-    barrel:
-      enabled: true
-      template: src/enums/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - enums
-              - $[owner.folders]
-              - $[owner.name.path]
-            file: index.$[language.extension]
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - enums
+    barrel: true
 
-  composite_files:
-    kind: source
+  composites:
     select: composites.each
-    template: src/composites/composite.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - composites
-            - $[owner.folders]
-            - $[owner.name.path]
-          file: $[item.name.path].$[language.extension]
-    barrel:
-      enabled: true
-      template: src/composites/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - composites
-              - $[owner.folders]
-              - $[owner.name.path]
-            file: index.$[language.extension]
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - composites
+    barrel: true
+    resolves:
+      enums:
+        $ref: "#/templates/enums/barrel"
 
-  model_files:
-    kind: source
+  models:
     select: models.each
-    template: src/models/model.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - models
-            - $[owner.folders]
-            - $[owner.name.path]
-          file: $[item.name.path].$[language.extension]
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - models
+    barrel: true
     resolves:
       enums:
-        ref: "#/templates/enum_files/barrel"
+        $ref: "#/templates/enums/barrel"
       composites:
-        ref: "#/templates/composite_files/barrel"
+        $ref: "#/templates/composites/barrel"
       models:
-        ref: "#/templates/model_files/barrel"
-    barrel:
-      enabled: true
-      template: src/models/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - models
-              - $[owner.folders]
-              - $[owner.name.path]
-            file: index.$[language.extension]
+        $ref: "#/templates/models/barrel"
 
-  dto_files:
-    kind: source
+  dtos:
     select: dtos.by_owner
-    template: src/dtos/dto.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - dtos
-            - $[owner.folders]
-            - $[owner.name.path]
-          file: dtos.$[language.extension]
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - dtos
+    barrel: true
     resolves:
       enums:
-        ref: "#/templates/enum_files/barrel"
+        $ref: "#/templates/enums/barrel"
       composites:
-        ref: "#/templates/composite_files/barrel"
+        $ref: "#/templates/composites/barrel"
       models:
-        ref: "#/templates/model_files/barrel"
-    barrel:
-      enabled: true
-      template: src/dtos/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - dtos
-              - $[owner.folders]
-              - $[owner.name.path]
-            file: index.$[language.extension]
+        $ref: "#/templates/models/barrel"
 
-  error_files:
-    kind: source
+  errors:
     select: errors.each
-    template: src/errors/error.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - errors
-            - $[owner.folders]
-            - $[owner.name.path]
-          file: $[item.name.path].$[language.extension]
-    barrel:
-      enabled: true
-      template: src/errors/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - errors
-              - $[owner.folders]
-              - $[owner.name.path]
-            file: index.$[language.extension]
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - errors
+    barrel: true
 
-  route_path_files:
-    kind: source
-    select: route_paths.by_resource
-    template: src/resources/route-paths.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - resources
-            - $[resource.folders]
-            - $[resource.name.path]
-          file: route-paths.$[language.extension]
-    barrel:
-      enabled: false
-      template: src/resources/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - resources
-              - $[resource.folders]
-              - $[resource.name.path]
-            file: index.$[language.extension]
-
-  route_files:
-    kind: source
-    select: routes.by_resource
-    template: src/resources/routes.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - resources
-            - $[resource.folders]
-            - $[resource.name.path]
-          file: routes.$[language.extension]
-    barrel:
-      enabled: false
-      template: src/resources/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - resources
-              - $[resource.folders]
-              - $[resource.name.path]
-            file: index.$[language.extension]
-
-  operation_files:
-    kind: source
-    select: operations.by_resource
-    template: src/resources/operations.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - resources
-            - $[resource.folders]
-            - $[resource.name.path]
-          file: operations.$[language.extension]
-    barrel:
-      enabled: false
-      template: src/resources/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - resources
-              - $[resource.folders]
-              - $[resource.name.path]
-            file: index.$[language.extension]
-
-  resource_files:
-    kind: source
+  resources:
     select: resources.each
-    template: src/resources/resource.ts.j2
-    output:
-      paths:
-        - folders:
-            - src
-            - resources
-            - $[resource.folders]
-            - $[resource.name.path]
-          file: index.$[language.extension]
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - resources
+    barrel: false
     resolves:
       route_paths:
-        ref: "#/templates/route_path_files"
+        $ref: "#/templates/route_paths"
       routes:
-        ref: "#/templates/route_files"
+        $ref: "#/templates/routes"
       operations:
-        ref: "#/templates/operation_files"
-    barrel:
-      enabled: false
-      template: src/resources/index.ts.j2
-      export: named
-      output:
-        paths:
-          - folders:
-              - src
-              - resources
-              - $[resource.folders]
-              - $[resource.name.path]
-            file: index.$[language.extension]
+        $ref: "#/templates/operations"
+
+  route_paths:
+    select: route_paths.by_owner
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - resources
+    barrel: false
+
+  routes:
+    select: routes.by_owner
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - resources
+    barrel: false
+
+  operations:
+    select: operations.by_owner
+    folders:
+      - "[owner.folders]"
+      - "[owner.name.path]"
+      - resources
+    barrel: false
