@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
+from contracts.spec.dependencies import SpecDependency
 from contracts.spec.records import SpecRecord
 from contracts.spec.refs import SpecOwner
 from spec.repository.ids import create_record_id
@@ -22,6 +23,7 @@ def create_spec_record(
     key: str,
     data: TData,
     owner: SpecOwner | None = None,
+    dependencies: tuple[SpecDependency, ...] = (),
 ) -> SpecRecord[TData]:
     """Create a normalized spec record around typed IR data."""
 
@@ -37,7 +39,7 @@ def create_spec_record(
         name=create_spec_name(identity.local_key),
         data=data,
         owner=normalized_owner,
-        dependencies=(),
+        dependencies=dependencies,
     )
 
 

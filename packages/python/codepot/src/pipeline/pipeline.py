@@ -15,6 +15,7 @@ from pipeline.contracts.events import PipelineEvent, PipelineEventLevel
 from pipeline.contracts.options import PipelineOptions
 from pipeline.contracts.results import PassReport, PassStatus, PipelineReport
 from pipeline.contracts.state import PipelineState
+from pipeline.debug.state_dump import PipelineStateDumpRequest, write_pipeline_state_dump
 from pipeline.passes.base import PipelinePass
 from pipeline.passes.registry import create_default_passes
 
@@ -79,13 +80,22 @@ class Pipeline:
         state = PipelineState(options=options)
         reports: list[PassReport] = []
 
-        for pipeline_pass in self.passes:
+        for index, pipeline_pass in enumerate(self.passes, start=1):
             if reporter is not None:
                 reporter(_event(pipeline_pass.name, f"Starting {pipeline_pass.title}"))
 
             result = pipeline_pass.run(state)
             state = result.state
             reports.append(result.report)
+
+            if state.options.debug:
+                write_pipeline_state_dump(
+                    PipelineStateDumpRequest(
+                        index=index,
+                        state=state,
+                        report=result.report,
+                    )
+                )
 
             if reporter is not None:
                 reporter(_event(pipeline_pass.name, result.report.message))

@@ -49,6 +49,21 @@ class RecordOutputIndex:
         return self.items.get(record.id)
 
 
+@dataclass(frozen=True)
+class FileOutputIndex:
+    """Index from planned file id to planned output file."""
+
+    items: dict[str, PlannedOutputFile]
+
+    def find_file(
+        self,
+        file_id: str,
+    ) -> PlannedOutputFile | None:
+        """Find a planned file by id."""
+
+        return self.items.get(file_id)
+
+
 def build_record_output_index(
     files: tuple[PlannedOutputFile, ...],
 ) -> RecordOutputIndex:
@@ -66,6 +81,14 @@ def build_record_output_index(
     return RecordOutputIndex(items=index)
 
 
+def build_file_output_index(
+    files: tuple[PlannedOutputFile, ...],
+) -> FileOutputIndex:
+    """Build planned-file id index."""
+
+    return FileOutputIndex(items={file.id: file for file in files})
+
+
 def _import_targets_for_file(
     *,
     file: PlannedOutputFile,
@@ -80,16 +103,91 @@ def _import_targets_for_file(
     return ()
 
 
-def _export_targets_for_file(
-    file: PlannedOutputFile,
-) -> tuple[LanguageExportTarget, ...]:
-    """Build export targets for records emitted by one file.
+def _symbol_for_record(record: SpecRecord[object]) -> str:
+    """Return a stable exported symbol for a record.
 
-    Normal files usually do not need export-from lines. Barrel export planning
-    will add targets later.
+    This is intentionally based on typed SpecName data, not guessed object shape.
+    Language-specific enrichment can replace this later.
     """
 
-    return ()
+    return record.name.pascal
+
+
+def _barrel_star_export_targets(
+    *,
+    file: PlannedOutputFile,
+    file_index: FileOutputIndex,
+) -> tuple[LanguageExportTarget, ...]:
+    """Build star export targets for one barrel file."""
+
+    targets: list[LanguageExportTarget] = []
+
+    for source_file_id in file.barrel_source_file_ids:
+        source_file = file_index.find_file(source_file_id)
+
+        if source_file is None:
+            raise ValueError(f"Barrel source file was not found: {source_file_id}")
+
+        targets.append(
+            LanguageExportTarget(
+                symbol="*",
+                target_path=source_file.output_path,
+                source_path=file.output_path,
+            )
+        )
+
+    return tuple(targets)
+
+
+def _barrel_named_export_targets(
+    *,
+    file: PlannedOutputFile,
+    file_index: FileOutputIndex,
+) -> tuple[LanguageExportTarget, ...]:
+    """Build named export targets for one barrel file."""
+
+    targets: list[LanguageExportTarget] = []
+
+    for source_file_id in file.barrel_source_file_ids:
+        source_file = file_index.find_file(source_file_id)
+
+        if source_file is None:
+            raise ValueError(f"Barrel source file was not found: {source_file_id}")
+
+        for record in source_file.source.records:
+            targets.append(
+                LanguageExportTarget(
+                    symbol=_symbol_for_record(record),
+                    target_path=source_file.output_path,
+                    source_path=file.output_path,
+                )
+            )
+
+    return tuple(targets)
+
+
+def _export_targets_for_file(
+    *,
+    file: PlannedOutputFile,
+    file_index: FileOutputIndex,
+) -> tuple[LanguageExportTarget, ...]:
+    """Build export targets for one file."""
+
+    if not file.is_barrel:
+        return ()
+
+    strategy = _export_strategy_for_file(file)
+
+    if strategy == LanguageExportStrategy.STAR:
+        return _barrel_star_export_targets(
+            file=file,
+            file_index=file_index,
+        )
+
+    return _barrel_named_export_targets(
+        file=file,
+        file_index=file_index,
+    )
 
 
 def _export_strategy_for_file(file: PlannedOutputFile) -> LanguageExportStrategy:
@@ -104,14 +202,15 @@ def _export_strategy_for_file(file: PlannedOutputFile) -> LanguageExportStrategy
 def plan_file_imports_exports(
     *,
     file: PlannedOutputFile,
-    index: RecordOutputIndex,
+    record_index: RecordOutputIndex,
+    file_index: FileOutputIndex,
     adapter: LanguageAdapter,
     runtime: LanguageRuntime,
 ) -> PlannedFileImportsExports:
     """Plan imports/exports for one planned output file."""
 
-    import_targets = _import_targets_for_file(file=file, index=index)
-    export_targets = _export_targets_for_file(file)
+    import_targets = _import_targets_for_file(file=file, index=record_index)
+    export_targets = _export_targets_for_file(file=file, file_index=file_index)
 
     imports = adapter.create_imports(
         LanguageImportRequest(
@@ -145,13 +244,15 @@ def plan_imports_exports(
 ) -> PlannedImportsExports:
     """Plan file-level imports and exports for all files."""
 
-    index = build_record_output_index(files)
+    record_index = build_record_output_index(files)
+    file_index = build_file_output_index(files)
 
     return PlannedImportsExports(
         files=tuple(
             plan_file_imports_exports(
                 file=file,
-                index=index,
+                record_index=record_index,
+                file_index=file_index,
                 adapter=adapter,
                 runtime=runtime,
             )
