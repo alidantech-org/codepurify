@@ -79,5 +79,5 @@ function toSnakeCase(value: string): string {
 function createScopedId(options: DefineRoutesOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
 
-  return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
+  return createEngineId(EngineIdPart.resource, options.resource.name, ...parts);
 }

@@ -2,6 +2,12 @@
  * Core contract builders
  * ========================================================= */
 
+import { PropertyRegistry, EntityRegistryResult } from './properties/property.types.js';
+import { RefUsage } from './refs/ref-usage.types.js';
+import { ArrayRef, ExtendedRef } from './refs/ref-wrapper.types.js';
+import { CompositeSchemaField, PrimitiveSchemaField, RefSchemaField } from './schema/schema.types.js';
+import { VersionBuilder } from './version/define-version-contract.js';
+
 export { defineVersionContract } from './version/define-version-contract.js';
 export { defineResource } from './resource/define-resource.js';
 
@@ -176,6 +182,17 @@ export { resolveCompileOptions } from './config/resolve-compile-options.js';
 export { resolvePackageConfig } from './config/resolve-package-config.js';
 
 export type { PackageConfig, PackageOutputConfig, PackageServerConfig } from './config/package-config.types.js';
+export type {
+  VersionBuilder,
+  ArrayRef,
+  RefUsage,
+  PropertyRegistry,
+  EntityRegistryResult,
+  ExtendedRef,
+  RefSchemaField,
+  CompositeSchemaField,
+  PrimitiveSchemaField,
+};
 
 /* =========================================================
  * Output and writer

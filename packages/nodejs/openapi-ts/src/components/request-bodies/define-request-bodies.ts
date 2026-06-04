@@ -55,5 +55,5 @@ function createRequestBodyRef(options: DefineRequestBodiesOptions, name: string)
 
 function createScopedId(options: DefineRequestBodiesOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
-  return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
+  return createEngineId(EngineIdPart.resource, options.resource.name, ...parts);
 }

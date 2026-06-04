@@ -39,7 +39,6 @@ const v1 = defineVersionContract({
 });
 
 const shared = v1.defineResource({
-  key: 'shared',
   name: 'Shared',
   route: '/_shared',
 });
@@ -156,7 +155,6 @@ v1.setDefaultResponses({
 });
 
 const users = v1.defineResource({
-  key: 'users',
   name: 'User',
   route: '/users',
 });
@@ -313,7 +311,6 @@ users.defineRoutes({
 });
 
 const vehicles = v1.defineResource({
-  key: 'vehicles',
   name: 'Vehicle',
   route: '/vehicles',
 });

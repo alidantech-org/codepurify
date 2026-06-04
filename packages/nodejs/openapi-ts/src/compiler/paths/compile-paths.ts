@@ -68,7 +68,7 @@ export function compilePaths(
         const inferred = inferRouteComponents(
           route,
           pathParams,
-          resource.context.key,
+          resource.context.name,
           contract.defaultResponses,
           contract.defaults,
           context,

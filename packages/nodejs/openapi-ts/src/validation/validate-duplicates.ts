@@ -6,7 +6,7 @@ export function validateDuplicates(contract: VersionContract): ValidationIssue[]
 
   issues.push(
     ...findDuplicates(
-      contract.resources.map((resource) => resource.context.key),
+      contract.resources.map((resource) => resource.context.name),
       'resources',
     ),
   );
@@ -47,7 +47,7 @@ export function validateDuplicates(contract: VersionContract): ValidationIssue[]
   );
 
   for (const resource of contract.resources) {
-    const basePath = `resources.${resource.context.key}`;
+    const basePath = `resources.${resource.context.name}`;
 
     issues.push(
       ...findRegistryDuplicates(

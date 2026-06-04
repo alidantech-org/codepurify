@@ -55,5 +55,5 @@ function createResponseRef(options: DefineResponsesOptions, name: string): Respo
 
 function createScopedId(options: DefineResponsesOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
-  return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
+  return createEngineId(EngineIdPart.resource, options.resource.name, ...parts);
 }

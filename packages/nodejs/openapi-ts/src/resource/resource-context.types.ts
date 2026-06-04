@@ -2,12 +2,6 @@ import type { ZodSourceRegistry } from '../zod/zod-source-registry.js';
 
 export interface ResourceContext {
   /**
-   * Stable machine key.
-   * Example: "users", "vehicle_brands"
-   */
-  readonly key: string;
-
-  /**
    * Human-readable resource name.
    * Example: "User", "Vehicle Brand"
    */

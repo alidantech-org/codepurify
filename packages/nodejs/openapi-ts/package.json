@@ -1,5 +1,5 @@
 {
-      "name": "@codepurify/openapi-ts",
+      "name": "codepurify",
       "version": "0.0.1",
       "description": "Typed OpenAPI contract engine for TypeScript projects.",
       "type": "module",

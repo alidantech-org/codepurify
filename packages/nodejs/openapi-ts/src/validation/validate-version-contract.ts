@@ -18,7 +18,7 @@ export function validateVersionContract(contract: VersionContract): ValidationIs
   for (const resource of contract.resources) {
     for (const registry of resource.schemaComponents) {
       for (const component of registry.definitions) {
-        issues.push(...validateSchemaComponentValue(component.value, `resources.${resource.context.key}.components.${component.name}`));
+        issues.push(...validateSchemaComponentValue(component.value, `resources.${resource.context.name}.components.${component.name}`));
       }
     }
 

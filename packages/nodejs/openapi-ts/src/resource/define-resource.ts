@@ -23,12 +23,6 @@ import { defineProperties } from '../properties/define-properties.js';
 
 export interface DefineResourceOptions {
   /**
-   * Stable machine key.
-   * Example: "users", "vehicle_brands"
-   */
-  key: string;
-
-  /**
    * Human-readable resource name.
    * Example: "User", "Vehicle Brand"
    */
@@ -104,12 +98,11 @@ function normalizeFolders(folders?: readonly string[]): readonly string[] {
 
 export function defineResource(options: DefineResourceOptions): ResourceBuilder {
   const context: ResourceContext = {
-    key: options.key,
     name: options.name,
     route: options.route,
     tag: options.tag ?? options.name,
     folders: normalizeFolders(options.folders),
-    alias: options.alias ?? options.key,
+    alias: options.alias ?? options.name,
   };
 
   const properties: PropertyRegistry[] = [];
@@ -121,7 +114,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
 
   function defineResourceProperties(name?: string) {
     const registry = defineProperties({
-      name: name ?? context.key,
+      name: name ?? context.name,
       resource: context,
     });
 
@@ -132,7 +125,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   function defineResourceSchemas<TInput extends Record<string, SchemaComponentValue>>(input: TInput, name?: string) {
     const registry = defineSchemas(
       {
-        name: name ?? context.key,
+        name: name ?? context.name,
         resource: context,
       },
       input,
@@ -148,7 +141,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   ) {
     const registry = defineParameters(
       {
-        name: name ?? context.key,
+        name: name ?? context.name,
         resource: context,
       },
       input,
@@ -164,7 +157,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   ) {
     const registry = defineRequestBodies(
       {
-        name: name ?? context.key,
+        name: name ?? context.name,
         resource: context,
       },
       input,
@@ -177,7 +170,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   function defineResourceResponses<TInput extends Record<string, Omit<ResponseComponentDefinition, 'name'>>>(input: TInput, name?: string) {
     const registry = defineResponses(
       {
-        name: name ?? context.key,
+        name: name ?? context.name,
         resource: context,
       },
       input,
@@ -190,7 +183,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   function defineResourceRoutes(input: Parameters<typeof defineRoutes>[1], name?: string) {
     const registry = defineRoutes(
       {
-        name: name ?? context.key,
+        name: name ?? context.name,
         resource: context,
       },
       input,

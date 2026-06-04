@@ -55,5 +55,5 @@ function createParameterRef(options: DefineParametersOptions, name: string): Par
 
 function createScopedId(options: DefineParametersOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
-  return createEngineId(EngineIdPart.resource, options.resource.key, ...parts);
+  return createEngineId(EngineIdPart.resource, options.resource.name, ...parts);
 }
