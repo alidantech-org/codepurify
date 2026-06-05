@@ -7,6 +7,9 @@ TITLE = "title"
 VERSION = "version"
 PATHS = "paths"
 COMPONENTS = "components"
+SERVERS = "servers"
+URL = "url"
+VARIABLES = "variables"
 
 # Component sections
 SCHEMAS = "schemas"

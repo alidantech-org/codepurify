@@ -1,9 +1,9 @@
 import { loggerConfigFromCliArgs, type ParsedCliArgs } from './cli-args.js';
 import { createLogger } from '../logging/create-logger.js';
 import { LogLevel } from '../logging/log-level.js';
-import { OpenApiTs } from '../api/openapi-ts.js';
 import { CliMessage } from './cli.constants.js';
 import { loadPackageConfig } from './load-package-config.js';
+import { OpenApiTs } from '../index.js';
 
 export async function runGenerateCommand(args: ParsedCliArgs): Promise<number> {
   const cliLoggerConfig = loggerConfigFromCliArgs(args);

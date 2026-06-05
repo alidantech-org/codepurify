@@ -32,7 +32,7 @@ folders:
       - schemas
       - [dto.emit.resource_path]
       - dtos
-      - [dto.emit.folder_path]
+      - [dto.name.path.o]
 
   enum:
     select: schemas.emit_enums
@@ -53,7 +53,7 @@ folders:
       - routes
 
   route_group:
-    select: resources
+    select: features
     as: resource
     parts:
       - lib
@@ -62,7 +62,7 @@ folders:
       - constants
 
   feature:
-    select: resources
+    select: features
     as: resource
     parts:
       - lib

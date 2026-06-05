@@ -33,6 +33,7 @@ from cli.presentation.core.interactive import (
     ask_templates_path,
     should_prompt,
 )
+from cli.paths import normalize_cli_path
 from cli.presentation.emit.renderer import render_emit_result
 
 
@@ -111,8 +112,12 @@ def emit_command(
         if resolved_output is None:
             raise ValueError("missing required option: --output")
 
+        resolved_input = normalize_cli_path(resolved_input)
+        resolved_output = normalize_cli_path(resolved_output)
+        resolved_templates_path = normalize_cli_path(resolved_templates_path)
+
         if not quiet:
-            print_header("Emit", f"{resolved_language} → {resolved_output}")
+            print_header("Emit", f"{resolved_language} -> {resolved_output}")
 
         runtime = get_runtime(ctx)
         result = runtime.emit(

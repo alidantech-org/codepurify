@@ -5,17 +5,51 @@
 ## Usage
 
 ```dart
+import 'package:flutter_api_bridge/flutter_api_bridge.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:{{ lang.package.name }}/{{ project.name.path.o }}.dart';
 
 void main() {
-  {{ project.name.pascal.o }}.initialize();
+  ApiClient.instance(
+    baseUrl: 'https://api.example.com',
+  );
+}
+
+Future<void> login(WidgetRef ref, LoginBody body) async {
+  final api = {{ project.name.pascal.o }}.fromRef(ref);
+
+  // Example:
+  await api.{{ project.meta.api_version_name.camel.o }}.auth.login(body: body);
 }
 ```
 
-## Development URL override
+The app owns the `flutter_api_bridge` client, including base URL, tokens,
+interceptors, retry behavior, and raw bridge access. The SDK receives Riverpod
+`WidgetRef`, reads `apiProvider.notifier`, and provides typed DTOs, routes, features,
+request methods, and response parsing.
 
-```dart
-{{ project.name.pascal.o }}.initialize(
-  baseUrl: 'http://192.168.1.10:3000',
-);
+## Bridge compatibility
+
+This SDK depends on:
+
+```yaml
+flutter_api_bridge: ^0.1.0
+flutter_riverpod: ^2.6.1
+```
+
+The consuming app should use a compatible version. To verify the resolved version:
+
+```bash
+flutter pub deps | grep flutter_api_bridge
+flutter pub deps | grep flutter_riverpod
+```
+
+If there is a version conflict, align the app and SDK to the same compatible
+dependency ranges.
+
+# generate dart models
+```bash
+dart format .
+dart pub get
+dart run build_runner build --force-jit
 ```

@@ -18,6 +18,7 @@ from cli.constants.defaults import (
     DEFAULT_WRITE_OUTPUT,
     LANGUAGE_CHOICES,
 )
+from cli.paths import normalize_cli_path
 
 T = TypeVar("T")
 
@@ -43,7 +44,7 @@ def ask_input_path() -> Path:
             validate=lambda p: Path(p).exists() or "File does not exist",
         )
     )
-    return Path(value)
+    return normalize_cli_path(value) or Path(value)
 
 
 def ask_language() -> str:
@@ -60,7 +61,7 @@ def ask_language() -> str:
 def ask_output_path() -> Path:
     """Ask for the output directory or file path."""
     value = _ask(lambda q: q.path("Output path:"))
-    return Path(value)
+    return normalize_cli_path(value) or Path(value)
 
 
 def ask_optional_output_path() -> Path | None:
@@ -82,7 +83,7 @@ def ask_optional_output_path() -> Path | None:
     if not value:
         return None
 
-    return Path(value)
+    return normalize_cli_path(value) or Path(value)
 
 
 def ask_templates_path() -> Path | None:
@@ -93,7 +94,7 @@ def ask_templates_path() -> Path | None:
         return None
 
     value = _ask(lambda q: q.path("Templates path:"))
-    return Path(value)
+    return normalize_cli_path(value) or Path(value)
 
 
 def ask_dry_run() -> bool:

@@ -1,10 +1,10 @@
 # documentation.md
 
-# @codepurify/openapi-ts
+# codepot-openapi
 
 TypeScript-first OpenAPI contract engine for building clean OpenAPI 3.1 specs and SDK-friendly metadata from code.
 
-`@codepurify/openapi-ts` lets you define your API contract using typed builders instead of manually writing YAML. It supports version contracts, resources, reusable properties, schemas, parameters, request bodies, responses, routes, default responses, shared primitives, enum detection, nullable/optional refs, and entity inheritance.
+`codepot-openapi` lets you define your API contract using typed builders instead of manually writing YAML. It supports version contracts, resources, reusable properties, schemas, parameters, request bodies, responses, routes, default responses, shared primitives, enum detection, nullable/optional refs, and entity inheritance.
 
 ---
 
@@ -96,19 +96,19 @@ paths:
 Assuming the package is published to npm:
 
 ```bash
-pnpm add -D @codepurify/openapi-ts
+pnpm add -D codepot-openapi
 ```
 
 or:
 
 ```bash
-npm install -D @codepurify/openapi-ts
+npm install -D codepot-openapi
 ```
 
 or:
 
 ```bash
-yarn add -D @codepurify/openapi-ts
+yarn add -D codepot-openapi
 ```
 
 You also need `zod`:
@@ -132,8 +132,8 @@ Add scripts to your backend `package.json`:
 ```json
 {
   "scripts": {
-    "openapi:init": "openapi-ts init",
-    "openapi:generate": "openapi-ts generate",
+    "openapi:init": "codepot-openapi init",
+    "openapi:generate": "codepot-openapi generate",
     "openapi:lint": "redocly lint openapi/openapi.v1.json",
     "openapi": "pnpm openapi:generate && pnpm openapi:lint"
   }
@@ -159,7 +159,7 @@ package.config.ts
 ## Initialize config
 
 ```bash
-openapi-ts init
+codepot-openapi init
 ```
 
 Creates a starter `package.config.ts`.
@@ -167,7 +167,7 @@ Creates a starter `package.config.ts`.
 ## Generate OpenAPI
 
 ```bash
-openapi-ts generate
+codepot-openapi generate
 ```
 
 Reads `package.config.ts` and writes OpenAPI JSON/YAML files.
@@ -190,7 +190,7 @@ The package expects a `package.config.ts` file at your project root.
 Basic shape:
 
 ```ts
-import { definePackageConfig } from '@codepurify/openapi-ts';
+import { definePackageConfig } from 'codepot-openapi';
 
 export default definePackageConfig({
   contracts: [],
@@ -1213,7 +1213,7 @@ import {
   SchemaAccess,
   QueryBehavior,
   ParameterLocation,
-} from '@codepurify/openapi-ts';
+} from 'codepot-openapi';
 
 const v1 = defineVersionContract({
   info: {

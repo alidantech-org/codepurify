@@ -58,4 +58,10 @@ def _api_title(api: ApiContract) -> str:
 
 
 def _api_version(api: ApiContract) -> str:
+    info = getattr(api, "info", None)
+    version = getattr(info, "api_version", None)
+
+    if isinstance(version, str) and version.strip():
+        return version.strip().strip("/") or DEFAULT_API_VERSION
+
     return DEFAULT_API_VERSION

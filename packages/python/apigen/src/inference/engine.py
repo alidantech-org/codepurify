@@ -35,6 +35,7 @@ class InferenceEngine:
             openapi_version=document.openapi_version,
             api_version=document.api_version,
             description=_clean_optional_text(document.description),
+            servers=document.servers,
             resources=resources,
             schemas=schemas,
             operations=operations,

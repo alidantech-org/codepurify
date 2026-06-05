@@ -36,12 +36,12 @@ def _style_level(level: str) -> str:
     normalized = str(level).lower()
 
     if normalized == "error":
-        return "[bold red]✗ error[/bold red]"
+        return "[bold red]x error[/bold red]"
 
     if normalized == "warning":
-        return "[bold yellow]⚠ warning[/bold yellow]"
+        return "[bold yellow]! warning[/bold yellow]"
 
     if normalized == "info":
-        return "[bold cyan]ℹ info[/bold cyan]"
+        return "[bold cyan]i info[/bold cyan]"
 
     return f"[dim]{level}[/dim]"

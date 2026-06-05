@@ -108,7 +108,7 @@ def _format_key(key: str) -> str:
 
 def _format_value(value: Any, *, highlight_zero: bool = False) -> str:
     if value is None:
-        return "[dim]—[/dim]"
+        return "[dim]-[/dim]"
 
     if isinstance(value, bool):
         return "[bold green]yes[/bold green]" if value else "[dim]no[/dim]"
@@ -129,7 +129,7 @@ def _format_value(value: Any, *, highlight_zero: bool = False) -> str:
 
     text = str(value)
     if text in {"-", ""}:
-        return "[dim]—[/dim]"
+        return "[dim]-[/dim]"
 
     return text
 

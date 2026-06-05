@@ -313,6 +313,9 @@ class TemplateOperationLang:
     function_name: str = "-"
     display_name: str = "-"
     method: str = "-"
+    endpoint_path: str = "-"
+    dart_interpolated_endpoint_path: str = "-"
+    version: str = "-"
 
 
 @dataclass(frozen=True)
@@ -569,6 +572,7 @@ class TemplateContract:
     lang: TemplateLanguage
     emit: TemplateEmit
     resources: tuple[TemplateResource, ...] = ()
+    features: tuple[TemplateResource, ...] = ()
     schemas: TemplateSchemaGroups = field(default_factory=TemplateSchemaGroups)
     operations: tuple[TemplateOperation, ...] = ()
     file: TemplateFile | None = None

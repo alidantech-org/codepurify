@@ -34,6 +34,7 @@ from contracts.template import (
 )
 from languages.dart.dependencies import dependency
 from languages.dart.names import name_text, safe_dart_identifier
+from languages.dart.urls import build_endpoint_path
 from languages.debug.context.path_values import safe_file_name
 
 _PATH_PARAM_PATTERN = re.compile(r"\{([^{}]+)\}")
@@ -42,6 +43,7 @@ _PATH_PARAM_PATTERN = re.compile(r"\{([^{}]+)\}")
 def template_operations(
     operations: tuple[ApiOperation, ...],
     *,
+    version: str,
     resource_paths: dict[str, tuple[str, ...]],
     schema_by_ref: dict[str, ApiSchema],
 ) -> tuple[TemplateOperation, ...]:
@@ -49,6 +51,7 @@ def template_operations(
     return tuple(
         _operation(
             operation,
+            version=version,
             resource_paths=resource_paths,
             schema_by_ref=schema_by_ref,
         )
@@ -67,6 +70,7 @@ def operations_for_resource(
 def _operation(
     operation: ApiOperation,
     *,
+    version: str,
     resource_paths: dict[str, tuple[str, ...]],
     schema_by_ref: dict[str, ApiSchema],
 ) -> TemplateOperation:
@@ -81,6 +85,7 @@ def _operation(
     body_ref = _body_ref(operation)
     response_ref = _success_response_ref(operation)
     path_params = _path_param_names(operation.path)
+    endpoint_path = build_endpoint_path(operation.path)
 
     return TemplateOperation(
         api=operation,
@@ -93,6 +98,9 @@ def _operation(
             function_name=function_name,
             display_name=operation.name.pascal.o,
             method=method,
+            endpoint_path=endpoint_path,
+            dart_interpolated_endpoint_path=_dart_interpolated_endpoint_path(endpoint_path),
+            version=version,
         ),
         emit=TemplateItemEmit(
             group=TemplateGroup.OPERATIONS,
@@ -376,6 +384,13 @@ def _path_param_names(path: str) -> tuple[str, ...]:
             names.append(name)
 
     return tuple(names)
+
+
+def _dart_interpolated_endpoint_path(path: str) -> str:
+    return _PATH_PARAM_PATTERN.sub(
+        lambda match: f"${safe_dart_identifier(match.group(1), fallback='param')}",
+        path,
+    )
 
 
 def _operation_resource_path(

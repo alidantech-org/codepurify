@@ -45,7 +45,7 @@ export async function validateOpenApiDocument(
   document: OpenApiDocument,
   config: OpenApiValidationConfig = {},
 ): Promise<OpenApiValidationResult> {
-  const tempDir = await mkdtemp(join(tmpdir(), 'openapi-ts-'));
+  const tempDir = await mkdtemp(join(tmpdir(), 'codepot-openapi-'));
 
   try {
     // Write document to temp file
@@ -94,7 +94,7 @@ export async function validateOpenApiFile(
     failOnWarnings: config.failOnWarnings,
   });
 
-  const tempDir = await mkdtemp(join(tmpdir(), 'openapi-ts-'));
+  const tempDir = await mkdtemp(join(tmpdir(), 'codepot-openapi-'));
 
   try {
     logger?.verbose('Running Redocly validation', {

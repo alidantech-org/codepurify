@@ -23,6 +23,7 @@ def render_emit_result(result, *, verbose: bool = False) -> None:
     if not dry_run:
         render_emit_files("Written Files", getattr(result, "written", []))
         render_emit_files("Updated Files", getattr(result, "updated", []))
+        render_emit_files("Unchanged Files", getattr(result, "unchanged", []))
         render_emit_files("Skipped Files", getattr(result, "skipped", []))
 
     render_diagnostics(getattr(result, "diagnostics", []))

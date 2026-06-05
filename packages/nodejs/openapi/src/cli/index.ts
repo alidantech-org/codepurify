@@ -28,7 +28,7 @@ async function main(): Promise<void> {
 function printHelp(): void {
   console.log(
     [
-      'openapi-ts',
+      'codepot-openapi',
       '',
       'Commands:',
       '  init       Create package.config.ts',

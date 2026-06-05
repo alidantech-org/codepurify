@@ -103,5 +103,6 @@ class EmitOutput:
     planned: list[Path] = field(default_factory=list)
     written: list[Path] = field(default_factory=list)
     updated: list[Path] = field(default_factory=list)
+    unchanged: list[Path] = field(default_factory=list)
     skipped: list[Path] = field(default_factory=list)
     diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)

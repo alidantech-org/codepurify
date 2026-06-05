@@ -1,5 +1,5 @@
 import type { ParsedCliArgs } from './cli-args.js';
-import { OpenApiTs } from '../api/openapi-ts.js';
+import { OpenApiTs } from '../api/codepot-openapi.js';
 import { CliMessage } from './cli.constants.js';
 
 export async function runInitCommand(args: ParsedCliArgs): Promise<number> {

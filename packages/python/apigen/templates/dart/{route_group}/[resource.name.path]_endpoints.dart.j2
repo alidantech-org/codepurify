@@ -1,22 +1,15 @@
 class {{ resource.name.pascal.o | string }}Endpoints {
   const {{ resource.name.pascal.o | string }}Endpoints();
-
-{%- for operation in resource.operations %}
-{%- if operation.meta.has_path_params %}
-  String {{ operation.lang.function_name | string }}({
-{%- for param in operation.meta.path_params %}
-    required String {{ param }}{%- if not loop.last %},{%- endif %}
-{%- endfor %}
-  }) =>
-{%- if operation.meta.path_params | length > 1 %}
-      '{{ operation.api.path | string | replace("{", "${") }}';
-{%- else %}
-      '{{ operation.api.path | string | replace("{", "$") | replace("}", "") }}';
-{%- endif %}
-
-{%- else %}
-  String get {{ operation.lang.function_name | string }} => '{{ operation.api.path | string }}';
-
-{%- endif %}
-{%- endfor %}
+{% for operation in resource.operations %}
+{% if operation.meta.has_path_params %}
+{{ "\n" }}  String {{ operation.lang.function_name | string }}({
+{% for param in operation.meta.path_params %}
+    required String {{ param }}{% if not loop.last %},{% endif %}
+{% endfor %}
+{{ "\n" }}  }) =>
+      '{{ operation.lang.dart_interpolated_endpoint_path }}';
+{% else %}
+{{ "\n" }}  String get {{ operation.lang.function_name | string }} => '{{ operation.lang.endpoint_path }}';
+{% endif %}
+{% endfor %}
 }

@@ -15,6 +15,7 @@ from constants.openapi import (
     INFO,
     OPENAPI,
     PATHS,
+    SERVERS,
     TITLE,
     VERSION,
 )
@@ -52,6 +53,14 @@ class OpenApiDocument:
     def paths(self) -> OpenApiDict:
         value = self.raw.get(PATHS)
         return value if isinstance(value, dict) else {}
+
+    @property
+    def servers(self) -> tuple[OpenApiDict, ...]:
+        value = self.raw.get(SERVERS)
+        if not isinstance(value, list):
+            return ()
+
+        return tuple(server for server in value if isinstance(server, dict))
 
     @property
     def components(self) -> OpenApiDict:

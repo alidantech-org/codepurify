@@ -18,9 +18,9 @@ export type { ResourceBuilder as OpenApiResourceContract } from './resource/defi
  * Public API facade
  * ========================================================= */
 
-export { OpenApiTs } from './api/openapi-ts.js';
+export { OpenApiTs } from './api/codepot-openapi.js';
 
-export type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './api/openapi-ts.types.js';
+export type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './api/codepot-openapi.types.js';
 
 /* =========================================================
  * Schema DSL

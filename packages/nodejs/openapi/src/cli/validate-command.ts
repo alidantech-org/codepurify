@@ -28,7 +28,7 @@ export async function runValidateCommand(args: ParsedCliArgs): Promise<number> {
     if (!fs.existsSync(jsonPath)) {
       logger.error('OpenAPI file not found');
       console.error(`OpenAPI file not found: ${jsonPath}`);
-      console.error('Run "openapi-ts generate" first.');
+      console.error('Run "codepot-openapi generate" first.');
       return 1;
     }
 

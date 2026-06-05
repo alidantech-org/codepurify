@@ -1,17 +1,18 @@
-{%- for model in schemas.emit_models %}
-export 'schemas/{{ model.emit.resource_path | join("/") }}/models/{{ model.name.path.o }}/index.dart';
-{%- endfor %}
-
-{%- for enum in schemas.emit_enums %}
-export 'schemas/{{ enum.emit.resource_path | join("/") }}/enums/{{ enum.name.path.o }}/index.dart';
-{%- endfor %}
-
-{%- for dto in schemas.emit_dtos %}
-export 'schemas/{{ dto.emit.resource_path | join("/") }}/dtos/{{ dto.emit.folder_path | join("/") }}/index.dart';
-{%- endfor %}
-
+export 'client.dart';
 export 'routes/routes.dart';
 
-{%- for resource in resources %}
-export 'features/{{ resource.name.path.o }}_feature.dart';
-{%- endfor %}
+{% for model in schemas.emit_models %}
+export 'schemas/{{ model.emit.resource_path | join("/") }}/models/{{ model.name.path.o }}/index.dart';{{ "\n" }}
+{% endfor %}
+
+{% for enum in schemas.emit_enums %}
+export 'schemas/{{ enum.emit.resource_path | join("/") }}/enums/{{ enum.name.path.o }}/index.dart';{{ "\n" }}
+{% endfor %}
+
+{% for dto in schemas.emit_dtos %}
+export 'schemas/{{ dto.emit.resource_path | join("/") }}/dtos/{{ dto.name.path.o }}/index.dart';{{ "\n" }}
+{% endfor %}
+
+{% for resource in features %}
+export 'features/{{ resource.name.path.o }}_feature.dart';{{ "\n" }}
+{% endfor %}

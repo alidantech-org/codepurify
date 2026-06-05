@@ -26,6 +26,7 @@ from contracts.api import (
     ApiRequestBody,
     ApiResource,
     ApiResponse,
+    ApiServer,
     ApiSchema,
     ApiSchemaGroups,
     ApiSchemaKind,
@@ -53,6 +54,8 @@ from constants.openapi import (
     SUMMARY,
     TYPE_ARRAY,
     TYPE_OBJECT,
+    URL,
+    VARIABLES,
 )
 from contracts.names import make_contract_name
 from inference.models import (
@@ -130,9 +133,23 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
             description=graph.description,
         ),
         resources=tuple(_resource(resource, graph) for resource in graph.resources),
+        servers=tuple(_server(server) for server in graph.servers),
         schemas=_schema_groups(schemas),
         operations=tuple(_operation(operation) for operation in graph.operations),
         dependencies=tuple(_dependency(dependency) for dependency in graph.dependencies),
+    )
+
+
+def _server(server: dict[str, Any]) -> ApiServer:
+    url = server.get(URL)
+    description = server.get(DESCRIPTION)
+    variables = server.get(VARIABLES)
+
+    return ApiServer(
+        url=url.strip() if isinstance(url, str) else "",
+        description=description.strip() if isinstance(description, str) and description.strip() else "-",
+        variables=variables if isinstance(variables, dict) else {},
+        meta={RAW: server},
     )
 
 

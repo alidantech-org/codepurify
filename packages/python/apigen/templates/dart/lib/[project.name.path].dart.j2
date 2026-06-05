@@ -1,13 +1,12 @@
-import 'package:flutter_api_bridge/flutter_api_bridge.dart';
+library {{ project.name.path.o }};
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '{{ project.meta.api_version }}/client.dart';
 
 class {{ project.name.pascal.o }} {
-  const {{ project.name.pascal.o }}._();
+  {{ project.name.pascal.o }}.fromRef(WidgetRef ref)
+      : {{ project.meta.api_version_name.camel.o }} = {{ project.meta.api_version_name.pascal.o }}Client.fromRef(ref);
 
-  static const String defaultBaseUrl = '{{ project.meta.default_base_url }}';
-
-  static void initialize({
-    String? baseUrl,
-  }) {
-    ApiClient.instance(baseUrl ?? defaultBaseUrl);
-  }
+  final {{ project.meta.api_version_name.pascal.o }}Client {{ project.meta.api_version_name.camel.o }};
 }

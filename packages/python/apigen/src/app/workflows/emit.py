@@ -103,7 +103,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
         )
     ]
 
-    diagnostics.extend(RuntimeDiagnostic(level="info", message=message) for message in post_result.diagnostics)
+    diagnostics.extend(RuntimeDiagnostic(level="info", message=message) for message in post_result.diagnostics)  # noqa: E501
 
     return EmitOutput(
         input_path=request.input_path,
@@ -113,6 +113,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
         planned=[file.output_path for file in emission_result.plan.files],
         written=list(write_result.created),
         updated=list(write_result.updated),
+        unchanged=list(write_result.unchanged),
         skipped=list(write_result.skipped),
         diagnostics=diagnostics,
     )

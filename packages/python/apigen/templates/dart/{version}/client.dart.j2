@@ -1,0 +1,22 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'routes/routes.dart';
+{% for resource in features %}
+import 'features/{{ resource.name.path.o | string }}_feature.dart';{{ "\n" }}
+{% endfor %}
+
+class {{ project.meta.api_version_name.pascal.o }}Client {
+  {{ project.meta.api_version_name.pascal.o }}Client.fromRef(WidgetRef ref)
+      : routes = const {{ project.meta.api_version_name.pascal.o }}Routes(){% if features %},
+{% for resource in features %}
+        {{ resource.name.camel.o | string }} = {{ resource.name.pascal.o | string }}Feature(ref){% if not loop.last %},{% else %};{% endif %}{{ "\n" }}
+{% endfor %}
+{% else %};
+{% endif %}
+
+  final {{ project.meta.api_version_name.pascal.o }}Routes routes;
+
+{% for resource in features %}
+  final {{ resource.name.pascal.o | string }}Feature {{ resource.name.camel.o | string }};{{ "\n" }}
+{% endfor %}
+}

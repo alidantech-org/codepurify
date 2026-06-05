@@ -55,6 +55,11 @@ def template_resources(
     return tuple(_resource(resource, schemas=schemas, operations=operations) for resource in resources)
 
 
+def feature_resources(resources: tuple[TemplateResource, ...]) -> tuple[TemplateResource, ...]:
+    """Return Dart resources that should emit feature clients."""
+    return tuple(resource for resource in resources if resource.operations)
+
+
 def _resource(
     resource: ApiResource,
     *,

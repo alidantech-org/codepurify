@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.contracts.api import ApiContract, ApiDocumentInfo, ApiOperation, ApiResource, ApiSchema, ApiSchemaGroups
+from src.contracts.api import (
+    ApiContract,
+    ApiDocumentInfo,
+    ApiOperation,
+    ApiResource,
+    ApiSchema,
+    ApiSchemaGroups,
+    ApiServer,
+)
 from src.contracts.names import make_contract_name
 from src.contracts.template import (
     TemplateContract,
@@ -40,6 +48,12 @@ def make_api_contract() -> ApiContract:
                 path=("platform", "auth"),
                 path_name=make_contract_name("platform_auth"),
                 operations_count=1,
+            ),
+        ),
+        servers=(
+            ApiServer(
+                url="https://api.example.test",
+                description="Test API",
             ),
         ),
         schemas=ApiSchemaGroups(

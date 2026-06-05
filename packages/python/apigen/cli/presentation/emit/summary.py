@@ -17,6 +17,7 @@ def render_emit_summary(result) -> None:
             "Planned": len(getattr(result, "planned", [])),
             "Written": len(getattr(result, "written", [])),
             "Updated": len(getattr(result, "updated", [])),
+            "Unchanged": len(getattr(result, "unchanged", [])),
             "Skipped": len(getattr(result, "skipped", [])),
         },
         highlight_zero=True,

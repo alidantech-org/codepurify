@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateOpenApi } from '../generator/generate-openapi.js';
-import type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './openapi-ts.types.js';
+import type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, OpenApiTsApi } from './codepot-openapi.types.js';
 
 const DefaultConfigFileName = 'package.config.ts';
 
@@ -41,7 +41,7 @@ export class OpenApiTs implements OpenApiTsApi {
 
 function createDefaultConfig(): string {
   return [
-    "import { definePackageConfig } from '@codepurify/openapi-ts';",
+    "import { definePackageConfig } from 'codepot-openapi';",
     '',
     'export default definePackageConfig({',
     '  contracts: [],',

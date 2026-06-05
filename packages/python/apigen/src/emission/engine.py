@@ -89,6 +89,7 @@ class EmissionContextBuilder:
             "emit": self.contract.emit,
             "meta": self.contract.meta,
             "resources": self.contract.resources,
+            "features": self.contract.features,
             "schemas": self.contract.schemas,
             "operations": self.contract.operations,
             "file": self.contract.file,

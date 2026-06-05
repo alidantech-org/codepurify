@@ -16,6 +16,15 @@ def test_build_api_contract_from_sample_openapi(sample_openapi_path) -> None:
     assert len(api.operations) > 0
 
 
+def test_api_contract_preserves_openapi_servers(sample_openapi_path) -> None:
+    graph = load_sample_graph(sample_openapi_path)
+    api = build_api_contract(graph)
+
+    assert api.servers
+    assert api.servers[0].url == "https://api.riderescueautolink.com"
+    assert api.servers[0].description == "Riderescue API"
+
+
 def test_api_contract_preserves_operation_facts(sample_openapi_path) -> None:
     graph = load_sample_graph(sample_openapi_path)
     api = build_api_contract(graph)

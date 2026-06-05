@@ -25,27 +25,27 @@ def print_header(title: str, detail: str | None = None) -> None:
 
 def print_subheader(title: str) -> None:
     """Print a lighter secondary heading (no rule line)."""
-    console.print(f"\n[bold {_BLUE}]▸ {title}[/bold {_BLUE}]")
+    console.print(f"\n[bold {_BLUE}]> {title}[/bold {_BLUE}]")
 
 
 def print_error(message: str) -> None:
     """Print a styled error to stderr."""
-    error_console.print(f"[{_RED}]✗ error:[/{_RED}] {message}")
+    error_console.print(f"[{_RED}]x error:[/{_RED}] {message}")
 
 
 def print_success(message: str) -> None:
     """Print a styled success message."""
-    console.print(f"[{_GREEN}]✓[/{_GREEN}] {message}")
+    console.print(f"[{_GREEN}]+[/{_GREEN}] {message}")
 
 
 def print_warning(message: str) -> None:
     """Print a styled warning message."""
-    console.print(f"[{_AMBER}]⚠ warning:[/{_AMBER}] {message}")
+    console.print(f"[{_AMBER}]! warning:[/{_AMBER}] {message}")
 
 
 def print_info(message: str) -> None:
     """Print a styled informational message."""
-    console.print(f"[{_BLUE}]ℹ[/{_BLUE}] [dim]{message}[/dim]")
+    console.print(f"[{_BLUE}]i[/{_BLUE}] [dim]{message}[/dim]")
 
 
 def print_step(index: int, total: int, message: str) -> None:

@@ -151,9 +151,9 @@ def name_text(value: object, *, fallback: str = "value") -> str:
     if isinstance(raw, str) and raw:
         return raw
 
-    singular = getattr(value, "singular", None)
-    if isinstance(singular, str) and singular:
-        return singular
+    original = getattr(value, "original", None)
+    if isinstance(original, str) and original:
+        return original
 
     text = str(value)
     return text if text and text != "None" else fallback

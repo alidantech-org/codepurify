@@ -75,6 +75,15 @@ class TypeScriptLanguageAdapter:
             schema_by_ref=schema_by_ref,
         )
         resources = template_resources(api.resources, schemas=schemas, operations=operations)
+        server_urls = tuple(server.url for server in api.servers if server.url)
+        servers = tuple(
+            {
+                "url": server.url,
+                "description": server.description,
+                "variables": server.variables,
+            }
+            for server in api.servers
+        )
 
         return TemplateContract(
             project=TemplateProject(
@@ -95,6 +104,8 @@ class TypeScriptLanguageAdapter:
                 ),
                 meta={
                     "default_base_url": default_base_url(api),
+                    "server_urls": server_urls,
+                    "servers": servers,
                     "api_version": context.version,
                 },
             ),
@@ -113,6 +124,8 @@ class TypeScriptLanguageAdapter:
                 meta={
                     "api_version": context.version,
                     "default_base_url": default_base_url(api),
+                    "server_urls": server_urls,
+                    "servers": servers,
                 },
             ),
             emit=TemplateEmit(

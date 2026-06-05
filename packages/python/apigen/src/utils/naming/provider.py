@@ -25,7 +25,7 @@ from utils.naming.plurality import categorize_word
 
 @dataclass(frozen=True)
 class PluralizedName:
-    """A case-specific name with original, singular, and plural variants."""
+    """A case-specific name with original, stable singular, and plural variants."""
 
     original: str
     singular: str
@@ -113,7 +113,12 @@ class NameSet:
 
 
 class NameProvider:
-    """Build case-first, pluralisation-second name objects."""
+    """Build case-first, pluralization-second name objects.
+
+    Singular forms intentionally preserve the input instead of singularizing a
+    plural source token. This avoids collisions such as page/pages both becoming
+    page in generated fields.
+    """
 
     def build(self, value: str) -> NameSet:
         original_words = split_words(value)
@@ -153,7 +158,6 @@ class NameProvider:
         plural = list(words)
 
         last = categorize_word(words[-1])
-        singular[-1] = last.singular
         plural[-1] = last.plural
 
         return {
@@ -163,7 +167,14 @@ class NameProvider:
             "number": last.kind,
         }
 
-    def _case(self, original: str, singular: str, plural: str, number: NumberKind, converter) -> PluralizedName:
+    def _case(
+        self,
+        original: str,
+        singular: str,
+        plural: str,
+        number: NumberKind,
+        converter,
+    ) -> PluralizedName:
         return PluralizedName(
             original=converter(original),
             singular=converter(singular),

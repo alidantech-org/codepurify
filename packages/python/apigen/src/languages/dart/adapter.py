@@ -21,6 +21,7 @@ from contracts.template import (
     TemplateProjectEmit,
     TemplateProjectLang,
 )
+from contracts.names import make_contract_name
 from languages.dart.constants import (
     DART_LANGUAGE_ALIAS_FLUTTER,
     DART_LANGUAGE_NAME,
@@ -29,7 +30,7 @@ from languages.dart.constants import (
 )
 from languages.dart.context import build_dart_context
 from languages.dart.operations import template_operations
-from languages.dart.resources import resource_paths, template_resources
+from languages.dart.resources import feature_resources, resource_paths, template_resources
 from languages.dart.schemas import template_schema_groups
 from languages.dart.urls import default_base_url
 from languages.decorators import language_adapter
@@ -71,10 +72,22 @@ class DartLanguageAdapter:
         schema_by_ref = {schema.ref: schema for schema in api.schemas.all}
         operations = template_operations(
             api.operations,
+            version=context.version,
             resource_paths=resource_path_map,
             schema_by_ref=schema_by_ref,
         )
         resources = template_resources(api.resources, schemas=schemas, operations=operations)
+        features = feature_resources(resources)
+        api_version_name = make_contract_name(context.version)
+        server_urls = tuple(server.url for server in api.servers if server.url)
+        servers = tuple(
+            {
+                "url": server.url,
+                "description": server.description,
+                "variables": server.variables,
+            }
+            for server in api.servers
+        )
 
         return TemplateContract(
             project=TemplateProject(
@@ -95,11 +108,15 @@ class DartLanguageAdapter:
                 ),
                 meta={
                     "default_base_url": default_base_url(api),
+                    "server_urls": server_urls,
+                    "servers": servers,
                     "api_version": context.version,
+                    "api_version_name": api_version_name,
                 },
             ),
             api=api,
             resources=resources,
+            features=features,
             schemas=schemas,
             operations=operations,
             lang=TemplateLanguage(
@@ -113,6 +130,9 @@ class DartLanguageAdapter:
                 meta={
                     "api_version": context.version,
                     "default_base_url": default_base_url(api),
+                    "server_urls": server_urls,
+                    "servers": servers,
+                    "api_version_name": api_version_name,
                 },
             ),
             emit=TemplateEmit(

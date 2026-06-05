@@ -73,6 +73,16 @@ class ApiDocumentInfo:
 
 
 @dataclass(frozen=True)
+class ApiServer:
+    """OpenAPI server information."""
+
+    url: str
+    description: str = "-"
+    variables: MetaMap = field(default_factory=dict)
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class ApiQueryOptions:
     """Query behavior inferred from x-codegen.query."""
 
@@ -86,7 +96,7 @@ class ApiQueryOptions:
     @property
     def enabled(self) -> bool:
         """Return whether any query behavior is enabled."""
-        return bool(self.filterable or self.operators or self.sortable or self.selectable or self.searchable)
+        return bool(self.filterable or self.operators or self.sortable or self.selectable or self.searchable)  # noqa: E501
 
 
 @dataclass(frozen=True)
@@ -301,6 +311,7 @@ class ApiContract:
 
     info: ApiDocumentInfo
     resources: tuple[ApiResource, ...] = ()
+    servers: tuple[ApiServer, ...] = ()
     schemas: ApiSchemaGroups = field(default_factory=ApiSchemaGroups)
     operations: tuple[ApiOperation, ...] = ()
     dependencies: tuple[ApiDependency, ...] = ()

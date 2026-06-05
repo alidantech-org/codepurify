@@ -13,10 +13,10 @@ def render_emit_status(result) -> None:
 
     if dry_run:
         console.print(
-            f"[bold cyan]ℹ Emit planned[/bold cyan] [dim]{language} → {output_path}[/dim]"
+            f"[bold cyan]i Emit planned[/bold cyan] [dim]{language} -> {output_path}[/dim]"
         )
         return
 
     console.print(
-        f"[bold green]✓ Emit completed[/bold green] [dim]{language} → {output_path}[/dim]"
+        f"[bold green]+ Emit completed[/bold green] [dim]{language} -> {output_path}[/dim]"
     )
