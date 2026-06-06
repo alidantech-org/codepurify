@@ -8,20 +8,22 @@ export function sanitizeDebugContract(value: unknown): unknown {
 
   // If this is a VersionContract, add structured source metadata
   if (isVersionContract(value)) {
-    return addSourceMetadataDebug(sanitized as VersionContract);
+    return addSourceMetadataDebug(sanitized, value);
   }
 
   return sanitized;
 }
 
-function addSourceMetadataDebug(contract: VersionContract): unknown {
-  const debug: Record<string, unknown> = { ...contract };
+function addSourceMetadataDebug(sanitized: unknown, contract: VersionContract): unknown {
+  const debug: Record<string, unknown> = isRecord(sanitized) ? { ...sanitized } : {};
 
   // Extract source metadata from schema components
   const schemaComponentsDebug: Record<string, Record<string, unknown>> = {};
 
   // Process shared schema components
   for (const registry of contract.schemaComponents) {
+    if (!isSchemaComponentRegistry(registry)) continue;
+
     const registryKey = 'shared';
     if (!schemaComponentsDebug[registryKey]) {
       schemaComponentsDebug[registryKey] = {};
@@ -43,6 +45,8 @@ function addSourceMetadataDebug(contract: VersionContract): unknown {
     }
 
     for (const registry of resource.schemaComponents) {
+      if (!isSchemaComponentRegistry(registry)) continue;
+
       for (const definition of registry.definitions) {
         const componentDebug = extractComponentSourceMetadata(definition.value);
         if (Object.keys(componentDebug).length > 0) {
@@ -136,6 +140,20 @@ function extractExtendWithFieldsSource(extendWith: unknown): Record<string, unkn
 
 function isVersionContract(value: unknown): value is VersionContract {
   return !!value && typeof value === 'object' && 'info' in value && 'resources' in value && 'schemaComponents' in value;
+}
+
+function isSchemaComponentRegistry(value: unknown): value is VersionContract['schemaComponents'][number] {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    'definitions' in value &&
+    Array.isArray((value as { definitions?: unknown }).definitions)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 function sanitizeDebugValue(value: unknown, seen = new WeakSet<object>()): unknown {

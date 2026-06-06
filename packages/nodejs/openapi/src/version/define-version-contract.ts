@@ -1,6 +1,6 @@
 import { defineResource } from '../resource/define-resource.js';
 import type { DefineResourceOptions, ResourceBuilder } from '../resource/define-resource.js';
-import { defineSchemas } from '../components/schemas/define-schemas.js';
+import { createSchemaComponentRegistry, defineSchemas } from '../components/schemas/define-schemas.js';
 import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
 import { defineParameters } from '../components/parameters/define-parameters.js';
 import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
@@ -12,7 +12,8 @@ import type {
 import { defineResponses } from '../components/responses/define-responses.js';
 import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
 import type { RouteResponseInput } from '../routes/route.types.js';
-import type { PropertyRegistry } from '../properties/property.types.js';
+import { defineProperties } from '../properties/define-properties.js';
+import type { PropertyGroupOptions, PropertyRegistry, ZodPropertyDefinitionFieldMap } from '../properties/property.types.js';
 import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types.js';
 import { ContentType } from '../openapi/content-type.js';
 
@@ -30,17 +31,40 @@ export interface DefineVersionContractOptions {
 
 export interface VersionBuilder {
   readonly contract: VersionContract;
+  readonly schemas: SchemaComponentRegistry;
+  readonly properties: PropertyRegistry[];
   defineResource(options: DefineResourceOptions): ResourceBuilder;
   addResource(resource: ResourceBuilder): VersionBuilder;
   addProperties(properties: PropertyRegistry): VersionBuilder;
+  defineProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
+    name: TName,
+    fields: TFields,
+    options?: PropertyGroupOptions,
+  ): ReturnType<typeof defineProperties<TName, TFields>>;
   defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
     input: TInput,
     name?: string,
   ): ReturnType<typeof defineSchemas<TInput>>;
+  defineParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(
+    input: TInput,
+    name?: string,
+  ): ReturnType<typeof defineParameters<TInput>>;
+  defineRequestBodies<TInput extends Record<string, Omit<RequestBodyComponentDefinition, 'name'>>>(
+    input: TInput,
+    name?: string,
+  ): ReturnType<typeof defineRequestBodies<TInput>>;
+  defineResponses<TInput extends Record<string, Omit<ResponseComponentDefinition, 'name'>>>(
+    input: TInput,
+    name?: string,
+  ): ReturnType<typeof defineResponses<TInput>>;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
 
 export function defineVersionContract(options: DefineVersionContractOptions): VersionBuilder {
+  const rootSchemas = createSchemaComponentRegistry('shared');
+  rootSchemas.definitions.push(...(options.schemaComponents ?? []).flatMap((registry) => registry.definitions));
+  Object.assign(rootSchemas.ref, ...(options.schemaComponents ?? []).map((registry) => registry.ref));
+
   const contract: VersionContract = {
     info: options.info,
     defaults: {
@@ -49,7 +73,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     },
     resources: [...(options.resources ?? [])],
     properties: [...(options.properties ?? [])],
-    schemaComponents: [...(options.schemaComponents ?? [])],
+    schemaComponents: [rootSchemas],
     parameterComponents: [...(options.parameterComponents ?? [])],
     requestBodyComponents: [...(options.requestBodyComponents ?? [])],
     responseComponents: [...(options.responseComponents ?? [])],
@@ -72,10 +96,34 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return builder;
   }
 
-  const schemaComponents = contract.schemaComponents;
   const parameterComponents = contract.parameterComponents;
   const requestBodyComponents = contract.requestBodyComponents;
   const responseComponents = contract.responseComponents;
+
+  function defineVersionProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
+    name: TName,
+    fields: TFields,
+    groupOptions?: PropertyGroupOptions,
+  ) {
+    const registry = defineProperties(
+      {
+        name: 'shared',
+      },
+      name,
+      fields,
+      groupOptions,
+    );
+
+    contract.properties.push({
+      name: registry.name,
+      definitions: registry.definitions,
+      ref: {
+        [name]: registry.ref,
+      },
+    });
+
+    return registry;
+  }
 
   function defineVersionSchemas<TInput extends Record<string, SchemaComponentValue>>(input: TInput, name?: string) {
     const registry = defineSchemas(
@@ -83,9 +131,9 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
         name: name ?? 'shared',
       },
       input,
+      rootSchemas,
     );
 
-    schemaComponents.push(registry);
     return registry;
   }
 
@@ -135,10 +183,16 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
 
   const builder: VersionBuilder = {
     contract,
+    schemas: rootSchemas,
+    properties: contract.properties,
     defineResource: defineVersionResource,
     addResource,
     addProperties,
+    defineProperties: defineVersionProperties,
     defineSchemas: defineVersionSchemas,
+    defineParameters: defineVersionParameters,
+    defineRequestBodies: defineVersionRequestBodies,
+    defineResponses: defineVersionResponses,
     setDefaultResponses,
   };
 

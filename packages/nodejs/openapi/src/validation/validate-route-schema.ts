@@ -76,7 +76,7 @@ export function validateRouteSchema(schema: ValidatableRouteSchema | undefined, 
     // Recursively validate nested schemas
     if (schema.kind === SchemaKind.composite) {
       // Composite schemas are property definitions, not schema compositions
-      // Skip validation here since they're already validated when created via .shared(), .forRef(), .entity()
+      // Skip validation here since property refs are validated when created through defineProperties().
       return [];
     }
     if (schema.kind === SchemaKind.record) {

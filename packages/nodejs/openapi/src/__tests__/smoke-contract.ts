@@ -1,36 +1,11 @@
 import { z } from 'zod';
-import { ContentType, HttpMethod, QueryOperator, SchemaAccess, defineVersionContract, schema } from '../index.js';
-
-interface IUser {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  avatar?: string;
-  ownerId: string;
-  isOnline: boolean;
-  passwordHash: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface IVehicle {
-  id: string;
-  ownerId: string;
-  numberPlate: string;
-  make: string;
-  vehicleModel?: string;
-  year?: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { ContentType, HttpMethod, defineVersionContract, schema } from '../index.js';
 
 const v1 = defineVersionContract({
   info: {
     title: 'Smoke API',
     version: 'v1',
-    description: 'Smoke test for final API',
+    description: 'Smoke test for the transport-schema API',
   },
   defaults: {
     requestContentType: ContentType.json,
@@ -38,118 +13,61 @@ const v1 = defineVersionContract({
   },
 });
 
-const shared = v1.defineResource({
-  name: 'Shared',
-  route: '/_shared',
+const sharedProps = v1.defineProperties('Shared', {
+  mongoId: z.string().regex(/^[a-f\d]{24}$/i),
+  dateTime: z.string().datetime(),
+  success: z.boolean(),
+  message: z.string().min(1).max(500),
+  page: z.number().int().positive().max(10000),
+  limit: z.number().int().positive().max(100),
+  total: z.number().int().nonnegative(),
+  pages: z.number().int().nonnegative(),
+  search: z.string().min(1).max(100),
 });
 
-const sharedProps = shared.defineProperties();
-
-const sharedPrimitives = sharedProps.shared('SharedPrimitives', {
-  mongoId: schema.primitive(z.string().regex(/^[a-f\d]{24}$/i), {
-    description: 'Mongo ObjectId',
-  }),
-
-  dateTime: schema.primitive(z.string().datetime(), {
-    description: 'ISO datetime',
-  }),
-
-  success: schema.primitive(z.boolean(), {
-    description: 'Request success state',
-  }),
-
-  message: schema.primitive(z.string().min(1).max(500), {
-    description: 'Human readable message',
-  }),
-
-  page: schema.primitive(z.number().int().positive().max(10000), {
-    required: false,
-    query: {
-      filter: true,
-      operators: [QueryOperator.exact],
-    },
-  }),
-
-  limit: schema.primitive(z.number().int().positive().max(100), {
-    required: false,
-    query: {
-      filter: true,
-      operators: [QueryOperator.exact],
-    },
-  }),
-
-  search: schema.primitive(z.string().min(1).max(100), {
-    required: false,
-    query: {
-      filter: true,
-      operators: [QueryOperator.search],
-    },
-  }),
-});
-
-const baseEntity = sharedProps.entity(
-  'BaseEntity',
-  {
-    id: schema.ref(sharedPrimitives.ref.mongoId, {
-      access: SchemaAccess.system,
-    }),
-
-    createdAt: schema.ref(sharedPrimitives.ref.dateTime, {
-      access: SchemaAccess.system,
-      query: {
-        filter: true,
-        operators: [QueryOperator.range],
-        sort: true,
-      },
-    }),
-
-    updatedAt: schema.ref(sharedPrimitives.ref.dateTime, {
-      access: SchemaAccess.system,
-      query: {
-        filter: true,
-        operators: [QueryOperator.range],
-        sort: true,
-      },
-    }),
+const sharedBaseSchemas = v1.defineSchemas({
+  DateRangeQuery: {
+    from: sharedProps.ref.dateTime.optional(),
+    to: sharedProps.ref.dateTime.optional(),
   },
-  { abstract: true },
-);
+
+  ApiMessage: {
+    success: sharedProps.ref.success,
+    message: sharedProps.ref.message,
+  },
+});
 
 const sharedSchemas = v1.defineSchemas({
-  ApiMessage: {
-    success: sharedPrimitives.ref.success,
-    message: sharedPrimitives.ref.message,
+  ValidationError: sharedBaseSchemas.ref.ApiMessage.extendWith({}),
+
+  PaginationMeta: {
+    page: sharedProps.ref.page,
+    limit: sharedProps.ref.limit,
+    total: sharedProps.ref.total,
+    pages: sharedProps.ref.pages,
   },
 
-  ValidationError: {
-    success: sharedPrimitives.ref.success,
-    message: sharedPrimitives.ref.message,
+  BaseQuery: {
+    page: sharedProps.ref.page.optional(),
+    limit: sharedProps.ref.limit.optional(),
+    search: sharedProps.ref.search.optional(),
   },
 
-  PaginatedMeta: {
-    page: sharedPrimitives.ref.page,
-    limit: sharedPrimitives.ref.limit,
-  },
-
-  PaginatedQuery: {
-    page: sharedPrimitives.ref.page,
-    limit: sharedPrimitives.ref.limit,
-    search: sharedPrimitives.ref.search,
-  },
+  DetailsQuery: {},
 });
 
 v1.setDefaultResponses({
-  400: sharedSchemas.ref.ApiMessage,
+  400: sharedBaseSchemas.ref.ApiMessage,
   401: {
-    schema: sharedSchemas.ref.ApiMessage,
+    schema: sharedBaseSchemas.ref.ApiMessage,
     description: 'Unauthorized',
   },
   422: {
-    schema: sharedSchemas.ref.ValidationError,
+    schema: v1.schemas.ref.ValidationError,
     description: 'Validation failed',
   },
   500: {
-    schema: sharedSchemas.ref.ApiMessage,
+    schema: sharedBaseSchemas.ref.ApiMessage,
     description: 'Internal server error',
   },
 });
@@ -159,110 +77,89 @@ const users = v1.defineResource({
   route: '/users',
 });
 
-const userProps = users.defineProperties();
+const userProps = users.defineProperties('User', {
+  id: z.string().regex(/^[a-f\d]{24}$/i),
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  phone: z.string().min(7).max(20),
+  avatar: z.string().url(),
+  isOnline: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
 
-const userEntity = userProps.entity(
-  'User',
-  {
-    email: schema.primitive(z.string().email(), {
-      query: {
-        filter: true,
-        operators: [QueryOperator.exact, QueryOperator.search],
-        sort: true,
-        select: true,
-      },
-    }),
+const userQueryProps = users.defineProperties('UserQuery', {
+  select: z.enum(['email', 'name', 'phone', 'avatar', 'isOnline']),
+  sort: z.enum(['+createdAt', '-createdAt', '+name', '-name']),
+});
 
-    name: schema.primitive(z.string().min(1).max(100), {
-      query: {
-        filter: true,
-        operators: [QueryOperator.search],
-        sort: true,
-        select: true,
-      },
-    }),
-
-    phone: schema.primitive(z.string().min(7).max(20), {
-      required: false,
-      nullable: true,
-    }),
-
-    avatar: schema.primitive(z.string().url(), {
-      required: false,
-      nullable: true,
-    }),
-
-    ownerId: schema.ref(sharedPrimitives.ref.mongoId, {
-      query: {
-        filter: true,
-        operators: [QueryOperator.exact],
-      },
-    }),
-
-    isOnline: schema.primitive(z.boolean(), {
-      query: {
-        filter: true,
-        operators: [QueryOperator.exact],
-        sort: true,
-        select: true,
-      },
-    }),
-
-    passwordHash: schema.primitive(z.string(), {
-      access: SchemaAccess.secret,
-      select: false,
-    }),
+const userPublicSchemas = users.defineSchemas({
+  UserPublic: {
+    id: userProps.ref.id,
+    email: userProps.ref.email,
+    name: userProps.ref.name,
+    phone: userProps.ref.phone.nullable(),
+    avatar: userProps.ref.avatar.nullable(),
+    isOnline: userProps.ref.isOnline,
+    createdAt: userProps.ref.createdAt,
+    updatedAt: userProps.ref.updatedAt,
   },
-  { extends: baseEntity },
-);
+});
+
+const userFilterSchemas = users.defineSchemas({
+  UserFilters: {
+    email: userProps.ref.email.optional(),
+    name: userProps.ref.name.optional(),
+    isOnline: userProps.ref.isOnline.optional(),
+    createdAt: sharedBaseSchemas.ref.DateRangeQuery.optional(),
+    updatedAt: sharedBaseSchemas.ref.DateRangeQuery.optional(),
+  },
+});
 
 const userSchemas = users.defineSchemas({
-  UserOk: {
-    success: sharedPrimitives.ref.success,
-    message: sharedPrimitives.ref.message,
-    data: userEntity.ref.publicModel,
-  },
+  UserListQuery: sharedSchemas.ref.BaseQuery.extendWith({
+    filters: userFilterSchemas.ref.UserFilters.optional(),
+    fields: userQueryProps.ref.select.array().optional(),
+    sort: userQueryProps.ref.sort.array().optional(),
+  }),
 
-  UsersListOk: {
-    success: sharedPrimitives.ref.success,
-    message: sharedPrimitives.ref.message,
-    data: userEntity.ref.publicModel.array(),
-    meta: sharedSchemas.ref.PaginatedMeta,
-  },
+  UserDetailQuery: sharedSchemas.ref.DetailsQuery.extendWith({
+    fields: userQueryProps.ref.select.array().optional(),
+  }),
 
-  UserWithExtra: {
-    success: sharedPrimitives.ref.success,
-    message: sharedPrimitives.ref.message,
-    data: userEntity.ref.publicModel.extendWith({
-      relatedUsers: userEntity.ref.publicModel.array(),
+  UsersListOk: sharedBaseSchemas.ref.ApiMessage.extendWith({
+    users: userPublicSchemas.ref.UserPublic.array(),
+    pagination: sharedSchemas.ref.PaginationMeta,
+  }),
+
+  UserOk: sharedBaseSchemas.ref.ApiMessage.extendWith({
+    user: userPublicSchemas.ref.UserPublic,
+  }),
+
+  UserWithExtra: sharedBaseSchemas.ref.ApiMessage.extendWith({
+    user: userPublicSchemas.ref.UserPublic.extendWith({
+      relatedUsers: userPublicSchemas.ref.UserPublic.array(),
     }),
-  },
-
-  UserListQuery: sharedSchemas.ref.PaginatedQuery.extendWith({
-    filter: userEntity.ref.queryFilterModel.optional(),
-    sort: userEntity.ref.values.querySort.optional(),
-    select: userEntity.ref.values.querySelect.array().optional(),
   }),
 
   CreateUserBody: {
-    email: userEntity.ref.fields.id,
-    name: userEntity.ref.fields.name,
-    phone: userEntity.ref.fields.phone.optional().nullable(),
-    avatar: userEntity.ref.fields.avatar.optional().nullable(),
+    email: userProps.ref.email,
+    name: userProps.ref.name,
+    phone: userProps.ref.phone.optional().nullable(),
   },
 
   UpdateUserBody: {
-    email: userEntity.ref.fields.email.optional(),
-    name: userEntity.ref.fields.name.optional(),
-    phone: userEntity.ref.fields.phone.optional().nullable(),
-    avatar: userEntity.ref.fields.avatar.optional().nullable(),
-    isOnline: userEntity.ref.fields.isOnline.optional(),
+    email: userProps.ref.email.optional(),
+    name: userProps.ref.name.optional(),
+    phone: userProps.ref.phone.optional().nullable(),
+    avatar: userProps.ref.avatar.optional().nullable(),
+    isOnline: userProps.ref.isOnline.optional(),
   },
 });
 
 users.defineRoutes({
   parameters: {
-    userId: userEntity.ref.fields.id,
+    userId: userProps.ref.id,
   },
 
   routes: {
@@ -288,6 +185,7 @@ users.defineRoutes({
       method: HttpMethod.get,
       path: '/:userId',
       summary: 'Get user by ID',
+      query: userSchemas.ref.UserDetailQuery,
       response: userSchemas.ref.UserWithExtra,
     },
 
@@ -310,138 +208,10 @@ users.defineRoutes({
   },
 });
 
-const vehicles = v1.defineResource({
-  name: 'Vehicle',
-  route: '/vehicles',
-});
-
-const vehicleProps = vehicles.defineProperties();
-
-const vehicleEntity = vehicleProps.entityFor<IVehicle>()(
-  'Vehicle',
-  {
-    ownerId: schema.ref(sharedPrimitives.ref.mongoId, {
-      query: {
-        filter: true,
-        operators: [QueryOperator.exact],
-      },
-    }),
-
-    numberPlate: schema.primitive(z.string().min(1).max(20), {
-      query: {
-        filter: true,
-        operators: [QueryOperator.exact, QueryOperator.search],
-        sort: true,
-        select: true,
-      },
-    }),
-
-    make: schema.primitive(z.string().min(1).max(50), {
-      query: {
-        filter: true,
-        operators: ['search'],
-        sort: true,
-        select: true,
-      },
-      access: 'internal',
-    }),
-
-    vehicleModel: schema.primitive(z.string().min(1).max(100), {
-      required: false,
-      nullable: true,
-    }),
-
-    year: schema.primitive(
-      z
-        .number()
-        .int()
-        .min(1900)
-        .max(new Date().getFullYear() + 1),
-      {
-        required: false,
-        query: {
-          filter: true,
-          operators: [QueryOperator.range, QueryOperator.gte, QueryOperator.lte],
-          sort: true,
-          select: true,
-        },
-      },
-    ),
-
-    status: schema.primitive(z.string().min(1).max(50), {
-      query: {
-        filter: true,
-        operators: [QueryOperator.exact, QueryOperator.in],
-        sort: true,
-        select: true,
-      },
-    }),
-  },
-  { extends: baseEntity },
-);
-
-const vehicleSchemas = vehicles.defineSchemas({
-  VehicleOk: { success: sharedPrimitives.ref.success, message: sharedPrimitives.ref.message, data: vehicleEntity.ref.publicModel },
-  VehiclesListOk: {
-    success: sharedPrimitives.ref.success,
-    message: sharedPrimitives.ref.message,
-    data: vehicleEntity.ref.publicModel.array(),
-    meta: sharedSchemas.ref.PaginatedMeta,
-  },
-  CreateVehicleBody: {
-    ownerId: vehicleEntity.ref.fields.ownerId,
-    numberPlate: vehicleEntity.ref.fields.numberPlate,
-    make: vehicleEntity.ref.fields.make,
-    vehicleModel: vehicleEntity.ref.fields.vehicleModel.optional().nullable(),
-    year: vehicleEntity.ref.fields.year.optional(),
-  },
-  UpdateVehicleBody: {
-    numberPlate: vehicleEntity.ref.fields.numberPlate.optional(),
-    make: vehicleEntity.ref.fields.make.optional(),
-    vehicleModel: vehicleEntity.ref.fields.vehicleModel.optional().nullable(),
-    year: vehicleEntity.ref.fields.year.optional(),
-    status: vehicleEntity.ref.fields.status.optional(),
-  },
-});
-
-vehicles.defineRoutes({
-  parameters: { vehicleId: vehicleEntity.ref.fields.id },
-  routes: {
-    listVehicles: {
-      method: HttpMethod.get,
-      path: '/',
-      summary: 'List vehicles',
-      query: {
-        page: sharedPrimitives.ref.page.optional(),
-        limit: sharedPrimitives.ref.limit.optional(),
-        make: vehicleEntity.ref.fields.make.optional(),
-        status: vehicleEntity.ref.fields.status.optional(),
-      },
-      response: vehicleSchemas.ref.VehiclesListOk,
-    },
-    createVehicle: {
-      method: HttpMethod.post,
-      path: '/',
-      summary: 'Create vehicle',
-      body: vehicleSchemas.ref.CreateVehicleBody,
-      responses: { 201: vehicleSchemas.ref.VehicleOk },
-    },
-    getVehicleById: { method: HttpMethod.get, path: '/:vehicleId', summary: 'Get vehicle by ID', response: vehicleSchemas.ref.VehicleOk },
-    updateVehicle: {
-      method: HttpMethod.patch,
-      path: '/:vehicleId',
-      summary: 'Update vehicle',
-      body: vehicleSchemas.ref.UpdateVehicleBody,
-      response: vehicleSchemas.ref.VehicleOk,
-    },
-  },
-});
-
 export const smokeContract = {
   v1,
-  sharedContract: { shared, sharedPrimitives, baseEntity, sharedSchemas },
-  userContract: { users, userEntity, userSchemas },
-  vehicleContract: { vehicles, vehicleEntity, vehicleSchemas },
+  sharedContract: { sharedProps, sharedBaseSchemas, sharedSchemas },
+  userContract: { users, userProps, userQueryProps, userPublicSchemas, userFilterSchemas, userSchemas },
 };
 
 export type SmokeContract = typeof smokeContract;

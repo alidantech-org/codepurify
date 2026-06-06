@@ -3,8 +3,8 @@ import type { ParameterComponentRegistry } from '../../components/parameters/par
 import type { RequestBodyComponentRegistry } from '../../components/request-bodies/request-body-component.types.js';
 import type { ResponseComponentRegistry } from '../../components/responses/response-component.types.js';
 import type { CompilerContext } from '../compiler-context.js';
-import { componentRefToSchemaName, modelRefToSchemaName } from '../../naming/ref-schema-name.js';
-import type { EntityPropertyRefs, PropertyRefGroup, PropertyRegistry, PropertyRegistryRef } from '../../properties/property.types.js';
+import { componentRefToSchemaName } from '../../naming/ref-schema-name.js';
+import type { PropertyRefGroup, PropertyRegistry, PropertyRegistryRef } from '../../properties/property.types.js';
 import type { PropertyRef } from '../../refs/ref.types.js';
 import type { ResourceBuilder } from '../../resource/define-resource.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
@@ -100,47 +100,9 @@ function registerPropertyRegistryRef(
     schemas.set(toSchemaName(groupName), toSchemaName(groupName));
   }
 
-  if (isEntityRefs(value)) {
-    registerEntityPropertyRefs(groupName, value, schemas);
-    return;
-  }
-
   if (isPropertyRefGroup(value)) {
     registerPropertyGroupRefs(groupName, value, schemas);
   }
-}
-
-function registerEntityPropertyRefs(groupName: string, value: EntityPropertyRefs, schemas: Map<string, string>): void {
-  for (const [key, fieldRef] of Object.entries(value.fields)) {
-    // Extract underlying ref if it's a RefUsage
-    const ref = 'ref' in fieldRef ? fieldRef.ref : fieldRef;
-
-    if (registerAliasRef(ref, schemas)) continue;
-
-    schemas.set(ref.id, toSchemaName(groupName, key));
-  }
-
-  registerEntityModelRefs(value, schemas);
-  registerEntityQueryHelperRefs(value, schemas);
-}
-
-function registerEntityModelRefs(value: EntityPropertyRefs, schemas: Map<string, string>): void {
-  schemas.set(value.model.id, modelRefToSchemaName(value.model));
-  schemas.set(value.publicModel.id, modelRefToSchemaName(value.publicModel));
-  schemas.set(value.internalModel.id, modelRefToSchemaName(value.internalModel));
-
-  schemas.set(value.partialModel.id, modelRefToSchemaName(value.partialModel));
-  schemas.set(value.publicPartialModel.id, modelRefToSchemaName(value.publicPartialModel));
-  schemas.set(value.internalPartialModel.id, modelRefToSchemaName(value.internalPartialModel));
-}
-
-function registerEntityQueryHelperRefs(value: EntityPropertyRefs, schemas: Map<string, string>): void {
-  schemas.set(value.queryFilterModel.id, modelRefToSchemaName(value.queryFilterModel));
-  schemas.set(value.advancedQueryFilterModel.id, modelRefToSchemaName(value.advancedQueryFilterModel));
-
-  schemas.set(value.values.querySort.id, toSchemaName(`${value.name}QuerySortValue`));
-
-  schemas.set(value.values.querySelect.id, toSchemaName(`${value.name}QuerySelectValue`));
 }
 
 function registerPropertyGroupRefs(groupName: string, value: PropertyRefGroup, schemas: Map<string, string>): void {
@@ -160,26 +122,8 @@ function registerRefRegistry(refs: Record<string, { id: string; name: string }>,
   }
 }
 
-function isEntityRefs(value: PropertyRegistryRef): value is EntityPropertyRefs {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    'name' in value &&
-    'fields' in value &&
-    'model' in value &&
-    'publicModel' in value &&
-    'internalModel' in value &&
-    'partialModel' in value &&
-    'publicPartialModel' in value &&
-    'internalPartialModel' in value &&
-    'queryFilterModel' in value &&
-    'values' in value
-  );
-}
-
 function isPropertyRefGroup(value: PropertyRegistryRef): value is PropertyRefGroup {
-  return !!value && typeof value === 'object' && !Array.isArray(value) && !isEntityRefs(value);
+  return !!value && typeof value === 'object' && !Array.isArray(value) && !('model' in value);
 }
 
 function registerAliasRef(ref: PropertyRef, schemas: Map<string, string>): boolean {

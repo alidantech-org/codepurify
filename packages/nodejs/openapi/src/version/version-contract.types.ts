@@ -6,8 +6,6 @@ import type { PropertyRegistry } from '../properties/property.types.js';
 import type { ResourceBuilder } from '../resource/define-resource.js';
 import type { RouteResponseInput } from '../routes/route.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
-import type { DeepPartial, ModelEmissionInput } from '../config/model-emission-defaults.js';
-import type { QueryModelOptions } from '../config/query-model-defaults.js';
 
 export interface VersionLicense {
   readonly name: string;
@@ -37,6 +35,4 @@ export interface VersionContract {
   readonly requestBodyComponents: RequestBodyComponentRegistry[];
   readonly responseComponents: ResponseComponentRegistry[];
   readonly defaultResponses: Record<number, RouteResponseInput>;
-  readonly modelEmission?: ModelEmissionInput;
-  readonly queryModels?: DeepPartial<QueryModelOptions>;
 }

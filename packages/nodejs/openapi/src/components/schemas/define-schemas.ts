@@ -4,8 +4,7 @@ import type { ComponentRef } from '../../refs/ref.types.js';
 import { withRefMethods } from '../../refs/ref-methods.js';
 import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
-import { XCodegenDtoRole, XCodegenKind } from '../../codegen/codegen-extension.types.js';
-import type { ComponentFieldMap, ComponentRefMap } from '../component.types.js';
+import { XCodegenKind } from '../../codegen/codegen-extension.types.js';
 import type { SchemaComponentDefinition, SchemaComponentRegistry, SchemaComponentValue } from './schema-component.types.js';
 import { compileZodRef } from '../../zod/compile-zod-ref.js';
 import type { z } from 'zod';
@@ -17,18 +16,52 @@ export interface DefineSchemasOptions extends OptionalResourceContext {
 export function defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
   options: DefineSchemasOptions,
   input: TInput,
+  target?: SchemaComponentRegistry,
 ): SchemaComponentRegistry<TInput> {
-  // Create toZod callback if zodRegistry is available
   const toZod = options.zodRegistry ? (ref: unknown): z.ZodTypeAny => compileZodRef(ref as ComponentRef, options.zodRegistry!) : undefined;
+  const definitions = Object.entries(input).map(([name, value]) => ({
+    name,
+    value,
+  }));
+  const ref = createRefs(options, input, toZod);
+
+  if (target) {
+    appendDefinitions(target, definitions, ref);
+  }
 
   return {
     name: options.name,
-    definitions: Object.entries(input).map(([name, value]) => ({
-      name,
-      value,
-    })),
-    ref: createRefs(options, input, toZod),
+    definitions,
+    ref,
   };
+}
+
+export function createSchemaComponentRegistry(name: string): SchemaComponentRegistry {
+  return {
+    name,
+    definitions: [],
+    ref: {},
+  };
+}
+
+function appendDefinitions(
+  target: SchemaComponentRegistry,
+  definitions: readonly SchemaComponentDefinition[],
+  ref: Record<string, RefWithUsageMethods<ComponentRef>>,
+): void {
+  const existing = new Set(target.definitions.map((definition) => definition.name));
+  const incoming = new Set<string>();
+
+  for (const definition of definitions) {
+    if (existing.has(definition.name) || incoming.has(definition.name)) {
+      throw new Error(`Duplicate schema component "${definition.name}" in registry "${target.name}".`);
+    }
+
+    incoming.add(definition.name);
+  }
+
+  target.definitions.push(...definitions);
+  Object.assign(target.ref, ref);
 }
 
 function createRefs<TInput extends Record<string, SchemaComponentValue>>(

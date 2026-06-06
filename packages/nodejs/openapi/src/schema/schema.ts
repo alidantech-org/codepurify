@@ -14,28 +14,16 @@ import type {
   SchemaField,
   SchemaFieldMap,
 } from './schema.types.js';
-import type { PrimitiveQueryOptions } from './query-behavior.js';
 import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types.js';
 import type { RefUsage } from '../refs/ref-usage.types.js';
-
-export interface PrimitiveOptions extends SchemaBehaviorOptions {
-  query?: false | PrimitiveQueryOptions;
-  sensitive?: boolean;
-}
 
 export interface CompositeOptions extends SchemaBehaviorOptions {}
 
 export const schema = {
-  primitive(zod: z.ZodTypeAny, options: PrimitiveOptions = {}): PrimitiveSchemaField {
+  primitive(zod: z.ZodTypeAny): PrimitiveSchemaField {
     return {
       kind: SchemaKind.primitive,
       zod,
-      access: options.access,
-      required: options.required,
-      nullable: options.nullable,
-      select: options.select,
-      query: options.query,
-      description: options.description,
     };
   },
 
@@ -43,10 +31,8 @@ export const schema = {
     return {
       kind: SchemaKind.composite,
       fields,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -58,10 +44,8 @@ export const schema = {
     return {
       kind: SchemaKind.ref,
       ref,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -70,10 +54,8 @@ export const schema = {
     return {
       kind: SchemaKind.record,
       value,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -82,10 +64,8 @@ export const schema = {
     return {
       kind: SchemaKind.literal,
       value,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -94,10 +74,8 @@ export const schema = {
     return {
       kind: SchemaKind.oneOf,
       values,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -106,10 +84,8 @@ export const schema = {
     return {
       kind: SchemaKind.anyOf,
       values,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -117,10 +93,8 @@ export const schema = {
   file(options: SchemaBehaviorOptions = {}): FileSchemaField {
     return {
       kind: SchemaKind.file,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },
@@ -128,10 +102,8 @@ export const schema = {
   noContent(options: SchemaBehaviorOptions = {}): NoContentSchemaField {
     return {
       kind: SchemaKind.noContent,
-      access: options.access,
       required: options.required,
       nullable: options.nullable,
-      select: options.select,
       description: options.description,
     };
   },

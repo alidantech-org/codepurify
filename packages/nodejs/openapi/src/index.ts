@@ -2,7 +2,7 @@
  * Core contract builders
  * ========================================================= */
 
-import { PropertyRegistry, EntityRegistryResult } from './properties/property.types.js';
+import { PropertyRegistry } from './properties/property.types.js';
 import { RefUsage } from './refs/ref-usage.types.js';
 import { ArrayRef, ExtendedRef } from './refs/ref-wrapper.types.js';
 import { CompositeSchemaField, PrimitiveSchemaField, RefSchemaField } from './schema/schema.types.js';
@@ -27,19 +27,6 @@ export type { GenerateInput, GenerateResult, InitConfigInput, InitConfigResult, 
  * ========================================================= */
 
 export { schema } from './schema/schema.js';
-
-export {
-  SchemaAccess,
-  isClientWritableAccess,
-  isHiddenByDefault,
-  isInternalAccess,
-  isSensitiveAccess,
-  isSystemManagedAccess,
-} from './schema/schema-access.js';
-
-export { QueryOperator } from './schema/query-behavior.js';
-
-export type { PrimitiveQueryOptions } from './schema/query-behavior.js';
 
 /* =========================================================
  * Routes
@@ -88,15 +75,26 @@ export type {
  * Properties and refs
  * ========================================================= */
 
-export type { EntityPropertyRefs, PropertyRefGroup } from './properties/property.types.js';
+export type { PropertyRefGroup } from './properties/property.types.js';
 
-export type { ComponentRef, ModelRef, ParameterRef, PropertyRef, RequestBodyRef, ResponseRef } from './refs/ref.types.js';
+export type {
+  ComponentRef,
+  EngineRef,
+  ModelRef,
+  OperationRef,
+  ParameterRef,
+  PropertyRef,
+  RequestBodyRef,
+  ResponseRef,
+  RouteRef,
+} from './refs/ref.types.js';
 
 /* =========================================================
  * Codegen metadata
  * ========================================================= */
 
-export { CODEGEN_EXTENSION_KEY, CodegenExtensionKey } from './codegen/codegen-extension.keys.js';
+export { CODEGEN_EXTENSION_KEY } from './codegen/codegen-extension.keys.js';
+export type { CodegenExtensionKey } from './codegen/codegen-extension.keys.js';
 
 export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind } from './codegen/codegen-extension.types.js';
 
@@ -187,7 +185,6 @@ export type {
   ArrayRef,
   RefUsage,
   PropertyRegistry,
-  EntityRegistryResult,
   ExtendedRef,
   RefSchemaField,
   CompositeSchemaField,
@@ -226,4 +223,5 @@ export { componentRefToSchemaName, modelRefToSchemaName } from './naming/ref-sch
  * Logger
  * ========================================================= */
 
-export { CompilerLogger, LogLevel } from './logger/index.js';
+export { CompilerLogger } from './logger/index.js';
+export type { LogLevel } from './logger/index.js';

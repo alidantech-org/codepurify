@@ -1,5 +1,3 @@
-import type { QueryOperator } from '../schema/query-behavior.js';
-
 export const XCodegenKind = {
   primitive: 'primitive',
   enum: 'enum',
@@ -87,7 +85,7 @@ export interface XCodegenQueryMeta {
   /**
    * Filter operators supported by this primitive model field.
    */
-  readonly operators?: readonly QueryOperator[];
+  readonly operators?: readonly string[];
 
   /**
    * Whether this primitive model field can be used in sort values.

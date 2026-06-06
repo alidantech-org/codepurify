@@ -14,7 +14,7 @@ import { isComponentRef, isEngineRef, isPropertyRef } from '../../validation/ref
 import { normalizeExtendWithInputWithSource } from '../schemas/normalize-extend-with.js';
 import { compileRouteSchema } from './compile-route-schema.js';
 
-export type QueryParameterFieldValue = RouteParameterFieldValue | ModelRef | RefUsage<ModelRef>;
+export type QueryParameterFieldValue = RouteParameterFieldValue | ModelRef | ComponentRef | RefUsage<ModelRef> | RefUsage<ComponentRef>;
 
 export interface CollectedQueryField {
   readonly name: string;
@@ -151,7 +151,7 @@ function compileComponentRefQueryParameters(
   return fieldMap.map((item) => {
     if (!isQueryParameterFieldValue(item.field)) {
       throw new Error(
-        `Query component field "${item.name}" must resolve to a PropertyRef, ModelRef, RefUsage<PropertyRef>, or RefUsage<ModelRef>. Got: ${describeValue(item.field)}`,
+        `Query component field "${item.name}" must resolve to a PropertyRef, ModelRef, ComponentRef, or matching RefUsage. Got: ${describeValue(item.field)}`,
       );
     }
 
@@ -268,7 +268,7 @@ function appendExtensionQueryFields(baseFields: CollectedQueryField[], extendWit
 function createCollectedQueryField(name: string, field: unknown, baseSource?: FieldSourceMetadata): CollectedQueryField {
   if (!isQueryParameterFieldValue(field)) {
     throw new Error(
-      `Query component field "${name}" must be a PropertyRef, ModelRef, RefUsage<PropertyRef>, or RefUsage<ModelRef>. Got: ${describeValue(field)}`,
+      `Query component field "${name}" must be a PropertyRef, ModelRef, ComponentRef, or matching RefUsage. Got: ${describeValue(field)}`,
     );
   }
 
@@ -283,7 +283,11 @@ function createCollectedQueryField(name: string, field: unknown, baseSource?: Fi
   };
 }
 
-function createQueryFieldSource(ref: PropertyRef | ModelRef, fieldName: string, baseSource?: FieldSourceMetadata): FieldSourceMetadata {
+function createQueryFieldSource(
+  ref: PropertyRef | ModelRef | ComponentRef,
+  fieldName: string,
+  baseSource?: FieldSourceMetadata,
+): FieldSourceMetadata {
   const source = baseSource && baseSource.origin !== 'inline' ? baseSource : getSourceMetadataFromRef(ref, 'inline');
 
   if (isPropertyRef(ref)) {
@@ -291,6 +295,16 @@ function createQueryFieldSource(ref: PropertyRef | ModelRef, fieldName: string, 
       ...source,
       propertyRefId: ref.id,
       fieldKey: ref.propertyKey,
+      propertyResource: ref.meta?.resource ? (ref.meta.resource as XCodegenResourceMeta).name : undefined,
+    };
+  }
+
+  if (isComponentRef(ref)) {
+    return {
+      ...source,
+      sourceRefId: ref.id,
+      sourceSchemaName: ref.name,
+      fieldKey: fieldName,
       propertyResource: ref.meta?.resource ? (ref.meta.resource as XCodegenResourceMeta).name : undefined,
     };
   }
@@ -314,9 +328,10 @@ function isComponentFieldMap(value: unknown): value is ComponentFieldMap {
 function isQueryParameterFieldValue(value: unknown): value is QueryParameterFieldValue {
   if (isPropertyRef(value)) return true;
   if (isModelRef(value)) return true;
+  if (isComponentRef(value)) return true;
 
   if (isRefUsage(value)) {
-    return isPropertyRef(value.ref) || isModelRef(value.ref);
+    return isPropertyRef(value.ref) || isModelRef(value.ref) || isComponentRef(value.ref);
   }
 
   return false;

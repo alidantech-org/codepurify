@@ -21,7 +21,7 @@ import type { VersionContract, VersionDefaults } from '../../version/version-con
 import { ContentType, ContentTypeInput } from '../../openapi/content-type.js';
 import { getDefaultResponseName, getParameterName, getRequestBodyName, getResponseName } from '../../naming/component-name.js';
 import { getRefRequired, isRefUsage } from '../../validation/ref-usage-guards.js';
-import { isEngineRef, isPropertyRef } from '../../validation/ref-guards.js';
+import { isComponentRef, isEngineRef, isPropertyRef } from '../../validation/ref-guards.js';
 import { collectQueryFieldsFromSchemaComponentValue, isRequiredForQuery } from './compile-route-parameters.js';
 import { RefKind } from '../../refs/ref-kind.js';
 
@@ -312,6 +312,7 @@ function getInferredSchemaRefId(schema: InferredQueryParameterSchema): string | 
 
   if (isPropertyRef(ref)) return ref.id;
   if (isModelRef(ref)) return ref.id;
+  if (isComponentRef(ref)) return ref.id;
 
   return undefined;
 }

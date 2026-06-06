@@ -1,4 +1,4 @@
-import { defineSchemas } from '../components/schemas/define-schemas.js';
+import { createSchemaComponentRegistry, defineSchemas } from '../components/schemas/define-schemas.js';
 import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
 
 import { defineParameters } from '../components/parameters/define-parameters.js';
@@ -13,7 +13,7 @@ import type {
 import { defineResponses } from '../components/responses/define-responses.js';
 import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../components/responses/response-component.types.js';
 
-import type { PropertyRegistry } from '../properties/property.types.js';
+import type { PropertyGroupOptions, PropertyRegistry, ZodPropertyDefinitionFieldMap } from '../properties/property.types.js';
 
 import { defineRoutes } from '../routes/define-routes.js';
 import type { RouteRegistry } from '../routes/route.types.js';
@@ -61,13 +61,18 @@ export interface ResourceBuilder {
   readonly context: ResourceContext;
 
   readonly properties: PropertyRegistry[];
+  readonly schemas: SchemaComponentRegistry;
   readonly schemaComponents: SchemaComponentRegistry[];
   readonly parameterComponents: ParameterComponentRegistry[];
   readonly requestBodyComponents: RequestBodyComponentRegistry[];
   readonly responseComponents: ResponseComponentRegistry[];
   readonly routes: RouteRegistry[];
 
-  defineProperties(name?: string): ReturnType<typeof defineProperties>;
+  defineProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
+    name: TName,
+    fields: TFields,
+    options?: PropertyGroupOptions,
+  ): ReturnType<typeof defineProperties<TName, TFields>>;
 
   defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
     input: TInput,
@@ -106,19 +111,30 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   };
 
   const properties: PropertyRegistry[] = [];
-  const schemaComponents: SchemaComponentRegistry[] = [];
+  const schemas = createSchemaComponentRegistry(context.name);
+  const schemaComponents: SchemaComponentRegistry[] = [schemas];
   const parameterComponents: ParameterComponentRegistry[] = [];
   const requestBodyComponents: RequestBodyComponentRegistry[] = [];
   const responseComponents: ResponseComponentRegistry[] = [];
   const routes: RouteRegistry[] = [];
 
-  function defineResourceProperties(name?: string) {
+  function defineResourceProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
+    name: TName,
+    fields: TFields,
+    groupOptions?: PropertyGroupOptions,
+  ) {
     const registry = defineProperties({
-      name: name ?? context.name,
+      name: context.name,
       resource: context,
-    });
+    }, name, fields, groupOptions);
 
-    properties.push(registry.registry());
+    properties.push({
+      name: registry.name,
+      definitions: registry.definitions,
+      ref: {
+        [name]: registry.ref,
+      },
+    });
     return registry;
   }
 
@@ -129,9 +145,9 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
         resource: context,
       },
       input,
+      schemas,
     );
 
-    schemaComponents.push(registry);
     return registry;
   }
 
@@ -196,6 +212,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   return {
     context,
     properties,
+    schemas,
     schemaComponents,
     parameterComponents,
     requestBodyComponents,

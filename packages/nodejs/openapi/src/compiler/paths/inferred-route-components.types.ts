@@ -1,9 +1,9 @@
 import type { ContentTypeInput } from '../../openapi/content-type.js';
-import type { ModelRef } from '../../refs/ref.types.js';
+import type { ComponentRef, ModelRef } from '../../refs/ref.types.js';
 import type { FieldSourceMetadata, RefUsage } from '../../refs/ref-usage.types.js';
 import type { RouteBodyInput, RouteParameterFieldValue, RouteResponseInput, RouteSchemaInput } from '../../routes/route.types.js';
 
-export type InferredQueryParameterSchema = RouteParameterFieldValue | ModelRef | RefUsage<ModelRef>;
+export type InferredQueryParameterSchema = RouteParameterFieldValue | ModelRef | ComponentRef | RefUsage<ModelRef> | RefUsage<ComponentRef>;
 
 export interface InferredParameterComponent {
   readonly name: string;

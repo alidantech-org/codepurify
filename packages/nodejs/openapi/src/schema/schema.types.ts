@@ -3,16 +3,11 @@ import { SchemaKind } from './schema-kind.js';
 import type { ComponentRef, ModelRef, PropertyRef } from '../refs/ref.types.js';
 import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from '../refs/ref-wrapper.types.js';
-import type { SchemaAccess } from './schema-access.js';
-import type { PrimitiveQueryOptions } from './query-behavior.js';
 
 export interface SchemaBehaviorOptions {
-  readonly access?: SchemaAccess;
   readonly required?: boolean;
   readonly nullable?: boolean;
-  readonly select?: boolean;
   readonly description?: string;
-  readonly query?: false | PrimitiveQueryOptions;
 }
 
 export interface PrimitiveSchemaField extends SchemaBehaviorOptions {
@@ -71,7 +66,7 @@ export type SchemaField =
 
 export type SchemaFieldMap = Record<string, SchemaField>;
 
-// Property definition context - used in .shared(), .forRef(), .entity()
+// Property definition context - used by defineProperties()
 // Allows schema helpers like schema.primitive(), schema.ref(), etc.
 export type PropertyDefinitionField =
   | PrimitiveSchemaField
