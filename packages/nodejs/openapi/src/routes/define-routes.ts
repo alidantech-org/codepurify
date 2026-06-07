@@ -1,13 +1,29 @@
 import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
 import { XCodegenDtoRole, XCodegenKind } from '../codegen/codegen-extension.types.js';
-import type { DefineRoutesInput, RouteDefinition, RouteParameterRegistry, RouteRegistry } from './route.types.js';
+import { HttpMethod } from './http-method.js';
+import type {
+  DefineRoutesBuilderInput,
+  DefineRoutesInput,
+  DefineRoutesInputLike,
+  RouteBodyInput,
+  RouteDefinition,
+  RouteParameterRegistry,
+  RouteQueryInput,
+  RouteRegistry,
+  RouteResponseInput,
+  RoutesBuilder,
+} from './route.types.js';
+
+type MutableRouteDefinition = {
+  -readonly [K in keyof RouteDefinition]: RouteDefinition[K];
+};
 
 export interface DefineRoutesOptions extends OptionalResourceContext {
   name: string;
 }
 
-export function defineRoutes(options: DefineRoutesOptions, input: DefineRoutesInput): RouteRegistry {
+export function defineRoutes(options: DefineRoutesOptions, input: DefineRoutesInputLike): RouteRegistry {
   const normalized = normalizeRoutesInput(input);
 
   const normalizedRoutes = Object.fromEntries(
@@ -21,10 +37,16 @@ export function defineRoutes(options: DefineRoutesOptions, input: DefineRoutesIn
   };
 }
 
-function normalizeRoutesInput(input: DefineRoutesInput): {
+function normalizeRoutesInput(input: DefineRoutesInputLike): {
   parameters?: RouteParameterRegistry;
   routes: Record<string, RouteDefinition>;
 } {
+  if (typeof input === 'function') {
+    const builder = new FluentRoutesBuilder();
+    const returnedBuilder = (input as DefineRoutesBuilderInput)(builder);
+    return (returnedBuilder ?? builder).build();
+  }
+
   if ('routes' in input) {
     const normalized = input as { parameters?: RouteParameterRegistry; routes: Record<string, RouteDefinition> };
 
@@ -42,6 +64,115 @@ function normalizeRoutesInput(input: DefineRoutesInput): {
     return normalized;
   }
   return { routes: input };
+}
+
+class FluentRoutesBuilder implements RoutesBuilder {
+  private parameters?: RouteParameterRegistry;
+  private routes: Record<string, RouteDefinition> = {};
+  private current?: { key: string; route: MutableRouteDefinition };
+
+  params(parameters: RouteParameterRegistry): RoutesBuilder {
+    this.parameters = parameters;
+    return this;
+  }
+
+  get(path: string, name: string): RoutesBuilder {
+    return this.open(HttpMethod.get, path, name);
+  }
+
+  post(path: string, name: string): RoutesBuilder {
+    return this.open(HttpMethod.post, path, name);
+  }
+
+  put(path: string, name: string): RoutesBuilder {
+    return this.open(HttpMethod.put, path, name);
+  }
+
+  patch(path: string, name: string): RoutesBuilder {
+    return this.open(HttpMethod.patch, path, name);
+  }
+
+  delete(path: string, name: string): RoutesBuilder {
+    return this.open(HttpMethod.delete, path, name);
+  }
+
+  summary(summary: string): RoutesBuilder {
+    this.activeRoute().summary = summary;
+    return this;
+  }
+
+  description(description: string): RoutesBuilder {
+    this.activeRoute().description = description;
+    return this;
+  }
+
+  query(query: RouteQueryInput): RoutesBuilder {
+    this.activeRoute().query = query;
+    return this;
+  }
+
+  body(body: RouteBodyInput): RoutesBuilder {
+    this.activeRoute().body = body;
+    return this;
+  }
+
+  response(response: RouteResponseInput): RoutesBuilder {
+    this.activeRoute().response = response;
+    return this;
+  }
+
+  on(status: number, response: RouteResponseInput): RoutesBuilder {
+    const route = this.activeRoute();
+    route.responses = {
+      ...(route.responses ?? {}),
+      [status]: response,
+    };
+    return this;
+  }
+
+  done(): RoutesBuilder {
+    this.flush();
+    return this;
+  }
+
+  build(): {
+    parameters?: RouteParameterRegistry;
+    routes: Record<string, RouteDefinition>;
+  } {
+    this.flush();
+
+    return {
+      parameters: this.parameters,
+      routes: this.routes,
+    };
+  }
+
+  private open(method: RouteDefinition['method'], path: string, name: string): RoutesBuilder {
+    this.flush();
+    this.current = {
+      key: name,
+      route: {
+        method,
+        path,
+      },
+    };
+    return this;
+  }
+
+  private activeRoute(): MutableRouteDefinition {
+    if (!this.current) {
+      throw new Error('defineRoutes builder route methods must be called after an HTTP method, for example .get("/", "listItems").');
+    }
+
+    return this.current.route;
+  }
+
+  private flush(): void {
+    if (!this.current) return;
+
+    this.routes[this.current.key] = this.current.route;
+    this.current = undefined;
+  }
 }
 
 function withRouteMeta(options: DefineRoutesOptions, key: string, route: RouteDefinition): RouteDefinition {

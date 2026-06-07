@@ -78,6 +78,30 @@ export type DefineRoutesInput =
       readonly routes: Record<string, RouteDefinition>;
     };
 
+export type DefineRoutesBuilderInput = (builder: RoutesBuilder) => RoutesBuilder | void;
+
+export type DefineRoutesInputLike = DefineRoutesInput | DefineRoutesBuilderInput;
+
+export interface RoutesBuilder {
+  params(parameters: RouteParameterRegistry): RoutesBuilder;
+  get(path: string, name: string): RoutesBuilder;
+  post(path: string, name: string): RoutesBuilder;
+  put(path: string, name: string): RoutesBuilder;
+  patch(path: string, name: string): RoutesBuilder;
+  delete(path: string, name: string): RoutesBuilder;
+  summary(summary: string): RoutesBuilder;
+  description(description: string): RoutesBuilder;
+  query(query: RouteQueryInput): RoutesBuilder;
+  body(body: RouteBodyInput): RoutesBuilder;
+  response(response: RouteResponseInput): RoutesBuilder;
+  on(status: number, response: RouteResponseInput): RoutesBuilder;
+  done(): RoutesBuilder;
+  build(): {
+    parameters?: RouteParameterRegistry;
+    routes: Record<string, RouteDefinition>;
+  };
+}
+
 export interface RouteRegistry {
   readonly name: string;
   readonly routes: Record<string, RouteDefinition>;
