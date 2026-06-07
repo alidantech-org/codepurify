@@ -22,6 +22,37 @@ export interface FieldSourceMetadata {
 
 export type ExtendWithInput = SchemaCompositionFieldMap | ModelRef | RefUsage<ModelRef>;
 
+export type ProjectionFieldSelection<
+  TFields extends Record<string, unknown>,
+  TMap extends Record<string, true>,
+> = TMap & {
+  readonly [K in Exclude<keyof TMap, keyof TFields>]: never;
+};
+
+export interface SchemaProjection {
+  readonly source: string;
+  readonly rootSource?: string;
+  readonly mode: 'partial' | 'pick' | 'omit';
+  readonly fields?: readonly string[];
+}
+
+export type SchemaProjectionDefinition<
+  TSourceName extends string,
+  TFields extends Record<string, unknown>,
+  TMode extends SchemaProjection['mode'],
+> = {
+  readonly kind: 'schema-projection-definition';
+  readonly source: TSourceName;
+  readonly sourceRefId: string;
+  readonly mode: TMode;
+  readonly fields?: readonly string[];
+  readonly __fields?: TFields;
+};
+
+export type SchemaExtendedRefUsage<TRef extends ComponentRef, TFields extends Record<string, unknown>> = RefUsage<TRef> & {
+  readonly __schemaFields?: TFields;
+};
+
 export interface RefUsageOptions {
   readonly required?: boolean;
   readonly nullable?: boolean;
@@ -33,6 +64,22 @@ export interface RefUsageOptions {
     readonly extensions?: readonly FieldSourceMetadata[];
   };
 }
+
+export type SchemaRefWithUsageMethods<TRef extends ComponentRef, TFields extends Record<string, unknown>> = Omit<
+  RefWithUsageMethods<TRef>,
+  'extendWith'
+> & {
+  extendWith<TExtensionFields extends SchemaCompositionFieldMap>(
+    fields: TExtensionFields,
+  ): SchemaExtendedRefUsage<TRef, TFields & TExtensionFields>;
+  partial(): SchemaProjectionDefinition<TRef['name'], Partial<TFields>, 'partial'>;
+  pick<const TMap extends Record<string, true>>(
+    fields: ProjectionFieldSelection<TFields, TMap>,
+  ): SchemaProjectionDefinition<TRef['name'], Pick<TFields, keyof TMap & keyof TFields>, 'pick'>;
+  omit<const TMap extends Record<string, true>>(
+    fields: ProjectionFieldSelection<TFields, TMap>,
+  ): SchemaProjectionDefinition<TRef['name'], Omit<TFields, keyof TMap & keyof TFields>, 'omit'>;
+};
 
 export interface RefUsage<TRef extends EngineRef = EngineRef> {
   readonly ref: TRef;

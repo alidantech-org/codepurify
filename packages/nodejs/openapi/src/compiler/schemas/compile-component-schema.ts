@@ -14,6 +14,10 @@ export function compileComponentSchema(
   ref?: ComponentRef,
   context?: CompilerContext,
 ): Record<string, unknown> {
+  if (isSchemaProjectionDefinition(definition.value)) {
+    throw new Error('Schema projections must be declared as top-level defineSchemas() entries before they are used as fields.');
+  }
+
   // Handle RefUsage with extendWith (allOf)
   if (isRefUsage(definition.value)) {
     return compileExtendedSchemaComponent(definition, ref, context);
@@ -30,19 +34,22 @@ export function compileComponentSchema(
   }
 
   // Handle ComponentFieldMap (normal object schema)
-  const required = getRequiredKeys(definition.value);
+  const fields = definition.value as ComponentFieldMap;
+  const required = definition.projection?.mode === 'partial' ? [] : getRequiredKeys(fields);
 
   const schema: Record<string, unknown> = {
     type: 'object',
-    properties: compileComponentFields(definition.value),
+    properties: compileComponentFields(fields),
   };
 
   if (required.length > 0) {
     schema.required = required;
   }
 
-  if (ref?.meta) {
-    const enrichedMeta = enrichDtoRoleMetadata(ref.meta, ref.id, context);
+  const metadata = createSchemaMetadata(definition, ref);
+
+  if (metadata && ref) {
+    const enrichedMeta = enrichDtoRoleMetadata(metadata, ref.id, context);
     return applyCodegenMetadata(schema, enrichedMeta, context);
   }
 
@@ -85,12 +92,24 @@ function compileExtendedSchemaComponent(
 
   const schema: Record<string, unknown> = { allOf };
 
-  if (ref?.meta) {
-    const enrichedMeta = enrichDtoRoleMetadata(ref.meta, ref.id, context);
+  const metadata = createSchemaMetadata(definition, ref);
+
+  if (metadata && ref) {
+    const enrichedMeta = enrichDtoRoleMetadata(metadata, ref.id, context);
     return applyCodegenMetadata(schema, enrichedMeta, context);
   }
 
   return schema;
+}
+
+function createSchemaMetadata(definition: SchemaComponentDefinition, ref?: ComponentRef): CodegenMetadata | undefined {
+  if (!ref?.meta) return undefined;
+
+  return {
+    ...ref.meta,
+    ...(definition.meta ?? {}),
+    ...(definition.projection ? { projection: definition.projection } : {}),
+  } as CodegenMetadata;
 }
 
 function isEngineRef(value: unknown): value is EngineRef {
@@ -139,6 +158,10 @@ function enrichDtoRoleMetadata(metadata: CodegenMetadata, refId: string, context
 }
 
 function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
+  if (isSchemaProjectionDefinition(value)) {
+    throw new Error('Schema projections must be declared as top-level defineSchemas() entries before they are used as fields.');
+  }
+
   let ref = isRefUsage(value) ? value.ref : value;
   let array = isRefUsage(value) ? value.usage.array : false;
   const nullable = isRefUsage(value) ? value.usage.nullable : false;
@@ -207,6 +230,15 @@ function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
   }
 
   return schema;
+}
+
+function isSchemaProjectionDefinition(value: unknown): boolean {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    (value as { kind?: unknown }).kind === 'schema-projection-definition'
+  );
 }
 
 function asObject(value: unknown): Record<string, unknown> {

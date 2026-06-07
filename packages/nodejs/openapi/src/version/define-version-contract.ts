@@ -1,7 +1,10 @@
 import { defineResource } from '../resource/define-resource.js';
 import type { DefineResourceOptions, ResourceBuilder } from '../resource/define-resource.js';
 import { createSchemaComponentRegistry, defineSchemas } from '../components/schemas/define-schemas.js';
-import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
+import type {
+  SchemaComponentRegistry,
+  SchemaComponentValue,
+} from '../components/schemas/schema-component.types.js';
 import { defineParameters } from '../components/parameters/define-parameters.js';
 import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
 import { defineRequestBodies } from '../components/request-bodies/define-request-bodies.js';
@@ -41,10 +44,10 @@ export interface VersionBuilder {
     fields: TFields,
     options?: PropertyGroupOptions,
   ): ReturnType<typeof defineProperties<TName, TFields>>;
-  defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
+  defineSchemas<const TInput extends Record<string, SchemaComponentValue>>(
     input: TInput,
     name?: string,
-  ): ReturnType<typeof defineSchemas<TInput>>;
+  ): SchemaComponentRegistry<TInput>;
   defineParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(
     input: TInput,
     name?: string,
@@ -125,17 +128,20 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return registry;
   }
 
-  function defineVersionSchemas<TInput extends Record<string, SchemaComponentValue>>(input: TInput, name?: string) {
+  const defineVersionSchemas: VersionBuilder['defineSchemas'] = <const TInput extends Record<string, SchemaComponentValue>>(
+    input: TInput,
+    name?: string,
+  ): SchemaComponentRegistry<TInput> => {
     const registry = defineSchemas(
       {
         name: name ?? 'shared',
       },
       input,
       rootSchemas,
-    );
+    ) as SchemaComponentRegistry<TInput>;
 
     return registry;
-  }
+  };
 
   function defineVersionParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(input: TInput, name?: string) {
     const registry = defineParameters(

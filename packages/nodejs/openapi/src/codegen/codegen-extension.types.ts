@@ -146,6 +146,13 @@ export interface XCodegenBaseMeta {
    * Operation query params can point to the reusable UserListQuery schema.
    */
   readonly target?: XCodegenRefPointer;
+
+  readonly projection?: {
+    readonly source: string;
+    readonly rootSource?: string;
+    readonly mode: 'pick' | 'omit' | 'partial';
+    readonly fields?: readonly string[];
+  };
 }
 
 export interface XCodegenPrimitiveMeta extends XCodegenBaseMeta {

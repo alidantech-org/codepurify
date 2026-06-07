@@ -65,7 +65,7 @@ function compileRequestBody(body: RouteBodyInput, resolver: RefResolver): unknow
       required: body.required ?? true,
       description: body.description,
       content: {
-        [ContentType.json]: {
+        [body.contentType ?? ContentType.json]: {
           schema: compileRouteSchema(body.schema, resolver),
         },
       },
@@ -125,7 +125,7 @@ function compileResponses(
 function compileResponseValue(description: string, response: RouteResponseInput, resolver: RefResolver): unknown {
   // Handle object-style input
   if (isResponseObjectInput(response)) {
-    return jsonResponse(response.description ?? description, compileRouteSchema(response.schema, resolver));
+    return typedResponse(response.description ?? description, compileRouteSchema(response.schema, resolver), response.contentType);
   }
 
   // Handle legacy ResponseRef
@@ -134,18 +134,18 @@ function compileResponseValue(description: string, response: RouteResponseInput,
   }
 
   // Handle direct schema input
-  return jsonResponse(description, compileRouteSchema(response, resolver));
+  return typedResponse(description, compileRouteSchema(response, resolver));
 }
 
 function isResponseObjectInput(response: RouteResponseInput): response is RouteResponseObjectInput {
   return typeof response === 'object' && 'schema' in response;
 }
 
-function jsonResponse(description: string, schema: unknown): Record<string, unknown> {
+function typedResponse(description: string, schema: unknown, contentType: string = ContentType.json): Record<string, unknown> {
   return {
     description,
     content: {
-      [ContentType.json]: {
+      [contentType]: {
         schema,
       },
     },

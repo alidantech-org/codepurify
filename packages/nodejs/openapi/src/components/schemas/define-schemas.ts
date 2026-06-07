@@ -2,28 +2,38 @@ import { EngineIdPart, createEngineId } from '../../ids/engine-id.js';
 import { RefKind } from '../../refs/ref-kind.js';
 import type { ComponentRef } from '../../refs/ref.types.js';
 import { withRefMethods } from '../../refs/ref-methods.js';
-import type { RefWithUsageMethods } from '../../refs/ref-usage.types.js';
+import type {
+  RefWithUsageMethods,
+  SchemaProjection,
+  SchemaProjectionDefinition,
+  SchemaRefWithUsageMethods,
+} from '../../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
 import { XCodegenKind } from '../../codegen/codegen-extension.types.js';
-import type { SchemaComponentDefinition, SchemaComponentRegistry, SchemaComponentValue } from './schema-component.types.js';
+import type {
+  SchemaComponentDefinition,
+  SchemaComponentRegistry,
+  SchemaComponentValue,
+} from './schema-component.types.js';
 import { compileZodRef } from '../../zod/compile-zod-ref.js';
 import type { z } from 'zod';
+import { normalizeExtendWithInput } from '../../compiler/schemas/normalize-extend-with.js';
+import type { ComponentFieldMap } from '../component.types.js';
 
 export interface DefineSchemasOptions extends OptionalResourceContext {
   readonly name: string;
 }
 
-export function defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
+const schemaDefinitionsByRefId = new Map<string, SchemaComponentDefinition>();
+
+export function defineSchemas<const TInput extends Record<string, SchemaComponentValue>>(
   options: DefineSchemasOptions,
   input: TInput,
   target?: SchemaComponentRegistry,
 ): SchemaComponentRegistry<TInput> {
   const toZod = options.zodRegistry ? (ref: unknown): z.ZodTypeAny => compileZodRef(ref as ComponentRef, options.zodRegistry!) : undefined;
-  const definitions = Object.entries(input).map(([name, value]) => ({
-    name,
-    value,
-  }));
-  const ref = createRefs(options, input, toZod);
+  const definitions = Object.entries(input).map(([name, value]) => normalizeSchemaDefinition(name, value as SchemaComponentValue));
+  const ref = createRefs<TInput>(options, definitions, toZod);
 
   if (target) {
     appendDefinitions(target, definitions, ref);
@@ -49,11 +59,10 @@ function appendDefinitions(
   definitions: readonly SchemaComponentDefinition[],
   ref: Record<string, RefWithUsageMethods<ComponentRef>>,
 ): void {
-  const existing = new Set(target.definitions.map((definition) => definition.name));
   const incoming = new Set<string>();
 
   for (const definition of definitions) {
-    if (existing.has(definition.name) || incoming.has(definition.name)) {
+    if (target.definitions.some((item) => item.name === definition.name) || incoming.has(definition.name)) {
       throw new Error(`Duplicate schema component "${definition.name}" in registry "${target.name}".`);
     }
 
@@ -64,27 +73,27 @@ function appendDefinitions(
   Object.assign(target.ref, ref);
 }
 
-function createRefs<TInput extends Record<string, SchemaComponentValue>>(
+function createRefs<TInput extends Record<string, unknown>>(
   options: DefineSchemasOptions,
-  input: TInput,
+  definitions: readonly SchemaComponentDefinition[],
   toZod?: (ref: unknown) => z.ZodTypeAny,
 ): SchemaComponentRegistry<TInput>['ref'] {
-  const entries = Object.keys(input).map((name) => {
-    return [name, createSchemaRef(options, name, input[name], toZod)] as const;
+  const entries = definitions.map((definition) => {
+    return [definition.name, createSchemaRef(options, definition, toZod)] as const;
   });
   return Object.fromEntries(entries) as SchemaComponentRegistry<TInput>['ref'];
 }
 
 function createSchemaRef(
   options: DefineSchemasOptions,
-  name: string,
-  value: SchemaComponentValue,
+  definition: SchemaComponentDefinition,
   toZod?: (ref: unknown) => z.ZodTypeAny,
-): RefWithUsageMethods<ComponentRef> {
+): SchemaRefWithUsageMethods<ComponentRef, Record<string, unknown>> {
+  const { name } = definition;
   const refId = createScopedId(options, EngineIdPart.component, 'schema', name);
   const isShared = !options.resource;
 
-  const definition = { name, value };
+  schemaDefinitionsByRefId.set(refId, definition);
 
   // Register schema definition in zodRegistry if available
   if (options.zodRegistry) {
@@ -110,10 +119,124 @@ function createSchemaRef(
       },
     },
     { toZod },
-  );
+  ) as SchemaRefWithUsageMethods<ComponentRef, Record<string, unknown>>;
 }
 
 function createScopedId(options: DefineSchemasOptions, ...parts: string[]): string {
   if (!options.resource) return createEngineId(...parts);
   return createEngineId(EngineIdPart.resource, options.resource.name, ...parts);
+}
+
+function normalizeSchemaDefinition(name: string, value: SchemaComponentValue): SchemaComponentDefinition {
+  if (!isSchemaProjectionDefinition(value)) {
+    return { name, value };
+  }
+
+  const sourceDefinition = schemaDefinitionsByRefId.get(value.sourceRefId);
+
+  if (!sourceDefinition) {
+    throw new Error(`Cannot create projection schema "${name}". Source schema "${value.source}" was not found.`);
+  }
+
+  const sourceFields = resolveProjectionSourceFields(sourceDefinition);
+  const selectedKeys = value.fields;
+
+  validateProjectionKeys(name, value.source, sourceFields, selectedKeys);
+
+  return {
+    name,
+    value: projectFields(sourceFields, value.mode, selectedKeys),
+    projection: {
+      source: value.source,
+      rootSource: sourceDefinition.projection?.rootSource ?? sourceDefinition.projection?.source ?? value.source,
+      mode: value.mode,
+      ...(selectedKeys ? { fields: selectedKeys } : {}),
+    },
+  };
+}
+
+function resolveProjectionSourceFields(definition: SchemaComponentDefinition): ComponentFieldMap {
+  if (isComponentFieldMap(definition.value)) {
+    return { ...definition.value };
+  }
+
+  if (isRefUsageWithExtendWith(definition.value)) {
+    const baseDefinition = schemaDefinitionsByRefId.get(definition.value.ref.id);
+
+    if (!baseDefinition) {
+      throw new Error(`Cannot project schema "${definition.name}". Base schema "${definition.value.ref.name}" was not found.`);
+    }
+
+    const baseFields = resolveProjectionSourceFields(baseDefinition);
+    const extensionFields = normalizeExtendWithInput(definition.value.usage.extendWith);
+
+    if (!extensionFields) {
+      throw new Error(`Cannot project schema "${definition.name}". extendWith fields are not a supported field map.`);
+    }
+
+    return {
+      ...baseFields,
+      ...extensionFields,
+    };
+  }
+
+  throw new Error(`Cannot project schema "${definition.name}". Only object schemas and extendWith schemas are supported.`);
+}
+
+function projectFields(
+  sourceFields: ComponentFieldMap,
+  mode: SchemaProjection['mode'],
+  selectedKeys: readonly string[] | undefined,
+): ComponentFieldMap {
+  if (mode === 'partial') return { ...sourceFields };
+
+  if (!selectedKeys) {
+    throw new Error(`Projection mode "${mode}" requires fields.`);
+  }
+
+  if (mode === 'pick') {
+    return Object.fromEntries(selectedKeys.map((key) => [key, sourceFields[key]])) as ComponentFieldMap;
+  }
+
+  const omitted = new Set(selectedKeys);
+  return Object.fromEntries(Object.entries(sourceFields).filter(([key]) => !omitted.has(key))) as ComponentFieldMap;
+}
+
+function validateProjectionKeys(
+  projectionName: string,
+  sourceName: string,
+  sourceFields: Record<string, unknown>,
+  selectedKeys: readonly string[] | undefined,
+): void {
+  for (const key of selectedKeys ?? []) {
+    if (!(key in sourceFields)) {
+      throw new Error(`Projection schema "${projectionName}" references unknown field "${key}" on source schema "${sourceName}".`);
+    }
+  }
+}
+
+function isComponentFieldMap(value: unknown): value is ComponentFieldMap {
+  return !!value && typeof value === 'object' && !Array.isArray(value) && !('kind' in value) && !('ref' in value);
+}
+
+function isSchemaProjectionDefinition(
+  value: unknown,
+): value is SchemaProjectionDefinition<string, Record<string, unknown>, SchemaProjection['mode']> {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    (value as { kind?: unknown }).kind === 'schema-projection-definition'
+  );
+}
+
+function isRefUsageWithExtendWith(value: unknown): value is { ref: ComponentRef; usage: { extendWith: import('../../refs/ref-usage.types.js').ExtendWithInput } } {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    'ref' in value &&
+    'usage' in value &&
+    !!(value as { usage?: { extendWith?: unknown } }).usage?.extendWith &&
+    (value as { ref?: { kind?: unknown } }).ref?.kind === RefKind.component
+  );
 }

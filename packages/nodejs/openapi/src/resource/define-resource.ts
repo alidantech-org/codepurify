@@ -1,5 +1,8 @@
 import { createSchemaComponentRegistry, defineSchemas } from '../components/schemas/define-schemas.js';
-import type { SchemaComponentRegistry, SchemaComponentValue } from '../components/schemas/schema-component.types.js';
+import type {
+  SchemaComponentRegistry,
+  SchemaComponentValue,
+} from '../components/schemas/schema-component.types.js';
 
 import { defineParameters } from '../components/parameters/define-parameters.js';
 import type { ParameterComponentRegistry, ParameterComponentDefinition } from '../components/parameters/parameter-component.types.js';
@@ -74,10 +77,10 @@ export interface ResourceBuilder {
     options?: PropertyGroupOptions,
   ): ReturnType<typeof defineProperties<TName, TFields>>;
 
-  defineSchemas<TInput extends Record<string, SchemaComponentValue>>(
+  defineSchemas<const TInput extends Record<string, SchemaComponentValue>>(
     input: TInput,
     name?: string,
-  ): ReturnType<typeof defineSchemas<TInput>>;
+  ): SchemaComponentRegistry<TInput>;
 
   defineParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(
     input: TInput,
@@ -138,7 +141,10 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceSchemas<TInput extends Record<string, SchemaComponentValue>>(input: TInput, name?: string) {
+  const defineResourceSchemas: ResourceBuilder['defineSchemas'] = <const TInput extends Record<string, SchemaComponentValue>>(
+    input: TInput,
+    name?: string,
+  ): SchemaComponentRegistry<TInput> => {
     const registry = defineSchemas(
       {
         name: name ?? context.name,
@@ -146,10 +152,10 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       },
       input,
       schemas,
-    );
+    ) as SchemaComponentRegistry<TInput>;
 
     return registry;
-  }
+  };
 
   function defineResourceParameters<TInput extends Record<string, Omit<ParameterComponentDefinition, 'key'>>>(
     input: TInput,

@@ -1,6 +1,11 @@
 import type { z } from 'zod';
 import type { EngineRef } from './ref.types.js';
-import type { ExtendWithInput, RefUsage, RefUsageOptions, RefWithUsageMethods } from './ref-usage.types.js';
+import type {
+  ExtendWithInput,
+  RefUsage,
+  RefUsageOptions,
+  RefWithUsageMethods,
+} from './ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 import { getSourceMetadataFromRef, getSourceMetadataFromExtendWithInput } from './ref-source-metadata.js';
@@ -52,9 +57,48 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
       configurable: true,
       value: () => options.toZod?.(ref) ?? throwMissingZodResolver(ref.id),
     },
+    partial: {
+      enumerable: false,
+      configurable: true,
+      value: () => createProjectionDefinition(ref, 'partial'),
+    },
+    pick: {
+      enumerable: false,
+      configurable: true,
+      value: (fields: Record<string, true | undefined>) => createProjectionDefinition(ref, 'pick', fields),
+    },
+    omit: {
+      enumerable: false,
+      configurable: true,
+      value: (fields: Record<string, true | undefined>) => createProjectionDefinition(ref, 'omit', fields),
+    },
   });
 
   return target;
+}
+
+function createProjectionDefinition<TRef extends EngineRef>(
+  ref: TRef,
+  mode: 'partial' | 'pick' | 'omit',
+  fields?: Record<string, true | undefined>,
+) {
+  return {
+    kind: 'schema-projection-definition',
+    source: ref.name,
+    sourceRefId: ref.id,
+    mode,
+    ...(fields ? { fields: projectionKeys(fields) } : {}),
+  };
+}
+
+function projectionKeys(fields: Record<string, true | undefined>): string[] {
+  return Object.entries(fields).map(([key, enabled]) => {
+    if (enabled !== true) {
+      throw new Error(`Projection field "${key}" must be true. Use only { fieldName: true }.`);
+    }
+
+    return key;
+  });
 }
 
 function createUsage<TRef extends EngineRef>(ref: TRef, usage: RefUsageOptions, options: RefMethodOptions): RefUsage<TRef> {

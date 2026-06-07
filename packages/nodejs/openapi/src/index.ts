@@ -3,7 +3,7 @@
  * ========================================================= */
 
 import { PropertyRegistry } from './properties/property.types.js';
-import { RefUsage } from './refs/ref-usage.types.js';
+import { ProjectionFieldSelection, RefUsage, SchemaProjection } from './refs/ref-usage.types.js';
 import { ArrayRef, ExtendedRef } from './refs/ref-wrapper.types.js';
 import { CompositeSchemaField, PrimitiveSchemaField, RefSchemaField } from './schema/schema.types.js';
 import { VersionBuilder } from './version/define-version-contract.js';
@@ -183,7 +183,9 @@ export type { PackageConfig, PackageOutputConfig, PackageServerConfig } from './
 export type {
   VersionBuilder,
   ArrayRef,
+  ProjectionFieldSelection,
   RefUsage,
+  SchemaProjection,
   PropertyRegistry,
   ExtendedRef,
   RefSchemaField,
@@ -196,6 +198,7 @@ export type {
  * ========================================================= */
 
 export { ContentType, DefaultOutputConfig } from './output/output.constants.js';
+export type { ContentType as ContentTypeValue } from './output/output.constants.js';
 export { createDebugFileName, createOpenApiFileName } from './output/openapi-file-name.js';
 export { resolveOutputConfig } from './output/resolve-output-config.js';
 
