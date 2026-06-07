@@ -22,6 +22,7 @@ export interface SchemaComponentDefinition {
   readonly value: SchemaComponentValue;
   readonly meta?: CodegenMetadata;
   readonly projection?: SchemaProjection;
+  readonly required?: readonly string[];
 }
 
 export type InferSchemaComponentFields<TValue> = TValue extends ComponentFieldMap

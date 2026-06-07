@@ -139,6 +139,7 @@ function normalizeSchemaDefinition(name: string, value: SchemaComponentValue): S
   }
 
   const sourceFields = resolveProjectionSourceFields(sourceDefinition);
+  const sourceRequired = resolveProjectionSourceRequired(sourceDefinition);
   const selectedKeys = value.fields;
 
   validateProjectionKeys(name, value.source, sourceFields, selectedKeys);
@@ -146,6 +147,7 @@ function normalizeSchemaDefinition(name: string, value: SchemaComponentValue): S
   return {
     name,
     value: projectFields(sourceFields, value.mode, selectedKeys),
+    required: projectRequired(sourceRequired, value.mode, selectedKeys),
     projection: {
       source: value.source,
       rootSource: sourceDefinition.projection?.rootSource ?? sourceDefinition.projection?.source ?? value.source,
@@ -183,6 +185,35 @@ function resolveProjectionSourceFields(definition: SchemaComponentDefinition): C
   throw new Error(`Cannot project schema "${definition.name}". Only object schemas and extendWith schemas are supported.`);
 }
 
+function resolveProjectionSourceRequired(definition: SchemaComponentDefinition): readonly string[] {
+  if (definition.required) {
+    return [...definition.required];
+  }
+
+  if (isComponentFieldMap(definition.value)) {
+    return getRequiredKeys(definition.value);
+  }
+
+  if (isRefUsageWithExtendWith(definition.value)) {
+    const baseDefinition = schemaDefinitionsByRefId.get(definition.value.ref.id);
+
+    if (!baseDefinition) {
+      throw new Error(`Cannot project schema "${definition.name}". Base schema "${definition.value.ref.name}" was not found.`);
+    }
+
+    const baseRequired = resolveProjectionSourceRequired(baseDefinition);
+    const extensionFields = normalizeExtendWithInput(definition.value.usage.extendWith);
+
+    if (!extensionFields) {
+      throw new Error(`Cannot project schema "${definition.name}". extendWith fields are not a supported field map.`);
+    }
+
+    return [...new Set([...baseRequired, ...getRequiredKeys(extensionFields)])];
+  }
+
+  throw new Error(`Cannot project schema "${definition.name}". Only object schemas and extendWith schemas are supported.`);
+}
+
 function projectFields(
   sourceFields: ComponentFieldMap,
   mode: SchemaProjection['mode'],
@@ -200,6 +231,26 @@ function projectFields(
 
   const omitted = new Set(selectedKeys);
   return Object.fromEntries(Object.entries(sourceFields).filter(([key]) => !omitted.has(key))) as ComponentFieldMap;
+}
+
+function projectRequired(
+  sourceRequired: readonly string[],
+  mode: SchemaProjection['mode'],
+  selectedKeys: readonly string[] | undefined,
+): readonly string[] {
+  if (mode === 'partial') return [];
+
+  if (!selectedKeys) {
+    throw new Error(`Projection mode "${mode}" requires fields.`);
+  }
+
+  const selected = new Set(selectedKeys);
+
+  if (mode === 'pick') {
+    return sourceRequired.filter((key) => selected.has(key));
+  }
+
+  return sourceRequired.filter((key) => !selected.has(key));
 }
 
 function validateProjectionKeys(
@@ -239,4 +290,14 @@ function isRefUsageWithExtendWith(value: unknown): value is { ref: ComponentRef;
     !!(value as { usage?: { extendWith?: unknown } }).usage?.extendWith &&
     (value as { ref?: { kind?: unknown } }).ref?.kind === RefKind.component
   );
+}
+
+function getRequiredKeys(fields: ComponentFieldMap): string[] {
+  return Object.entries(fields)
+    .filter(([, value]) => !isOptional(value))
+    .map(([key]) => key);
+}
+
+function isOptional(value: unknown): boolean {
+  return !!value && typeof value === 'object' && 'usage' in value && (value as { usage?: { required?: boolean } }).usage?.required === false;
 }

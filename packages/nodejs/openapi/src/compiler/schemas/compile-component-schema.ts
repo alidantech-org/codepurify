@@ -35,7 +35,7 @@ export function compileComponentSchema(
 
   // Handle ComponentFieldMap (normal object schema)
   const fields = definition.value as ComponentFieldMap;
-  const required = definition.projection?.mode === 'partial' ? [] : getRequiredKeys(fields);
+  const required = definition.required ? [...definition.required] : getRequiredKeys(fields);
 
   const schema: Record<string, unknown> = {
     type: 'object',

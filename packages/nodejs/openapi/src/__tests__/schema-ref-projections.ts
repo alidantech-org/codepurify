@@ -60,6 +60,15 @@ const uploadPublicSchemas = uploads.defineSchemas({
   }),
 });
 
+const uploadMutableSchemas = uploads.defineSchemas({
+  UploadMutable: {
+    originalName: uploadProps.ref.originalName,
+    secureUrl: uploadProps.ref.secureUrl,
+    mimeType: uploadProps.ref.mimeType,
+    status: uploadProps.ref.status,
+  },
+});
+
 const uploadProjectionSchemas = uploads.defineSchemas({
   UploadPartial: uploadPublicSchemas.ref.UploadPublic.partial(),
   UploadPreview: uploadPublicSchemas.ref.UploadPublic.pick({
@@ -83,6 +92,19 @@ const uploadNestedProjectionSchemas = uploads.defineSchemas({
   UploadTinyPreview: uploadProjectionSchemas.ref.UploadPreview.pick({
     id: true,
     secureUrl: true,
+  }),
+});
+
+const uploadMutableProjectionSchemas = uploads.defineSchemas({
+  UpdateUploadBody: uploadMutableSchemas.ref.UploadMutable.partial(),
+});
+
+const uploadMutableNestedProjectionSchemas = uploads.defineSchemas({
+  UpdateUploadNameOnly: uploadMutableProjectionSchemas.ref.UpdateUploadBody.pick({
+    originalName: true,
+  }),
+  UpdateUploadWithoutStatus: uploadMutableProjectionSchemas.ref.UpdateUploadBody.omit({
+    status: true,
   }),
 });
 
@@ -220,6 +242,27 @@ assert.deepEqual((schemas.UploadTinyPreview['x-codegen'] as { projection?: unkno
   rootSource: 'UploadPublic',
   mode: 'pick',
   fields: ['id', 'secureUrl'],
+});
+assert.equal(schemas.UpdateUploadBody.required, undefined);
+assert.equal(schemas.UpdateUploadNameOnly.required, undefined);
+assert.deepEqual(Object.keys((schemas.UpdateUploadNameOnly.properties as Record<string, unknown>) ?? {}), ['originalName']);
+assert.deepEqual((schemas.UpdateUploadNameOnly['x-codegen'] as { projection?: unknown }).projection, {
+  source: 'UpdateUploadBody',
+  rootSource: 'UploadMutable',
+  mode: 'pick',
+  fields: ['originalName'],
+});
+assert.equal(schemas.UpdateUploadWithoutStatus.required, undefined);
+assert.deepEqual(Object.keys((schemas.UpdateUploadWithoutStatus.properties as Record<string, unknown>) ?? {}), [
+  'originalName',
+  'secureUrl',
+  'mimeType',
+]);
+assert.deepEqual((schemas.UpdateUploadWithoutStatus['x-codegen'] as { projection?: unknown }).projection, {
+  source: 'UpdateUploadBody',
+  rootSource: 'UploadMutable',
+  mode: 'omit',
+  fields: ['status'],
 });
 
 const uploadPreviewOkAllOf = schemas.UploadPreviewOk.allOf as readonly { properties?: Record<string, unknown>; required?: string[] }[];
