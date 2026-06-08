@@ -1,0 +1,5 @@
+export enum {{ enum.name.pascal.o }} {
+{%- for value in enum.meta.enum_values %}
+  {{ value.safe_name }} = "{{ value.wire }}",
+{%- endfor %}
+}

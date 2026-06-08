@@ -1,0 +1,24 @@
+import type { RequestOptions } from 'next-api-bridge';
+import { getCleanFormData } from 'next-api-bridge/form';
+
+export type ActionBody<T> = T | FormData;
+
+export function cleanActionBody<T>(body: ActionBody<T>): T {
+  if (body instanceof FormData) {
+    return getCleanFormData<T>(body);
+  }
+
+  return body;
+}
+
+export function requestOptions(
+  options?: RequestOptions,
+  query?: Record<string, unknown>,
+  isMultipart = false,
+): RequestOptions {
+  return {
+    ...options,
+    ...(query ? { query } : {}),
+    ...(isMultipart ? { isMultipart: true } : {}),
+  };
+}

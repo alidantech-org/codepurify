@@ -1,0 +1,72 @@
+{% macro params_type(operation) -%}
+{
+{%- for param in operation.meta.path_params %}
+  {{ param }}: string;
+{%- endfor %}
+}
+{%- endmacro %}
+
+{% macro endpoint_expr(operation) -%}
+{%- if operation.meta.has_path_params -%}
+routes.{{ resource.name.camel.o }}.{{ operation.lang.function_name }}(input.params)
+{%- else -%}
+routes.{{ resource.name.camel.o }}.{{ operation.lang.function_name }}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro response_type(operation) -%}
+{{ operation.meta.response_type or 'unknown' }}
+{%- endmacro %}
+
+'use server';
+
+import type { ApiBridgeResponse, RequestOptions } from 'next-api-bridge';
+import { api } from '../api';
+import routes from '../routes';
+import { cleanActionBody, requestOptions, type ActionBody } from './helpers';
+{%- for import in file.imports %}
+{{ import.statement }}
+{%- endfor %}
+
+{%- for operation in resource.operations %}
+{{ "\n" }}
+export type {{ operation.name.pascal.o }}Input = {
+{%- if operation.meta.has_path_params %}
+  params: {{ params_type(operation) }};
+{%- endif %}
+{%- if operation.meta.query_type %}
+  query?: {{ operation.meta.query_type }};
+{%- endif %}
+{%- if operation.meta.is_multipart_request %}
+  body: FormData;
+{%- elif operation.meta.body_type %}
+  body{% if operation.request_body and operation.request_body.lang.required %}{% else %}?{% endif %}: ActionBody<{{ operation.meta.body_type }}>;
+{%- endif %}
+  options?: RequestOptions;
+};
+
+export async function {{ operation.lang.function_name }}(
+  input{% if not operation.meta.has_path_params and not (operation.meta.body_type and operation.request_body and operation.request_body.lang.required) and not operation.meta.is_multipart_request %}?{% endif %}: {{ operation.name.pascal.o }}Input{% if not operation.meta.has_path_params and not (operation.meta.body_type and operation.request_body and operation.request_body.lang.required) and not operation.meta.is_multipart_request %} = {}{% endif %},
+): Promise<ApiBridgeResponse<{{ response_type(operation) }}>> {
+  const endpoint = {{ endpoint_expr(operation) }};
+  const options = requestOptions(
+    input?.options,
+    input?.query as Record<string, unknown> | undefined,
+    {{ "true" if operation.meta.is_multipart_request else "false" }},
+  );
+{%- if operation.lang.method == 'get' %}
+
+  return api.get<{{ response_type(operation) }}>(endpoint, options);
+{%- elif operation.meta.is_multipart_request %}
+
+  return api.{{ operation.lang.method }}<{{ response_type(operation) }}>(endpoint, input.body, options);
+{%- elif operation.meta.body_type %}
+  const body = input.body ? cleanActionBody<{{ operation.meta.body_type }}>(input.body) : undefined;
+
+  return api.{{ operation.lang.method }}<{{ response_type(operation) }}>(endpoint, body, options);
+{%- else %}
+
+  return api.{{ operation.lang.method }}<{{ response_type(operation) }}>(endpoint, undefined, options);
+{%- endif %}
+}
+{%- endfor %}
