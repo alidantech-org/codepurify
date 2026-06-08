@@ -9,14 +9,20 @@ const v1 = defineVersionContract({
   },
 });
 
+const sharedProps = v1.defineProperties('Shared', {
+  message: z.string(),
+});
+
 const users = v1.defineResource({
-  name: 'User',
+  name: 'users',
   route: '/users',
+  folders: ['platform', 'users'],
 });
 
 const props = users.defineProperties('User', {
   id: z.string(),
   email: z.string().email(),
+  status: z.enum(['active', 'suspended']),
 });
 
 const schemas = users.defineSchemas({
@@ -54,7 +60,20 @@ assert.equal(result.success, true);
 const userQuery = result.document.components.schemas.UserQuery as Record<string, unknown>;
 const createUserBody = result.document.components.schemas.CreateUserBody as Record<string, unknown>;
 const userOk = result.document.components.schemas.UserOk as Record<string, unknown>;
+const sharedMessage = result.document.components.schemas.SharedMessage as Record<string, unknown>;
+const userStatus = result.document.components.schemas.UserStatus as Record<string, unknown>;
 
 assert.equal((userQuery[CODEGEN_EXTENSION_KEY] as { role?: string }).role, 'query');
 assert.equal((createUserBody[CODEGEN_EXTENSION_KEY] as { role?: string }).role, 'body');
 assert.equal((userOk[CODEGEN_EXTENSION_KEY] as { role?: string }).role, 'response');
+assert.deepEqual(sharedMessage[CODEGEN_EXTENSION_KEY], {
+  kind: 'primitive',
+  shared: true,
+});
+assert.deepEqual(userStatus[CODEGEN_EXTENSION_KEY], {
+  kind: 'enum',
+  resource: {
+    name: 'users',
+    path: ['platform', 'users'],
+  },
+});

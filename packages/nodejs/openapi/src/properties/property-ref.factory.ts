@@ -51,7 +51,13 @@ export function createPropertyRef(
       generatedSchema,
       meta: {
         kind: XCodegenKind.primitive,
-        ...(sourceKind === PropertyKind.shared ? { shared: true } : {}),
+        ...(!options.resource && sourceKind === PropertyKind.shared ? { shared: true } : {}),
+        resource: options.resource
+          ? {
+              name: options.resource.alias,
+              path: options.resource.folders,
+            }
+          : undefined,
       },
     },
     { toZod },
