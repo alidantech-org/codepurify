@@ -108,6 +108,9 @@ export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind } 
 export type {
   CodegenKind,
   CodegenMetadata,
+  CodegenUiInput,
+  CodegenUiMeta,
+  CodegenUiRole,
   XCodegenAccess as XCodegenAccessType,
   XCodegenBaseMeta,
   XCodegenDtoMeta,
@@ -121,6 +124,7 @@ export type {
   XCodegenQueryMeta,
   XCodegenRefPointer,
   XCodegenResourceMeta,
+  ResolvedCodegenUiMeta,
 } from './codegen/codegen-extension.types.js';
 
 export {

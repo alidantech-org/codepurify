@@ -29,3 +29,11 @@ OPERATORS = "operators"
 SORT = "sort"
 SELECT = "select"
 SEARCH = "search"
+
+# UI metadata keys
+UI = "ui"
+ENABLED = "enabled"
+ROLE = "role"
+INFERRED = "inferred"
+INFERENCE_SOURCE = "inferenceSource"
+INFERENCE_REASON = "inferenceReason"

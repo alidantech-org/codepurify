@@ -1,6 +1,8 @@
 import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
 import { XCodegenDtoRole, XCodegenKind } from '../codegen/codegen-extension.types.js';
+import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
+import { normalizeCodegenUiInput } from '../codegen/codegen-ui.js';
 import { HttpMethod } from './http-method.js';
 import type {
   DefineRoutesBuilderInput,
@@ -135,6 +137,11 @@ class FluentRoutesBuilder implements RoutesBuilder {
     return this;
   }
 
+  ui(roleOrMeta: CodegenUiInput): RoutesBuilder {
+    this.activeRoute().ui = normalizeCodegenUiInput(roleOrMeta);
+    return this;
+  }
+
   done(): RoutesBuilder {
     this.flush();
     return this;
@@ -185,6 +192,7 @@ function withRouteMeta(options: DefineRoutesOptions, key: string, route: RouteDe
 
   return {
     ...route,
+    ui: normalizeCodegenUiInput(route.ui),
     operationId,
     tags: [options.resource?.tag].filter((tag): tag is string => Boolean(tag)),
     meta: {

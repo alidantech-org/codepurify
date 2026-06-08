@@ -11,7 +11,22 @@ from __future__ import annotations
 
 import re
 
-from contracts.api import ApiOperation, ApiParameter, ApiRequestBody, ApiResponse, ApiSchema
+from constants.codegen import (
+    ENABLED,
+    INFERENCE_REASON,
+    INFERENCE_SOURCE,
+    INFERRED,
+    ROLE,
+    UI,
+)
+from contracts.api import (
+    ApiField,
+    ApiOperation,
+    ApiParameter,
+    ApiRequestBody,
+    ApiResponse,
+    ApiSchema,
+)
 from contracts.template import (
     TemplateDependency,
     TemplateDependencyPurpose,
@@ -92,6 +107,7 @@ def _operation(
     params_ref = _params_ref(operation)
     body_ref = _body_ref(operation)
     response_ref = _success_response_ref(operation)
+    list_field = _list_response_field(response_ref, schema_by_ref)
     path_params = _path_param_names(operation.path)
     request_content_types = _request_content_types(operation)
 
@@ -157,6 +173,14 @@ def _operation(
             route_getter=function_name,
             path_params=path_params,
             has_path_params=bool(path_params),
+            ui_enabled=_ui_enabled(operation),
+            ui_role=_ui_role(operation),
+            ui_inferred=_ui_inferred(operation),
+            ui_inference_source=_ui_inference_source(operation),
+            ui_inference_reason=_ui_inference_reason(operation),
+            ui_list_field=list_field.name.camel.o if list_field else None,
+            ui_list_item_type=_field_item_type(list_field, schema_by_ref),
+            ui_pagination_field=_pagination_field(response_ref, schema_by_ref),
         ),
     )
 
@@ -429,6 +453,62 @@ def _schema_type(ref: str | None, schema_by_ref: dict[str, ApiSchema]) -> str | 
     return schema.name.pascal.o
 
 
+def _list_response_field(
+    ref: str | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> ApiField | None:
+    if ref is None:
+        return None
+
+    schema = schema_by_ref.get(ref)
+    if schema is None:
+        return None
+
+    for field in schema.fields:
+        kind = getattr(field.type.kind, "value", field.type.kind)
+        if kind == "array":
+            return field
+
+    return None
+
+
+def _field_item_type(
+    field: ApiField | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> str | None:
+    if field is None:
+        return None
+
+    for ref in (field.item_ref, *field.item_refs):
+        schema = schema_by_ref.get(ref)
+        if schema is not None:
+            return schema.name.pascal.o
+
+    if field.type.item_type:
+        return _schema_type(field.type.item_type, schema_by_ref) or field.type.item_type
+
+    return None
+
+
+def _pagination_field(ref: str | None, schema_by_ref: dict[str, ApiSchema]) -> str | None:
+    if ref is None:
+        return None
+
+    schema = schema_by_ref.get(ref)
+    if schema is None:
+        return None
+
+    for field in schema.fields:
+        name = field.name.camel.o
+        field_type = str(field.type.type or "")
+        if name in {"pagination", "meta", "paginationMeta"} or field_type.endswith(
+            "PaginationMeta"
+        ):
+            return name
+
+    return None
+
+
 def _path_param_names(path: str) -> tuple[str, ...]:
     names: list[str] = []
 
@@ -457,6 +537,34 @@ def _operation_method(operation: ApiOperation) -> str:
 
 def _first(values: tuple[str, ...]) -> str | None:
     return values[0] if values else None
+
+
+def _ui_metadata(operation: ApiOperation) -> dict:
+    ui = operation.meta.get(UI)
+    return ui if isinstance(ui, dict) else {}
+
+
+def _ui_enabled(operation: ApiOperation) -> bool:
+    return _ui_metadata(operation).get(ENABLED) is True
+
+
+def _ui_role(operation: ApiOperation) -> str | None:
+    role = _ui_metadata(operation).get(ROLE)
+    return role if isinstance(role, str) else None
+
+
+def _ui_inferred(operation: ApiOperation) -> bool:
+    return _ui_metadata(operation).get(INFERRED) is True
+
+
+def _ui_inference_source(operation: ApiOperation) -> str | None:
+    source = _ui_metadata(operation).get(INFERENCE_SOURCE)
+    return source if isinstance(source, str) else None
+
+
+def _ui_inference_reason(operation: ApiOperation) -> str | None:
+    reason = _ui_metadata(operation).get(INFERENCE_REASON)
+    return reason if isinstance(reason, str) else None
 
 
 def _append_ref(refs: list[str], ref: str | None) -> None:

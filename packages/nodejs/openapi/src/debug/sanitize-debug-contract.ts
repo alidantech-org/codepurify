@@ -2,6 +2,8 @@ import type { VersionContract } from '../version/version-contract.types.js';
 import type { FieldSourceMetadata } from '../refs/ref-usage.types.js';
 import { isRefUsage } from '../validation/ref-usage-guards.js';
 import type { XCodegenResourceMeta } from '../codegen/codegen-extension.types.js';
+import { resolveCodegenUi } from '../codegen/codegen-ui.js';
+import { expressPathToOpenApi } from '../compiler/paths/express-path-to-openapi.js';
 
 export function sanitizeDebugContract(value: unknown): unknown {
   const sanitized = sanitizeDebugValue(value);
@@ -60,7 +62,49 @@ function addSourceMetadataDebug(sanitized: unknown, contract: VersionContract): 
     debug._sourceMetadata = schemaComponentsDebug;
   }
 
+  const uiDebug = extractUiMetadataDebug(contract);
+
+  if (uiDebug.length > 0) {
+    debug._uiMetadata = uiDebug;
+  }
+
   return debug;
+}
+
+function extractUiMetadataDebug(contract: VersionContract): unknown[] {
+  const entries: unknown[] = [];
+
+  for (const resource of contract.resources) {
+    const resourcePath = expressPathToOpenApi(resource.context.route);
+
+    for (const registry of resource.routes) {
+      for (const route of Object.values(registry.routes)) {
+        const fullPath = expressPathToOpenApi(`${resource.context.route}${route.path}`);
+        const ui = resolveCodegenUi({
+          operationUi: typeof route.ui === 'object' ? route.ui : undefined,
+          resourceUi: resource.context.ui,
+          method: route.method,
+          fullPath,
+          resourcePath,
+        });
+
+        entries.push({
+          resource: resource.context.alias,
+          operationId: route.operationId,
+          path: fullPath,
+          method: route.method,
+          ui: {
+            enabled: ui.enabled,
+            role: ui.role,
+            inferred: ui.inferred,
+            inferenceReason: ui.inferenceReason,
+          },
+        });
+      }
+    }
+  }
+
+  return entries;
 }
 
 function extractComponentSourceMetadata(value: unknown): Record<string, unknown> {

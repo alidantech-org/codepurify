@@ -8,34 +8,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from contracts.api import (
-    ApiComposition,
-    ApiContract,
-    ApiDependency,
-    ApiDocumentInfo,
-    ApiEnumValue,
-    ApiField,
-    ApiFieldKind,
-    ApiFieldType,
-    ApiHttpMethod,
-    ApiMediaType,
-    ApiOperation,
-    ApiOperationTarget,
-    ApiParameter,
-    ApiQueryOptions,
-    ApiRequestBody,
-    ApiResource,
-    ApiResponse,
-    ApiServer,
-    ApiSchema,
-    ApiSchemaGroups,
-    ApiSchemaKind,
-)
 from constants.codegen import (
     KIND_DTO,
     KIND_ENUM,
     KIND_MODEL,
     KIND_PRIMITIVE,
+    UI,
     X_CODEGEN,
 )
 from constants.http import (
@@ -56,6 +34,29 @@ from constants.openapi import (
     TYPE_OBJECT,
     URL,
     VARIABLES,
+)
+from contracts.api import (
+    ApiComposition,
+    ApiContract,
+    ApiDependency,
+    ApiDocumentInfo,
+    ApiEnumValue,
+    ApiField,
+    ApiFieldKind,
+    ApiFieldType,
+    ApiHttpMethod,
+    ApiMediaType,
+    ApiOperation,
+    ApiOperationTarget,
+    ApiParameter,
+    ApiQueryOptions,
+    ApiRequestBody,
+    ApiResource,
+    ApiResponse,
+    ApiSchema,
+    ApiSchemaGroups,
+    ApiSchemaKind,
+    ApiServer,
 )
 from contracts.names import make_contract_name
 from inference.models import (
@@ -147,7 +148,9 @@ def _server(server: dict[str, Any]) -> ApiServer:
 
     return ApiServer(
         url=url.strip() if isinstance(url, str) else "",
-        description=description.strip() if isinstance(description, str) and description.strip() else "-",
+        description=(
+            description.strip() if isinstance(description, str) and description.strip() else "-"
+        ),
         variables=variables if isinstance(variables, dict) else {},
         meta={RAW: server},
     )
@@ -165,7 +168,10 @@ def _resource(resource: InferredResource, graph: InferenceGraph) -> ApiResource:
     )
 
 
-def _detect_field_overrides(schema: InferredSchema, schema_by_ref: dict[str, InferredSchema]) -> bool:
+def _detect_field_overrides(
+    schema: InferredSchema,
+    schema_by_ref: dict[str, InferredSchema],
+) -> bool:
     """Detect if schema overrides any inherited fields."""
     if not schema.inherited_refs:
         return False
@@ -291,6 +297,7 @@ def _operation(operation: InferredOperation) -> ApiOperation:
         responses=tuple(_response(response) for response in operation.responses),
         target=_operation_target(operation.target),
         description=str(operation.raw.get(DESCRIPTION) or operation.raw.get(SUMMARY) or "-"),
+        meta={UI: operation.ui},
     )
 
 
@@ -316,7 +323,9 @@ def _request_body(
         ref=request_body.ref,
         required=request_body.required,
         content_types=tuple(str(value) for value in _tuple(request_body.content_types)),
-        media_types=tuple(_media_type(media_type) for media_type in _tuple(request_body.media_types)),
+        media_types=tuple(
+            _media_type(media_type) for media_type in _tuple(request_body.media_types)
+        ),
         schema_refs=tuple(str(value) for value in _tuple(request_body.schema_refs)),
     )
 

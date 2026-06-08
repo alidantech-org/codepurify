@@ -3,7 +3,7 @@ import type { ComponentFieldMap } from '../components/component.types.js';
 import type { RefWithUsageMethods, RefUsage } from '../refs/ref-usage.types.js';
 import type { SchemaField } from '../schema/schema.types.js';
 import type { HttpMethod } from './http-method.js';
-import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
+import type { CodegenMetadata, CodegenUiInput } from '../codegen/codegen-extension.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
 
 // Legacy types - kept for backward compatibility
@@ -69,6 +69,7 @@ export interface RouteDefinition {
   readonly operationId?: string;
   readonly tags?: string[];
   readonly meta?: CodegenMetadata;
+  readonly ui?: CodegenUiInput;
 }
 
 export type DefineRoutesInput =
@@ -95,6 +96,7 @@ export interface RoutesBuilder {
   body(body: RouteBodyInput): RoutesBuilder;
   response(response: RouteResponseInput): RoutesBuilder;
   on(status: number, response: RouteResponseInput): RoutesBuilder;
+  ui(roleOrMeta: CodegenUiInput): RoutesBuilder;
   done(): RoutesBuilder;
   build(): {
     parameters?: RouteParameterRegistry;

@@ -86,4 +86,5 @@ class InferredOperation:
     request_body: InferredRequestBody | None = None
     responses: tuple[InferredResponse, ...] = field(default_factory=tuple)
     target: InferredOperationTarget | None = None
+    ui: dict[str, Any] = field(default_factory=dict)
     raw: dict[str, Any] = field(default_factory=dict)

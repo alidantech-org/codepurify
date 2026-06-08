@@ -194,3 +194,90 @@ def test_next_resource_dto_barrel_exports_resource_dtos(project_root: Path) -> N
 
     assert "export * from './notification_list_response';" in output
     assert "export * from './notification_partial';" in output
+
+
+def test_next_ui_columns_template_uses_list_item_schema(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{ui_resource}") / "[resource.name.path.o]-columns.tsx.j2",
+        context={
+            "resource": {
+                "path": ("platform",),
+                "name": {
+                    "path": {"o": "users"},
+                    "camel": {"o": "users"},
+                },
+                "operations": [
+                    {
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "list",
+                            "ui_list_item_type": "UserPartial",
+                        }
+                    }
+                ],
+                "schemas": [
+                    {
+                        "name": {"pascal": {"o": "UserPartial"}},
+                        "fields": [
+                            {
+                                "lang": {
+                                    "display_name": "email",
+                                    "type": "string",
+                                },
+                                "name": {"pascal": {"o": "Email"}},
+                            },
+                            {
+                                "lang": {
+                                    "display_name": "createdAt",
+                                    "type": "Date",
+                                },
+                                "name": {"pascal": {"o": "CreatedAt"}},
+                            },
+                        ],
+                    }
+                ],
+            }
+        },
+    )
+
+    assert "ColumnDef<UserPartial>" in output
+    assert "from '@/lib/server/types/platform/users'" in output
+    assert "accessorKey: 'email'" in output
+    assert "accessorKey: 'createdAt'" in output
+
+
+def test_next_ui_dialog_template_wires_create_form_action(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{ui_resource}") / "[resource.name.path.o]-dialogs.tsx.j2",
+        context={
+            "resource": {
+                "path": ("platform",),
+                "name": {
+                    "path": {"o": "users"},
+                    "pascal": {"o": "Users"},
+                },
+                "operations": [
+                    {
+                        "name": {"pascal": {"o": "CreateUser"}},
+                        "lang": {"function_name": "createUser"},
+                        "docs": {"description": "Create a user"},
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "create",
+                            "body_type": "CreateUserBody",
+                            "has_path_params": False,
+                            "path_params": (),
+                        },
+                    }
+                ],
+            }
+        },
+    )
+
+    assert "import {" in output
+    assert "createUser" in output
+    assert "CreateUserFormFields" in output
+    assert "body," in output
+    assert "export function CreateUserDialog" in output

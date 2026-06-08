@@ -1,0 +1,97 @@
+{% set ui = namespace(list=None, item=None, update=None, delete=None) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_item_type %}
+{% set ui.list = operation %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "update" %}
+{% set ui.update = operation %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "delete" %}
+{% set ui.delete = operation %}
+{% endif %}
+{% endfor %}
+{% if ui.list %}
+{% for schema in resource.schemas %}
+{% if schema.name.pascal.o == ui.list.meta.ui_list_item_type %}
+{% set ui.item = schema %}
+{% endif %}
+{% endfor %}
+'use client';
+
+import { Button } from '@/components/ui/button';
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+{% if ui.update or ui.delete %}
+import {
+{% if ui.update %}
+  {{ ui.update.name.pascal.o }}Dialog,
+{% endif %}
+{% if ui.delete %}
+  {{ ui.delete.name.pascal.o }}Dialog,
+{% endif %}
+} from './{{ resource.name.path.o }}-dialogs';
+{% endif %}
+
+type {{ resource.name.pascal.o }}TableProps = {
+  data: {{ ui.list.meta.ui_list_item_type }}[];
+  onChanged?: () => void;
+};
+
+export function {{ resource.name.pascal.o }}Table({ data, onChanged }: {{ resource.name.pascal.o }}TableProps) {
+  return (
+    <div className="overflow-hidden rounded-md border">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/50">
+          <tr>
+{% if ui.item %}
+{% for field in ui.item.fields %}
+            <th className="px-3 py-2 text-left font-medium">{{ field.name.pascal.o }}</th>
+{% endfor %}
+{% endif %}
+{% if ui.update or ui.delete %}
+            <th className="px-3 py-2 text-right font-medium">Actions</th>
+{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item, index) => (
+            <tr key={(item as { id?: string }).id ?? index} className="border-t">
+{% if ui.item %}
+{% for field in ui.item.fields %}
+              <td className="px-3 py-2">{String(item.{{ field.lang.display_name }} ?? '')}</td>
+{% endfor %}
+{% endif %}
+{% if ui.update or ui.delete %}
+              <td className="px-3 py-2">
+                <div className="flex justify-end gap-2">
+{% if ui.update %}
+                  <{{ ui.update.name.pascal.o }}Dialog
+{% for param in ui.update.meta.path_params %}
+                    {{ param }}={String((item as Record<string, unknown>).{{ param }} ?? (item as { id?: string }).id ?? '')}
+{% endfor %}
+                    defaultValue={item}
+                    onSuccess={onChanged}
+                    trigger={<Button type="button" size="sm" variant="outline">Edit</Button>}
+                  />
+{% endif %}
+{% if ui.delete %}
+                  <{{ ui.delete.name.pascal.o }}Dialog
+{% for param in ui.delete.meta.path_params %}
+                    {{ param }}={String((item as Record<string, unknown>).{{ param }} ?? (item as { id?: string }).id ?? '')}
+{% endfor %}
+                    onSuccess={onChanged}
+                    trigger={<Button type="button" size="sm" variant="destructive">Delete</Button>}
+                  />
+{% endif %}
+                </div>
+              </td>
+{% endif %}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+{% else %}
+export function {{ resource.name.pascal.o }}Table() {
+  return null;
+}
+{% endif %}

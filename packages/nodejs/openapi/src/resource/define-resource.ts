@@ -23,6 +23,8 @@ import type { RouteRegistry } from '../routes/route.types.js';
 
 import type { ResourceContext } from './resource-context.types.js';
 import { defineProperties } from '../properties/define-properties.js';
+import { normalizeCodegenUiInput } from '../codegen/codegen-ui.js';
+import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
 
 export interface DefineResourceOptions {
   /**
@@ -58,6 +60,11 @@ export interface DefineResourceOptions {
    * Defaults to key.
    */
   alias?: string;
+
+  /**
+   * Resource-level UI generation intent.
+   */
+  ui?: CodegenUiInput;
 }
 
 export interface ResourceBuilder {
@@ -111,6 +118,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     tag: options.tag ?? options.name,
     folders: normalizeFolders(options.folders),
     alias: options.alias ?? options.name,
+    ui: normalizeCodegenUiInput(options.ui),
   };
 
   const properties: PropertyRegistry[] = [];

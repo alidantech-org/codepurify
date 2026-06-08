@@ -418,6 +418,14 @@ class TemplateOperationMeta:
     route_getter: str = "-"
     path_params: tuple[str, ...] = ()
     has_path_params: bool = False
+    ui_enabled: bool = False
+    ui_role: str | None = None
+    ui_inferred: bool = False
+    ui_inference_source: str | None = None
+    ui_inference_reason: str | None = None
+    ui_list_field: str | None = None
+    ui_list_item_type: str | None = None
+    ui_pagination_field: str | None = None
 
 
 @dataclass(frozen=True)

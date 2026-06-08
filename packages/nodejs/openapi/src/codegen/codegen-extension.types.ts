@@ -32,6 +32,24 @@ export const XCodegenDtoRole = {
 
 export type XCodegenDtoRole = (typeof XCodegenDtoRole)[keyof typeof XCodegenDtoRole];
 
+export type CodegenUiRole = 'list' | 'detail' | 'create' | 'update' | 'delete' | 'action';
+
+export interface CodegenUiMeta {
+  readonly enabled?: boolean;
+  readonly infer?: boolean;
+  readonly role?: CodegenUiRole;
+}
+
+export interface ResolvedCodegenUiMeta {
+  readonly enabled: boolean;
+  readonly role?: CodegenUiRole;
+  readonly inferred?: boolean;
+  readonly inferenceSource?: 'compiler';
+  readonly inferenceReason?: string;
+}
+
+export type CodegenUiInput = CodegenUiRole | CodegenUiMeta;
+
 export interface XCodegenRefPointer {
   readonly $ref: string;
 }
@@ -157,6 +175,8 @@ export interface XCodegenBaseMeta {
       readonly fields?: readonly string[];
     }[];
   };
+
+  readonly ui?: ResolvedCodegenUiMeta;
 }
 
 export interface XCodegenPrimitiveMeta extends XCodegenBaseMeta {

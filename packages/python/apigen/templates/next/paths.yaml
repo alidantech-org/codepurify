@@ -20,6 +20,24 @@ folders:
       - server
       - actions
 
+  ui_resource:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - components
+      - [resource.path]
+      - [resource.name.path.o]
+
+  ui_page:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - pages
+      - [resource.path]
+      - [resource.name.path.o]
+
   resource_types:
     select: resources
     as: resource

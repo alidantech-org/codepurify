@@ -3,6 +3,7 @@ import type { VersionContract } from '../../version/version-contract.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { expressPathToOpenApi, normalizeOpenApiPath } from './express-path-to-openapi.js';
+import { resolveCodegenUi } from '../../codegen/codegen-ui.js';
 import type { RouteDefinition, RouteParameterMap, RouteParameterRegistry } from '../../routes/route.types.js';
 import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types.js';
 import { inferRouteComponents } from './infer-route-components.js';
@@ -55,7 +56,7 @@ export function compilePaths(
   // First pass: collect all operations and inferred components
   const pathOperations = new Map<
     string,
-    Array<{ method: string; operation: OpenApiOperation; inferred: InferredRouteComponents; resourceContext: any }>
+    Array<{ method: string; operation: OpenApiOperation; inferred: InferredRouteComponents; resourceContext: any; route: RouteDefinition }>
   >();
 
   for (const resource of contract.resources) {
@@ -63,6 +64,7 @@ export function compilePaths(
       for (const route of Object.values(registry.routes)) {
         const routePath = `${resource.context.route}${route.path}`;
         const fullPath = expressPathToOpenApi(routePath);
+        const resourcePath = expressPathToOpenApi(resource.context.route);
         const pathParams = resolvePathParameters(registry.parameters, routePath, route.operationId);
 
         // Infer components for this route
@@ -80,11 +82,29 @@ export function compilePaths(
         mergeInferredComponents(allInferredComponents, inferred);
 
         const operation = compileRouteOperationWithRefs(route, resolver, inferred, context, contract);
+        const ui = resolveCodegenUi({
+          operationUi: typeof route.ui === 'object' ? route.ui : undefined,
+          resourceUi: resource.context.ui,
+          method: route.method,
+          fullPath,
+          resourcePath,
+        });
+        mergeOperationCodegen(operation, {
+          resource: {
+            name: resource.context.alias,
+            path: resource.context.folders,
+          },
+          operation: {
+            name: route.operationId,
+            role: ui.role,
+          },
+          ui,
+        });
 
         if (!pathOperations.has(fullPath)) {
           pathOperations.set(fullPath, []);
         }
-        pathOperations.get(fullPath)!.push({ method: route.method, operation, inferred, resourceContext: resource.context });
+        pathOperations.get(fullPath)!.push({ method: route.method, operation, inferred, resourceContext: resource.context, route });
       }
     }
   }
@@ -116,7 +136,7 @@ export function compilePaths(
     }
 
     // Add operations, removing duplicated path params
-    for (const { method, operation, inferred, resourceContext } of operations) {
+    for (const { method, operation } of operations) {
       const filteredOperation = { ...operation };
 
       // Replace default responses with $ref
@@ -148,6 +168,46 @@ export function compilePaths(
   }
 
   return { paths, inferredComponents: allInferredComponents };
+}
+
+function mergeOperationCodegen(operation: OpenApiOperation, metadata: Record<string, unknown>): void {
+  const current = isRecord(operation['x-codegen']) ? operation['x-codegen'] : {};
+  const next = cleanObject({
+    ...current,
+    ...metadata,
+  });
+
+  if (Object.keys(next).length > 0) {
+    operation['x-codegen'] = next;
+  }
+}
+
+function cleanObject(input: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(input)
+      .map(([key, value]) => [key, cleanValue(value)] as const)
+      .filter(([, value]) => value !== undefined),
+  );
+}
+
+function cleanValue(value: unknown): unknown {
+  if (value === undefined || value === null) return undefined;
+
+  if (Array.isArray(value)) {
+    const items = value.map(cleanValue).filter((item) => item !== undefined);
+    return items.length > 0 ? items : undefined;
+  }
+
+  if (isRecord(value)) {
+    const cleaned = cleanObject(value);
+    return Object.keys(cleaned).length > 0 ? cleaned : undefined;
+  }
+
+  return value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 function resolvePathParameters(

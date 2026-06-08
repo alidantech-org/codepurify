@@ -1,0 +1,30 @@
+{% set ui = namespace(list=None, item=None) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_item_type %}
+{% set ui.list = operation %}
+{% endif %}
+{% endfor %}
+{% if ui.list %}
+{% for schema in resource.schemas %}
+{% if schema.name.pascal.o == ui.list.meta.ui_list_item_type %}
+{% set ui.item = schema %}
+{% endif %}
+{% endfor %}
+'use client';
+
+import type { ColumnDef } from '@tanstack/react-table';
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+
+export const {{ resource.name.camel.o }}Columns: ColumnDef<{{ ui.list.meta.ui_list_item_type }}>[] = [
+{% if ui.item %}
+{% for field in ui.item.fields %}
+  {
+    accessorKey: '{{ field.lang.display_name }}',
+    header: '{{ field.name.title.o if field.name.title is defined else field.name.pascal.o }}',
+  },
+{% endfor %}
+{% endif %}
+];
+{% else %}
+export const {{ resource.name.camel.o }}Columns = [];
+{% endif %}

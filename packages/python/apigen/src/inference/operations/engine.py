@@ -7,6 +7,7 @@ from constants.http import HTTP_METHODS
 from constants.openapi import OPERATION_ID, REQUEST_BODY, RESPONSES
 from inference.metadata.parameters import get_parameter_target_refs, get_parameter_target_source
 from inference.metadata.targets import get_codegen_target_ref, get_codegen_target_source
+from inference.metadata.ui import get_operation_ui_metadata
 from inference.models import InferredOperation, InferredOperationTarget
 from inference.operations.parameters import infer_parameters
 from inference.operations.request_bodies import infer_request_body
@@ -41,6 +42,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
             request_body = infer_request_body(operation.get(REQUEST_BODY), document)
             responses = infer_responses(operation.get(RESPONSES), document)
             target = infer_operation_target(operation, parameters, request_body, responses)
+            ui = get_operation_ui_metadata(operation)
 
             operations.append(
                 InferredOperation(
@@ -52,6 +54,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
                     request_body=request_body,
                     responses=responses,
                     target=target,
+                    ui=ui,
                     raw=operation,
                 )
             )

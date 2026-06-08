@@ -1,0 +1,75 @@
+{% macro field_control(field, value_name='defaultValue') -%}
+{% set field_type = field.lang.type | string %}
+{% if field_type == "boolean" %}
+        <input
+          id="{{ field.lang.display_name }}"
+          name="{{ field.lang.display_name }}"
+          type="checkbox"
+          defaultChecked={Boolean({{ value_name }}?.{{ field.lang.display_name }})}
+          disabled={disabled}
+          className="h-4 w-4 rounded border-input"
+        />
+{% else %}
+        <Input
+          id="{{ field.lang.display_name }}"
+          name="{{ field.lang.display_name }}"
+          type="{% if field_type == 'number' %}number{% elif field_type == 'Date' %}datetime-local{% else %}text{% endif %}"
+          defaultValue={String({{ value_name }}?.{{ field.lang.display_name }} ?? '')}
+          disabled={disabled}
+          {% if field.api.required %}required{% endif %}
+        />
+{% endif %}
+{%- endmacro %}
+{% set ui = namespace(has_form=False) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
+{% set ui.has_form = True %}
+{% endif %}
+{% endfor %}
+'use client';
+
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+{% if ui.has_form %}
+import type {
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
+  {{ operation.meta.body_type }},
+{% endif %}
+{% endfor %}
+} from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+{% endif %}
+
+type FormFieldsProps<TValue> = {
+  defaultValue?: Partial<TValue>;
+  disabled?: boolean;
+};
+
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
+{% set body_schema = namespace(value=None) %}
+{% for schema in resource.schemas %}
+{% if schema.name.pascal.o == operation.meta.body_type %}
+{% set body_schema.value = schema %}
+{% endif %}
+{% endfor %}
+export function {{ operation.name.pascal.o }}FormFields({
+  defaultValue,
+  disabled = false,
+}: FormFieldsProps<{{ operation.meta.body_type }}>) {
+  return (
+    <div className="grid gap-4">
+{% if body_schema.value %}
+{% for field in body_schema.value.fields %}
+      <div className="grid gap-2">
+        <Label htmlFor="{{ field.lang.display_name }}">{{ field.name.pascal.o }}</Label>
+{{ field_control(field) }}
+      </div>
+{% endfor %}
+{% endif %}
+    </div>
+  );
+}
+
+{% endif %}
+{% endfor %}

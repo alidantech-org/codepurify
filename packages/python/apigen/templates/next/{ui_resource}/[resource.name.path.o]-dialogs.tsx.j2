@@ -1,0 +1,176 @@
+{% macro params_props(operation) -%}
+{% for param in operation.meta.path_params %}
+  {{ param }}: string;
+{% endfor %}
+{%- endmacro %}
+{% macro params_object(operation) -%}
+{% if operation.meta.has_path_params %}
+      params: {
+{% for param in operation.meta.path_params %}
+        {{ param }},
+{% endfor %}
+      },
+{% endif %}
+{%- endmacro %}
+{% set ui = namespace(has_dialog=False, has_body=False) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update", "delete") %}
+{% set ui.has_dialog = True %}
+{% if operation.meta.body_type %}
+{% set ui.has_body = True %}
+{% endif %}
+{% endif %}
+{% endfor %}
+'use client';
+
+import { FormEvent, ReactNode, useState, useTransition } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update", "delete") %}
+  {{ operation.lang.function_name }},
+{% endif %}
+{% endfor %}
+} from '@/lib/server/actions/{{ resource.name.path.o }}.actions';
+{% if ui.has_body %}
+import type {
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
+  {{ operation.meta.body_type }},
+{% endif %}
+{% endfor %}
+} from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+import {
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
+  {{ operation.name.pascal.o }}FormFields,
+{% endif %}
+{% endfor %}
+} from './{{ resource.name.path.o }}-form';
+{% endif %}
+
+type DialogBaseProps = {
+  trigger?: ReactNode;
+  onSuccess?: () => void;
+};
+
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
+type {{ operation.name.pascal.o }}DialogProps = DialogBaseProps & {
+{{ params_props(operation) }}
+  defaultValue?: Partial<{{ operation.meta.body_type }}>;
+};
+
+export function {{ operation.name.pascal.o }}Dialog({
+  trigger,
+  onSuccess,
+  defaultValue,
+{% for param in operation.meta.path_params %}
+  {{ param }},
+{% endfor %}
+}: {{ operation.name.pascal.o }}DialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const body = Object.fromEntries(formData.entries()) as {{ operation.meta.body_type }};
+
+    startTransition(async () => {
+      await {{ operation.lang.function_name }}({
+{{ params_object(operation) }}
+        body,
+      });
+      setOpen(false);
+      onSuccess?.();
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger ?? <Button type="button">{{ operation.meta.ui_role | title }} {{ resource.name.pascal.o }}</Button>}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <form onSubmit={handleSubmit} className="grid gap-6">
+          <DialogHeader>
+            <DialogTitle>{{ operation.name.pascal.o }}</DialogTitle>
+            <DialogDescription>{{ operation.docs.description }}</DialogDescription>
+          </DialogHeader>
+          <{{ operation.name.pascal.o }}FormFields defaultValue={defaultValue} disabled={isPending} />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "delete" %}
+type {{ operation.name.pascal.o }}DialogProps = DialogBaseProps & {
+{{ params_props(operation) }}
+  title?: string;
+};
+
+export function {{ operation.name.pascal.o }}Dialog({
+  trigger,
+  onSuccess,
+  title = '{{ resource.name.pascal.o }}',
+{% for param in operation.meta.path_params %}
+  {{ param }},
+{% endfor %}
+}: {{ operation.name.pascal.o }}DialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      await {{ operation.lang.function_name }}({
+{{ params_object(operation) }}
+      });
+      setOpen(false);
+      onSuccess?.();
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger ?? <Button type="button" variant="destructive">Delete</Button>}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {title}</DialogTitle>
+          <DialogDescription>This action cannot be undone.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button type="button" variant="destructive" disabled={isPending} onClick={handleDelete}>
+            {isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+{% endif %}
+{% endfor %}

@@ -1,4 +1,5 @@
 import type { ZodSourceRegistry } from '../zod/zod-source-registry.js';
+import type { CodegenUiMeta } from '../codegen/codegen-extension.types.js';
 
 export interface ResourceContext {
   /**
@@ -34,6 +35,11 @@ export interface ResourceContext {
    * Defaults to key.
    */
   readonly alias: string;
+
+  /**
+   * Resource-level UI generation intent.
+   */
+  readonly ui?: CodegenUiMeta;
 }
 
 export interface OptionalResourceContext {
