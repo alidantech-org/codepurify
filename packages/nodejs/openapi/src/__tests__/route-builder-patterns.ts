@@ -24,6 +24,16 @@ const builderResource = v1.defineResource({
   route: '/builder-users',
 });
 
+const companyMembersResource = v1.defineResource({
+  name: 'CompanyMembers',
+  route: '/companies/:companyId/members',
+});
+
+const localParamsResource = v1.defineResource({
+  name: 'LocalParams',
+  route: '/local-params',
+});
+
 const objectSchemas = objectResource.defineSchemas({
   ListQuery: {
     search: sharedProps.ref.message.optional(),
@@ -103,6 +113,24 @@ const builderRoutes = builderResource.defineRoutes((b) =>
     .done(),
 );
 
+const companyMemberRoutes = companyMembersResource.defineRoutes((b) =>
+  b
+    .params({ companyId: sharedProps.ref.id })
+    .get('/', 'listCompanyMembers')
+    .summary('List company members')
+    .response(builderSchemas.ref.UserOk)
+    .done(),
+);
+
+const localParamRoutes = localParamsResource.defineRoutes((b) =>
+  b
+    .get('/:memberId', 'getLocalMember')
+    .params({ memberId: sharedProps.ref.id })
+    .summary('Get local member')
+    .response(builderSchemas.ref.UserOk)
+    .done(),
+);
+
 assert.deepEqual(Object.keys(objectRoutes.routes), ['listUsers', 'createUser', 'deleteUser']);
 assert.deepEqual(Object.keys(builderRoutes.routes), ['listUsers', 'createUser', 'deleteUser']);
 assert.equal(objectRoutes.routes.createUser.method, HttpMethod.post);
@@ -131,3 +159,13 @@ assert.ok(objectCreateOperation?.responses['400']);
 assert.ok(builderCreateOperation?.responses['400']);
 assert.ok(objectDeleteOperation?.responses['204']);
 assert.ok(builderDeleteOperation?.responses['204']);
+
+const companyMembersPath = result.document.paths['/companies/{companyId}/members'];
+const localMemberPath = result.document.paths['/local-params/{memberId}'];
+
+assert.ok(companyMemberRoutes.parameters?.companyId);
+assert.ok(companyMembersPath?.parameters);
+assert.ok(JSON.stringify(companyMembersPath.parameters).includes('CompanyMembersCompanyIdPathParam'));
+assert.ok(localParamRoutes.routes.getLocalMember.params?.memberId);
+assert.ok(localMemberPath?.parameters);
+assert.ok(JSON.stringify(localMemberPath.parameters).includes('LocalParamsMemberIdPathParam'));

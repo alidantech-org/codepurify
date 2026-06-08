@@ -18,9 +18,9 @@ folders:
     parts:
       - lib
       - [project.meta.api_version]
-      - schemas
-      - [model.emit.resource_path]
+      - schemas  
       - models
+      - [model.emit.resource_path]
       - [model.name.path.o]
 
   dto:
@@ -30,8 +30,8 @@ folders:
       - lib
       - [project.meta.api_version]
       - schemas
+      - models
       - [dto.emit.resource_path]
-      - dtos
       - [dto.name.path.o]
 
   enum:
@@ -41,7 +41,6 @@ folders:
       - lib
       - [project.meta.api_version]
       - schemas
-      - [enum.emit.resource_path]
       - enums
       - [enum.name.path.o]
 

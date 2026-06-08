@@ -5,6 +5,9 @@ import type {
   RefUsage,
   RefUsageOptions,
   RefWithUsageMethods,
+  SchemaProjection,
+  SchemaProjectionDefinition,
+  SchemaProjectionStep,
 } from './ref-usage.types.js';
 import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
@@ -79,13 +82,74 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
 
 function createProjectionDefinition<TRef extends EngineRef>(
   ref: TRef,
-  mode: 'partial' | 'pick' | 'omit',
+  mode: SchemaProjection['mode'],
   fields?: Record<string, true | undefined>,
 ) {
-  return {
+  const step = createProjectionStep(mode, fields);
+  return withProjectionMethods({
     kind: 'schema-projection-definition',
     source: ref.name,
     sourceRefId: ref.id,
+    mode: step.mode,
+    ...(step.fields ? { fields: step.fields } : {}),
+    steps: [step],
+  });
+}
+
+function createChainedProjectionDefinition<
+  TSourceName extends string,
+  TFields extends Record<string, unknown>,
+>(
+  projection: SchemaProjectionDefinition<TSourceName, TFields, SchemaProjection['mode']>,
+  mode: SchemaProjection['mode'],
+  fields?: Record<string, true | undefined>,
+) {
+  const step = createProjectionStep(mode, fields);
+  return withProjectionMethods({
+    kind: 'schema-projection-definition',
+    source: projection.source,
+    sourceRefId: projection.sourceRefId,
+    mode: step.mode,
+    ...(step.fields ? { fields: step.fields } : {}),
+    steps: [...(projection.steps ?? [{ mode: projection.mode, ...(projection.fields ? { fields: projection.fields } : {}) }]), step],
+  });
+}
+
+function withProjectionMethods<
+  TSourceName extends string,
+  TFields extends Record<string, unknown>,
+  TMode extends SchemaProjection['mode'],
+>(
+  projection: Omit<SchemaProjectionDefinition<TSourceName, TFields, TMode>, 'partial' | 'pick' | 'omit'>,
+): SchemaProjectionDefinition<TSourceName, TFields, TMode> {
+  const target = projection as SchemaProjectionDefinition<TSourceName, TFields, TMode>;
+
+  Object.defineProperties(target, {
+    partial: {
+      enumerable: false,
+      configurable: true,
+      value: () => createChainedProjectionDefinition(target, 'partial'),
+    },
+    pick: {
+      enumerable: false,
+      configurable: true,
+      value: (fields: Record<string, true | undefined>) => createChainedProjectionDefinition(target, 'pick', fields),
+    },
+    omit: {
+      enumerable: false,
+      configurable: true,
+      value: (fields: Record<string, true | undefined>) => createChainedProjectionDefinition(target, 'omit', fields),
+    },
+  });
+
+  return target;
+}
+
+function createProjectionStep(
+  mode: SchemaProjection['mode'],
+  fields?: Record<string, true | undefined>,
+): SchemaProjectionStep {
+  return {
     mode,
     ...(fields ? { fields: projectionKeys(fields) } : {}),
   };

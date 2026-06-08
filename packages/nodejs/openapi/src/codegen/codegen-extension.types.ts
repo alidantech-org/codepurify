@@ -152,6 +152,10 @@ export interface XCodegenBaseMeta {
     readonly rootSource?: string;
     readonly mode: 'pick' | 'omit' | 'partial';
     readonly fields?: readonly string[];
+    readonly steps?: readonly {
+      readonly mode: 'pick' | 'omit' | 'partial';
+      readonly fields?: readonly string[];
+    }[];
   };
 }
 

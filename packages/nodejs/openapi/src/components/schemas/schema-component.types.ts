@@ -3,6 +3,7 @@ import type { ComponentRef } from '../../refs/ref.types.js';
 import type { EngineRef } from '../../refs/ref.types.js';
 import type {
   RefWithUsageMethods,
+  SchemaExtendedRefUsage,
   SchemaProjection,
   SchemaProjectionDefinition,
   SchemaRefWithUsageMethods,
@@ -13,6 +14,7 @@ import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 export type SchemaComponentValue =
   | ComponentFieldMap
   | EngineRef
+  | SchemaExtendedRefUsage<ComponentRef, Record<string, unknown>>
   | RefUsage<EngineRef>
   | RefUsage<ComponentRef>
   | SchemaProjectionDefinition<string, Record<string, unknown>, SchemaProjection['mode']>;
@@ -28,6 +30,8 @@ export interface SchemaComponentDefinition {
 export type InferSchemaComponentFields<TValue> = TValue extends ComponentFieldMap
   ? TValue
   : TValue extends SchemaProjectionDefinition<string, infer TFields, SchemaProjection['mode']>
+    ? TFields
+  : TValue extends SchemaExtendedRefUsage<ComponentRef, infer TFields>
     ? TFields
   : TValue extends { readonly __schemaFields?: infer TFields }
     ? TFields extends Record<string, unknown>

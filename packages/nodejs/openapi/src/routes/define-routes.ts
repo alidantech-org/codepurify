@@ -72,6 +72,11 @@ class FluentRoutesBuilder implements RoutesBuilder {
   private current?: { key: string; route: MutableRouteDefinition };
 
   params(parameters: RouteParameterRegistry): RoutesBuilder {
+    if (this.current) {
+      this.current.route.params = parameters;
+      return this;
+    }
+
     this.parameters = parameters;
     return this;
   }

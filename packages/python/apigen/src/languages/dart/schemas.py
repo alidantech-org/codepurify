@@ -24,13 +24,17 @@ from languages.dart.paths import resource_path_for_schema, safe_schema_file_name
 def _merge_fields_with_overrides(
     schema: ApiSchema,
     base_schema: ApiSchema | None,
+    schema_by_ref: dict[str, ApiSchema],
 ) -> tuple:
     """Merge base and child fields, with child fields overriding base fields."""
     if base_schema is None:
         return schema.fields
 
-    # Build dict of base fields by wire name
-    base_fields_by_wire = {field.name.camel.o: field for field in base_schema.fields}
+    # Build dict of inherited fields by wire name, including the full ancestor chain.
+    base_fields_by_wire = {
+        field.name.camel.o: field
+        for field in _constructor_api_fields(base_schema, schema_by_ref)
+    }
 
     # Build dict of child fields by wire name (child wins)
     child_fields_by_wire = {field.name.camel.o: field for field in schema.fields}
@@ -60,11 +64,15 @@ def _base_schema(
 def _own_api_fields(
     schema: ApiSchema,
     base_schema: ApiSchema | None,
+    schema_by_ref: dict[str, ApiSchema],
 ) -> tuple:
     if base_schema is None:
         return schema.fields
 
-    inherited = {field.name.camel.o for field in base_schema.fields}
+    inherited = {
+        field.name.camel.o
+        for field in _constructor_api_fields(base_schema, schema_by_ref)
+    }
     return tuple(field for field in schema.fields if field.name.camel.o not in inherited)
 
 
@@ -75,7 +83,32 @@ def _super_fields(
     if base_schema is None:
         return ()
 
-    return tuple(template_field(field, schema_by_ref) for field in base_schema.fields)
+    return tuple(
+        template_field(field, schema_by_ref)
+        for field in _constructor_api_fields(base_schema, schema_by_ref)
+    )
+
+
+def _constructor_api_fields(
+    schema: ApiSchema,
+    schema_by_ref: dict[str, ApiSchema],
+    seen_refs: frozenset[str] = frozenset(),
+) -> tuple:
+    """Return fields accepted by this schema's generated constructor."""
+    if schema.ref in seen_refs:
+        return schema.fields
+
+    base_schema = _base_schema(schema, schema_by_ref)
+    if base_schema is None or schema.has_field_overrides:
+        return schema.fields
+
+    inherited_fields = _constructor_api_fields(base_schema, schema_by_ref, seen_refs | {schema.ref})
+    inherited_names = {field.name.camel.o for field in inherited_fields}
+    own_fields = tuple(
+        field for field in schema.fields if field.name.camel.o not in inherited_names
+    )
+
+    return (*inherited_fields, *own_fields)
 
 
 def template_schema_groups(
@@ -114,13 +147,13 @@ def _schema(
 
     # If has field overrides, use flattened composition with merged fields
     if schema.has_field_overrides:
-        merged_fields = _merge_fields_with_overrides(schema, base_schema)
+        merged_fields = _merge_fields_with_overrides(schema, base_schema, schema_by_ref)
         fields = tuple(template_field(field, schema_by_ref) for field in merged_fields)
         super_fields = ()
         extends_type = None
         has_extends = False
     else:
-        own_api_fields = _own_api_fields(schema, base_schema)
+        own_api_fields = _own_api_fields(schema, base_schema, schema_by_ref)
         fields = tuple(template_field(field, schema_by_ref) for field in own_api_fields)
         super_fields = _super_fields(base_schema, schema_by_ref)
         extends_type = base_schema.name.pascal.o if base_schema else None

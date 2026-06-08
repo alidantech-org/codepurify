@@ -3,7 +3,14 @@
  * ========================================================= */
 
 import { PropertyRegistry } from './properties/property.types.js';
-import { ProjectionFieldSelection, RefUsage, SchemaProjection } from './refs/ref-usage.types.js';
+import {
+  ProjectionFieldSelection,
+  RefUsage,
+  SchemaExtendedRefUsage,
+  SchemaProjection,
+  SchemaProjectionDefinition,
+  SchemaProjectionStep,
+} from './refs/ref-usage.types.js';
 import { ArrayRef, ExtendedRef } from './refs/ref-wrapper.types.js';
 import { CompositeSchemaField, PrimitiveSchemaField, RefSchemaField } from './schema/schema.types.js';
 import { VersionBuilder } from './version/define-version-contract.js';
@@ -185,7 +192,10 @@ export type {
   ArrayRef,
   ProjectionFieldSelection,
   RefUsage,
+  SchemaExtendedRefUsage,
   SchemaProjection,
+  SchemaProjectionDefinition,
+  SchemaProjectionStep,
   PropertyRegistry,
   ExtendedRef,
   RefSchemaField,

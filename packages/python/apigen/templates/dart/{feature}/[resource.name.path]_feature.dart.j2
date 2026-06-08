@@ -20,14 +20,50 @@ class {{ resource.name.pascal.o | string }}Feature {
     required String {{ param }},
 {%- endfor %}
 {%- endif %}
-{%- if operation.meta.query_type %}
+{%- if operation.meta.query_type and not operation.meta.is_multipart_request %}
     {{ operation.meta.query_type }}? query,
 {%- endif %}
-{%- if operation.meta.body_type %}
+{%- if operation.meta.is_multipart_request %}
+    required List<UploadFile> files,
+    Map<String, String>? fields,
+{%- elif operation.meta.body_type %}
     {%- if operation.request_body and operation.request_body.lang.required %}required {%- endif %} {{ operation.meta.body_type }} body,
 {%- endif %}
-    {%- if operation.lang.method == 'get' %}ApiGetRequestOptions{%- else %}ApiRequestOptions{%- endif %}? options
+    {%- if operation.lang.method == 'get' and not operation.meta.is_multipart_request %}ApiGetRequestOptions{%- else %}ApiRequestOptions{%- endif %}? options
   }) {
+{%- if operation.meta.is_multipart_request %}
+    return ref.read(uploadProvider.notifier).upload(
+          UploadRequest<{{ operation.meta.response_type or 'dynamic' }}>(
+{%- if operation.meta.has_path_params %}
+            endpoint: const {{ project.meta.api_version_name.pascal.o }}Routes().{{ resource.name.camel.o | string }}.{{ operation.meta.route_getter }}(
+{%- if operation.meta.params_type %}
+{%- for param in operation.meta.path_params %}
+              {{ param }}: params.{{ param }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+{%- else %}
+{%- for param in operation.meta.path_params %}
+              {{ param }}: {{ param }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+{%- endif %}
+            ),
+{%- else %}
+            endpoint: const {{ project.meta.api_version_name.pascal.o }}Routes().{{ resource.name.camel.o | string }}.{{ operation.meta.route_getter }},
+{%- endif %}
+            version: '{{ operation.lang.version }}',
+            files: files,
+            fields: fields,
+{%- if operation.lang.method == 'put' %}
+            method: UploadMethod.put,
+{%- endif %}
+            options: options,
+{%- if operation.meta.response_type %}
+            fromJson: (json) => {{ operation.meta.response_type }}.fromJson(
+              Map<String, dynamic>.from((json as Map?) ?? {})
+            )
+{%- endif %}
+          )
+        );
+{%- else %}
     return ref.read(apiProvider.notifier).send(
           {%- if operation.lang.method == 'get' %}GetRequest{%- elif operation.lang.method == 'post' %}PostRequest{%- elif operation.lang.method == 'put' %}PutRequest{%- elif operation.lang.method == 'patch' %}PatchRequest{%- elif operation.lang.method == 'delete' %}DeleteRequest{%- else %}GetRequest{%- endif %}<{{ operation.meta.response_type or 'dynamic' }}>(
 {%- if operation.meta.has_path_params %}
@@ -62,6 +98,7 @@ class {{ resource.name.pascal.o | string }}Feature {
 {%- endif %}
           )
         );
+{%- endif %}
   }
 {%- endfor %}
 }

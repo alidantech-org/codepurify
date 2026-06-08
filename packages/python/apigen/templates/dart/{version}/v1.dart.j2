@@ -2,15 +2,15 @@ export 'client.dart';
 export 'routes/routes.dart';
 
 {% for model in schemas.emit_models %}
-export 'schemas/{{ model.emit.resource_path | join("/") }}/models/{{ model.name.path.o }}/index.dart';{{ "\n" }}
+export 'schemas/models/{{ model.emit.resource_path | join("/") }}/{{ model.name.path.o }}/index.dart';{{ "\n" }}
 {% endfor %}
 
 {% for enum in schemas.emit_enums %}
-export 'schemas/{{ enum.emit.resource_path | join("/") }}/enums/{{ enum.name.path.o }}/index.dart';{{ "\n" }}
+export 'schemas/enums/{{ enum.name.path.o }}/index.dart';{{ "\n" }}
 {% endfor %}
 
 {% for dto in schemas.emit_dtos %}
-export 'schemas/{{ dto.emit.resource_path | join("/") }}/dtos/{{ dto.name.path.o }}/index.dart';{{ "\n" }}
+export 'schemas/models/{{ dto.emit.resource_path | join("/") }}/{{ dto.name.path.o }}/index.dart';{{ "\n" }}
 {% endfor %}
 
 {% for resource in features %}

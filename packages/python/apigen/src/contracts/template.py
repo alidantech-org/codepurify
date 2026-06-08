@@ -398,6 +398,13 @@ class TemplateOperationMeta:
     parameter_count: int = 0
     response_count: int = 0
     has_request_body: bool = False
+    request_content_types: tuple[str, ...] = ()
+    request_content_type: str | None = None
+    is_json_request: bool = False
+    is_multipart_request: bool = False
+    is_form_url_encoded_request: bool = False
+    is_octet_stream_request: bool = False
+    is_text_request: bool = False
     target_ref: str | None = None
 
     query_ref: str | None = None
@@ -489,7 +496,7 @@ class TemplateResource:
     name: NameSet
     path: tuple[str, ...] = ()
     path_name: NameSet | None = None
-    operations: tuple["TemplateOperation", ...] = ()
+    operations: tuple[TemplateOperation, ...] = ()
     models: tuple[TemplateSchema, ...] = ()
     dtos: tuple[TemplateSchema, ...] = ()
     enums: tuple[TemplateSchema, ...] = ()

@@ -93,6 +93,23 @@ const uploadNestedProjectionSchemas = uploads.defineSchemas({
     id: true,
     secureUrl: true,
   }),
+  UploadFilterable: uploadPublicSchemas.ref.UploadPublic.pick({
+    id: true,
+    originalName: true,
+    secureUrl: true,
+    mimeType: true,
+    status: true,
+    createdAt: true,
+    updatedAt: true,
+  }).partial(),
+  UploadSafeDraft: uploadPublicSchemas.ref.UploadPublic.omit({
+    password: true,
+    storage: true,
+  }).partial(),
+  UploadPublicWithoutSecretsDraft: uploadPublicSchemas.ref.UploadPublic.partial().omit({
+    password: true,
+    storage: true,
+  }),
 });
 
 const uploadMutableProjectionSchemas = uploads.defineSchemas({
@@ -119,6 +136,10 @@ function assertProjectionTypes(): void {
   uploadPublicSchemas.ref.UploadPublic.partial('UploadPartial');
   // @ts-expect-error projected refs only expose their narrowed field set
   uploadProjectionSchemas.ref.UploadPreview.pick({ storage: true });
+  // @ts-expect-error chained projections keep narrowing their field set
+  uploadPublicSchemas.ref.UploadPublic.pick({ id: true }).partial().pick({ storage: true });
+  // @ts-expect-error partial does not reintroduce fields omitted earlier in the chain
+  uploadPublicSchemas.ref.UploadPublic.omit({ storage: true }).partial().pick({ storage: true });
 }
 
 void assertProjectionTypes;
@@ -243,6 +264,50 @@ assert.deepEqual((schemas.UploadTinyPreview['x-codegen'] as { projection?: unkno
   mode: 'pick',
   fields: ['id', 'secureUrl'],
 });
+assert.equal(schemas.UploadFilterable.required, undefined);
+assert.deepEqual(Object.keys((schemas.UploadFilterable.properties as Record<string, unknown>) ?? {}), [
+  'id',
+  'originalName',
+  'secureUrl',
+  'mimeType',
+  'status',
+  'createdAt',
+  'updatedAt',
+]);
+assert.deepEqual((schemas.UploadFilterable['x-codegen'] as { projection?: unknown }).projection, {
+  source: 'UploadPublic',
+  rootSource: 'UploadPublic',
+  mode: 'partial',
+  steps: [
+    {
+      mode: 'pick',
+      fields: ['id', 'originalName', 'secureUrl', 'mimeType', 'status', 'createdAt', 'updatedAt'],
+    },
+    {
+      mode: 'partial',
+    },
+  ],
+});
+assert.equal(schemas.UploadSafeDraft.required, undefined);
+assert.deepEqual(Object.keys((schemas.UploadSafeDraft.properties as Record<string, unknown>) ?? {}), [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'originalName',
+  'secureUrl',
+  'mimeType',
+  'status',
+]);
+assert.equal(schemas.UploadPublicWithoutSecretsDraft.required, undefined);
+assert.deepEqual(Object.keys((schemas.UploadPublicWithoutSecretsDraft.properties as Record<string, unknown>) ?? {}), [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'originalName',
+  'secureUrl',
+  'mimeType',
+  'status',
+]);
 assert.equal(schemas.UpdateUploadBody.required, undefined);
 assert.equal(schemas.UpdateUploadNameOnly.required, undefined);
 assert.deepEqual(Object.keys((schemas.UpdateUploadNameOnly.properties as Record<string, unknown>) ?? {}), ['originalName']);

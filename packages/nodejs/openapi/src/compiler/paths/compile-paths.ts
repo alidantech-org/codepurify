@@ -61,8 +61,9 @@ export function compilePaths(
   for (const resource of contract.resources) {
     for (const registry of resource.routes) {
       for (const route of Object.values(registry.routes)) {
-        const fullPath = expressPathToOpenApi(`${resource.context.route}${route.path}`);
-        const pathParams = resolvePathParameters(registry.parameters, route.path, route.operationId);
+        const routePath = `${resource.context.route}${route.path}`;
+        const fullPath = expressPathToOpenApi(routePath);
+        const pathParams = resolvePathParameters(registry.parameters, routePath, route.operationId);
 
         // Infer components for this route
         const inferred = inferRouteComponents(

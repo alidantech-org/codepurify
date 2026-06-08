@@ -99,7 +99,10 @@ def safe_identifier(
     if not parts:
         return fallback
 
-    name = parts[0].lower() + "".join(part[:1].upper() + part[1:] for part in parts[1:])
+    if len(parts) == 1:
+        name = _lower_first(parts[0])
+    else:
+        name = parts[0].lower() + "".join(part[:1].upper() + part[1:] for part in parts[1:])
 
     if name[0].isdigit():
         name = f"value{name[:1].upper()}{name[1:]}"
@@ -111,6 +114,10 @@ def safe_identifier(
         name = f"{name}Value"
 
     return name
+
+
+def _lower_first(value: str) -> str:
+    return value[:1].lower() + value[1:]
 
 
 def safe_enum_key(

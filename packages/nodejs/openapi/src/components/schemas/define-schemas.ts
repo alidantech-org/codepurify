@@ -6,6 +6,7 @@ import type {
   RefWithUsageMethods,
   SchemaProjection,
   SchemaProjectionDefinition,
+  SchemaProjectionStep,
   SchemaRefWithUsageMethods,
 } from '../../refs/ref-usage.types.js';
 import type { OptionalResourceContext } from '../../resource/resource-context.types.js';
@@ -138,23 +139,34 @@ function normalizeSchemaDefinition(name: string, value: SchemaComponentValue): S
     throw new Error(`Cannot create projection schema "${name}". Source schema "${value.source}" was not found.`);
   }
 
-  const sourceFields = resolveProjectionSourceFields(sourceDefinition);
-  const sourceRequired = resolveProjectionSourceRequired(sourceDefinition);
-  const selectedKeys = value.fields;
+  const steps = resolveProjectionSteps(value);
+  let fields = resolveProjectionSourceFields(sourceDefinition);
+  let required = resolveProjectionSourceRequired(sourceDefinition);
 
-  validateProjectionKeys(name, value.source, sourceFields, selectedKeys);
+  for (const step of steps) {
+    validateProjectionKeys(name, value.source, fields, step.fields);
+    fields = projectFields(fields, step.mode, step.fields);
+    required = projectRequired(required, step.mode, step.fields);
+  }
 
   return {
     name,
-    value: projectFields(sourceFields, value.mode, selectedKeys),
-    required: projectRequired(sourceRequired, value.mode, selectedKeys),
+    value: fields,
+    required,
     projection: {
       source: value.source,
       rootSource: sourceDefinition.projection?.rootSource ?? sourceDefinition.projection?.source ?? value.source,
       mode: value.mode,
-      ...(selectedKeys ? { fields: selectedKeys } : {}),
+      ...(value.fields ? { fields: value.fields } : {}),
+      ...(steps.length > 1 ? { steps } : {}),
     },
   };
+}
+
+function resolveProjectionSteps(
+  value: SchemaProjectionDefinition<string, Record<string, unknown>, SchemaProjection['mode']>,
+): readonly SchemaProjectionStep[] {
+  return value.steps ?? [{ mode: value.mode, ...(value.fields ? { fields: value.fields } : {}) }];
 }
 
 function resolveProjectionSourceFields(definition: SchemaComponentDefinition): ComponentFieldMap {

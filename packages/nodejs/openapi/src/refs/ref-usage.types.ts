@@ -34,6 +34,12 @@ export interface SchemaProjection {
   readonly rootSource?: string;
   readonly mode: 'partial' | 'pick' | 'omit';
   readonly fields?: readonly string[];
+  readonly steps?: readonly SchemaProjectionStep[];
+}
+
+export interface SchemaProjectionStep {
+  readonly mode: SchemaProjection['mode'];
+  readonly fields?: readonly string[];
 }
 
 export type SchemaProjectionDefinition<
@@ -46,7 +52,15 @@ export type SchemaProjectionDefinition<
   readonly sourceRefId: string;
   readonly mode: TMode;
   readonly fields?: readonly string[];
+  readonly steps?: readonly SchemaProjectionStep[];
   readonly __fields?: TFields;
+  partial(): SchemaProjectionDefinition<TSourceName, TFields, 'partial'>;
+  pick<const TMap extends Record<string, true>>(
+    fields: ProjectionFieldSelection<TFields, TMap>,
+  ): SchemaProjectionDefinition<TSourceName, Pick<TFields, keyof TMap & keyof TFields>, 'pick'>;
+  omit<const TMap extends Record<string, true>>(
+    fields: ProjectionFieldSelection<TFields, TMap>,
+  ): SchemaProjectionDefinition<TSourceName, Omit<TFields, keyof TMap & keyof TFields>, 'omit'>;
 };
 
 export type SchemaExtendedRefUsage<TRef extends ComponentRef, TFields extends Record<string, unknown>> = RefUsage<TRef> & {
@@ -72,7 +86,7 @@ export type SchemaRefWithUsageMethods<TRef extends ComponentRef, TFields extends
   extendWith<TExtensionFields extends SchemaCompositionFieldMap>(
     fields: TExtensionFields,
   ): SchemaExtendedRefUsage<TRef, TFields & TExtensionFields>;
-  partial(): SchemaProjectionDefinition<TRef['name'], Partial<TFields>, 'partial'>;
+  partial(): SchemaProjectionDefinition<TRef['name'], TFields, 'partial'>;
   pick<const TMap extends Record<string, true>>(
     fields: ProjectionFieldSelection<TFields, TMap>,
   ): SchemaProjectionDefinition<TRef['name'], Pick<TFields, keyof TMap & keyof TFields>, 'pick'>;

@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+from typing import Any
+
 from constants.codegen import X_CODEGEN
 from constants.http import HTTP_METHODS
 from constants.openapi import OPERATION_ID, REQUEST_BODY, RESPONSES
-from inference.models import InferredOperation, InferredOperationTarget
+from inference.metadata.parameters import get_parameter_target_refs, get_parameter_target_source
 from inference.metadata.targets import get_codegen_target_ref, get_codegen_target_source
+from inference.models import InferredOperation, InferredOperationTarget
 from inference.operations.parameters import infer_parameters
 from inference.operations.request_bodies import infer_request_body
-from inference.operations.responses import infer_responses
 from inference.operations.resources import infer_resource
+from inference.operations.responses import infer_responses
 from inference.resources import extract_resource_from_x_codegen
 from openapi.document import OpenApiDocument
-from typing import Any
 
 
 def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]:
@@ -34,7 +36,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
 
             resource = infer_resource(operation, path_item, path_resource)
             merged_params = _merged_parameters(path_item, operation)
-            parameters = infer_parameters({"parameters": merged_params}, document)
+            parameters = infer_parameters(merged_params, document)
             request_body = infer_request_body(operation.get(REQUEST_BODY), document)
             responses = infer_responses(operation.get(RESPONSES), document)
             target = infer_operation_target(operation, parameters, request_body, responses)
@@ -74,10 +76,17 @@ def infer_operation_target(
         An InferredOperationTarget if target metadata exists, None otherwise.
     """
     target_ref = get_codegen_target_ref(operation)
+    source = get_codegen_target_source(operation) or "x-codegen.target"
+
+    if not target_ref:
+        parameter_target_refs = get_parameter_target_refs(operation)
+        target_ref = parameter_target_refs[0] if parameter_target_refs else None
+        source = get_parameter_target_source(operation) or "x-codegen.parameters.target"
+
     if not target_ref:
         return None
 
-    source = get_codegen_target_source(operation) or "x-codegen.target"
+    parameter_target = source == "x-codegen.parameters.target"
 
     # Infer roles from operation context
     inferred_roles: list[str] = []
@@ -92,10 +101,10 @@ def infer_operation_target(
         if "path" in param_locations:
             inferred_roles.append("params")
 
-    if request_body:
+    if request_body and not parameter_target:
         inferred_roles.append("body")
 
-    if responses:
+    if responses and not parameter_target:
         success_responses = [r for r in responses if r.is_success]
         if success_responses:
             inferred_roles.append("response")

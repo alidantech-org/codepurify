@@ -11,7 +11,14 @@ from __future__ import annotations
 
 import re
 
-from contracts.api import ApiOperation, ApiParameter, ApiRequestBody, ApiResponse, ApiSchema
+from contracts.api import (
+    ApiOperation,
+    ApiParameter,
+    ApiRequestBody,
+    ApiResponse,
+    ApiSchema,
+    ApiSchemaKind,
+)
 from contracts.template import (
     TemplateDependency,
     TemplateDependencyPurpose,
@@ -39,6 +46,12 @@ from languages.debug.context.path_values import safe_file_name
 
 _PATH_PARAM_PATTERN = re.compile(r"\{([^{}]+)\}")
 
+_CONTENT_JSON = "application/json"
+_CONTENT_MULTIPART = "multipart/form-data"
+_CONTENT_FORM_URL_ENCODED = "application/x-www-form-urlencoded"
+_CONTENT_OCTET_STREAM = "application/octet-stream"
+_CONTENT_TEXT = "text/plain"
+
 
 def template_operations(
     operations: tuple[ApiOperation, ...],
@@ -64,7 +77,11 @@ def operations_for_resource(
     resource_path: tuple[str, ...],
 ) -> tuple[TemplateOperation, ...]:
     """Return operations belonging to a resource path."""
-    return tuple(operation for operation in operations if operation.emit is not None and operation.emit.resource_path == resource_path)
+    return tuple(
+        operation
+        for operation in operations
+        if operation.emit is not None and operation.emit.resource_path == resource_path
+    )
 
 
 def _operation(
@@ -77,7 +94,9 @@ def _operation(
     resource_path = _operation_resource_path(operation, resource_paths)
     method = _operation_method(operation)
     function_name = safe_dart_identifier(operation.name.camel.o, fallback="request")
-    file_name = f"{method}_{safe_file_name(name_text(operation.name.path.o), fallback=operation.id)}"
+    file_name = (
+        f"{method}_{safe_file_name(name_text(operation.name.path.o), fallback=operation.id)}"
+    )
 
     dependencies = _operation_dependencies(operation, schema_by_ref)
     query_ref = _query_ref(operation)
@@ -86,12 +105,19 @@ def _operation(
     response_ref = _success_response_ref(operation)
     path_params = _path_param_names(operation.path)
     endpoint_path = build_endpoint_path(operation.path)
+    request_content_types = _request_content_types(operation)
 
     return TemplateOperation(
         api=operation,
         name=operation.name,
-        parameters=tuple(_parameter(parameter, schema_by_ref) for parameter in operation.parameters),
-        request_body=(_request_body(operation.request_body, schema_by_ref) if operation.request_body is not None else None),
+        parameters=tuple(
+            _parameter(parameter, schema_by_ref) for parameter in operation.parameters
+        ),
+        request_body=(
+            _request_body(operation.request_body, schema_by_ref)
+            if operation.request_body is not None
+            else None
+        ),
         responses=tuple(_response(response, schema_by_ref) for response in operation.responses),
         lang=TemplateOperationLang(
             kind="dart_operation",
@@ -121,11 +147,24 @@ def _operation(
             parameter_count=len(operation.parameters),
             response_count=len(operation.responses),
             has_request_body=operation.request_body is not None,
+            request_content_types=request_content_types,
+            request_content_type=_first(request_content_types),
+            is_json_request=_has_content_type(request_content_types, _CONTENT_JSON),
+            is_multipart_request=_has_content_type(request_content_types, _CONTENT_MULTIPART),
+            is_form_url_encoded_request=_has_content_type(
+                request_content_types,
+                _CONTENT_FORM_URL_ENCODED,
+            ),
+            is_octet_stream_request=_has_content_type(
+                request_content_types,
+                _CONTENT_OCTET_STREAM,
+            ),
+            is_text_request=_has_content_type(request_content_types, _CONTENT_TEXT),
             target_ref=operation.target.ref if operation.target else None,
             query_ref=query_ref,
             query_type=_schema_type(query_ref, schema_by_ref),
             params_ref=params_ref,
-            params_type=_schema_type(params_ref, schema_by_ref),
+            params_type=_params_type(params_ref, schema_by_ref),
             body_ref=body_ref,
             body_type=_schema_type(body_ref, schema_by_ref),
             response_ref=response_ref,
@@ -334,6 +373,9 @@ def _parameter_dependency_refs(parameter: ApiParameter) -> tuple[str, ...]:
 
 
 def _query_ref(operation: ApiOperation) -> str | None:
+    if operation.target is not None and _target_has_role(operation.target, "query"):
+        return operation.target.ref
+
     for parameter in operation.parameters:
         if parameter.location == "query":
             return parameter.schema_ref or _first(parameter.schema_refs)
@@ -349,11 +391,38 @@ def _params_ref(operation: ApiOperation) -> str | None:
     return None
 
 
+def _target_has_role(target: object, role: str) -> bool:
+    roles = getattr(target, "inferred_roles", ())
+    locations = getattr(target, "locations", ())
+
+    return role in roles or role in locations
+
+
 def _body_ref(operation: ApiOperation) -> str | None:
     if operation.request_body is None:
         return None
 
     return _first(operation.request_body.schema_refs)
+
+
+def _request_content_types(operation: ApiOperation) -> tuple[str, ...]:
+    if operation.request_body is None:
+        return ()
+
+    return tuple(
+        _normalize_content_type(content_type)
+        for content_type in operation.request_body.content_types
+        if _normalize_content_type(content_type)
+    )
+
+
+def _has_content_type(content_types: tuple[str, ...], expected: str) -> bool:
+    expected = _normalize_content_type(expected)
+    return any(content_type == expected for content_type in content_types)
+
+
+def _normalize_content_type(value: str) -> str:
+    return value.split(";", 1)[0].strip().lower()
 
 
 def _success_response_ref(operation: ApiOperation) -> str | None:
@@ -370,6 +439,20 @@ def _schema_type(ref: str | None, schema_by_ref: dict[str, ApiSchema]) -> str | 
 
     schema = schema_by_ref.get(ref)
     if schema is None:
+        return None
+
+    return schema.name.pascal.o
+
+
+def _params_type(ref: str | None, schema_by_ref: dict[str, ApiSchema]) -> str | None:
+    if ref is None:
+        return None
+
+    schema = schema_by_ref.get(ref)
+    if schema is None:
+        return None
+
+    if schema.kind not in {ApiSchemaKind.DTO, ApiSchemaKind.MODEL}:
         return None
 
     return schema.name.pascal.o
