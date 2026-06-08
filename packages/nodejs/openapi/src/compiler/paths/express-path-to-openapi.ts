@@ -1,9 +1,13 @@
 export function expressPathToOpenApi(path: string): string {
-  const converted = path.replace(/:(\w+)/g, '{$1}').replace(/\/+/g, '/');
+  return normalizeOpenApiPath(path).replace(/:(\w+)/g, '{$1}');
+}
 
-  if (converted.length > 1 && converted.endsWith('/')) {
-    return converted.slice(0, -1);
+export function normalizeOpenApiPath(path: string): string {
+  const normalized = path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/?/, '/');
+
+  if (normalized === '/') {
+    return '/';
   }
 
-  return converted;
+  return normalized.replace(/\/$/, '');
 }

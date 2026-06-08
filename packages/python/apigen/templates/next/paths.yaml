@@ -20,6 +20,49 @@ folders:
       - server
       - actions
 
+  resource_types:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+
+  resource_dto:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+      - dto
+
+  resource_models:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+      - models
+
+  resource_enums:
+    select: resources
+    as: resource
+    parts:
+      - lib
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+      - enums
+
   model:
     select: schemas.emit_models
     as: model

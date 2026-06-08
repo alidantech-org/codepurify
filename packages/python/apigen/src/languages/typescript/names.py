@@ -106,7 +106,12 @@ def safe_identifier(
     if not parts:
         return fallback
 
-    name = parts[0].lower() + "".join(_upper_first(part) for part in parts[1:])
+    if len(parts) == 1 and parts[0].isupper():
+        name = parts[0].lower()
+    elif len(parts) == 1:
+        name = _lower_first(parts[0])
+    else:
+        name = parts[0].lower() + "".join(_upper_first(part) for part in parts[1:])
 
     if name[0].isdigit():
         name = f"value{_upper_first(name)}"
@@ -245,3 +250,10 @@ def _upper_first(value: str) -> str:
         return value
 
     return value[:1].upper() + value[1:]
+
+
+def _lower_first(value: str) -> str:
+    if not value:
+        return value
+
+    return value[:1].lower() + value[1:]

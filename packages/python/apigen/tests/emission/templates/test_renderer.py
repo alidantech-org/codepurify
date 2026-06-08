@@ -119,3 +119,78 @@ def test_next_action_template_renders_multipart_action(project_root: Path) -> No
     assert "body: FormData" in output
     assert "requestOptions(" in output
     assert "api.post<UploadResponse>(endpoint, input.body, options)" in output
+
+
+def test_next_action_template_only_passes_query_when_query_type_exists(
+    project_root: Path,
+) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{resource}") / "[resource.name.path.o].actions.ts.j2",
+        context={
+            "file": {"imports": []},
+            "resource": {
+                "name": {
+                    "path": {"o": "availability"},
+                    "camel": {"o": "availability"},
+                },
+                "operations": [
+                    {
+                        "name": {"pascal": {"o": "GetCompanyAvailability"}},
+                        "lang": {
+                            "function_name": "getCompanyAvailability",
+                            "method": "get",
+                        },
+                        "request_body": None,
+                        "meta": {
+                            "response_type": "CompanyAvailabilityResponse",
+                            "has_path_params": True,
+                            "path_params": ("companyId",),
+                            "query_type": "CompanyAvailabilityDetailQuery",
+                            "body_type": None,
+                            "is_multipart_request": False,
+                        },
+                    },
+                    {
+                        "name": {"pascal": {"o": "DeleteCompanyAvailability"}},
+                        "lang": {
+                            "function_name": "deleteCompanyAvailability",
+                            "method": "delete",
+                        },
+                        "request_body": None,
+                        "meta": {
+                            "response_type": "CompanyAvailabilityDeletedResponse",
+                            "has_path_params": True,
+                            "path_params": ("companyId",),
+                            "query_type": None,
+                            "body_type": None,
+                            "is_multipart_request": False,
+                        },
+                    },
+                ],
+            },
+        },
+    )
+
+    assert "query?: CompanyAvailabilityDetailQuery;" in output
+    assert "input?.query as Record<string, unknown> | undefined" in output
+    assert output.count("input?.query as Record<string, unknown> | undefined") == 1
+    assert "undefined,\n    false,\n  );" in output
+
+
+def test_next_resource_dto_barrel_exports_resource_dtos(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{resource_dto}") / "index.ts.j2",
+        context={
+            "resource": {
+                "dtos": [
+                    {"name": {"path": {"o": "notification_list_response"}}},
+                    {"name": {"path": {"o": "notification_partial"}}},
+                ]
+            }
+        },
+    )
+
+    assert "export * from './notification_list_response';" in output
+    assert "export * from './notification_partial';" in output

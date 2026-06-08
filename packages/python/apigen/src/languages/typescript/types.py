@@ -6,7 +6,7 @@ from contracts.api import ApiField, ApiFieldKind, ApiSchema, ApiSchemaKind
 from contracts.template import TemplateDependencyTargetKind
 
 _OPENAPI_PRIMITIVES = {"string", "integer", "number", "boolean", "object"}
-_DATE_FORMATS = {"date", "date-time"}
+_DATE_TIME_FORMAT = "date-time"
 
 
 def ts_field_type(
@@ -183,8 +183,8 @@ def _ts_primitive_type(type_name: str | None, fmt: str | None) -> str:
     if normalized == "boolean":
         return "boolean"
 
-    if normalized == "string" and fmt in _DATE_FORMATS:
-        return "string"
+    if normalized == "string" and fmt == _DATE_TIME_FORMAT:
+        return "Date"
 
     if normalized == "string":
         return "string"

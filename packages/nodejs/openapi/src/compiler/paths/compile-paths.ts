@@ -2,7 +2,7 @@ import type { OpenApiPaths, OpenApiOperation } from '../../openapi/openapi.types
 import type { VersionContract } from '../../version/version-contract.types.js';
 import type { CompilerContext } from '../compiler-context.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
-import { expressPathToOpenApi } from './express-path-to-openapi.js';
+import { expressPathToOpenApi, normalizeOpenApiPath } from './express-path-to-openapi.js';
 import type { RouteDefinition, RouteParameterMap, RouteParameterRegistry } from '../../routes/route.types.js';
 import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types.js';
 import { inferRouteComponents } from './infer-route-components.js';
@@ -144,7 +144,7 @@ export function compilePaths(
       pathItem[method] = filteredOperation;
     }
 
-    paths[fullPath] = pathItem;
+    paths[normalizeOpenApiPath(fullPath)] = pathItem;
   }
 
   return { paths, inferredComponents: allInferredComponents };

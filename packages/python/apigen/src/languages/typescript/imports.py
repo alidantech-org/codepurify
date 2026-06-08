@@ -172,7 +172,10 @@ def _strip_ts_extension(value: str) -> str:
     path = PurePosixPath(value)
 
     if path.suffix in TS_EXTENSIONS:
-        return path.with_suffix("").as_posix()
+        stripped = path.with_suffix("").as_posix()
+        if value.startswith("./") and not stripped.startswith("."):
+            return f"./{stripped}"
+        return stripped
 
     return value
 
@@ -184,7 +187,9 @@ def _dependency_symbol(dependency: TemplateDependency) -> str:
 
     fallback = dependency.ref.rsplit("/", 1)[-1].strip()
     if not fallback:
-        raise ValueError(f"Cannot determine TypeScript import symbol for dependency: {dependency.ref}")
+        raise ValueError(
+            f"Cannot determine TypeScript import symbol for dependency: {dependency.ref}"
+        )
 
     return fallback
 

@@ -34,6 +34,16 @@ const localParamsResource = v1.defineResource({
   route: '/local-params',
 });
 
+const normalizedRouteResource = v1.defineResource({
+  name: 'NormalizedRoutes',
+  route: '///v1//vehicles/',
+});
+
+const windowsRouteResource = v1.defineResource({
+  name: 'WindowsRoutes',
+  route: 'v1\\garages',
+});
+
 const objectSchemas = objectResource.defineSchemas({
   ListQuery: {
     search: sharedProps.ref.message.optional(),
@@ -131,6 +141,31 @@ const localParamRoutes = localParamsResource.defineRoutes((b) =>
     .done(),
 );
 
+normalizedRouteResource.defineRoutes({
+  parameters: {
+    vehicleId: sharedProps.ref.id,
+  },
+  routes: {
+    getVehicle: {
+      method: HttpMethod.get,
+      path: '//:vehicleId/',
+      summary: 'Get normalized vehicle',
+      response: builderSchemas.ref.UserOk,
+    },
+  },
+});
+
+windowsRouteResource.defineRoutes({
+  routes: {
+    listGarages: {
+      method: HttpMethod.get,
+      path: '\\',
+      summary: 'List normalized garages',
+      response: builderSchemas.ref.UserOk,
+    },
+  },
+});
+
 assert.deepEqual(Object.keys(objectRoutes.routes), ['listUsers', 'createUser', 'deleteUser']);
 assert.deepEqual(Object.keys(builderRoutes.routes), ['listUsers', 'createUser', 'deleteUser']);
 assert.equal(objectRoutes.routes.createUser.method, HttpMethod.post);
@@ -162,6 +197,8 @@ assert.ok(builderDeleteOperation?.responses['204']);
 
 const companyMembersPath = result.document.paths['/companies/{companyId}/members'];
 const localMemberPath = result.document.paths['/local-params/{memberId}'];
+const normalizedVehiclePath = result.document.paths['/v1/vehicles/{vehicleId}'];
+const normalizedGaragePath = result.document.paths['/v1/garages'];
 
 assert.ok(companyMemberRoutes.parameters?.companyId);
 assert.ok(companyMembersPath?.parameters);
@@ -169,3 +206,8 @@ assert.ok(JSON.stringify(companyMembersPath.parameters).includes('CompanyMembers
 assert.ok(localParamRoutes.routes.getLocalMember.params?.memberId);
 assert.ok(localMemberPath?.parameters);
 assert.ok(JSON.stringify(localMemberPath.parameters).includes('LocalParamsMemberIdPathParam'));
+assert.ok(normalizedVehiclePath?.parameters);
+assert.equal(normalizedVehiclePath.get?.summary, 'Get normalized vehicle');
+assert.equal(normalizedGaragePath.get?.summary, 'List normalized garages');
+assert.ok(!Object.keys(result.document.paths).some((path) => !path.startsWith('/')));
+assert.ok(!Object.keys(result.document.paths).some((path) => path.length > 1 && path.endsWith('/')));

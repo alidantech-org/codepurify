@@ -49,7 +49,7 @@ class {{ resource.name.pascal.o | string }}Feature {
 {%- else %}
             endpoint: const {{ project.meta.api_version_name.pascal.o }}Routes().{{ resource.name.camel.o | string }}.{{ operation.meta.route_getter }},
 {%- endif %}
-            version: '{{ operation.lang.version }}',
+            {% comment %} version: '{{ operation.lang.version }}', {% endcomment %}
             files: files,
             fields: fields,
 {%- if operation.lang.method == 'put' %}
@@ -81,7 +81,7 @@ class {{ resource.name.pascal.o | string }}Feature {
 {%- else %}
             endpoint: const {{ project.meta.api_version_name.pascal.o }}Routes().{{ resource.name.camel.o | string }}.{{ operation.meta.route_getter }},
 {%- endif %}
-            version: '{{ operation.lang.version }}',
+            {% comment %} version: '{{ operation.lang.version }}', {% endcomment %}
             {%- if operation.meta.query_type or operation.meta.body_type or operation.meta.response_type or true %}
             options: options{%- if operation.meta.query_type or operation.meta.body_type or operation.meta.response_type %},{%- endif %}
             {%- endif %}

@@ -1,0 +1,3 @@
+{% for resource in resources if resource.schemas %}
+export * from './{{ resource.emit.resource_path | join("/") }}';
+{% endfor %}

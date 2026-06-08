@@ -14,6 +14,7 @@ from inference.operations.resources import infer_resource
 from inference.operations.responses import infer_responses
 from inference.resources import extract_resource_from_x_codegen
 from openapi.document import OpenApiDocument
+from openapi.resolver.parameters import resolve_parameter
 
 
 def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]:
@@ -35,7 +36,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
                 continue
 
             resource = infer_resource(operation, path_item, path_resource)
-            merged_params = _merged_parameters(path_item, operation)
+            merged_params = _merged_parameters(path_item, operation, document)
             parameters = infer_parameters(merged_params, document)
             request_body = infer_request_body(operation.get(REQUEST_BODY), document)
             responses = infer_responses(operation.get(RESPONSES), document)
@@ -122,6 +123,7 @@ def infer_operation_target(
 def _merged_parameters(
     path_item: dict[str, Any],
     operation: dict[str, Any],
+    document: OpenApiDocument,
 ) -> list[dict[str, Any]]:
     """Merge path-level and operation-level parameters.
 
@@ -136,8 +138,9 @@ def _merged_parameters(
     """
     merged: dict[tuple[str, str], dict[str, Any]] = {}
 
-    for parameter in path_item.get("parameters", []):
-        if not isinstance(parameter, dict):
+    for raw_parameter in path_item.get("parameters", []):
+        parameter = _mergeable_parameter(raw_parameter, document)
+        if parameter is None:
             continue
 
         key = (
@@ -146,8 +149,9 @@ def _merged_parameters(
         )
         merged[key] = parameter
 
-    for parameter in operation.get("parameters", []):
-        if not isinstance(parameter, dict):
+    for raw_parameter in operation.get("parameters", []):
+        parameter = _mergeable_parameter(raw_parameter, document)
+        if parameter is None:
             continue
 
         key = (
@@ -157,6 +161,25 @@ def _merged_parameters(
         merged[key] = parameter
 
     return list(merged.values())
+
+
+def _mergeable_parameter(
+    parameter: Any,
+    document: OpenApiDocument,
+) -> dict[str, Any] | None:
+    if not isinstance(parameter, dict):
+        return None
+
+    resolved = resolve_parameter(document, parameter)
+    if not isinstance(resolved, dict):
+        return None
+
+    if "$ref" not in parameter:
+        return resolved
+
+    merged = dict(resolved)
+    merged["$ref"] = parameter["$ref"]
+    return merged
 
 
 def upper(method: str) -> str:

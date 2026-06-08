@@ -1,0 +1,3 @@
+{% for dto in resource.dtos %}
+export * from './{{ dto.name.path.o }}';
+{% endfor %}

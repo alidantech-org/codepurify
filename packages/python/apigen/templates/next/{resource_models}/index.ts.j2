@@ -1,0 +1,3 @@
+{% for model in resource.models %}
+export * from './{{ model.name.path.o }}';
+{% endfor %}
