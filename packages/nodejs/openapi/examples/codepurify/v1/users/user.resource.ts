@@ -1,4 +1,3 @@
-import { HttpMethod } from 'codepot-openapi';
 import { z } from 'zod';
 import { sharedContract } from '../_global/shared.contract.js';
 import { v1 } from '../_global/version.contract.js';
@@ -9,7 +8,15 @@ const USER_SORT_VALUES = ['+createdAt', '-createdAt', '+name', '-name', '+status
 const UserRoles = ['rider', 'driver', 'admin'] as const;
 const UserStatus = ['active', 'disabled', 'pending'] as const;
 
-const users = v1.defineResource({ name: 'users', route: '/users' });
+const users = v1.defineResource({
+  name: 'users',
+  route: 'v1/users',
+  folders: ['platform'],
+  ui: {
+    enabled: true,
+    infer: true,
+  },
+});
 
 const userProps = users.defineProperties('User', {
   id: z.string().regex(/^[a-f\d]{24}$/i),
@@ -44,15 +51,31 @@ const userPublicSchemas = users.defineSchemas({
   }),
 });
 
+const userProjectionSchemas = users.defineSchemas({
+  UserPartial: userPublicSchemas.ref.UserPublic.partial(),
+
+  UserPreview: userPublicSchemas.ref.UserPublic.pick({
+    id: true,
+    email: true,
+    name: true,
+    avatar: true,
+    status: true,
+    createdAt: true,
+  }),
+
+  UserFilterable: userPublicSchemas.ref.UserPublic.pick({
+    status: true,
+    roles: true,
+    emailVerified: true,
+    isOnline: true,
+  }).partial(),
+});
+
 const userFilterSchemas = users.defineSchemas({
-  UserFilters: {
-    status: userProps.ref.status.optional(),
-    roles: userProps.ref.roles.optional(),
-    emailVerified: userProps.ref.emailVerified.optional(),
-    isOnline: userProps.ref.isOnline.optional(),
+  UserFilters: userProjectionSchemas.ref.UserFilterable.extendWith({
     createdAt: sharedContract.sharedSchemas.ref.DateRangeQuery.optional(),
     updatedAt: sharedContract.sharedSchemas.ref.DateRangeQuery.optional(),
-  },
+  }),
 });
 
 const userSchemas = users.defineSchemas({
@@ -67,12 +90,12 @@ const userSchemas = users.defineSchemas({
   }),
 
   UsersListOk: sharedContract.sharedSchemas.ref.PaginatedResponse.extendWith({
-    users: userPublicSchemas.ref.UserPublic.array(),
+    users: userProjectionSchemas.ref.UserPreview.array(),
     pagination: sharedContract.sharedSchemas.ref.PaginationMeta,
   }),
 
   UserOk: sharedContract.sharedSchemas.ref.ApiMessage.extendWith({
-    user: userPublicSchemas.ref.UserPublic,
+    user: userProjectionSchemas.ref.UserPartial,
   }),
 
   CreateUserBody: {
@@ -81,81 +104,72 @@ const userSchemas = users.defineSchemas({
     phone: userProps.ref.phone.optional().nullable(),
   },
 
-  UpdateUserBody: {
-    email: userProps.ref.email.optional(),
-    name: userProps.ref.name.optional(),
-    phone: userProps.ref.phone.optional().nullable(),
-    avatar: userProps.ref.avatar.optional().nullable(),
-  },
+  UpdateUserBody: userPublicSchemas.ref.UserPublic.pick({
+    email: true,
+    name: true,
+    phone: true,
+    avatar: true,
+  }).partial(),
 
   UserDeleted: sharedContract.sharedSchemas.ref.ApiMessage.extendWith({
     deletedId: userProps.ref.id,
   }),
 });
 
-users.defineRoutes({
-  parameters: {
-    userId: userProps.ref.id,
-  },
+users.defineRoutes((r) =>
+  r
+    .get('/', 'listUsers')
+    .summary('List users')
+    .query(userSchemas.ref.UserListQuery)
+    .response(userSchemas.ref.UsersListOk)
+    .ui('list')
+    .done()
 
-  routes: {
-    listUsers: {
-      method: HttpMethod.get,
-      path: '/',
-      summary: 'List users',
-      query: userSchemas.ref.UserListQuery,
-      response: userSchemas.ref.UsersListOk,
-    },
+    .post('/', 'createUser')
+    .summary('Create user')
+    .body(userSchemas.ref.CreateUserBody)
+    .on(201, userSchemas.ref.UserOk)
+    .on(409, sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('create')
+    .done()
 
-    createUser: {
-      method: HttpMethod.post,
-      path: '/',
-      summary: 'Create user',
-      body: userSchemas.ref.CreateUserBody,
-      responses: {
-        201: userSchemas.ref.UserOk,
-        409: sharedContract.sharedSchemas.ref.ApiMessage,
-      },
-    },
+    .get('/me', 'getCurrentUser')
+    .summary('Get current user')
+    .query(userSchemas.ref.UserDetailQuery)
+    .response(userSchemas.ref.UserOk)
+    .ui({ enabled: false })
+    .done()
 
-    getCurrentUser: {
-      method: HttpMethod.get,
-      path: '/me',
-      summary: 'Get current user',
-      query: userSchemas.ref.UserDetailQuery,
-      response: userSchemas.ref.UserOk,
-    },
+    .get('/:userId', 'getUserById')
+    .params({ userId: userProps.ref.id })
+    .summary('Get user by ID')
+    .query(userSchemas.ref.UserDetailQuery)
+    .response(userSchemas.ref.UserOk)
+    .ui('detail')
+    .done()
 
-    getUserById: {
-      method: HttpMethod.get,
-      path: '/:userId',
-      summary: 'Get user by ID',
-      query: userSchemas.ref.UserDetailQuery,
-      response: userSchemas.ref.UserOk,
-    },
+    .patch('/:userId', 'updateUser')
+    .params({ userId: userProps.ref.id })
+    .summary('Update user')
+    .body(userSchemas.ref.UpdateUserBody)
+    .response(userSchemas.ref.UserOk)
+    .ui('update')
+    .done()
 
-    updateUser: {
-      method: HttpMethod.patch,
-      path: '/:userId',
-      summary: 'Update user',
-      body: userSchemas.ref.UpdateUserBody,
-      response: userSchemas.ref.UserOk,
-    },
-
-    deleteUser: {
-      method: HttpMethod.delete,
-      path: '/:userId',
-      summary: 'Delete user',
-      response: userSchemas.ref.UserDeleted,
-    },
-  },
-});
+    .delete('/:userId', 'deleteUser')
+    .params({ userId: userProps.ref.id })
+    .summary('Delete user')
+    .response(userSchemas.ref.UserDeleted)
+    .ui('delete')
+    .done(),
+);
 
 export const userContract = {
   users,
   userProps,
   userQueryProps,
   userPublicSchemas,
+  userProjectionSchemas,
   userFilterSchemas,
   userSchemas,
 };

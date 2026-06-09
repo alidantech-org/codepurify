@@ -1,4 +1,3 @@
-import { HttpMethod } from 'codepot-openapi';
 import { z } from 'zod';
 import { sharedContract } from '../_global/shared.contract.js';
 import { userContract } from '../users/user.resource.js';
@@ -7,9 +6,13 @@ import { v1 } from '../_global/version.contract.js';
 const AuthNextStep = ['signup', 'login', 'verify-email', 'reset-password'] as const;
 
 const auth = v1.defineResource({
-  name: 'Auth',
-  route: '/auth',
-  folders: ['platform', 'auth'],
+  name: 'auth',
+  route: 'v1/auth',
+  folders: ['platform'],
+  ui: {
+    enabled: true,
+    infer: false,
+  },
 });
 
 const authFields = auth.defineProperties('AuthFields', {
@@ -97,102 +100,83 @@ const authResponses = auth.defineSchemas({
   Conflict: sharedContract.sharedSchemas.ref.ApiMessage,
 });
 
-auth.defineRoutes({
-  routes: {
-    resolveEmail: {
-      method: HttpMethod.post,
-      path: '/resolve-email',
-      summary: 'Resolve email',
-      body: authBodies.ref.ResolveEmailBody,
-      response: authResponses.ref.ResolveEmailOk,
-    },
+auth.defineRoutes((r) =>
+  r
+    .post('/resolve-email', 'resolveEmail')
+    .summary('Resolve email')
+    .body(authBodies.ref.ResolveEmailBody)
+    .response(authResponses.ref.ResolveEmailOk)
+    .ui('auth')
+    .done()
 
-    signup: {
-      method: HttpMethod.post,
-      path: '/signup',
-      summary: 'Sign up',
-      body: authBodies.ref.SignupBody,
-      responses: {
-        201: authResponses.ref.SignupOk,
-        409: authResponses.ref.Conflict,
-      },
-    },
+    .post('/signup', 'signup')
+    .summary('Sign up')
+    .body(authBodies.ref.SignupBody)
+    .on(201, authResponses.ref.SignupOk)
+    .on(409, authResponses.ref.Conflict)
+    .ui('auth')
+    .done()
 
-    login: {
-      method: HttpMethod.post,
-      path: '/login',
-      summary: 'Login',
-      body: authBodies.ref.LoginBody,
-      responses: {
-        200: authResponses.ref.AuthSessionOk,
-        401: sharedContract.sharedSchemas.ref.ApiMessage,
-      },
-    },
+    .post('/login', 'login')
+    .summary('Login')
+    .body(authBodies.ref.LoginBody)
+    .on(200, authResponses.ref.AuthSessionOk)
+    .on(401, sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    adminLogin: {
-      method: HttpMethod.post,
-      path: '/admin/login',
-      summary: 'Admin login',
-      body: authBodies.ref.AdminLoginBody,
-      responses: {
-        200: authResponses.ref.AuthSessionOk,
-        401: sharedContract.sharedSchemas.ref.ApiMessage,
-        403: sharedContract.sharedSchemas.ref.ApiMessage,
-      },
-    },
+    .post('/admin/login', 'adminLogin')
+    .summary('Admin login')
+    .body(authBodies.ref.AdminLoginBody)
+    .on(200, authResponses.ref.AuthSessionOk)
+    .on(401, sharedContract.sharedSchemas.ref.ApiMessage)
+    .on(403, sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    googleSignIn: {
-      method: HttpMethod.post,
-      path: '/google',
-      summary: 'Google sign-in',
-      body: authBodies.ref.GoogleSignInBody,
-      responses: {
-        200: authResponses.ref.AuthSessionOk,
-        401: sharedContract.sharedSchemas.ref.ApiMessage,
-      },
-    },
+    .post('/google', 'googleSignIn')
+    .summary('Google sign-in')
+    .body(authBodies.ref.GoogleSignInBody)
+    .on(200, authResponses.ref.AuthSessionOk)
+    .on(401, sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    verifyEmail: {
-      method: HttpMethod.post,
-      path: '/verify-email',
-      summary: 'Verify email',
-      body: authBodies.ref.VerifyEmailBody,
-      response: sharedContract.sharedSchemas.ref.ApiMessage,
-    },
+    .post('/verify-email', 'verifyEmail')
+    .summary('Verify email')
+    .body(authBodies.ref.VerifyEmailBody)
+    .response(sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    resendVerificationEmail: {
-      method: HttpMethod.post,
-      path: '/resend-verification-email',
-      summary: 'Resend verification email',
-      body: authBodies.ref.ResendVerificationEmailBody,
-      response: sharedContract.sharedSchemas.ref.ApiMessage,
-    },
+    .post('/resend-verification-email', 'resendVerificationEmail')
+    .summary('Resend verification email')
+    .body(authBodies.ref.ResendVerificationEmailBody)
+    .response(sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    forgotPassword: {
-      method: HttpMethod.post,
-      path: '/forgot-password',
-      summary: 'Forgot password',
-      body: authBodies.ref.ForgotPasswordBody,
-      response: sharedContract.sharedSchemas.ref.ApiMessage,
-    },
+    .post('/forgot-password', 'forgotPassword')
+    .summary('Forgot password')
+    .body(authBodies.ref.ForgotPasswordBody)
+    .response(sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    resetPassword: {
-      method: HttpMethod.post,
-      path: '/reset-password',
-      summary: 'Reset password',
-      body: authBodies.ref.ResetPasswordBody,
-      response: sharedContract.sharedSchemas.ref.ApiMessage,
-    },
+    .post('/reset-password', 'resetPassword')
+    .summary('Reset password')
+    .body(authBodies.ref.ResetPasswordBody)
+    .response(sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('auth')
+    .done()
 
-    changePassword: {
-      method: HttpMethod.put,
-      path: '/change-password',
-      summary: 'Change password',
-      body: authBodies.ref.ChangePasswordBody,
-      response: sharedContract.sharedSchemas.ref.ApiMessage,
-    },
-  },
-});
+    .put('/change-password', 'changePassword')
+    .summary('Change password')
+    .body(authBodies.ref.ChangePasswordBody)
+    .response(sharedContract.sharedSchemas.ref.ApiMessage)
+    .ui('update')
+    .done(),
+);
 
 export const authContract = {
   auth,

@@ -9,7 +9,12 @@ const LanguageCode = ['en', 'sw', 'fr'] as const;
 
 const userSettings = v1.defineResource({
   name: 'user-settings',
-  route: '/users/:userId/settings',
+  route: 'v1/users/:userId/settings',
+  folders: ['platform'],
+  ui: {
+    enabled: true,
+    infer: false,
+  },
 });
 
 const settingsProps = userSettings.defineProperties('UserSettings', {
@@ -106,6 +111,7 @@ userSettings.defineRoutes({
       path: '/',
       summary: 'Get user settings',
       response: settingsSchemas.ref.UserSettingsOk,
+      ui: 'detail',
     },
 
     updateUserSettings: {
@@ -114,6 +120,7 @@ userSettings.defineRoutes({
       summary: 'Update user settings',
       body: settingsSchemas.ref.UpdateUserSettingsBody,
       response: settingsSchemas.ref.UserSettingsOk,
+      ui: 'update',
     },
 
     updateNotificationSettings: {
@@ -122,6 +129,7 @@ userSettings.defineRoutes({
       summary: 'Update notification settings',
       body: settingsUpdateBodySchemas.ref.UpdateNotificationSettingsBody,
       response: settingsSchemas.ref.UserSettingsOk,
+      ui: 'update',
     },
 
     updatePrivacySettings: {
@@ -130,6 +138,7 @@ userSettings.defineRoutes({
       summary: 'Update privacy settings',
       body: settingsUpdateBodySchemas.ref.UpdatePrivacySettingsBody,
       response: settingsSchemas.ref.UserSettingsOk,
+      ui: 'update',
     },
 
     updateDisplaySettings: {
@@ -138,6 +147,7 @@ userSettings.defineRoutes({
       summary: 'Update display settings',
       body: settingsUpdateBodySchemas.ref.UpdateDisplaySettingsBody,
       response: settingsSchemas.ref.UserSettingsOk,
+      ui: 'update',
     },
   },
 });
