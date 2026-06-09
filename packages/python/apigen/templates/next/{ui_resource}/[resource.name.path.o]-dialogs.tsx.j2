@@ -3,59 +3,121 @@
   {{ param }}: string;
 {% endfor %}
 {%- endmacro %}
-{% macro params_object(operation) -%}
-{% if operation.meta.has_path_params %}
-      params: {
+{% macro path_inputs(operation) -%}
 {% for param in operation.meta.path_params %}
-        {{ param }},
+      <input type="hidden" name="__path:{{ param }}" value={{ "{" }}{{ param }}{{ "}" }} />
 {% endfor %}
-      },
-{% endif %}
 {%- endmacro %}
-{% set ui = namespace(has_dialog=False, has_body=False) %}
+{% macro params_from_row(operation) -%}
+{% for param in operation.meta.path_params %}
+                    {{ param }}={String((row as Record<string, unknown>).{{ param }} ?? row.id ?? '')}
+{% endfor %}
+{%- endmacro %}
+{% set ui = namespace(list=None, create=None, update=None, delete=None, has_dialog=False, has_body=False) %}
 {% for operation in resource.operations %}
-{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update", "delete") %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_item_type %}
+{% set ui.list = operation %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "create" and operation.meta.body_type %}
+{% set ui.create = operation %}
 {% set ui.has_dialog = True %}
-{% if operation.meta.body_type %}
 {% set ui.has_body = True %}
-{% endif %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "update" and operation.meta.body_type %}
+{% set ui.update = operation %}
+{% set ui.has_dialog = True %}
+{% set ui.has_body = True %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "delete" %}
+{% set ui.delete = operation %}
+{% set ui.has_dialog = True %}
 {% endif %}
 {% endfor %}
 'use client';
 
-import { FormEvent, ReactNode, useState, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Dialogs And Row Actions
+ * ---------------------------------------------------------------------------
+ *
+ * Generated create/update/delete shells for the {{ resource.name.path.o }} UI.
+ * Create and update dialogs submit to generated form actions; delete dialogs
+ * call the request action directly.
+ */
+
+import { ComponentProps, ReactNode, useState{% if ui.delete %}, useTransition{% endif %} } from 'react';
+{% if ui.update or ui.delete %}
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-{% for operation in resource.operations %}
-{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update", "delete") %}
-  {{ operation.lang.function_name }},
+{% if ui.update %}
+  Edit,
 {% endif %}
-{% endfor %}
+{% if ui.delete %}
+  Loader2,
+{% endif %}
+  MoreHorizontal,
+{% if ui.delete %}
+  Trash2,
+{% endif %}
+} from 'lucide-react';
+{% endif %}
+
+{% if ui.update or ui.delete %}
+import { Button } from '@/components/ui/button';
+{% endif %}
+{% if ui.delete %}
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+{% endif %}
+{% if ui.update or ui.delete %}
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+{% endif %}
+import CreateButton from '@/components/_core/create-button';
+import { DialogFormShell } from '@/components/_core/dialog-form-shell';
+import { useDialogAction } from '@/lib/hooks/use-dialog-action';
+{% if ui.create or ui.update or ui.delete %}
+import {
+{% if ui.create %}
+  {{ ui.create.lang.function_name }}Action,
+{% endif %}
+{% if ui.update %}
+  {{ ui.update.lang.function_name }}Action,
+{% endif %}
+{% if ui.delete %}
+  {{ ui.delete.lang.function_name }},
+{% endif %}
 } from '@/gen/server/actions/{{ resource.name.path.o }}.actions';
+{% endif %}
 {% if ui.has_body %}
 import type {
-{% for operation in resource.operations %}
-{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
-  {{ operation.meta.body_type }},
+{% if ui.create %}
+  {{ ui.create.meta.body_type }},
 {% endif %}
-{% endfor %}
+{% if ui.update %}
+  {{ ui.update.meta.body_type }},
+{% endif %}
 } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 import {
-{% for operation in resource.operations %}
-{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
-  {{ operation.name.pascal.o }}FormFields,
+{% if ui.create %}
+  {{ ui.create.name.pascal.o }}FormFields,
 {% endif %}
-{% endfor %}
+{% if ui.update %}
+  {{ ui.update.name.pascal.o }}FormFields,
+{% endif %}
 } from './{{ resource.name.path.o }}-form';
+{% endif %}
+{% if ui.list and (ui.update or ui.delete) %}
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 {% endif %}
 
 type DialogBaseProps = {
@@ -63,86 +125,163 @@ type DialogBaseProps = {
   onSuccess?: () => void;
 };
 
-{% for operation in resource.operations %}
-{% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
-type {{ operation.name.pascal.o }}DialogProps = DialogBaseProps & {
-{{ params_props(operation) }}
-  defaultValue?: Partial<{{ operation.meta.body_type }}>;
+{% if ui.create %}
+/**
+ * Dialog wrapper for creating a {{ resource.name.path.o }} record.
+ */
+type {{ ui.create.name.pascal.o }}DialogProps = DialogBaseProps & {
+{{ params_props(ui.create) }}
 };
 
-export function {{ operation.name.pascal.o }}Dialog({
+/**
+ * Opens the generated {{ ui.create.name.pascal.o }} form inside DialogFormShell.
+ */
+export function {{ ui.create.name.pascal.o }}Dialog({
   trigger,
   onSuccess,
-  defaultValue,
-{% for param in operation.meta.path_params %}
+{% for param in ui.create.meta.path_params %}
   {{ param }},
 {% endfor %}
-}: {{ operation.name.pascal.o }}DialogProps) {
+}: {{ ui.create.name.pascal.o }}DialogProps) {
   const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const body = Object.fromEntries(formData.entries()) as {{ operation.meta.body_type }};
-
-    startTransition(async () => {
-      await {{ operation.lang.function_name }}({
-{{ params_object(operation) }}
-        body,
-      });
-      setOpen(false);
-      onSuccess?.();
-    });
-  };
+  const { action, isPending } = useDialogAction({{ ui.create.lang.function_name }}Action, {
+    isOpen: open,
+    onOpenChange: setOpen,
+    onSuccess,
+  });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? <Button type="button">{{ operation.meta.ui_role | title }} {{ resource.name.pascal.o }}</Button>}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <form onSubmit={handleSubmit} className="grid gap-6">
-          <DialogHeader>
-            <DialogTitle>{{ operation.name.pascal.o }}</DialogTitle>
-            <DialogDescription>{{ operation.docs.description }}</DialogDescription>
-          </DialogHeader>
-          <{{ operation.name.pascal.o }}FormFields defaultValue={defaultValue} disabled={isPending} />
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <span onClick={() => setOpen(true)}>
+        {trigger ?? <CreateButton text="Create {{ resource.name.pascal.o }}" type="button" />}
+      </span>
+      <DialogFormShell
+        open={open}
+        onOpenChange={setOpen}
+        action={action}
+        title="Create {{ resource.name.pascal.o }}"
+        description="Create a new {{ resource.name.path.o }} record."
+        maxWidth="max-w-3xl"
+        isPending={isPending}
+        submitText="Create {{ resource.name.pascal.o }}"
+        pendingText="Saving..."
+      >
+{{ path_inputs(ui.create) }}
+        <{{ ui.create.name.pascal.o }}FormFields disabled={isPending} />
+      </DialogFormShell>
+    </>
   );
 }
 
-{% elif operation.meta.ui_enabled and operation.meta.ui_role == "delete" %}
-type {{ operation.name.pascal.o }}DialogProps = DialogBaseProps & {
-{{ params_props(operation) }}
+/**
+ * Default create button wired to the generated create dialog.
+ */
+type {{ ui.create.name.pascal.o }}DialogButtonProps = Omit<ComponentProps<typeof CreateButton>, 'text'> & {
+{{ params_props(ui.create) }}
+  onCreated?: () => void;
+};
+
+export function {{ ui.create.name.pascal.o }}DialogButton({
+  onCreated,
+{% for param in ui.create.meta.path_params %}
+  {{ param }},
+{% endfor %}
+  ...buttonProps
+}: {{ ui.create.name.pascal.o }}DialogButtonProps) {
+  return (
+    <{{ ui.create.name.pascal.o }}Dialog
+{% for param in ui.create.meta.path_params %}
+      {{ param }}={{ "{" }}{{ param }}{{ "}" }}
+{% endfor %}
+      onSuccess={onCreated}
+      trigger={<CreateButton text="Create {{ resource.name.pascal.o }}" type="button" {...buttonProps} />}
+    />
+  );
+}
+{% endif %}
+
+{% if ui.update %}
+/**
+ * Dialog wrapper for updating a {{ resource.name.path.o }} record.
+ */
+type {{ ui.update.name.pascal.o }}DialogProps = DialogBaseProps & {
+{{ params_props(ui.update) }}
+  defaultValue?: Partial<{{ ui.update.meta.body_type }}>;
+};
+
+/**
+ * Opens the generated {{ ui.update.name.pascal.o }} form inside DialogFormShell.
+ */
+export function {{ ui.update.name.pascal.o }}Dialog({
+  trigger,
+  onSuccess,
+  defaultValue,
+{% for param in ui.update.meta.path_params %}
+  {{ param }},
+{% endfor %}
+}: {{ ui.update.name.pascal.o }}DialogProps) {
+  const [open, setOpen] = useState(false);
+  const { action, isPending } = useDialogAction({{ ui.update.lang.function_name }}Action, {
+    isOpen: open,
+    onOpenChange: setOpen,
+    onSuccess,
+  });
+
+  return (
+    <>
+      <span onClick={() => setOpen(true)}>
+        {trigger ?? <Button type="button">Update {{ resource.name.pascal.o }}</Button>}
+      </span>
+      <DialogFormShell
+        open={open}
+        onOpenChange={setOpen}
+        action={action}
+        title="Update {{ resource.name.pascal.o }}"
+        description="Update this {{ resource.name.path.o }} record."
+        maxWidth="max-w-3xl"
+        isPending={isPending}
+        submitText="Update {{ resource.name.pascal.o }}"
+        pendingText="Saving..."
+      >
+{{ path_inputs(ui.update) }}
+        <{{ ui.update.name.pascal.o }}FormFields defaultValue={defaultValue} disabled={isPending} />
+      </DialogFormShell>
+    </>
+  );
+}
+{% endif %}
+
+{% if ui.delete %}
+/**
+ * Confirmation dialog for deleting a {{ resource.name.path.o }} record.
+ */
+type {{ ui.delete.name.pascal.o }}DialogProps = DialogBaseProps & {
+{{ params_props(ui.delete) }}
   title?: string;
 };
 
-export function {{ operation.name.pascal.o }}Dialog({
+/**
+ * Calls the generated delete action after explicit user confirmation.
+ */
+export function {{ ui.delete.name.pascal.o }}Dialog({
   trigger,
   onSuccess,
   title = '{{ resource.name.pascal.o }}',
-{% for param in operation.meta.path_params %}
+{% for param in ui.delete.meta.path_params %}
   {{ param }},
 {% endfor %}
-}: {{ operation.name.pascal.o }}DialogProps) {
+}: {{ ui.delete.name.pascal.o }}DialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
     startTransition(async () => {
-      await {{ operation.lang.function_name }}({
-{{ params_object(operation) }}
+      await {{ ui.delete.lang.function_name }}({
+        params: {
+{% for param in ui.delete.meta.path_params %}
+          {{ param }},
+{% endfor %}
+        },
       });
       setOpen(false);
       onSuccess?.();
@@ -150,27 +289,94 @@ export function {{ operation.name.pascal.o }}Dialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? <Button type="button" variant="destructive">Delete</Button>}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete {title}</DialogTitle>
-          <DialogDescription>This action cannot be undone.</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button type="button" variant="destructive" disabled={isPending} onClick={handleDelete}>
-            {isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      {trigger && <span onClick={() => setOpen(true)}>{trigger}</span>}
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete {title}?</AlertDialogTitle>
+          <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
-
 {% endif %}
-{% endfor %}
+
+{% if ui.update or ui.delete %}
+/**
+ * Row action cell used by generated columns.
+ */
+export type {{ resource.name.pascal.o }}ActionsCellProps = {
+  value: string;
+  row: {% if ui.list %}{{ ui.list.meta.ui_list_item_type }}{% else %}Record<string, unknown>{% endif %};
+  onChanged?: () => void;
+  actionButtonProps?: ComponentProps<typeof Button>;
+};
+
+/**
+ * Dropdown menu that exposes available row-level update and delete actions.
+ */
+export function {{ resource.name.pascal.o }}ActionsCell({
+  value,
+  row,
+  onChanged,
+  actionButtonProps,
+}: {{ resource.name.pascal.o }}ActionsCellProps) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" title="More options" {...actionButtonProps}>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+{% if ui.update %}
+          <{{ ui.update.name.pascal.o }}Dialog
+{{ params_from_row(ui.update) }}
+            defaultValue={row as Partial<{{ ui.update.meta.body_type }}>}
+            onSuccess={onChanged}
+            trigger={
+              <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+            }
+          />
+{% endif %}
+{% if ui.update and ui.delete %}
+          <DropdownMenuSeparator />
+{% endif %}
+{% if ui.delete %}
+          <{{ ui.delete.name.pascal.o }}Dialog
+{{ params_from_row(ui.delete) }}
+            title={String((row as Record<string, unknown>).name ?? (row as Record<string, unknown>).title ?? value)}
+            onSuccess={onChanged}
+            trigger={
+              <DropdownMenuItem
+                onSelect={(event) => event.preventDefault()}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            }
+          />
+{% endif %}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+{% endif %}

@@ -1,7 +1,19 @@
-{% set ui = namespace(list=None, item=None) %}
+{% macro should_skip_field(field) -%}
+{%- set name = field.lang.display_name | string -%}
+{%- set field_type = field.lang.type | string -%}
+{%- set is_enum = field.meta is defined and (field.meta.enum_options | default(()) | length > 0) -%}
+{%- set is_scalar = field_type.startswith("string") or field_type.startswith("number") or field_type.startswith("boolean") or field_type.startswith("Date") -%}
+{%- set is_simple_array = field_type.startswith("Array<string") or field_type.startswith("Array<number") or field_type.startswith("Array<boolean") or field_type.startswith("Array<Date") -%}
+{{- name in ("id", "_id", "createdAt", "updatedAt") or name.endswith("Id") or name.endswith("ID") or name.endswith("_id") or name.endswith("-id") or (not is_enum and not is_scalar and not is_simple_array) -}}
+{%- endmacro %}
+{% set ui = namespace(list=None, item=None, update=None, delete=None) %}
 {% for operation in resource.operations %}
 {% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_item_type %}
 {% set ui.list = operation %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "update" %}
+{% set ui.update = operation %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "delete" %}
+{% set ui.delete = operation %}
 {% endif %}
 {% endfor %}
 {% if ui.list %}
@@ -10,19 +22,157 @@
 {% set ui.item = schema %}
 {% endif %}
 {% endfor %}
+{% set flags = namespace(has_badge=False, has_date=False, has_enum=False) %}
+{% if ui.item %}
+{% set flag_state = namespace(count=0) %}
+{% for field in ui.item.fields %}
+{% if should_skip_field(field) != "True" and flag_state.count < 6 %}
+{% set flag_state.count = flag_state.count + 1 %}
+{% if "Date" in field.lang.type %}
+{% set flags.has_date = True %}
+{% endif %}
+{% if "boolean" in field.lang.type or ("string" not in field.lang.type and "number" not in field.lang.type and "Date" not in field.lang.type and not field.lang.type.startswith("Array<")) %}
+{% set flags.has_badge = True %}
+{% endif %}
+{% if field.meta is defined and (field.meta.enum_options | default(()) | length > 0) %}
+{% set flags.has_badge = True %}
+{% set flags.has_enum = True %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
 'use client';
 
-import type { ColumnDef } from '@tanstack/react-table';
-import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Table Columns
+ * ---------------------------------------------------------------------------
+ *
+ * Generated column definitions for the {{ resource.name.path.o }} list view.
+ * Sortable fields come from the sort enum, and filterable fields come from
+ * the query filter schema. ID-like fields, complex object fields, and columns
+ * beyond the first six display fields are hidden by default.
+ */
 
-export const {{ resource.name.camel.o }}Columns: ColumnDef<{{ ui.list.meta.ui_list_item_type }}>[] = [
-{% if ui.item %}
-{% for field in ui.item.fields %}
-  {
-    accessorKey: '{{ field.lang.display_name }}',
-    header: '{{ field.name.title.o if field.name.title is defined else field.name.pascal.o }}',
-  },
+import { Column } from '@/components/_core/tables/types';
+{% if flags.has_badge %}
+import { Badge } from '@/components/ui/badge';
+{% endif %}
+{% if flags.has_date %}
+import { format } from 'date-fns';
+{% endif %}
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+{% if ui.update or ui.delete %}
+import { {{ resource.name.pascal.o }}ActionsCell } from './{{ resource.name.path.o }}-dialogs';
+{% endif %}
+
+const {{ resource.name.path.o | upper }}_SORT_FIELDS: readonly string[] = [
+{% for field in ui.list.meta.ui_sort_fields | default(()) %}
+  '{{ field }}',
 {% endfor %}
+];
+
+const {{ resource.name.path.o | upper }}_FILTER_FIELDS: readonly string[] = [
+{% for field in ui.list.meta.ui_filter_fields | default(()) %}
+  '{{ field }}',
+{% endfor %}
+];
+
+{% if flags.has_enum %}
+/**
+ * Builds readable labels from wire enum values while preserving the original
+ * value for API requests and table filters.
+ */
+function enumLabel(value: string) {
+  return value
+    .replace(/^[-+]/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+/**
+ * Keeps the UI's reversible `all` filter value available without narrowing the
+ * table component to a project-specific filter option shape.
+ */
+function filterOption(key: string, label: string, value: string) {
+  return { key, label, value } as { label: string; value: string } & { key: string };
+}
+
+{% endif %}
+export type {{ resource.name.pascal.o }}ColumnField = keyof {{ ui.list.meta.ui_list_item_type }};
+export type {{ resource.name.pascal.o }}ColumnVisibility = Partial<Record<{{ resource.name.pascal.o }}ColumnField, boolean>>;
+
+/**
+ * Columns consumed by the shared DataTable and TableFilters components.
+ */
+export const {{ resource.name.camel.o }}Columns: Column<{{ ui.list.meta.ui_list_item_type }}>[] = [
+  {
+    key: '#',
+    label: '#',
+    className: 'w-12 text-left px-3',
+    sortable: false,
+    filterable: false,
+  },
+{% if ui.item %}
+{% set column_state = namespace(count=0) %}
+{% for field in ui.item.fields %}
+{% if should_skip_field(field) != "True" and column_state.count < 6 %}
+{% set column_state.count = column_state.count + 1 %}
+  {
+    key: '{{ field.lang.display_name }}',
+    label: '{{ field.name.title.o if field.name.title is defined else field.name.pascal.o }}',
+    className: '{% if "Date" in field.lang.type %}w-40 text-xs{% elif "boolean" in field.lang.type %}w-28{% else %}min-w-[140px] max-w-[260px] overflow-hidden text-ellipsis{% endif %}',
+    sortable: {{ resource.name.path.o | upper }}_SORT_FIELDS.includes('{{ field.lang.display_name }}'),
+    filterable: {{ resource.name.path.o | upper }}_FILTER_FIELDS.includes('{{ field.lang.display_name }}'),
+{% if field.meta is defined and (field.meta.enum_options | default(()) | length > 0) %}
+    filterOptions: [
+      filterOption('all', 'All {{ field.name.pascal.o }}', 'all'),
+{% for value in field.meta.enum_options %}
+      filterOption('{{ value.wire }}', enumLabel('{{ value.wire }}'), '{{ value.wire }}'),
+{% endfor %}
+    ],
+{% endif %}
+{% if "Date" in field.lang.type %}
+    render: (value: Date | string) => value ? format(new Date(value), 'MMM dd, yyyy HH:mm') : '',
+{% elif "boolean" in field.lang.type %}
+    render: (value: boolean) => (
+      <Badge variant={value ? 'default' : 'outline'}>
+        {value ? 'Yes' : 'No'}
+      </Badge>
+    ),
+{% elif field.lang.type.startswith("Array<") %}
+    render: (value: unknown[]) => Array.isArray(value) ? value.join(', ') : '',
+{% elif field.meta is defined and (field.meta.enum_options | default(()) | length > 0) %}
+    render: (value: string) => (
+      <Badge variant="outline" className="truncate max-w-[140px]">
+        {enumLabel(String(value ?? ''))}
+      </Badge>
+    ),
+{% elif "string" not in field.lang.type and "number" not in field.lang.type %}
+    render: (value: string) => (
+      <Badge variant="outline" className="truncate max-w-[140px]">
+        {String(value ?? '')}
+      </Badge>
+    ),
+{% else %}
+    render: (value: unknown) => String(value ?? ''),
+{% endif %}
+  },
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if ui.update or ui.delete %}
+  {
+    key: 'id',
+    label: 'Actions',
+    className: 'justify-center',
+    sortable: false,
+    filterable: false,
+    render: (value: string, row: {{ ui.list.meta.ui_list_item_type }}) => (
+      <{{ resource.name.pascal.o }}ActionsCell value={value} row={row} />
+    ),
+  },
 {% endif %}
 ];
 {% else %}

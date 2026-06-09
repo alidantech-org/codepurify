@@ -1,6 +1,15 @@
 import type { RequestOptions } from 'next-api-bridge';
 import { getCleanFormData, validateRedirectPath } from 'next-api-bridge/form';
 
+/**
+ * ---------------------------------------------------------------------------
+ * Server Action Helpers
+ * ---------------------------------------------------------------------------
+ *
+ * Shared helpers used by generated Next.js server actions. Reserved FormData
+ * controls start with "__" so they do not collide with API payload fields.
+ */
+
 export type ActionBody<T> = T | FormData;
 
 export type FormActionResult<TBody, TResponse> = {
@@ -27,6 +36,9 @@ const ACTION_CONTROL_FIELDS = [
   '__date',
 ] as const;
 
+/**
+ * Accepts either a typed body or FormData and returns a typed payload.
+ */
 export function cleanActionBody<T>(body: ActionBody<T>): T {
   if (body instanceof FormData) {
     return getCleanFormData<T>(body);
@@ -35,6 +47,9 @@ export function cleanActionBody<T>(body: ActionBody<T>): T {
   return body;
 }
 
+/**
+ * Merges bridge request options with query and multipart metadata.
+ */
 export function requestOptions(
   options?: RequestOptions,
   query?: Record<string, unknown>,
@@ -47,6 +62,10 @@ export function requestOptions(
   };
 }
 
+/**
+ * Reads generated FormData metadata controls and delegates payload coercion to
+ * next-api-bridge's getCleanFormData helper.
+ */
 export function cleanActionFormData<T>(
   data: FormData,
   options: CleanActionFormDataOptions = {},
@@ -77,6 +96,9 @@ export function cleanActionFormData<T>(
   });
 }
 
+/**
+ * Returns a validated redirect path from __redirect_path when one was posted.
+ */
 export function formActionRedirectPath(data: FormData): string | undefined {
   const value = data.get(ACTION_REDIRECT_PATH_FIELD);
 
@@ -87,10 +109,16 @@ export function formActionRedirectPath(data: FormData): string | undefined {
   return validateRedirectPath(value);
 }
 
+/**
+ * Reads a required generated FormData value such as a path parameter.
+ */
 export function actionFormDataValue(data: FormData, name: string): string {
   return String(data.get(name) ?? '');
 }
 
+/**
+ * Collects all generated coercion metadata from hidden form controls.
+ */
 function actionFormDataMetadata(data: FormData): Required<CleanActionFormDataOptions> {
   return {
     delete: actionFormDataControlValues(data, '__delete'),
@@ -101,6 +129,10 @@ function actionFormDataMetadata(data: FormData): Required<CleanActionFormDataOpt
   };
 }
 
+/**
+ * Supports both repeated controls like __json_parse=name and compact controls
+ * like __json_parse:name for generated forms.
+ */
 function actionFormDataControlValues(data: FormData, key: string): string[] {
   const values = new Set<string>();
 
@@ -123,6 +155,9 @@ function actionFormDataControlValues(data: FormData, key: string): string[] {
   return [...values];
 }
 
+/**
+ * Strips generated control fields before the payload reaches API validation.
+ */
 function dataWithoutActionControls(data: FormData): FormData {
   const next = new FormData();
 

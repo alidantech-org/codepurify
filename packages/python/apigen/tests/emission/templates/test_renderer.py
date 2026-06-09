@@ -144,6 +144,7 @@ def test_next_action_template_renders_multipart_action(project_root: Path) -> No
     )
 
     assert "body: FormData" in output
+    assert "Uploads Server Actions" in output
     assert "requestOptions(" in output
     assert "): Promise<ApiBridgeResponse<UploadResponse>>" not in output
     assert "api.post<UploadResponse>(endpoint, input.body, options)" in output
@@ -218,6 +219,7 @@ def test_next_action_template_renders_ui_form_action_wrapper(
                 "name": {
                     "path": {"o": "users"},
                     "camel": {"o": "users"},
+                    "pascal": {"o": "Users"},
                 },
                 "operations": [
                     {
@@ -244,6 +246,8 @@ def test_next_action_template_renders_ui_form_action_wrapper(
     )
 
     assert "import { redirect } from 'next/navigation';" in output
+    assert "Users Server Actions" in output
+    assert "UpdateUser Form Action" in output
     assert "type FormActionResult" in output
     assert "type UpdateUserActionResult = FormActionResult<" in output
     assert "export type UpdateUserActionResult" not in output
@@ -272,6 +276,7 @@ def test_next_action_helpers_use_reserved_form_control_fields(
     )
 
     assert "const ACTION_REDIRECT_PATH_FIELD = '__redirect_path';" in output
+    assert "Server Action Helpers" in output
     assert "'__delete'" in output
     assert "'__json_parse'" in output
     assert "'__boolean'" in output
@@ -348,6 +353,36 @@ def test_next_resource_dto_barrel_exports_resource_dtos(project_root: Path) -> N
     assert "export * from './notification_partial';" in output
 
 
+def test_next_enum_template_exports_options(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{enum}") / "[enum.name.path.o].ts.j2",
+        context={
+            "enum": {
+                "name": {
+                    "pascal": {"o": "UserStatus"},
+                    "camel": {"o": "userStatus"},
+                },
+                "meta": {
+                    "enum_values": (
+                        {"safe_name": "active", "wire": "active"},
+                        {"safe_name": "emailVerified", "wire": "emailVerified"},
+                    )
+                },
+            }
+        },
+    )
+
+    assert "export const userStatusOptions = [" in output
+    assert "UserStatus" in output
+    assert "Options list suitable for generated select fields" in output
+    assert '{ label: enumLabel("active"), value: UserStatus.active }' in output
+    assert (
+        '{ label: enumLabel("emailVerified"), value: UserStatus.emailVerified }'
+        in output
+    )
+
+
 def test_next_ui_columns_template_uses_list_item_schema(project_root: Path) -> None:
     output = render_template(
         template_root=project_root / "templates" / "next",
@@ -358,13 +393,25 @@ def test_next_ui_columns_template_uses_list_item_schema(project_root: Path) -> N
                 "name": {
                     "path": {"o": "users"},
                     "camel": {"o": "users"},
+                    "pascal": {"o": "Users"},
                 },
                 "operations": [
+                    {
+                        "name": {"pascal": {"o": "UpdateUser"}},
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "update",
+                            "has_path_params": True,
+                            "path_params": ("userId",),
+                        },
+                    },
                     {
                         "meta": {
                             "ui_enabled": True,
                             "ui_role": "list",
                             "ui_list_item_type": "UserPartial",
+                            "ui_sort_fields": ("status",),
+                            "ui_filter_fields": ("status",),
                         }
                     }
                 ],
@@ -374,15 +421,25 @@ def test_next_ui_columns_template_uses_list_item_schema(project_root: Path) -> N
                         "fields": [
                             {
                                 "lang": {
-                                    "display_name": "email",
-                                    "type": "string",
+                                    "display_name": "status",
+                                    "type": "UserStatus",
+                                    "sortable": True,
+                                    "filterable": True,
                                 },
-                                "name": {"pascal": {"o": "Email"}},
+                                "name": {"pascal": {"o": "Status"}},
+                                "meta": {
+                                    "enum_options": (
+                                        {"wire": "active"},
+                                        {"wire": "suspended"},
+                                    )
+                                },
                             },
                             {
                                 "lang": {
                                     "display_name": "createdAt",
                                     "type": "Date",
+                                    "sortable": True,
+                                    "filterable": False,
                                 },
                                 "name": {"pascal": {"o": "CreatedAt"}},
                             },
@@ -393,10 +450,202 @@ def test_next_ui_columns_template_uses_list_item_schema(project_root: Path) -> N
         },
     )
 
-    assert "ColumnDef<UserPartial>" in output
+    assert "Column<UserPartial>" in output
+    assert "Users Table Columns" in output
     assert "from '@/gen/server/types/platform/users'" in output
-    assert "accessorKey: 'email'" in output
-    assert "accessorKey: 'createdAt'" in output
+    assert "key: 'status'" in output
+    assert "const USERS_SORT_FIELDS: readonly string[]" in output
+    assert "const USERS_FILTER_FIELDS: readonly string[]" in output
+    assert "sortable: USERS_SORT_FIELDS.includes('status')" in output
+    assert "filterable: USERS_FILTER_FIELDS.includes('status')" in output
+    assert "function filterOption(" in output
+    assert "filterOption('all', 'All Status', 'all')" in output
+    assert "filterOption('active', enumLabel('active'), 'active')" in output
+    assert "key: 'createdAt'" not in output
+    assert "UsersActionsCell" in output
+    assert "key: 'id'" in output
+    assert "label: 'Actions'" in output
+
+
+def test_next_ui_columns_template_hides_ids_objects_and_caps_fields(
+    project_root: Path,
+) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{ui_resource}") / "[resource.name.path.o]-columns.tsx.j2",
+        context={
+            "resource": {
+                "path": ("platform",),
+                "name": {
+                    "path": {"o": "companies"},
+                    "camel": {"o": "companies"},
+                    "pascal": {"o": "Companies"},
+                },
+                "operations": [
+                    {
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "list",
+                            "ui_list_item_type": "CompanyPartial",
+                            "ui_sort_fields": (),
+                            "ui_filter_fields": (),
+                        }
+                    }
+                ],
+                "schemas": [
+                    {
+                        "name": {"pascal": {"o": "CompanyPartial"}},
+                        "fields": [
+                            {
+                                "lang": {"display_name": "id", "type": "string"},
+                                "name": {"pascal": {"o": "Id"}},
+                            },
+                            {
+                                "lang": {"display_name": "companyId", "type": "string"},
+                                "name": {"pascal": {"o": "CompanyId"}},
+                            },
+                            {
+                                "lang": {"display_name": "location", "type": "GeoLocation"},
+                                "name": {"pascal": {"o": "Location"}},
+                            },
+                            {
+                                "lang": {"display_name": "status", "type": "CompanyStatus"},
+                                "name": {"pascal": {"o": "Status"}},
+                                "meta": {"enum_options": ({"wire": "active"},)},
+                            },
+                            {
+                                "lang": {"display_name": "email", "type": "string"},
+                                "name": {"pascal": {"o": "Email"}},
+                            },
+                            {
+                                "lang": {"display_name": "name", "type": "string"},
+                                "name": {"pascal": {"o": "Name"}},
+                            },
+                            {
+                                "lang": {"display_name": "phone", "type": "string"},
+                                "name": {"pascal": {"o": "Phone"}},
+                            },
+                            {
+                                "lang": {"display_name": "paid", "type": "boolean"},
+                                "name": {"pascal": {"o": "Paid"}},
+                            },
+                            {
+                                "lang": {"display_name": "rating", "type": "number"},
+                                "name": {"pascal": {"o": "Rating"}},
+                            },
+                            {
+                                "lang": {"display_name": "startedAt", "type": "Date"},
+                                "name": {"pascal": {"o": "StartedAt"}},
+                            },
+                            {
+                                "lang": {"display_name": "extra", "type": "string"},
+                                "name": {"pascal": {"o": "Extra"}},
+                            },
+                        ],
+                    }
+                ],
+            }
+        },
+    )
+
+    assert "key: 'id'" not in output
+    assert "key: 'companyId'" not in output
+    assert "key: 'location'" not in output
+    assert "key: 'status'" in output
+    assert "key: 'email'" in output
+    assert "key: 'name'" in output
+    assert "key: 'phone'" in output
+    assert "key: 'paid'" in output
+    assert "key: 'rating'" in output
+    assert "key: 'startedAt'" not in output
+    assert "key: 'extra'" not in output
+
+
+def test_next_ui_table_template_wraps_core_data_table(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{ui_resource}") / "[resource.name.path.o]-table.tsx.j2",
+        context={
+            "resource": {
+                "path": ("platform",),
+                "name": {
+                    "path": {"o": "users"},
+                    "camel": {"o": "users"},
+                    "pascal": {"o": "Users"},
+                },
+                "operations": [
+                    {
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "list",
+                            "ui_list_item_type": "UserPartial",
+                        }
+                    }
+                ],
+            }
+        },
+    )
+
+    assert "import { DataTable } from '@/components/_core/data-table';" in output
+    assert "Users Data Table" in output
+    assert "fields?: UsersColumnVisibility;" in output
+    assert "function visibleColumns(" in output
+    assert "return fields[column.key as UsersColumnField] !== false;" in output
+    assert "columns={visibleColumns(fields)}" in output
+
+
+def test_next_ui_page_template_matches_core_table_page_shape(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{ui_page}") / "page.tsx.j2",
+        context={
+            "resource": {
+                "path": ("platform",),
+                "name": {
+                    "path": {"o": "users"},
+                    "camel": {"o": "users"},
+                    "pascal": {"o": "Users"},
+                },
+                "operations": [
+                    {
+                        "name": {"pascal": {"o": "CreateUser"}},
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "create",
+                            "body_type": "CreateUserBody",
+                            "has_path_params": False,
+                            "path_params": (),
+                        },
+                    },
+                    {
+                        "lang": {"function_name": "listUsers"},
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "list",
+                            "ui_list_field": "users",
+                            "ui_list_item_type": "UserPartial",
+                            "has_path_params": False,
+                            "path_params": (),
+                            "query_type": "UserListQuery",
+                        },
+                    }
+                ],
+            }
+        },
+    )
+
+    assert "import { Metadata } from 'next';" in output
+    assert "Users Page" in output
+    assert "import ReusableAppBar from '@/components/_core/reusable-appbar';" in output
+    assert "import { DataTable } from '@/components/_core/data-table';" in output
+    assert "import { TableFilters } from '@/components/_core/table-filters';" in output
+    assert "import { CreateUserDialogButton }" in output
+    assert "export const dynamic = 'force-dynamic';" in output
+    assert "const resolvedSearchParams = await searchParams;" in output
+    assert "query: resolvedSearchParams as UserListQuery" in output
+    assert "columns={usersColumns}" in output
+    assert "<CreateUserDialogButton" in output
+    assert "data={data?.body?.users || []}" in output
 
 
 def test_next_ui_dialog_template_wires_create_form_action(project_root: Path) -> None:
@@ -411,6 +660,17 @@ def test_next_ui_dialog_template_wires_create_form_action(project_root: Path) ->
                     "pascal": {"o": "Users"},
                 },
                 "operations": [
+                    {
+                        "name": {"pascal": {"o": "UpdateUser"}},
+                        "lang": {"function_name": "updateUser"},
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "update",
+                            "body_type": "UpdateUserBody",
+                            "has_path_params": True,
+                            "path_params": ("userId",),
+                        },
+                    },
                     {
                         "name": {"pascal": {"o": "CreateUser"}},
                         "lang": {"function_name": "createUser"},
@@ -429,7 +689,82 @@ def test_next_ui_dialog_template_wires_create_form_action(project_root: Path) ->
     )
 
     assert "import {" in output
-    assert "createUser" in output
+    assert "Users Dialogs And Row Actions" in output
+    assert "createUserAction" in output
+    assert "updateUserAction" in output
     assert "CreateUserFormFields" in output
-    assert "body," in output
+    assert "UpdateUserFormFields" in output
+    assert "useDialogAction(createUserAction" in output
+    assert "defaultValue={row as Partial<UpdateUserBody>}" in output
+    assert "<DialogFormShell" in output
+    assert "action={action}" in output
     assert "export function CreateUserDialog" in output
+    assert "export function CreateUserDialogButton" in output
+
+
+def test_next_ui_form_template_renders_enum_select(project_root: Path) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "next",
+        relative_path=Path("{ui_resource}") / "[resource.name.path.o]-form.tsx.j2",
+        context={
+            "resource": {
+                "path": ("platform",),
+                "name": {"path": {"o": "users"}},
+                "operations": [
+                    {
+                        "name": {"pascal": {"o": "CreateUser"}},
+                        "meta": {
+                            "ui_enabled": True,
+                            "ui_role": "create",
+                            "body_type": "CreateUserBody",
+                        },
+                    }
+                ],
+                "schemas": [
+                    {
+                        "name": {"pascal": {"o": "CreateUserBody"}},
+                        "fields": [
+                            {
+                                "api": {"required": True},
+                                "lang": {
+                                    "display_name": "status",
+                                    "type": "UserStatus",
+                                },
+                                "name": {"pascal": {"o": "Status"}},
+                                "meta": {
+                                    "enum_options": (
+                                        {"wire": "active"},
+                                        {"wire": "emailVerified"},
+                                    )
+                                },
+                            },
+                            {
+                                "api": {"required": False},
+                                "lang": {
+                                    "display_name": "roles",
+                                    "type": "Array<UserRole>",
+                                },
+                                "name": {"pascal": {"o": "Roles"}},
+                                "meta": {
+                                    "enum_options": (
+                                        {"wire": "admin"},
+                                        {"wire": "company_owner"},
+                                    )
+                                },
+                            },
+                        ],
+                    }
+                ],
+            }
+        },
+    )
+
+    assert "from '@/components/ui/select';" in output
+    assert "Form Fields" in output
+    assert '<Select\n          name="status"' in output
+    assert '<SelectItem value="active">{enumLabel(' in output
+    assert '<SelectItem value="emailVerified">{enumLabel(' in output
+    assert "import { useState } from 'react';" in output
+    assert "function EnumArrayField(" in output
+    assert '<EnumArrayField\n          name="roles"' in output
+    assert "{ label: enumLabel('company_owner'), value: 'company_owner' }" in output

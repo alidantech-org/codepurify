@@ -362,6 +362,9 @@ class TemplateFieldMeta:
 
     default: Any = None
     enum_values: tuple[str, ...] = ()
+    enum_options: tuple[TemplateEnumValue, ...] = ()
+    enum_type: str | None = None
+    enum_ref: str | None = None
     raw_type: str | None = None
 
 
@@ -426,6 +429,9 @@ class TemplateOperationMeta:
     ui_list_field: str | None = None
     ui_list_item_type: str | None = None
     ui_pagination_field: str | None = None
+    ui_sort_fields: tuple[str, ...] = ()
+    ui_filter_fields: tuple[str, ...] = ()
+    ui_select_fields: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

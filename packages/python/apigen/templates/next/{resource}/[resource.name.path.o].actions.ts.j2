@@ -18,6 +18,10 @@ routes.{{ resource.name.camel.o }}.{{ operation.lang.function_name }}
 {{ operation.lang.function_name }}Action
 {%- endmacro %}
 
+{%- macro resource_title() -%}
+{{ resource.name.pascal.o if resource.name.pascal is defined else (resource.name.path.o | replace("_", " ") | replace("-", " ") | title | replace(" ", "")) }}
+{%- endmacro %}
+
 {%- set ns = namespace(has_form_actions=False, has_form_action_path_params=False, has_clean_form_actions=False) %}
 {% for operation in resource.operations %}
 {% if operation.meta.ui_enabled | default(false) and operation.meta.ui_role in ("create", "update", "auth") and operation.meta.body_type %}
@@ -32,6 +36,15 @@ routes.{{ resource.name.camel.o }}.{{ operation.lang.function_name }}
 {% endfor -%}
 
 'use server';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource_title() }} Server Actions
+ * ---------------------------------------------------------------------------
+ *
+ * Generated request helpers for the {{ resource.name.camel.o }} resource.
+ * Form-enabled operations also receive useActionState-compatible wrappers.
+ */
 
 import type {
 {% if ns.has_form_actions %}
@@ -64,7 +77,9 @@ import {
 {% for operation in resource.operations %}
 {{ "\n" }}
 /**
+ * ---------------------------------------------------------------------------
  * {{ operation.name.pascal.o }}
+ * ---------------------------------------------------------------------------
  *
  * @description Server action for the {{ operation.lang.function_name }} operation on the {{ resource.name.camel.o }} resource.
  *
@@ -138,6 +153,11 @@ export async function {{ operation.lang.function_name }}(
 
 {% if operation.meta.ui_enabled | default(false) and operation.meta.ui_role in ("create", "update", "auth") and operation.meta.body_type %}
 
+/**
+ * {{ operation.name.pascal.o }} Action Result
+ *
+ * Typed result returned by the generated form action wrapper.
+ */
 type {{ form_action_result_type(operation) }} = FormActionResult<
 {% if operation.meta.is_multipart_request %}
   FormData,
@@ -147,6 +167,12 @@ type {{ form_action_result_type(operation) }} = FormActionResult<
   ApiBridgeResponse<{{ response_type(operation) }}>
 >;
 
+/**
+ * {{ operation.name.pascal.o }} Form Action
+ *
+ * Cleans FormData controls, calls {{ operation.lang.function_name }}, and
+ * redirects when __redirect_path is present and the response succeeds.
+ */
 export async function {{ form_action_function_name(operation) }}(
   _prev: {{ form_action_result_type(operation) }} | null,
   data: FormData,

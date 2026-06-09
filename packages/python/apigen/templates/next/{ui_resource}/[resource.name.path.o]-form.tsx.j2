@@ -1,35 +1,145 @@
+{% macro is_complex_type(field) -%}
+{{ "string" not in field.lang.type and "number" not in field.lang.type and "boolean" not in field.lang.type and "Date" not in field.lang.type and not field.lang.type.startswith("Array<") and not (field.meta is defined and (field.meta.enum_options | default(()) | length > 0)) }}
+{%- endmacro %}
+{% macro is_enum_field(field) -%}
+{{ field.meta is defined and (field.meta.enum_options | default(()) | length > 0) }}
+{%- endmacro %}
+{% macro is_enum_array_field(field) -%}
+{{ is_enum_field(field) == "True" and (field.lang.type | string).startswith("Array<") }}
+{%- endmacro %}
+{% macro resource_title() -%}
+{{ resource.name.pascal.o if resource.name.pascal is defined else (resource.name.path.o | replace("_", " ") | replace("-", " ") | title | replace(" ", "")) }}
+{%- endmacro %}
 {% macro field_control(field, value_name='defaultValue') -%}
 {% set field_type = field.lang.type | string %}
-{% if field_type == "boolean" %}
-        <input
-          id="{{ field.lang.display_name }}"
+{% set enum_type = field_type.replace(" | null", "").replace(" | undefined", "") %}
+{% if is_enum_array_field(field) == "True" %}
+        <EnumArrayField
           name="{{ field.lang.display_name }}"
-          type="checkbox"
-          defaultChecked={Boolean({{ value_name }}?.{{ field.lang.display_name }})}
+          options={[
+{% for value in field.meta.enum_options %}
+            { label: enumLabel('{{ value.wire }}'), value: '{{ value.wire }}' },
+{% endfor %}
+          ]}
+          defaultValue={(Array.isArray({{ value_name }}?.{{ field.lang.display_name }}) ? {{ value_name }}?.{{ field.lang.display_name }} : []) as string[]}
           disabled={disabled}
-          className="h-4 w-4 rounded border-input"
         />
-{% else %}
+{% elif field_type.startswith("Array<") %}
+        <input type="hidden" name="__json_parse:{{ field.lang.display_name }}" value="1" />
         <Input
           id="{{ field.lang.display_name }}"
           name="{{ field.lang.display_name }}"
-          type="{% if field_type == 'number' %}number{% elif field_type == 'Date' %}datetime-local{% else %}text{% endif %}"
+          defaultValue={JSON.stringify({{ value_name }}?.{{ field.lang.display_name }} ?? [])}
+          disabled={disabled}
+{% if field.api.required %}
+          required
+{% endif %}
+        />
+{% elif is_enum_field(field) == "True" %}
+        <Select
+          name="{{ field.lang.display_name }}"
           defaultValue={String({{ value_name }}?.{{ field.lang.display_name }} ?? '')}
           disabled={disabled}
-          {% if field.api.required %}required{% endif %}
+{% if field.api.required %}
+          required
+{% endif %}
+        >
+          <SelectTrigger id="{{ field.lang.display_name }}">
+            <SelectValue placeholder="Select {{ field.name.pascal.o }}" />
+          </SelectTrigger>
+          <SelectContent>
+{% if field.meta is defined and (field.meta.enum_options | default(()) | length > 0) %}
+{% for value in field.meta.enum_options %}
+            <SelectItem value="{{ value.wire }}">{enumLabel('{{ value.wire }}')}</SelectItem>
+{% endfor %}
+{% endif %}
+          </SelectContent>
+        </Select>
+{% elif is_complex_type(field) == "True" %}
+        <input type="hidden" name="__json_parse:{{ field.lang.display_name }}" value="1" />
+        <Input
+          id="{{ field.lang.display_name }}"
+          name="{{ field.lang.display_name }}"
+          defaultValue={JSON.stringify({{ value_name }}?.{{ field.lang.display_name }} ?? [])}
+          disabled={disabled}
+{% if field.api.required %}
+          required
+{% endif %}
+        />
+{% elif "boolean" in field_type %}
+        <input type="hidden" name="__boolean:{{ field.lang.display_name }}" value="1" />
+        <input type="hidden" name="{{ field.lang.display_name }}" value="false" />
+        <Input
+          id="{{ field.lang.display_name }}"
+          name="{{ field.lang.display_name }}"
+          type="checkbox"
+          value="true"
+          defaultChecked={Boolean({{ value_name }}?.{{ field.lang.display_name }})}
+          disabled={disabled}
+          className="h-4 w-4"
+        />
+{% else %}
+{% if "number" in field_type %}
+        <input type="hidden" name="__number:{{ field.lang.display_name }}" value="1" />
+{% elif "Date" in field_type %}
+        <input type="hidden" name="__date:{{ field.lang.display_name }}" value="1" />
+{% endif %}
+        <Input
+          id="{{ field.lang.display_name }}"
+          name="{{ field.lang.display_name }}"
+          type="{% if 'number' in field_type %}number{% elif 'Date' in field_type %}datetime-local{% else %}text{% endif %}"
+          defaultValue={String({{ value_name }}?.{{ field.lang.display_name }} ?? '')}
+          disabled={disabled}
+{% if field.api.required %}
+          required
+{% endif %}
         />
 {% endif %}
 {%- endmacro %}
-{% set ui = namespace(has_form=False) %}
+{% set ui = namespace(has_form=False, has_select=False, has_enum_array=False, has_value_import=False) %}
 {% for operation in resource.operations %}
 {% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}
 {% set ui.has_form = True %}
+{% for schema in resource.schemas %}
+{% if schema.name.pascal.o == operation.meta.body_type %}
+{% for field in schema.fields %}
+{% if is_enum_field(field) == "True" and not field.lang.type.startswith("Array<") %}
+{% set ui.has_select = True %}
+{% endif %}
+{% if is_enum_array_field(field) == "True" %}
+{% set ui.has_enum_array = True %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
 {% endif %}
 {% endfor %}
 'use client';
 
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource_title() }} Form Fields
+ * ---------------------------------------------------------------------------
+ *
+ * Generated create/update form controls for this resource. Enum fields render
+ * as selects, enum arrays render as checkbox groups, and complex values are
+ * serialized through action metadata fields.
+ */
+
+{% if ui.has_enum_array %}
+import { useState } from 'react';
+{% endif %}
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+{% if ui.has_select %}
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+{% endif %}
 {% if ui.has_form %}
 import type {
 {% for operation in resource.operations %}
@@ -40,6 +150,80 @@ import type {
 } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 {% endif %}
 
+{% if ui.has_select or ui.has_enum_array %}
+/**
+ * Converts enum wire values into compact labels for generated form controls.
+ */
+function enumLabel(value: string) {
+  return value
+    .replace(/^[-+]/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+{% endif %}
+{% if ui.has_enum_array %}
+/**
+ * Option used by generated enum array checkbox groups.
+ */
+type EnumOption = {
+  label: string;
+  value: string;
+};
+
+type EnumArrayFieldProps = {
+  name: string;
+  options: EnumOption[];
+  defaultValue?: string[];
+  disabled?: boolean;
+};
+
+/**
+ * Checkbox group that serializes selected enum values into a JSON FormData
+ * field understood by the generated server action helpers.
+ */
+function EnumArrayField({
+  name,
+  options,
+  defaultValue = [],
+  disabled = false,
+}: EnumArrayFieldProps) {
+  const [selected, setSelected] = useState<string[]>(defaultValue.map(String));
+
+  const toggleValue = (value: string, checked: boolean) => {
+    setSelected((current) => {
+      if (checked) {
+        return current.includes(value) ? current : [...current, value];
+      }
+
+      return current.filter((item) => item !== value);
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <input type="hidden" name={`__json_parse:${name}`} value="1" />
+      <input type="hidden" name={name} value={JSON.stringify(selected)} />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {options.map((option) => (
+          <label key={option.value} className="flex items-center gap-2 text-sm">
+            <Input
+              type="checkbox"
+              checked={selected.includes(option.value)}
+              onChange={(event) => toggleValue(option.value, event.currentTarget.checked)}
+              disabled={disabled}
+              className="h-4 w-4"
+            />
+            <span>{option.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+{% endif %}
 type FormFieldsProps<TValue> = {
   defaultValue?: Partial<TValue>;
   disabled?: boolean;
@@ -53,20 +237,31 @@ type FormFieldsProps<TValue> = {
 {% set body_schema.value = schema %}
 {% endif %}
 {% endfor %}
+/**
+ * Field set used by the {{ operation.name.pascal.o }} dialog and form action.
+ */
 export function {{ operation.name.pascal.o }}FormFields({
   defaultValue,
   disabled = false,
 }: FormFieldsProps<{{ operation.meta.body_type }}>) {
   return (
-    <div className="grid gap-4">
+    <div className="h-full overflow-y-auto">
+      <div className="space-y-6 py-4">
+        <div className="space-y-4 px-3 md:px-6">
+          <h3 className="text-lg font-semibold">Basic Information</h3>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 {% if body_schema.value %}
 {% for field in body_schema.value.fields %}
-      <div className="grid gap-2">
-        <Label htmlFor="{{ field.lang.display_name }}">{{ field.name.pascal.o }}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="{{ field.lang.display_name }}">{{ field.name.pascal.o }}</Label>
 {{ field_control(field) }}
-      </div>
+            </div>
 {% endfor %}
 {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

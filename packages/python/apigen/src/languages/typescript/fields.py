@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from contracts.api import ApiField, ApiSchema
+from contracts.api import ApiField, ApiSchema, ApiSchemaKind
 from contracts.template import (
+    TemplateEnumValue,
     TemplateField,
     TemplateFieldLang,
     TemplateFieldMeta,
@@ -12,7 +13,7 @@ from contracts.template import (
     TemplateItemKey,
 )
 from languages.typescript.dependencies import field_dependencies
-from languages.typescript.names import safe_ts_identifier
+from languages.typescript.names import TYPESCRIPT_RESERVED_WORDS, safe_enum_key, safe_ts_identifier
 from languages.typescript.types import ts_field_type
 
 
@@ -66,6 +67,9 @@ def template_field(
         meta=TemplateFieldMeta(
             default=field.default,
             enum_values=field.enum_values,
+            enum_options=_field_enum_options(field, schema_by_ref),
+            enum_type=_field_enum_type(field, schema_by_ref),
+            enum_ref=_field_enum_ref(field, schema_by_ref),
             raw_type=field.type.raw_type,
         ),
     )
@@ -84,3 +88,83 @@ def _field_dependency_refs(field: ApiField) -> tuple[str, ...]:
             refs.append(ref)
 
     return tuple(refs)
+
+
+def _field_enum_options(
+    field: ApiField,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[TemplateEnumValue, ...]:
+    schema = _field_enum_schema(field, schema_by_ref)
+    if schema is not None:
+        return tuple(
+            TemplateEnumValue(
+                wire=value.value,
+                name=value.name.camel.o,
+                safe_name=safe_enum_key(
+                    value.value,
+                    reserved_words=TYPESCRIPT_RESERVED_WORDS,
+                ),
+                original_name=value.value,
+            )
+            for value in schema.enum_values
+        )
+
+    return tuple(
+        TemplateEnumValue(
+            wire=value,
+            name=safe_enum_key(value, reserved_words=TYPESCRIPT_RESERVED_WORDS),
+            safe_name=safe_enum_key(value, reserved_words=TYPESCRIPT_RESERVED_WORDS),
+            original_name=value,
+        )
+        for value in field.enum_values
+    )
+
+
+def _field_enum_type(
+    field: ApiField,
+    schema_by_ref: dict[str, ApiSchema],
+) -> str | None:
+    schema = _field_enum_schema(field, schema_by_ref)
+    if schema is not None:
+        return schema.name.pascal.o
+
+    if field.enum_values:
+        return field.type.type
+
+    return None
+
+
+def _field_enum_ref(
+    field: ApiField,
+    schema_by_ref: dict[str, ApiSchema],
+) -> str | None:
+    schema = _field_enum_schema(field, schema_by_ref)
+    return schema.ref if schema is not None else None
+
+
+def _field_enum_schema(
+    field: ApiField,
+    schema_by_ref: dict[str, ApiSchema],
+) -> ApiSchema | None:
+    for ref in (
+        field.schema_ref,
+        *field.schema_refs,
+        field.item_ref,
+        *field.item_refs,
+    ):
+        schema = schema_by_ref.get(ref or "")
+        if schema is not None and _kind_value(schema.kind) == ApiSchemaKind.ENUM.value:
+            return schema
+
+    return None
+
+
+def _kind_value(value: object) -> str:
+    enum_value = getattr(value, "value", None)
+    if isinstance(enum_value, str):
+        return enum_value
+
+    if isinstance(value, str):
+        return value
+
+    return ""

@@ -1,5 +1,7 @@
 /**
+ * ---------------------------------------------------------------------------
  * {{ enum.name.pascal.o }}
+ * ---------------------------------------------------------------------------
  *
  * @description Represents the {{ enum.name.pascal.o }} enumeration.
  *
@@ -14,3 +16,23 @@ export enum {{ enum.name.pascal.o }} {
   {{ value.safe_name }} = "{{ value.wire }}",
 {% endfor %}
 }
+
+/**
+ * Converts enum wire values into human-readable labels for generated UI.
+ */
+function enumLabel(value: string) {
+  return value
+    .replace(/^[-+]/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+/**
+ * Options list suitable for generated select fields and table filters.
+ */
+export const {{ enum.name.camel.o }}Options = [
+{% for value in enum.meta.enum_values %}
+  { label: enumLabel("{{ value.wire }}"), value: {{ enum.name.pascal.o }}.{{ value.safe_name }} },
+{% endfor %}
+] as const;

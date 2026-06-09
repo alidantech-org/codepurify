@@ -7,6 +7,7 @@ from pathlib import Path
 from src.contracts.api import (
     ApiContract,
     ApiDocumentInfo,
+    ApiEnumValue,
     ApiField,
     ApiFieldKind,
     ApiFieldType,
@@ -22,6 +23,10 @@ from src.contracts.api import (
 )
 from src.contracts.names import make_contract_name
 from src.languages.typescript.adapter import TypeScriptLanguageAdapter
+
+
+def make_enum_value(value: str) -> ApiEnumValue:
+    return ApiEnumValue(value=value, name=make_contract_name(value))
 
 
 def test_typescript_operation_uses_parameter_target_as_query_type(tmp_path: Path) -> None:
@@ -319,3 +324,194 @@ def test_typescript_operation_exposes_ui_list_response_metadata(tmp_path: Path) 
     assert operation.meta.ui_list_field == "users"
     assert operation.meta.ui_list_item_type == "UserPartial"
     assert operation.meta.ui_pagination_field == "pagination"
+
+
+def test_typescript_operation_exposes_ui_query_field_metadata(tmp_path: Path) -> None:
+    query_ref = "#/components/schemas/UserListQuery"
+    filters_ref = "#/components/schemas/UserFilters"
+    filterable_ref = "#/components/schemas/UserFilterable"
+    sort_ref = "#/components/schemas/UserSort"
+    select_ref = "#/components/schemas/UserSelect"
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="UI API", api_version="v1"),
+        resources=(
+            ApiResource(
+                id="users",
+                name=make_contract_name("users"),
+                operations_count=1,
+            ),
+        ),
+        schemas=ApiSchemaGroups(
+            all=(
+                ApiSchema(
+                    id="UserSort",
+                    name=make_contract_name("UserSort"),
+                    ref=sort_ref,
+                    kind=ApiSchemaKind.ENUM,
+                    enum_values=(
+                        make_enum_value("email"),
+                        make_enum_value("-createdAt"),
+                        make_enum_value("+updatedAt"),
+                    ),
+                ),
+                ApiSchema(
+                    id="UserSelect",
+                    name=make_contract_name("UserSelect"),
+                    ref=select_ref,
+                    kind=ApiSchemaKind.ENUM,
+                    enum_values=(
+                        make_enum_value("email"),
+                        make_enum_value("status"),
+                    ),
+                ),
+                ApiSchema(
+                    id="UserFilterable",
+                    name=make_contract_name("UserFilterable"),
+                    ref=filterable_ref,
+                    kind=ApiSchemaKind.DTO,
+                    fields=(
+                        ApiField(id="email", name=make_contract_name("email")),
+                        ApiField(id="status", name=make_contract_name("status")),
+                    ),
+                ),
+                ApiSchema(
+                    id="UserFilters",
+                    name=make_contract_name("UserFilters"),
+                    ref=filters_ref,
+                    kind=ApiSchemaKind.DTO,
+                    inherited_refs=(filterable_ref,),
+                    fields=(
+                        ApiField(id="createdAt", name=make_contract_name("createdAt")),
+                    ),
+                ),
+                ApiSchema(
+                    id="UserListQuery",
+                    name=make_contract_name("UserListQuery"),
+                    ref=query_ref,
+                    kind=ApiSchemaKind.DTO,
+                    fields=(
+                        ApiField(
+                            id="sort",
+                            name=make_contract_name("sort"),
+                            type=ApiFieldType(kind=ApiFieldKind.ARRAY),
+                            item_ref=sort_ref,
+                            item_refs=(sort_ref,),
+                        ),
+                        ApiField(
+                            id="fields",
+                            name=make_contract_name("fields"),
+                            type=ApiFieldType(kind=ApiFieldKind.ARRAY),
+                            item_ref=select_ref,
+                            item_refs=(select_ref,),
+                        ),
+                        ApiField(
+                            id="filters",
+                            name=make_contract_name("filters"),
+                            schema_ref=filters_ref,
+                            schema_refs=(filters_ref,),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        operations=(
+            ApiOperation(
+                id="listUsers",
+                name=make_contract_name("listUsers"),
+                method="get",
+                path="/users",
+                resource="users",
+                target=ApiOperationTarget(
+                    ref=query_ref,
+                    source="x-codegen.parameters.target",
+                    inferred_roles=("query",),
+                    locations=("query",),
+                ),
+            ),
+        ),
+    )
+
+    contract = TypeScriptLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    operation = contract.operations[0]
+
+    assert operation.meta.ui_sort_fields == ("email", "createdAt", "updatedAt")
+    assert operation.meta.ui_filter_fields == ("email", "status", "createdAt")
+    assert operation.meta.ui_select_fields == ("email", "status")
+
+
+def test_typescript_field_exposes_referenced_enum_metadata(tmp_path: Path) -> None:
+    status_ref = "#/components/schemas/UserStatus"
+    body_ref = "#/components/schemas/CreateUserBody"
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="Enum API", api_version="v1"),
+        schemas=ApiSchemaGroups(
+            all=(
+                ApiSchema(
+                    id="UserStatus",
+                    name=make_contract_name("UserStatus"),
+                    ref=status_ref,
+                    kind=ApiSchemaKind.ENUM,
+                    enum_values=(
+                        make_enum_value("active"),
+                        make_enum_value("emailVerified"),
+                    ),
+                ),
+                ApiSchema(
+                    id="CreateUserBody",
+                    name=make_contract_name("CreateUserBody"),
+                    ref=body_ref,
+                    kind=ApiSchemaKind.DTO,
+                    fields=(
+                        ApiField(
+                            id="status",
+                            name=make_contract_name("status"),
+                            type=ApiFieldType(kind=ApiFieldKind.ENUM),
+                            schema_ref=status_ref,
+                            schema_refs=(status_ref,),
+                        ),
+                    ),
+                ),
+            ),
+            dtos=(
+                ApiSchema(
+                    id="CreateUserBody",
+                    name=make_contract_name("CreateUserBody"),
+                    ref=body_ref,
+                    kind=ApiSchemaKind.DTO,
+                    fields=(
+                        ApiField(
+                            id="status",
+                            name=make_contract_name("status"),
+                            type=ApiFieldType(kind=ApiFieldKind.ENUM),
+                            schema_ref=status_ref,
+                            schema_refs=(status_ref,),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    contract = TypeScriptLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    field = contract.schemas.all[1].fields[0]
+
+    assert field.meta.enum_type == "UserStatus"
+    assert field.meta.enum_ref == status_ref
+    assert tuple(option.wire for option in field.meta.enum_options) == (
+        "active",
+        "emailVerified",
+    )

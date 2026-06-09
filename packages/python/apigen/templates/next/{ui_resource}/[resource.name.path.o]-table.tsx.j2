@@ -1,93 +1,83 @@
-{% set ui = namespace(list=None, item=None, update=None, delete=None) %}
+{% set ui = namespace(list=None) %}
 {% for operation in resource.operations %}
 {% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_item_type %}
 {% set ui.list = operation %}
-{% elif operation.meta.ui_enabled and operation.meta.ui_role == "update" %}
-{% set ui.update = operation %}
-{% elif operation.meta.ui_enabled and operation.meta.ui_role == "delete" %}
-{% set ui.delete = operation %}
 {% endif %}
 {% endfor %}
 {% if ui.list %}
-{% for schema in resource.schemas %}
-{% if schema.name.pascal.o == ui.list.meta.ui_list_item_type %}
-{% set ui.item = schema %}
-{% endif %}
-{% endfor %}
 'use client';
 
-import { Button } from '@/components/ui/button';
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Data Table
+ * ---------------------------------------------------------------------------
+ *
+ * Thin wrapper around the shared DataTable that lets callers hide generated
+ * columns with a field visibility object.
+ */
+
+import { DataTable } from '@/components/_core/data-table';
+import type { Column } from '@/components/_core/tables/types';
 import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
-{% if ui.update or ui.delete %}
 import {
-{% if ui.update %}
-  {{ ui.update.name.pascal.o }}Dialog,
-{% endif %}
-{% if ui.delete %}
-  {{ ui.delete.name.pascal.o }}Dialog,
-{% endif %}
-} from './{{ resource.name.path.o }}-dialogs';
-{% endif %}
+  {{ resource.name.camel.o }}Columns,
+  type {{ resource.name.pascal.o }}ColumnField,
+  type {{ resource.name.pascal.o }}ColumnVisibility,
+} from './{{ resource.name.path.o }}-columns';
 
 type {{ resource.name.pascal.o }}TableProps = {
   data: {{ ui.list.meta.ui_list_item_type }}[];
-  onChanged?: () => void;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+  filters?: Record<string, string>;
+  fields?: {{ resource.name.pascal.o }}ColumnVisibility;
+  className?: string;
+  emptyMessage?: string;
 };
 
-export function {{ resource.name.pascal.o }}Table({ data, onChanged }: {{ resource.name.pascal.o }}TableProps) {
+/**
+ * Applies optional field visibility while keeping utility columns available.
+ */
+function visibleColumns(
+  fields?: {{ resource.name.pascal.o }}ColumnVisibility,
+): Column<{{ ui.list.meta.ui_list_item_type }}>[] {
+  if (!fields) {
+    return {{ resource.name.camel.o }}Columns;
+  }
+
+  return {{ resource.name.camel.o }}Columns.filter((column) => {
+    if (column.key === '#') {
+      return true;
+    }
+
+    return fields[column.key as {{ resource.name.pascal.o }}ColumnField] !== false;
+  });
+}
+
+/**
+ * Resource-specific table component backed by generated columns.
+ */
+export function {{ resource.name.pascal.o }}Table({
+  data,
+  pagination,
+  filters,
+  fields,
+  className,
+  emptyMessage = 'No {{ resource.name.path.o }} found.',
+}: {{ resource.name.pascal.o }}TableProps) {
   return (
-    <div className="overflow-hidden rounded-md border">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50">
-          <tr>
-{% if ui.item %}
-{% for field in ui.item.fields %}
-            <th className="px-3 py-2 text-left font-medium">{{ field.name.pascal.o }}</th>
-{% endfor %}
-{% endif %}
-{% if ui.update or ui.delete %}
-            <th className="px-3 py-2 text-right font-medium">Actions</th>
-{% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item, index) => (
-            <tr key={(item as { id?: string }).id ?? index} className="border-t">
-{% if ui.item %}
-{% for field in ui.item.fields %}
-              <td className="px-3 py-2">{String(item.{{ field.lang.display_name }} ?? '')}</td>
-{% endfor %}
-{% endif %}
-{% if ui.update or ui.delete %}
-              <td className="px-3 py-2">
-                <div className="flex justify-end gap-2">
-{% if ui.update %}
-                  <{{ ui.update.name.pascal.o }}Dialog
-{% for param in ui.update.meta.path_params %}
-                    {{ param }}={String((item as Record<string, unknown>).{{ param }} ?? (item as { id?: string }).id ?? '')}
-{% endfor %}
-                    defaultValue={item}
-                    onSuccess={onChanged}
-                    trigger={<Button type="button" size="sm" variant="outline">Edit</Button>}
-                  />
-{% endif %}
-{% if ui.delete %}
-                  <{{ ui.delete.name.pascal.o }}Dialog
-{% for param in ui.delete.meta.path_params %}
-                    {{ param }}={String((item as Record<string, unknown>).{{ param }} ?? (item as { id?: string }).id ?? '')}
-{% endfor %}
-                    onSuccess={onChanged}
-                    trigger={<Button type="button" size="sm" variant="destructive">Delete</Button>}
-                  />
-{% endif %}
-                </div>
-              </td>
-{% endif %}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      data={data}
+      columns={visibleColumns(fields)}
+      pagination={pagination}
+      filters={filters}
+      className={className}
+      emptyMessage={emptyMessage}
+    />
   );
 }
 {% else %}

@@ -181,6 +181,9 @@ def _operation(
             ui_list_field=list_field.name.camel.o if list_field else None,
             ui_list_item_type=_field_item_type(list_field, schema_by_ref),
             ui_pagination_field=_pagination_field(response_ref, schema_by_ref),
+            ui_sort_fields=_query_sort_fields(query_ref, schema_by_ref),
+            ui_filter_fields=_query_filter_fields(query_ref, schema_by_ref),
+            ui_select_fields=_query_select_fields(query_ref, schema_by_ref),
         ),
     )
 
@@ -507,6 +510,131 @@ def _pagination_field(ref: str | None, schema_by_ref: dict[str, ApiSchema]) -> s
             return name
 
     return None
+
+
+def _query_sort_fields(
+    query_ref: str | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[str, ...]:
+    query_schema = _schema_for_ref(query_ref, schema_by_ref)
+    if query_schema is None:
+        return ()
+
+    for field in query_schema.fields:
+        if field.name.camel.o != "sort":
+            continue
+
+        return _enum_field_names(field, schema_by_ref)
+
+    return ()
+
+
+def _query_select_fields(
+    query_ref: str | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[str, ...]:
+    query_schema = _schema_for_ref(query_ref, schema_by_ref)
+    if query_schema is None:
+        return ()
+
+    for field in query_schema.fields:
+        if field.name.camel.o not in {"fields", "select"}:
+            continue
+
+        return _enum_field_names(field, schema_by_ref)
+
+    return ()
+
+
+def _query_filter_fields(
+    query_ref: str | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[str, ...]:
+    query_schema = _schema_for_ref(query_ref, schema_by_ref)
+    if query_schema is None:
+        return ()
+
+    for field in query_schema.fields:
+        if field.name.camel.o != "filters":
+            continue
+
+        refs = (field.schema_ref, *field.schema_refs, field.item_ref, *field.item_refs)
+        for ref in refs:
+            filter_schema = _schema_for_ref(ref, schema_by_ref)
+            if filter_schema is not None:
+                return tuple(
+                    filter_field.name.camel.o
+                    for filter_field in _schema_fields_with_inheritance(
+                        filter_schema,
+                        schema_by_ref,
+                    )
+                )
+
+    return ()
+
+
+def _enum_field_names(
+    field: ApiField,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[str, ...]:
+    values = field.enum_values
+
+    refs = (field.schema_ref, *field.schema_refs, field.item_ref, *field.item_refs)
+    for ref in refs:
+        schema = _schema_for_ref(ref, schema_by_ref)
+        if schema is not None and schema.enum_values:
+            values = tuple(value.value for value in schema.enum_values)
+            break
+
+    names: list[str] = []
+    for value in values:
+        name = str(value).strip()
+        if name.startswith(("-", "+")):
+            name = name[1:]
+        if name and name not in names:
+            names.append(name)
+
+    return tuple(names)
+
+
+def _schema_for_ref(
+    ref: str | None,
+    schema_by_ref: dict[str, ApiSchema],
+) -> ApiSchema | None:
+    if ref is None:
+        return None
+
+    return schema_by_ref.get(ref)
+
+
+def _schema_fields_with_inheritance(
+    schema: ApiSchema,
+    schema_by_ref: dict[str, ApiSchema],
+    seen_refs: tuple[str, ...] = (),
+) -> tuple[ApiField, ...]:
+    if schema.ref in seen_refs:
+        return schema.fields
+
+    fields: list[ApiField] = []
+    next_seen_refs = (*seen_refs, schema.ref)
+
+    for ref in (*schema.inherited_refs, schema.alias_of):
+        parent = _schema_for_ref(ref, schema_by_ref)
+        if parent is not None:
+            fields.extend(
+                _schema_fields_with_inheritance(
+                    parent,
+                    schema_by_ref,
+                    next_seen_refs,
+                )
+            )
+
+    existing = {field.name.camel.o for field in fields}
+    for field in schema.fields:
+        if field.name.camel.o not in existing:
+            fields.append(field)
+
+    return tuple(fields)
 
 
 def _path_param_names(path: str) -> tuple[str, ...]:
