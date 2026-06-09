@@ -1,4 +1,4 @@
-{% macro endpoint_expr(operation) -%}
+{%- macro endpoint_expr(operation) -%}
 {%- if operation.meta.has_path_params -%}
 routes.{{ resource.name.camel.o }}.{{ operation.lang.function_name }}(input.params)
 {%- else -%}
@@ -6,23 +6,89 @@ routes.{{ resource.name.camel.o }}.{{ operation.lang.function_name }}
 {%- endif -%}
 {%- endmacro %}
 
-{% macro response_type(operation) -%}
+{%- macro response_type(operation) -%}
 {{ operation.meta.response_type or 'unknown' }}
 {%- endmacro %}
 
+{%- macro form_action_result_type(operation) -%}
+{{ operation.name.pascal.o }}ActionResult
+{%- endmacro %}
+
+{%- macro form_action_function_name(operation) -%}
+{{ operation.lang.function_name }}Action
+{%- endmacro %}
+
+{%- set ns = namespace(has_form_actions=False, has_form_action_path_params=False, has_clean_form_actions=False) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled | default(false) and operation.meta.ui_role in ("create", "update", "auth") and operation.meta.body_type %}
+{% set ns.has_form_actions = True %}
+{% if operation.meta.has_path_params %}
+{% set ns.has_form_action_path_params = True %}
+{% endif %}
+{% if not operation.meta.is_multipart_request %}
+{% set ns.has_clean_form_actions = True %}
+{% endif %}
+{% endif %}
+{% endfor -%}
+
 'use server';
 
-import type { ApiBridgeResponse, RequestOptions } from 'next-api-bridge';
+import type {
+{% if ns.has_form_actions %}
+  ApiBridgeResponse,
+{% endif %}
+  RequestOptions,
+} from 'next-api-bridge';
+{% if ns.has_form_actions %}
+import { redirect } from 'next/navigation';
+{% endif %}
 import { api } from '../api';
 import routes from '../routes';
-import { cleanActionBody, requestOptions, type ActionBody } from './helpers';
+import {
+{% if ns.has_form_actions %}
+{% if ns.has_form_action_path_params %}
+  actionFormDataValue,
+{% endif %}
+{% if ns.has_clean_form_actions %}
+  cleanActionFormData,
+{% endif %}
+  formActionRedirectPath,
+  type FormActionResult,
+{% endif %}
+  requestOptions,
+} from './helpers';
 {% for import in file.imports %}
 {{ import.statement }}
 {% endfor %}
 
 {% for operation in resource.operations %}
 {{ "\n" }}
-export type {{ operation.name.pascal.o }}Input = {
+/**
+ * {{ operation.name.pascal.o }}
+ *
+ * @description Server action for the {{ operation.lang.function_name }} operation on the {{ resource.name.camel.o }} resource.
+ *
+ * @remarks
+ * Method: {{ operation.lang.method | upper }}
+{% if operation.meta.has_path_params %}
+ * Params:
+{% for param in operation.meta.path_params %}
+ *   - {{ param }}: string
+{% endfor %}
+{% endif %}
+{% if operation.meta.query_type %}
+ * Query: {{ operation.meta.query_type }} (optional)
+{% endif %}
+{% if operation.meta.is_multipart_request %}
+ * Body: FormData (multipart)
+{% elif operation.meta.body_type %}
+ * Body: {{ operation.meta.body_type }}{{ "" if operation.request_body and operation.request_body.lang.required else " (optional)" }}
+{% endif %}
+ *
+ * @param input - {{ operation.name.pascal.o }}Input
+ * @returns Promise<ApiBridgeResponse<{{ response_type(operation) }}>>
+ */
+type {{ operation.name.pascal.o }}Input = {
 {% if operation.meta.has_path_params %}
   params: {
 {% for param in operation.meta.path_params %}
@@ -36,19 +102,19 @@ export type {{ operation.name.pascal.o }}Input = {
 {% if operation.meta.is_multipart_request %}
   body: FormData;
 {% elif operation.meta.body_type %}
-  body{% if operation.request_body and operation.request_body.lang.required %}{% else %}?{% endif %}: ActionBody<{{ operation.meta.body_type }}>;
+  body{% if operation.request_body and operation.request_body.lang.required %}{% else %}?{% endif %}: {{ operation.meta.body_type }};
 {% endif %}
   options?: RequestOptions;
 };
 
 export async function {{ operation.lang.function_name }}(
   input: {{ operation.name.pascal.o }}Input{% if not operation.meta.has_path_params and not (operation.meta.body_type and operation.request_body and operation.request_body.lang.required) and not operation.meta.is_multipart_request %} = {}{% endif %},
-): Promise<ApiBridgeResponse<{{ response_type(operation) }}>> {
+) {
   const endpoint = {{ endpoint_expr(operation) }};
   const options = requestOptions(
     input?.options,
 {% if operation.meta.query_type %}
-    input?.query as Record<string, unknown> | undefined,
+    input?.query as Record<string, unknown>,
 {% else %}
     undefined,
 {% endif %}
@@ -61,7 +127,7 @@ export async function {{ operation.lang.function_name }}(
 
   return api.{{ operation.lang.method }}<{{ response_type(operation) }}>(endpoint, input.body, options);
 {% elif operation.meta.body_type %}
-  const body = input.body ? cleanActionBody<{{ operation.meta.body_type }}>(input.body) : undefined;
+  const body = input.body ? input.body : undefined;
 
   return api.{{ operation.lang.method }}<{{ response_type(operation) }}>(endpoint, body, options);
 {% else %}
@@ -69,4 +135,48 @@ export async function {{ operation.lang.function_name }}(
   return api.{{ operation.lang.method }}<{{ response_type(operation) }}>(endpoint, undefined, options);
 {% endif %}
 }
+
+{% if operation.meta.ui_enabled | default(false) and operation.meta.ui_role in ("create", "update", "auth") and operation.meta.body_type %}
+
+type {{ form_action_result_type(operation) }} = FormActionResult<
+{% if operation.meta.is_multipart_request %}
+  FormData,
+{% else %}
+  {{ operation.meta.body_type }},
+{% endif %}
+  ApiBridgeResponse<{{ response_type(operation) }}>
+>;
+
+export async function {{ form_action_function_name(operation) }}(
+  _prev: {{ form_action_result_type(operation) }} | null,
+  data: FormData,
+): Promise<{{ form_action_result_type(operation) }}> {
+  const redirectPath = formActionRedirectPath(data);
+{% if operation.meta.is_multipart_request %}
+  const body = data;
+{% else %}
+  const body = cleanActionFormData<{{ operation.meta.body_type }}>(
+    data,
+  );
+{% endif %}
+
+  const response = await {{ operation.lang.function_name }}({
+{% if operation.meta.has_path_params %}
+    params: {
+{% for param in operation.meta.path_params %}
+      {{ param }}: actionFormDataValue(data, '__path:{{ param }}'),
+{% endfor %}
+    },
+{% endif %}
+    body,
+    options: {},
+  });
+
+  if (response.success && redirectPath) {
+    redirect(redirectPath);
+  }
+
+  return { response, formdata: body };
+}
+{% endif %}
 {% endfor %}

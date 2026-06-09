@@ -20,6 +20,10 @@ export const routes = {
 {%- for resource in resources if resource.operations %}
   {{ resource.name.camel.o }}: {
 {%- for operation in resource.operations %}
+     {{ "\n"}}
+    /**
+     *@{{ operation.lang.method | upper }} {{ operation.api.path }}
+     *{%- if operation.meta.has_path_params %}@PARAMS {{ operation.meta.path_params | join(", ") }}{%- endif %}{{ "\n"}}*/
     {{ operation.lang.function_name }}: {{ route_value(operation) }},
 {%- endfor %}
   },

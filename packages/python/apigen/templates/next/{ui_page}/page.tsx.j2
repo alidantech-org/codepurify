@@ -21,10 +21,10 @@
 {% endif %}
 {% endfor %}
 {% if ui.list %}
-import { {{ ui.list.lang.function_name }} } from '@/lib/server/actions/{{ resource.name.path.o }}.actions';
-import { {{ resource.name.pascal.o }}Table } from '@/lib/components/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}/{{ resource.name.path.o }}-table';
+import { {{ ui.list.lang.function_name }} } from '@/gen/server/actions/{{ resource.name.path.o }}.actions';
+import { {{ resource.name.pascal.o }}Table } from '@/gen/components/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}/{{ resource.name.path.o }}-table';
 {% if ui.create %}
-import { {{ ui.create.name.pascal.o }}Dialog } from '@/lib/components/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}/{{ resource.name.path.o }}-dialogs';
+import { {{ ui.create.name.pascal.o }}Dialog } from '@/gen/components/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}/{{ resource.name.path.o }}-dialogs';
 {% endif %}
 
 {% if ui.list.meta.has_path_params %}

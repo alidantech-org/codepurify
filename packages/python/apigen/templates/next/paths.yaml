@@ -9,14 +9,14 @@ folders:
   root:
     mode: once
     parts:
-      - lib
+      - gen
       - server
 
   resource:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - server
       - actions
 
@@ -24,7 +24,7 @@ folders:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - components
       - [resource.path]
       - [resource.name.path.o]
@@ -33,7 +33,7 @@ folders:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - pages
       - [resource.path]
       - [resource.name.path.o]
@@ -42,7 +42,7 @@ folders:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - server
       - types
       - [resource.path]
@@ -52,7 +52,7 @@ folders:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - server
       - types
       - [resource.path]
@@ -63,7 +63,7 @@ folders:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - server
       - types
       - [resource.path]
@@ -74,7 +74,7 @@ folders:
     select: resources
     as: resource
     parts:
-      - lib
+      - gen
       - server
       - types
       - [resource.path]
@@ -85,7 +85,7 @@ folders:
     select: schemas.emit_models
     as: model
     parts:
-      - lib
+      - gen
       - server
       - types
       - [model.emit.resource_path]
@@ -95,7 +95,7 @@ folders:
     select: schemas.emit_dtos
     as: dto
     parts:
-      - lib
+      - gen
       - server
       - types
       - [dto.emit.resource_path]
@@ -105,7 +105,7 @@ folders:
     select: schemas.emit_enums
     as: enum
     parts:
-      - lib
+      - gen
       - server
       - types
       - [enum.emit.resource_path]

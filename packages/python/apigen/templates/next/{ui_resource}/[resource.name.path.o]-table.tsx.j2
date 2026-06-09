@@ -17,7 +17,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import type { {{ ui.list.meta.ui_list_item_type }} } from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 {% if ui.update or ui.delete %}
 import {
 {% if ui.update %}

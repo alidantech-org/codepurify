@@ -40,7 +40,7 @@ import {
   {{ operation.lang.function_name }},
 {% endif %}
 {% endfor %}
-} from '@/lib/server/actions/{{ resource.name.path.o }}.actions';
+} from '@/gen/server/actions/{{ resource.name.path.o }}.actions';
 {% if ui.has_body %}
 import type {
 {% for operation in resource.operations %}
@@ -48,7 +48,7 @@ import type {
   {{ operation.meta.body_type }},
 {% endif %}
 {% endfor %}
-} from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+} from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 import {
 {% for operation in resource.operations %}
 {% if operation.meta.ui_enabled and operation.meta.ui_role in ("create", "update") and operation.meta.body_type %}

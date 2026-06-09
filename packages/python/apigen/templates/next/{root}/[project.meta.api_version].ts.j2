@@ -1,4 +1,4 @@
-export * from './api';
+/* Do not export './api' here. It contains server-only runtime values and can break client component barrel imports. */
+/* Do not export './actions' here. Server action files must only be imported intentionally from server/action boundaries. */
 export * from './routes';
-export * from './actions';
 export * from './types';

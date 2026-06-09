@@ -1,3 +1,14 @@
+/**
+ * {{ resource.name.pascal.o }} Exports
+ *
+ * @description Barrel file exporting all enums for the {{ resource.name.pascal.o }} resource.
+ *
+ * @remarks
+ * Exports:
+ *{%- for enum in resource.enums %}
+ *   - {{ enum.name.path.o }}
+ *{%- endfor %}
+ */
 {% for enum in resource.enums %}
 export * from './{{ enum.name.path.o }}';
 {% endfor %}

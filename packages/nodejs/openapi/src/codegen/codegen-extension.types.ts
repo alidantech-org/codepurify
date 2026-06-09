@@ -32,7 +32,7 @@ export const XCodegenDtoRole = {
 
 export type XCodegenDtoRole = (typeof XCodegenDtoRole)[keyof typeof XCodegenDtoRole];
 
-export type CodegenUiRole = 'list' | 'detail' | 'create' | 'update' | 'delete' | 'action';
+export type CodegenUiRole = 'list' | 'detail' | 'create' | 'update' | 'delete' | 'action' | 'auth';
 
 export interface CodegenUiMeta {
   readonly enabled?: boolean;

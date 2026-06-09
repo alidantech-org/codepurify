@@ -1,3 +1,14 @@
+/**
+ * {{ enum.name.pascal.o }}
+ *
+ * @description Represents the {{ enum.name.pascal.o }} enumeration.
+ *
+ * @remarks
+ * Values:
+ *{%- for value in enum.meta.enum_values %}
+ *   - {{ value.safe_name }}: "{{ value.wire }}"
+ *{%- endfor %}
+ */
 export enum {{ enum.name.pascal.o }} {
 {% for value in enum.meta.enum_values %}
   {{ value.safe_name }} = "{{ value.wire }}",

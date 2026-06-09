@@ -1,3 +1,14 @@
+/**
+ * {{ resource.name.pascal.o }} Exports
+ *
+ * @description Barrel file exporting all DTOs for the {{ resource.name.pascal.o }} resource.
+ *
+ * @remarks
+ * Exports:
+ *{%- for dto in resource.dtos %}
+ *   - {{ dto.name.path.o }}
+ *{%- endfor %}
+ */
 {% for dto in resource.dtos %}
 export * from './{{ dto.name.path.o }}';
 {% endfor %}

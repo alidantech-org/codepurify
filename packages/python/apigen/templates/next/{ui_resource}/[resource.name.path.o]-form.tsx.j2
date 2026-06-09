@@ -37,7 +37,7 @@ import type {
   {{ operation.meta.body_type }},
 {% endif %}
 {% endfor %}
-} from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+} from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 {% endif %}
 
 type FormFieldsProps<TValue> = {

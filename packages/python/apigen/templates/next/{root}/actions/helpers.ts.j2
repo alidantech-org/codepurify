@@ -1,7 +1,31 @@
 import type { RequestOptions } from 'next-api-bridge';
-import { getCleanFormData } from 'next-api-bridge/form';
+import { getCleanFormData, validateRedirectPath } from 'next-api-bridge/form';
 
 export type ActionBody<T> = T | FormData;
+
+export type FormActionResult<TBody, TResponse> = {
+  response?: TResponse;
+  formdata?: TBody;
+};
+
+export type CleanActionFormDataOptions = {
+  delete?: string[];
+  jsonParse?: string[];
+  boolean?: string[];
+  number?: string[];
+  date?: string[];
+};
+
+const ACTION_CONTROL_PREFIX = '__';
+const ACTION_REDIRECT_PATH_FIELD = '__redirect_path';
+const ACTION_CONTROL_FIELDS = [
+  ACTION_REDIRECT_PATH_FIELD,
+  '__delete',
+  '__json_parse',
+  '__boolean',
+  '__number',
+  '__date',
+] as const;
 
 export function cleanActionBody<T>(body: ActionBody<T>): T {
   if (body instanceof FormData) {
@@ -21,4 +45,97 @@ export function requestOptions(
     ...(query ? { query } : {}),
     ...(isMultipart ? { isMultipart: true } : {}),
   };
+}
+
+export function cleanActionFormData<T>(
+  data: FormData,
+  options: CleanActionFormDataOptions = {},
+): T {
+  const metadata = actionFormDataMetadata(data);
+
+  return getCleanFormData<T>(dataWithoutActionControls(data), {
+    delete: [
+      ...metadata.delete,
+      ...(options.delete ?? []),
+    ],
+    jsonParse: [
+      ...metadata.jsonParse,
+      ...(options.jsonParse ?? []),
+    ],
+    boolean: [
+      ...metadata.boolean,
+      ...(options.boolean ?? []),
+    ],
+    number: [
+      ...metadata.number,
+      ...(options.number ?? []),
+    ],
+    date: [
+      ...metadata.date,
+      ...(options.date ?? []),
+    ],
+  });
+}
+
+export function formActionRedirectPath(data: FormData): string | undefined {
+  const value = data.get(ACTION_REDIRECT_PATH_FIELD);
+
+  if (typeof value !== 'string' || !value) {
+    return undefined;
+  }
+
+  return validateRedirectPath(value);
+}
+
+export function actionFormDataValue(data: FormData, name: string): string {
+  return String(data.get(name) ?? '');
+}
+
+function actionFormDataMetadata(data: FormData): Required<CleanActionFormDataOptions> {
+  return {
+    delete: actionFormDataControlValues(data, '__delete'),
+    jsonParse: actionFormDataControlValues(data, '__json_parse'),
+    boolean: actionFormDataControlValues(data, '__boolean'),
+    number: actionFormDataControlValues(data, '__number'),
+    date: actionFormDataControlValues(data, '__date'),
+  };
+}
+
+function actionFormDataControlValues(data: FormData, key: string): string[] {
+  const values = new Set<string>();
+
+  for (const value of data.getAll(key)) {
+    if (typeof value === 'string' && value) {
+      values.add(value);
+    }
+  }
+
+  const prefix = `${key}:`;
+  for (const [entryKey] of data.entries()) {
+    if (entryKey.startsWith(prefix)) {
+      const value = entryKey.slice(prefix.length);
+      if (value) {
+        values.add(value);
+      }
+    }
+  }
+
+  return [...values];
+}
+
+function dataWithoutActionControls(data: FormData): FormData {
+  const next = new FormData();
+
+  for (const [key, value] of data.entries()) {
+    if (
+      ACTION_CONTROL_FIELDS.includes(key as (typeof ACTION_CONTROL_FIELDS)[number]) ||
+      key.startsWith(ACTION_CONTROL_PREFIX)
+    ) {
+      continue;
+    }
+
+    next.append(key, value);
+  }
+
+  return next;
 }

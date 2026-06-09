@@ -33,6 +33,16 @@ const auth = v1.defineResource({
   },
 });
 
+const adminAuth = v1.defineResource({
+  name: 'auth',
+  route: '/v1/admin/auth',
+  folders: ['platform'],
+  ui: {
+    enabled: true,
+    infer: false,
+  },
+});
+
 const bookings = v1.defineResource({
   name: 'bookings',
   route: '/v1/bookings',
@@ -128,6 +138,18 @@ auth.defineRoutes({
       path: '/login',
       body: userSchemas.ref.UserBody,
       response: userSchemas.ref.UserOk,
+    },
+  },
+});
+
+adminAuth.defineRoutes({
+  routes: {
+    adminLogin: {
+      method: HttpMethod.post,
+      path: '/login',
+      body: userSchemas.ref.UserBody,
+      response: userSchemas.ref.UserOk,
+      ui: 'auth',
     },
   },
 });
@@ -229,6 +251,19 @@ assert.deepEqual(codegen('/v1/users/{userId}/run-action', 'post').ui, {
 });
 assert.deepEqual(codegen('/v1/auth/login', 'post').ui, {
   enabled: false,
+});
+assert.deepEqual(codegen('/v1/admin/auth/login', 'post').resource, {
+  name: 'auth',
+  path: ['platform'],
+});
+assert.deepEqual(codegen('/v1/admin/auth/login', 'post').operation, {
+  name: 'adminLogin',
+  role: 'auth',
+});
+assert.deepEqual(codegen('/v1/admin/auth/login', 'post').ui, {
+  enabled: true,
+  role: 'auth',
+  inferred: false,
 });
 assert.deepEqual(codegen('/v1/bookings', 'get').ui, {
   enabled: false,

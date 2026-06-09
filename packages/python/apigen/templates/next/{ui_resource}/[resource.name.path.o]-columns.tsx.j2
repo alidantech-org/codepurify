@@ -13,7 +13,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import type { {{ ui.list.meta.ui_list_item_type }} } from '@/lib/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
 
 export const {{ resource.name.camel.o }}Columns: ColumnDef<{{ ui.list.meta.ui_list_item_type }}>[] = [
 {% if ui.item %}
