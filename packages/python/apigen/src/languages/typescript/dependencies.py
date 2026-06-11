@@ -19,6 +19,18 @@ def schema_dependencies(
     dependencies: list[TemplateDependency] = []
 
     for ref in schema.inherited_refs:
+        if schema.has_field_overrides:
+            parent_schema = schema_by_ref.get(ref)
+            if parent_schema is not None:
+                dependencies.extend(
+                    _parent_field_type_dependencies(
+                        schema=schema,
+                        parent_schema=parent_schema,
+                        schema_by_ref=schema_by_ref,
+                    )
+                )
+            continue
+
         dependencies.append(
             dependency(
                 ref=ref,
@@ -43,6 +55,50 @@ def schema_dependencies(
                 owner_ref=schema.ref,
             )
         )
+
+    return _unique_dependencies(tuple(dependencies))
+
+
+def _parent_field_type_dependencies(
+    *,
+    schema: ApiSchema,
+    parent_schema: ApiSchema,
+    schema_by_ref: dict[str, ApiSchema],
+) -> tuple[TemplateDependency, ...]:
+    """Import dependencies needed by flattened parent fields in override schemas."""
+    dependencies: list[TemplateDependency] = []
+
+    for ref in parent_schema.dependencies:
+        if ref == parent_schema.ref:
+            continue
+
+        dependencies.append(
+            dependency(
+                ref=ref,
+                purpose=TemplateDependencyPurpose.FIELD_TYPE,
+                reason=(
+                    f"{schema.name.pascal.o} redefines fields from "
+                    f"{parent_schema.name.pascal.o}, which references {ref}"
+                ),
+                schema_by_ref=schema_by_ref,
+                owner_ref=schema.ref,
+            )
+        )
+
+    for field in parent_schema.fields:
+        for field_dependency in field_dependencies(field, schema_by_ref):
+            dependencies.append(
+                dependency(
+                    ref=field_dependency.ref,
+                    purpose=field_dependency.purpose,
+                    reason=(
+                        f"{schema.name.pascal.o} redefines inherited field "
+                        f"{field.name.camel.o}, which uses {field_dependency.ref}"
+                    ),
+                    schema_by_ref=schema_by_ref,
+                    owner_ref=schema.ref,
+                )
+            )
 
     return tuple(dependencies)
 
@@ -75,6 +131,22 @@ def field_dependencies(
         )
 
     return tuple(dependencies)
+
+
+def _unique_dependencies(
+    dependencies: tuple[TemplateDependency, ...],
+) -> tuple[TemplateDependency, ...]:
+    unique: list[TemplateDependency] = []
+    seen: set[tuple[str, TemplateDependencyPurpose]] = set()
+
+    for item in dependencies:
+        key = (item.ref, item.purpose)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+
+    return tuple(unique)
 
 
 def dependency(

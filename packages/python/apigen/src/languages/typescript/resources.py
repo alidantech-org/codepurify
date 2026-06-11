@@ -31,7 +31,10 @@ def template_resources(
     operations: tuple[TemplateOperation, ...] = (),
 ) -> tuple[TemplateResource, ...]:
     """Build TypeScript resources with grouped children."""
-    return tuple(_resource(resource, schemas=schemas, operations=operations) for resource in resources)
+    return tuple(
+        _resource(resource, schemas=schemas, operations=operations)
+        for resource in resources
+    )
 
 
 def _resource(
@@ -68,7 +71,7 @@ def _resource(
             resource_path=resource_path,
             folder_path=resource_path,
             file_name="index",
-            path_parts=(TemplateGroup.RESOURCES.value, resource.name.path.o),
+            path_parts=(TemplateGroup.RESOURCES.value, resource.name.kebab.o),
             dependencies=_operation_dependencies(resource_operations),
         ),
         docs=TemplateDocs(),
@@ -103,4 +106,8 @@ def _operation_dependencies(
 
 def _items_for_resource(items: tuple, resource_path: tuple[str, ...]) -> tuple:
     """Return template items belonging to a resource path."""
-    return tuple(item for item in items if item.emit is not None and item.emit.resource_path == resource_path)
+    return tuple(
+        item
+        for item in items
+        if item.emit is not None and item.emit.resource_path == resource_path
+    )

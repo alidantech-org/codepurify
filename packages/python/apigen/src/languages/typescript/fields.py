@@ -13,7 +13,7 @@ from contracts.template import (
     TemplateItemKey,
 )
 from languages.typescript.dependencies import field_dependencies
-from languages.typescript.names import TYPESCRIPT_RESERVED_WORDS, safe_enum_key, safe_ts_identifier
+from languages.typescript.names import TYPESCRIPT_RESERVED_WORDS, safe_enum_key
 from languages.typescript.types import ts_field_type
 
 
@@ -44,7 +44,7 @@ def template_field(
         lang=TemplateFieldLang(
             kind="typescript_field",
             type=ts_field_type(field, schema_by_ref),
-            display_name=safe_ts_identifier(field.name.camel.original, fallback="field"),
+            display_name=field.name.camel.o,
             required=field.required,
             nullable=_ts_nullable(field, schema_by_ref),
             # optional=_ts_optional(field),

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from contracts.api import ApiResource, ApiSchema
-from languages.dart.names import name_text
 from languages.debug.context.path_values import safe_file_name, safe_path_parts
+from src.languages.dart.names import name_text
 
 SHARED_PATH = ("shared",)
 

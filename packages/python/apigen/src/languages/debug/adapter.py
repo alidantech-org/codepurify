@@ -15,7 +15,6 @@ from contracts.api import (
 )
 from contracts.emission import EmissionResult
 from contracts.events import ProgressSink, RuntimeEvent
-from contracts.language import LanguagePostResult
 from contracts.names import make_contract_name
 from contracts.template import (
     TemplateContract,
@@ -59,8 +58,9 @@ from contracts.template import (
     TemplateSchemaLang,
     TemplateSchemaMeta,
 )
-from languages.decorators import language_adapter
 from languages.debug.context.path_values import safe_file_name, safe_path_parts
+from languages.decorators import language_adapter
+from src.contracts.language import LanguagePostResult
 
 
 @language_adapter(name="debug", aliases=("txt", "md"), template_name="debug")
@@ -389,7 +389,7 @@ def _operation(
         responses=tuple(_response(response, schema_by_ref) for response in operation.responses),
         lang=TemplateOperationLang(
             kind="debug_operation",
-            function_name=operation.name.snake,
+            function_name=operation.name.snake.o,
             display_name=operation.name.pascal.o,
             method=operation.method.upper(),
         ),

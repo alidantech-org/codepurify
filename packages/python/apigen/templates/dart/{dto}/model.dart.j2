@@ -5,7 +5,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'model.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(includeIfNull: false)
 class {{ dto.name.pascal.o }}{%- if dto.meta.has_extends %} extends {{ dto.meta.extends_type }}{%- endif %} {
 {%- if dto.fields or dto.meta.super_fields %}
   const {{ dto.name.pascal.o }}({

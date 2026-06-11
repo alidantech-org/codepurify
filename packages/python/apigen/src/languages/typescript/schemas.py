@@ -29,21 +29,30 @@ def template_schema_groups(
     """Build TypeScript schema groups."""
     schema_by_ref = {schema.ref: schema for schema in api.schemas.all}
 
+    def build_group(
+        schemas: tuple[ApiSchema, ...],
+        group: TemplateGroup,
+    ) -> tuple[TemplateSchema, ...]:
+        return tuple(
+            _schema(schema, group, schema_by_ref, resource_paths)
+            for schema in schemas
+        )
+
     return TemplateSchemaGroups(
-        all=tuple(_schema(schema, TemplateGroup.SCHEMAS, schema_by_ref, resource_paths) for schema in api.schemas.all),
-        models=tuple(_schema(schema, TemplateGroup.MODELS, schema_by_ref, resource_paths) for schema in api.schemas.models),
-        dtos=tuple(_schema(schema, TemplateGroup.DTOS, schema_by_ref, resource_paths) for schema in api.schemas.dtos),
-        enums=tuple(_schema(schema, TemplateGroup.ENUMS, schema_by_ref, resource_paths) for schema in api.schemas.enums),
-        primitives=tuple(_schema(schema, TemplateGroup.PRIMITIVES, schema_by_ref, resource_paths) for schema in api.schemas.primitives),
-        aliases=tuple(_schema(schema, TemplateGroup.ALIASES, schema_by_ref, resource_paths) for schema in api.schemas.aliases),
-        unknown=tuple(_schema(schema, TemplateGroup.UNKNOWN, schema_by_ref, resource_paths) for schema in api.schemas.unknown),
-        queries=tuple(_schema(schema, TemplateGroup.QUERIES, schema_by_ref, resource_paths) for schema in api.schemas.queries),
-        params=tuple(_schema(schema, TemplateGroup.PARAMS, schema_by_ref, resource_paths) for schema in api.schemas.params),
-        bodies=tuple(_schema(schema, TemplateGroup.BODIES, schema_by_ref, resource_paths) for schema in api.schemas.bodies),
-        responses=tuple(_schema(schema, TemplateGroup.RESPONSES, schema_by_ref, resource_paths) for schema in api.schemas.responses),
-        emit_models=tuple(_schema(schema, TemplateGroup.MODELS, schema_by_ref, resource_paths) for schema in api.schemas.emit_models),
-        emit_dtos=tuple(_schema(schema, TemplateGroup.DTOS, schema_by_ref, resource_paths) for schema in api.schemas.emit_dtos),
-        emit_enums=tuple(_schema(schema, TemplateGroup.ENUMS, schema_by_ref, resource_paths) for schema in api.schemas.emit_enums),
+        all=build_group(api.schemas.all, TemplateGroup.SCHEMAS),
+        models=build_group(api.schemas.models, TemplateGroup.MODELS),
+        dtos=build_group(api.schemas.dtos, TemplateGroup.DTOS),
+        enums=build_group(api.schemas.enums, TemplateGroup.ENUMS),
+        primitives=build_group(api.schemas.primitives, TemplateGroup.PRIMITIVES),
+        aliases=build_group(api.schemas.aliases, TemplateGroup.ALIASES),
+        unknown=build_group(api.schemas.unknown, TemplateGroup.UNKNOWN),
+        queries=build_group(api.schemas.queries, TemplateGroup.QUERIES),
+        params=build_group(api.schemas.params, TemplateGroup.PARAMS),
+        bodies=build_group(api.schemas.bodies, TemplateGroup.BODIES),
+        responses=build_group(api.schemas.responses, TemplateGroup.RESPONSES),
+        emit_models=build_group(api.schemas.emit_models, TemplateGroup.MODELS),
+        emit_dtos=build_group(api.schemas.emit_dtos, TemplateGroup.DTOS),
+        emit_enums=build_group(api.schemas.emit_enums, TemplateGroup.ENUMS),
     )
 
 
