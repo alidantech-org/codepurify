@@ -3,6 +3,7 @@ import type { OptionalResourceContext } from '../resource/resource-context.types
 import { XCodegenDtoRole, XCodegenKind } from '../codegen/codegen-extension.types.js';
 import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
 import { normalizeCodegenUiInput } from '../codegen/codegen-ui.js';
+import type { AccessRef } from '../access/access.types.js';
 import { HttpMethod } from './http-method.js';
 import type {
   DefineRoutesBuilderInput,
@@ -139,6 +140,16 @@ class FluentRoutesBuilder implements RoutesBuilder {
 
   ui(roleOrMeta: CodegenUiInput): RoutesBuilder {
     this.activeRoute().ui = normalizeCodegenUiInput(roleOrMeta);
+    return this;
+  }
+
+  access(access: AccessRef): RoutesBuilder {
+    this.activeRoute().access = access;
+    return this;
+  }
+
+  tags(tags: readonly string[]): RoutesBuilder {
+    this.activeRoute().codegenTags = tags;
     return this;
   }
 

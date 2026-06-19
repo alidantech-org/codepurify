@@ -46,7 +46,7 @@ export function compileComponentSchema(
     schema.required = required;
   }
 
-  const metadata = createSchemaMetadata(definition, ref);
+  const metadata = createSchemaMetadata(definition, ref, context);
 
   if (metadata && ref) {
     const enrichedMeta = enrichDtoRoleMetadata(metadata, ref.id, context);
@@ -92,7 +92,7 @@ function compileExtendedSchemaComponent(
 
   const schema: Record<string, unknown> = { allOf };
 
-  const metadata = createSchemaMetadata(definition, ref);
+  const metadata = createSchemaMetadata(definition, ref, context);
 
   if (metadata && ref) {
     const enrichedMeta = enrichDtoRoleMetadata(metadata, ref.id, context);
@@ -102,12 +102,13 @@ function compileExtendedSchemaComponent(
   return schema;
 }
 
-function createSchemaMetadata(definition: SchemaComponentDefinition, ref?: ComponentRef): CodegenMetadata | undefined {
+function createSchemaMetadata(definition: SchemaComponentDefinition, ref?: ComponentRef, context?: CompilerContext): CodegenMetadata | undefined {
   if (!ref?.meta) return undefined;
 
   return {
     ...ref.meta,
     ...(definition.meta ?? {}),
+    ...(context?.accessContextSchemaIds?.has(ref.id) ? { role: XCodegenDtoRole.context } : {}),
     ...(definition.projection ? { projection: definition.projection } : {}),
   } as CodegenMetadata;
 }

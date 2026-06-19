@@ -19,6 +19,8 @@ import { defineProperties } from '../properties/define-properties.js';
 import type { PropertyGroupOptions, PropertyRegistry, ZodPropertyDefinitionFieldMap } from '../properties/property.types.js';
 import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types.js';
 import { ContentType } from '../openapi/content-type.js';
+import { defineAccess } from '../access/define-access.js';
+import type { AccessDefinition, AccessRegistry } from '../access/access.types.js';
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;
@@ -29,6 +31,7 @@ export interface DefineVersionContractOptions {
   parameterComponents?: ParameterComponentRegistry[];
   requestBodyComponents?: RequestBodyComponentRegistry[];
   responseComponents?: ResponseComponentRegistry[];
+  accessComponents?: AccessRegistry[];
   defaultResponses?: Record<number, RouteResponseInput>;
 }
 
@@ -36,6 +39,7 @@ export interface VersionBuilder {
   readonly contract: VersionContract;
   readonly schemas: SchemaComponentRegistry;
   readonly properties: PropertyRegistry[];
+  readonly accessComponents: AccessRegistry[];
   defineResource(options: DefineResourceOptions): ResourceBuilder;
   addResource(resource: ResourceBuilder): VersionBuilder;
   addProperties(properties: PropertyRegistry): VersionBuilder;
@@ -60,6 +64,7 @@ export interface VersionBuilder {
     input: TInput,
     name?: string,
   ): ReturnType<typeof defineResponses<TInput>>;
+  defineAccess<const TInput extends Record<string, AccessDefinition>>(input: TInput): AccessRegistry<TInput>;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
 
@@ -80,6 +85,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     parameterComponents: [...(options.parameterComponents ?? [])],
     requestBodyComponents: [...(options.requestBodyComponents ?? [])],
     responseComponents: [...(options.responseComponents ?? [])],
+    accessComponents: [...(options.accessComponents ?? [])],
     defaultResponses: { ...(options.defaultResponses ?? {}) },
   };
 
@@ -102,6 +108,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
   const parameterComponents = contract.parameterComponents;
   const requestBodyComponents = contract.requestBodyComponents;
   const responseComponents = contract.responseComponents;
+  const accessComponents = contract.accessComponents;
 
   function defineVersionProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
     name: TName,
@@ -187,10 +194,17 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return builder;
   }
 
+  function defineVersionAccess<const TInput extends Record<string, AccessDefinition>>(input: TInput): AccessRegistry<TInput> {
+    const registry = defineAccess(input);
+    accessComponents.push(registry);
+    return registry;
+  }
+
   const builder: VersionBuilder = {
     contract,
     schemas: rootSchemas,
     properties: contract.properties,
+    accessComponents,
     defineResource: defineVersionResource,
     addResource,
     addProperties,
@@ -199,6 +213,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     defineParameters: defineVersionParameters,
     defineRequestBodies: defineVersionRequestBodies,
     defineResponses: defineVersionResponses,
+    defineAccess: defineVersionAccess,
     setDefaultResponses,
   };
 

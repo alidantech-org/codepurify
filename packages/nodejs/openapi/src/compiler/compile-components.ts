@@ -248,7 +248,7 @@ function emitPropertyGroupNamedSchemas(input: {
 
     if (!name || !sourceField) continue;
 
-    schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, ref), resolver, context);
+    schemas[name] = resolvePendingRefs(compileNamedPropertySchema(sourceField, ref, context), resolver, context);
   }
 }
 

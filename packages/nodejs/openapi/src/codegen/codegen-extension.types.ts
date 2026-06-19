@@ -28,6 +28,7 @@ export const XCodegenDtoRole = {
   query: 'query',
   params: 'params',
   body: 'body',
+  context: 'context',
 } as const;
 
 export type XCodegenDtoRole = (typeof XCodegenDtoRole)[keyof typeof XCodegenDtoRole];
@@ -181,6 +182,7 @@ export interface XCodegenBaseMeta {
 
 export interface XCodegenPrimitiveMeta extends XCodegenBaseMeta {
   readonly kind: typeof XCodegenKind.primitive;
+  readonly role?: 'access-role';
 
   /**
    * Only valid on primitive fields inside model/entity definitions.
@@ -190,6 +192,7 @@ export interface XCodegenPrimitiveMeta extends XCodegenBaseMeta {
 
 export interface XCodegenEnumMeta extends XCodegenBaseMeta {
   readonly kind: typeof XCodegenKind.enum;
+  readonly role?: 'access-role';
 }
 
 export interface XCodegenModelMeta extends XCodegenBaseMeta {

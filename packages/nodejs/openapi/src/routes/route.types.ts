@@ -4,6 +4,7 @@ import type { RefWithUsageMethods, RefUsage } from '../refs/ref-usage.types.js';
 import type { SchemaField } from '../schema/schema.types.js';
 import type { HttpMethod } from './http-method.js';
 import type { CodegenMetadata, CodegenUiInput } from '../codegen/codegen-extension.types.js';
+import type { AccessRef } from '../access/access.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
 
 // Legacy types - kept for backward compatibility
@@ -68,8 +69,10 @@ export interface RouteDefinition {
 
   readonly operationId?: string;
   readonly tags?: string[];
+  readonly codegenTags?: readonly string[];
   readonly meta?: CodegenMetadata;
   readonly ui?: CodegenUiInput;
+  readonly access?: AccessRef;
 }
 
 export type DefineRoutesInput =
@@ -97,6 +100,8 @@ export interface RoutesBuilder {
   response(response: RouteResponseInput): RoutesBuilder;
   on(status: number, response: RouteResponseInput): RoutesBuilder;
   ui(roleOrMeta: CodegenUiInput): RoutesBuilder;
+  access(access: AccessRef): RoutesBuilder;
+  tags(tags: readonly string[]): RoutesBuilder;
   done(): RoutesBuilder;
   build(): {
     parameters?: RouteParameterRegistry;

@@ -17,9 +17,11 @@ import { VersionBuilder } from './version/define-version-contract.js';
 
 export { defineVersionContract } from './version/define-version-contract.js';
 export { defineResource } from './resource/define-resource.js';
+export { defineAccess } from './access/define-access.js';
 
 export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
 export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
+export type { AccessDefinition, AccessRef, AccessRegistry, AccessRoleMap } from './access/access.types.js';
 
 /* =========================================================
  * Public API facade

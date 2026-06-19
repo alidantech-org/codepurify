@@ -1,5 +1,5 @@
 import type { VersionContract } from '../version/version-contract.types.js';
-import type { CompilerContext } from './compiler-context.js';
+import type { CompilerContext, ResolvedCompilerContext } from './compiler-context.js';
 import { resolveCompilerContext } from './compiler-context.js';
 import { OpenApiVersion } from '../openapi/openapi-version.js';
 import type { OpenApiDocument } from '../openapi/openapi.types.js';
@@ -11,6 +11,7 @@ import type { CompileResult } from './compile-result.types.js';
 import { compileInferredComponents } from './paths/compile-inferred-components.js';
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
 import { collectDtoRoleUsageFromContract } from './dto-role-usage.js';
+import { collectAccessMetadataFromContract } from './access-metadata.js';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {
   const resolvedContext = resolveCompilerContext(context);
@@ -34,8 +35,9 @@ export function compileOpenApi(contract: VersionContract, options: CompileOption
   };
 }
 
-function createOpenApiShell(contract: VersionContract, options: CompileOptions, context: CompilerContext): OpenApiDocument {
+function createOpenApiShell(contract: VersionContract, options: CompileOptions, context: ResolvedCompilerContext): OpenApiDocument {
   // Prepass: collect DTO role usage from routes
+  collectAccessMetadataFromContract(contract, context);
   collectDtoRoleUsageFromContract(contract, context);
 
   // Compile components first

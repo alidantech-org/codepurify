@@ -25,6 +25,7 @@ import type { ResourceContext } from './resource-context.types.js';
 import { defineProperties } from '../properties/define-properties.js';
 import { normalizeCodegenUiInput } from '../codegen/codegen-ui.js';
 import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
+import type { AccessRef } from '../access/access.types.js';
 
 export interface DefineResourceOptions {
   /**
@@ -65,6 +66,11 @@ export interface DefineResourceOptions {
    * Resource-level UI generation intent.
    */
   ui?: CodegenUiInput;
+
+  /**
+   * Resource-level access policy inherited by operations.
+   */
+  access?: AccessRef;
 }
 
 export interface ResourceBuilder {
@@ -119,6 +125,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     folders: normalizeFolders(options.folders),
     alias: options.alias ?? options.name,
     ui: normalizeCodegenUiInput(options.ui),
+    access: options.access,
   };
 
   const properties: PropertyRegistry[] = [];

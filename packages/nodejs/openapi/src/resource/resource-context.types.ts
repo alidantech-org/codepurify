@@ -1,5 +1,6 @@
 import type { ZodSourceRegistry } from '../zod/zod-source-registry.js';
 import type { CodegenUiMeta } from '../codegen/codegen-extension.types.js';
+import type { AccessRef } from '../access/access.types.js';
 
 export interface ResourceContext {
   /**
@@ -40,6 +41,11 @@ export interface ResourceContext {
    * Resource-level UI generation intent.
    */
   readonly ui?: CodegenUiMeta;
+
+  /**
+   * Resource-level access policy inherited by routes.
+   */
+  readonly access?: AccessRef;
 }
 
 export interface OptionalResourceContext {

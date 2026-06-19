@@ -9,12 +9,11 @@ import type { InferredParameterComponent, InferredRouteComponents } from './infe
 import { inferRouteComponents } from './infer-route-components.js';
 import { compileRouteOperation } from './compile-route-operation.js';
 import { extractPathParamNames } from '../../routes/route.types.js';
-import { applyCodegenMetadata } from '../../codegen/apply-codegen-extensions.js';
-import type { CodegenMetadata } from '../../codegen/codegen-extension.types.js';
 import type { ComponentRef } from '../../refs/ref.types.js';
 import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';
 import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
+import type { AccessRef } from '../../access/access.types.js';
 
 export function compilePaths(
   contract: VersionContract,
@@ -99,6 +98,8 @@ export function compilePaths(
             role: ui.role,
           },
           ui,
+          access: resolveOperationAccess(route.access ?? resource.context.access, resolver),
+          tags: route.codegenTags,
         });
 
         if (!pathOperations.has(fullPath)) {
@@ -182,6 +183,28 @@ function mergeOperationCodegen(operation: OpenApiOperation, metadata: Record<str
   }
 }
 
+function resolveOperationAccess(access: AccessRef | undefined, resolver: RefResolver): Record<string, unknown> | undefined {
+  if (!access) return undefined;
+
+  return cleanObject({
+    key: access.key,
+    context: resolveAccessContext(access, resolver),
+    systemRoles: access.definition.systemRoles,
+    tenantRoles: access.definition.tenantRoles,
+    tags: access.definition.tags,
+    description: access.definition.description,
+  });
+}
+
+function resolveAccessContext(access: AccessRef, resolver: RefResolver): unknown {
+  const context = access.definition.context;
+
+  if (context === null) return null;
+
+  const schemaName = resolver.schemas.get(context.id) ?? context.name;
+  return { $ref: `#/components/schemas/${schemaName}` };
+}
+
 function cleanObject(input: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(input)
@@ -191,7 +214,7 @@ function cleanObject(input: Record<string, unknown>): Record<string, unknown> {
 }
 
 function cleanValue(value: unknown): unknown {
-  if (value === undefined || value === null) return undefined;
+  if (value === undefined) return undefined;
 
   if (Array.isArray(value)) {
     const items = value.map(cleanValue).filter((item) => item !== undefined);

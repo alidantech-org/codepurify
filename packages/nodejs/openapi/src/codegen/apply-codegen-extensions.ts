@@ -51,8 +51,15 @@ function validateCodegenMetadata(metadata: CodegenMetadata): void {
   //   throw new Error('x-codegen.role is required when x-codegen.kind is "dto".');
   // }
 
-  if (metadata.kind !== XCodegenKind.dto && ('role' in metadata || 'roles' in metadata)) {
+  if (metadata.kind !== XCodegenKind.dto && 'roles' in metadata) {
     throw new Error('x-codegen.role and x-codegen.roles are only allowed when x-codegen.kind is "dto".');
+  }
+
+  if (metadata.kind !== XCodegenKind.dto && 'role' in metadata) {
+    const role = (metadata as { role?: unknown }).role;
+    if ((metadata.kind !== XCodegenKind.primitive && metadata.kind !== XCodegenKind.enum) || role !== 'access-role') {
+      throw new Error('x-codegen.role is only allowed on dto schemas, or as "access-role" on primitive/enum schemas.');
+    }
   }
 }
 
