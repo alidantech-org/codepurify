@@ -84,6 +84,19 @@ const sharedSchemas = v1.defineSchemas({
   PaginatedResponse: baseSchemas.ref.ApiMessage.extendWith({}),
 });
 
+const baseEntities = v1.defineBaseEntities({
+  BaseEntity: {
+    kind: 'abstract',
+    schema: baseSchemas.ref.BaseEntity,
+    fields: {
+      id: ($) => $.unique().index().role('primaryKey').query((q) => q.exact()),
+      createdAt: ($) => $.role('createdAt').query((q) => q.date().range().sort()),
+      updatedAt: ($) => $.role('updatedAt').query((q) => q.date().range().sort()),
+      deletedAt: ($) => $.role('softDelete').query((q) => q.date().range()),
+    },
+  },
+});
+
 v1.setDefaultResponses({
   400: baseSchemas.ref.ApiMessage,
   401: baseSchemas.ref.ApiMessage,
@@ -101,4 +114,5 @@ export const sharedContract = {
   sharedSchemas: v1.schemas,
   baseEntity: baseSchemas.ref.BaseEntity,
   publicBaseEntity: baseSchemas.ref.PublicBaseEntity,
+  baseEntities: baseEntities.ref,
 };

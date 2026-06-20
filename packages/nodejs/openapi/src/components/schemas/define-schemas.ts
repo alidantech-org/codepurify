@@ -27,6 +27,17 @@ export interface DefineSchemasOptions extends OptionalResourceContext {
 
 const schemaDefinitionsByRefId = new Map<string, SchemaComponentDefinition>();
 
+export function getSchemaDefinitionByRefId(refId: string): SchemaComponentDefinition | undefined {
+  return schemaDefinitionsByRefId.get(refId);
+}
+
+export function getSchemaFieldKeysByRefId(refId: string): readonly string[] {
+  const definition = schemaDefinitionsByRefId.get(refId);
+  if (!definition) return [];
+
+  return Object.keys(resolveProjectionSourceFields(definition));
+}
+
 export function defineSchemas<const TInput extends Record<string, SchemaComponentValue>>(
   options: DefineSchemasOptions,
   input: TInput,

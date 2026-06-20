@@ -8,6 +8,24 @@ import type { AccessRef } from '../access/access.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
 import type { RuntimeRouteConfig } from '../hooks/runtime-hooks.types.js';
 
+export interface RouteCacheInvalidationConfig {
+  readonly operations: readonly string[];
+}
+
+export interface RouteCacheConfig {
+  readonly invalidate?: RouteCacheInvalidationConfig;
+}
+
+export interface RouteCacheInvalidateBuilder {
+  on(operationId: string): RouteCacheInvalidateBuilder;
+  build(): RouteCacheInvalidationConfig;
+}
+
+export interface RouteCacheBuilder {
+  readonly invalidate: RouteCacheInvalidateBuilder;
+  build(): RouteCacheConfig;
+}
+
 export type RouteSchemaRef = ComponentRef | ModelRef | ComponentFieldMap;
 
 export type RouteRequestBodyRef = RequestBodyRef | RouteSchemaRef;
@@ -98,6 +116,7 @@ export interface RouteDefinition {
   readonly access?: AccessRef;
   readonly effects?: CodegenOperationEffects;
   readonly runtime?: RuntimeRouteConfig;
+  readonly cache?: RouteCacheConfig;
   readonly source?: RouteSourceMapInput;
   readonly sources?: Record<string, RouteSourceDefinition>;
 }
@@ -132,6 +151,7 @@ export interface RouteOperationBuilder {
   access(access: AccessRef): RouteOperationBuilder;
   effects(effects: CodegenOperationEffects): RouteOperationBuilder;
   runtime(runtime: RuntimeRouteConfig): RouteOperationBuilder;
+  cache(configure: (cache: RouteCacheBuilder) => RouteCacheInvalidateBuilder | RouteCacheBuilder): RouteOperationBuilder;
   tags(tags: readonly string[]): RouteOperationBuilder;
   source(responseField: string, configure: (source: RouteSourceSelector) => RouteSourceSelector): RouteOperationBuilder;
   build(): RouteDefinition;

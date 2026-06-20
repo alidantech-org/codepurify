@@ -23,6 +23,7 @@ import type {
   RuntimeTransportSideInbound,
   RuntimeTransportSideOutbound,
 } from '../../hooks/runtime-hooks.types.js';
+import { compactOperationAccess, compileAccessRegistryMetadata } from '../access-registry-metadata.js';
 
 export function compilePaths(
   contract: VersionContract,
@@ -66,6 +67,9 @@ export function compilePaths(
     string,
     Array<{ method: string; operation: OpenApiOperation; inferred: InferredRouteComponents; resourceContext: any; route: RouteDefinition }>
   >();
+  const operationIds = collectOperationIds(contract);
+  const accessRegistryMetadata = compileAccessRegistryMetadata(contract, resolver);
+  const hookRegistry = createHookRegistry(contract);
 
   for (const resource of contract.resources) {
     for (const registry of resource.routeRegistries) {
@@ -98,7 +102,7 @@ export function compilePaths(
           resourcePath,
         });
         const access = route.access ?? resource.context.access;
-        const resolvedAccess = resolveOperationAccess(access, resolver);
+        const resolvedAccess = compactOperationAccess(access, resolver, accessRegistryMetadata.policies);
 
         mergeOperationCodegen(operation, {
           resource: {
@@ -112,7 +116,8 @@ export function compilePaths(
           ui,
           access: resolvedAccess,
           effects: route.effects,
-          runtime: resolveOperationRuntime(route.runtime),
+          runtime: resolveOperationRuntime(route.operationId, route.runtime, hookRegistry),
+          cache: resolveOperationCache(route, operationIds),
           tags: mergeTags(contract.tags, resource.context.tags, route.codegenTags),
           sources: resolveOperationSources(route, resolver, contract),
         });
@@ -176,6 +181,39 @@ export function compilePaths(
   return { paths, inferredComponents: allInferredComponents };
 }
 
+function collectOperationIds(contract: VersionContract): ReadonlySet<string> {
+  const operationIds = new Set<string>();
+
+  for (const resource of contract.resources) {
+    for (const registry of resource.routeRegistries) {
+      for (const route of Object.values(registry.routes)) {
+        if (route.operationId) {
+          operationIds.add(route.operationId);
+        }
+      }
+    }
+  }
+
+  return operationIds;
+}
+
+function resolveOperationCache(route: RouteDefinition, operationIds: ReadonlySet<string>): Record<string, unknown> | undefined {
+  const operations = route.cache?.invalidate?.operations;
+  if (!operations || operations.length === 0) return undefined;
+
+  for (const operationId of operations) {
+    if (!operationIds.has(operationId)) {
+      throw new Error(`Operation "${route.operationId || 'unknown'}" invalidates unknown operation "${operationId}".`);
+    }
+  }
+
+  return {
+    invalidate: {
+      operations: [...operations],
+    },
+  };
+}
+
 function mergeOperationCodegen(operation: OpenApiOperation, metadata: Record<string, unknown>): void {
   const current = isRecord(operation['x-codegen']) ? operation['x-codegen'] : {};
   const next = cleanObject({
@@ -186,28 +224,6 @@ function mergeOperationCodegen(operation: OpenApiOperation, metadata: Record<str
   if (Object.keys(next).length > 0) {
     operation['x-codegen'] = next;
   }
-}
-
-function resolveOperationAccess(access: AccessRef | undefined, resolver: RefResolver): Record<string, unknown> | undefined {
-  if (!access) return undefined;
-
-  return cleanObject({
-    key: access.key,
-    owner: access.owner,
-    context: resolveAccessContext(access, resolver),
-    roles: resolveAccessRoles(access, resolver),
-    tags: access.definition.tags,
-    description: access.definition.description,
-  });
-}
-
-function resolveAccessContext(access: AccessRef, resolver: RefResolver): unknown {
-  const context = access.definition.context;
-
-  if (context === null) return null;
-
-  const schemaName = resolver.schemas.get(context.id) ?? context.name;
-  return { $ref: `#/components/schemas/${schemaName}` };
 }
 
 function resolveOperationSources(
@@ -336,30 +352,14 @@ function unwrapArrayItemComponentRef(value: unknown): ComponentRef | undefined {
   return undefined;
 }
 
-function resolveAccessRoles(access: AccessRef, resolver: RefResolver): Record<string, unknown> | undefined {
-  const roles = access.definition.roles;
-  if (!roles) return undefined;
-
-  return Object.fromEntries(
-    Object.entries(roles).map(([realm, role]) => [
-      realm,
-      cleanObject({
-        source: resolveAccessRoleSource(role.source, resolver),
-        allow: role.allow,
-      }),
-    ]),
-  );
-}
-
-function resolveAccessRoleSource(source: { readonly id: string; readonly name: string }, resolver: RefResolver): unknown {
-  const schemaName = resolver.schemas.get(source.id) ?? source.name;
-  return { $ref: `#/components/schemas/${schemaName}` };
-}
-
-function resolveOperationRuntime(runtime: RuntimeRouteConfig | undefined): Record<string, unknown> | undefined {
+function resolveOperationRuntime(
+  operationId: string | undefined,
+  runtime: RuntimeRouteConfig | undefined,
+  hookRegistry: ReadonlyMap<string, RuntimeHookRef>,
+): Record<string, unknown> | undefined {
   if (!runtime) return undefined;
 
-  const hooks = normalizeRuntimeHooks(runtime.hooks);
+  const hooks = normalizeRuntimeHooks(operationId, runtime.hooks, hookRegistry);
   const hookRefs = Object.values(hooks).flat();
   const transport = mergeRuntimeTransports(runtime.transport, ...hookRefs.map((hook) => hook.definition.transport));
 
@@ -368,11 +368,9 @@ function resolveOperationRuntime(runtime: RuntimeRouteConfig | undefined): Recor
     hooks: Object.fromEntries(
       Object.entries(hooks).map(([phase, phaseHooks]) => [
         phase,
-        phaseHooks.map((hook) => cleanObject({
+        phaseHooks.map((hook) => ({
           key: hook.key,
           owner: hook.owner,
-          transport: hook.definition.transport,
-          description: hook.definition.description,
         })),
       ]),
     ),
@@ -380,7 +378,9 @@ function resolveOperationRuntime(runtime: RuntimeRouteConfig | undefined): Recor
 }
 
 function normalizeRuntimeHooks(
+  operationId: string | undefined,
   hooks: RuntimeRouteConfig['hooks'],
+  hookRegistry: ReadonlyMap<string, RuntimeHookRef>,
 ): Partial<Record<RuntimeHookPhase, RuntimeHookRef[]>> {
   const normalized: Partial<Record<RuntimeHookPhase, RuntimeHookRef[]>> = {};
 
@@ -391,12 +391,43 @@ function normalizeRuntimeHooks(
       if (hook.phase !== phase) {
         throw new Error(`Runtime hook "${hook.key}" declares phase "${hook.phase}" but was used in phase "${phase}".`);
       }
+
+      const rootHook = hookRegistry.get(hookRefId(hook));
+      if (!rootHook) {
+        throw new Error(`Operation "${operationId || 'unknown'}" uses hook "${hookRefId(hook)}", but root hook registry does not define it.`);
+      }
+
+      if (
+        rootHook.phase !== phase ||
+        JSON.stringify(rootHook.definition.transport ?? {}) !== JSON.stringify(hook.definition.transport ?? {}) ||
+        rootHook.definition.description !== hook.definition.description
+      ) {
+        throw new Error(`Operation "${operationId || 'unknown'}" uses hook "${hookRefId(hook)}" under phase "${phase}", but root hook registry defines it with different metadata.`);
+      }
     }
 
     normalized[phase] = phaseHooks as RuntimeHookRef[];
   }
 
   return normalized;
+}
+
+function createHookRegistry(contract: VersionContract): Map<string, RuntimeHookRef> {
+  const registry = new Map<string, RuntimeHookRef>();
+
+  for (const resource of contract.resources) {
+    for (const hooks of resource.hookComponents) {
+      for (const hook of Object.values(hooks.ref)) {
+        registry.set(hookRefId(hook), hook);
+      }
+    }
+  }
+
+  return registry;
+}
+
+function hookRefId(hook: RuntimeHookRef): string {
+  return `${hook.owner.resource.name}.${hook.key}`;
 }
 
 function mergeRuntimeTransports(...transports: Array<RuntimeTransport | undefined>): RuntimeTransport | undefined {

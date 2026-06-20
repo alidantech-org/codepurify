@@ -150,6 +150,7 @@ if (!result.success) {
 
 const document = result.document;
 const schemas = document.components.schemas as Record<string, Record<string, unknown>>;
+const documentCodegen = document[CODEGEN_EXTENSION_KEY] as Record<string, unknown>;
 
 function operation(path: string, method: string): Record<string, unknown> {
   const pathItem = document.paths[path] as Record<string, unknown> | undefined;
@@ -180,21 +181,26 @@ assert.deepEqual(codegen('/platform/apps', 'get').access, {
       path: ['auth'],
     },
   },
-  context: {
-    $ref: '#/components/schemas/AuthUserContext',
-  },
-  roles: {
-    user: {
-      source: {
-        $ref: '#/components/schemas/UserRole',
-      },
-      allow: {
-        admin: true,
-        super_admin: true,
+});
+assert.deepEqual(
+  (((documentCodegen.access as Record<string, unknown>).resources as Record<string, Record<string, unknown>>).users as Record<string, Record<string, unknown>>).admin,
+  {
+    context: {
+      $ref: '#/components/schemas/AuthUserContext',
+    },
+    roles: {
+      user: {
+        source: {
+          $ref: '#/components/schemas/UserRole',
+        },
+        allow: {
+          admin: true,
+          super_admin: true,
+        },
       },
     },
   },
-});
+);
 assert.deepEqual((codegen('/platform/apps', 'get').ui as Record<string, unknown>).enabled, true);
 
 assert.deepEqual(codegen('/platform/apps/{id}', 'delete').access, {
@@ -203,19 +209,6 @@ assert.deepEqual(codegen('/platform/apps/{id}', 'delete').access, {
     resource: {
       name: 'users',
       path: ['auth'],
-    },
-  },
-  context: {
-    $ref: '#/components/schemas/AuthUserContext',
-  },
-  roles: {
-    user: {
-      source: {
-        $ref: '#/components/schemas/UserRole',
-      },
-      allow: {
-        super_admin: true,
-      },
     },
   },
 });
@@ -233,8 +226,8 @@ assert.deepEqual(codegen('/platform/apps/public', 'get').access, {
   owner: {
     global: true,
   },
-  context: null,
 });
+assert.deepEqual(((documentCodegen.access as Record<string, unknown>).global as Record<string, unknown>).public, { context: null });
 assert.deepEqual(operation('/platform/apps/public', 'get').security, []);
 
 assert.deepEqual(codegen('/platform/apps/refresh', 'post').access, {
@@ -242,6 +235,8 @@ assert.deepEqual(codegen('/platform/apps/refresh', 'post').access, {
   owner: {
     global: true,
   },
+});
+assert.deepEqual(((documentCodegen.access as Record<string, unknown>).global as Record<string, unknown>).refreshToken, {
   context: {
     $ref: '#/components/schemas/RefreshTokenContext',
   },

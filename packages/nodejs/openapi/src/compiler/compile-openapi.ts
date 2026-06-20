@@ -12,6 +12,9 @@ import { compileInferredComponents } from './paths/compile-inferred-components.j
 import { resolvePendingRefs } from './refs/resolve-pending-refs.js';
 import { collectDtoRoleUsageFromContract } from './dto-role-usage.js';
 import { collectAccessMetadataFromContract } from './access-metadata.js';
+import { compileEntityMetadata } from './entity-metadata.js';
+import type { RefResolver } from './refs/ref-resolver.types.js';
+import { compileAccessRegistryMetadata } from './access-registry-metadata.js';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {
   const resolvedContext = resolveCompilerContext(context);
@@ -80,13 +83,13 @@ function createOpenApiShell(contract: VersionContract, options: CompileOptions, 
         },
       },
     },
-    'x-codegen': createDocumentCodegenMetadata(contract),
+    'x-codegen': createDocumentCodegenMetadata(contract, compiledComponents.resolver),
   };
 
   return resolvePendingRefs(document, compiledComponents.resolver, context) as OpenApiDocument;
 }
 
-function createDocumentCodegenMetadata(contract: VersionContract): Record<string, unknown> | undefined {
+function createDocumentCodegenMetadata(contract: VersionContract, resolver: RefResolver): Record<string, unknown> | undefined {
   const hooks = Object.fromEntries(
     contract.resources
       .filter((resource) => resource.hookComponents.length > 0)
@@ -108,7 +111,15 @@ function createDocumentCodegenMetadata(contract: VersionContract): Record<string
       ]),
   );
 
-  return Object.keys(hooks).length > 0 ? { hooks } : undefined;
+  const entities = compileEntityMetadata(contract, resolver);
+  const access = compileAccessRegistryMetadata(contract, resolver).access;
+  const metadata = cleanObject({
+    access,
+    ...entities,
+    hooks: Object.keys(hooks).length > 0 ? hooks : undefined,
+  });
+
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
 function cleanObject(input: Record<string, unknown>): Record<string, unknown> {

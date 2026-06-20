@@ -1,6 +1,6 @@
 # codepot-openapi
 
-TypeScript-first OpenAPI 3.1 contract builder with Zod-backed reusable refs, route builders, compiler-resolved `x-codegen` metadata, and JSON/YAML output.
+TypeScript-first OpenAPI 3.1 contract builder with Zod-backed refs, route builders, JSON/YAML output, and compiler-resolved `x-codegen` metadata for generators.
 
 ## Install
 
@@ -17,98 +17,198 @@ npm install codepot-openapi zod
 ## Quick Start
 
 ```ts
-// package.config.ts
-import { ContentType, HttpMethod, definePackageConfig, defineVersionContract } from 'codepot-openapi';
+import { ContentType, definePackageConfig, defineVersionContract } from 'codepot-openapi';
 import { z } from 'zod';
 
-const v1 = defineVersionContract({
+export const v1 = defineVersionContract({
   info: {
     title: 'Example API',
     version: 'v1',
   },
-  tags: ['v1'],
   defaults: {
     requestContentType: ContentType.json,
     responseContentType: ContentType.json,
   },
 });
 
-const sharedProps = v1.defineProperties('Shared', {
-  mongoId: z.string().regex(/^[a-f\d]{24}$/i),
-  success: z.boolean(),
+export const sharedPropsRef = v1.defineProperties('Shared', {
+  uuid: z.string().uuid(),
+  dateTime: z.string().datetime(),
+  username: z.string().min(1).max(100),
+  token: z.string().min(1).max(500),
+  boolean: z.boolean(),
   message: z.string().min(1).max(500),
-});
+}).ref;
 
-const sharedSchemas = v1.defineSchemas({
-  ApiMessage: {
-    success: sharedProps.ref.success,
-    message: sharedProps.ref.message,
+export const baseEntitySchemasRef = v1.defineSchemas({
+  BaseEntity: {
+    id: sharedPropsRef.uuid,
+    createdAt: sharedPropsRef.dateTime,
+    updatedAt: sharedPropsRef.dateTime,
   },
-});
+}).ref;
 
-const users = v1.defineResource({
-  name: 'users',
-  route: 'v1/users',
-  folders: ['platform'],
-  tags: ['platform', 'users'],
-  ui: {
-    enabled: true,
-    infer: true,
-  },
-});
-
-const userProps = users.defineProperties('User', {
-  email: z.string().email(),
-  name: z.string().min(1).max(100),
-  status: z.enum(['active', 'suspended']),
-});
-
-const userBaseSchemas = users.defineSchemas({
-  UserPublic: {
-    id: sharedProps.ref.mongoId,
-    email: userProps.ref.email,
-    name: userProps.ref.name,
-    status: userProps.ref.status,
-  },
-});
-
-const userProjectionSchemas = users.defineSchemas({
-  UserPreview: userBaseSchemas.ref.UserPublic.pick({
-    id: true,
-    email: true,
-    name: true,
+export const auditedEntitySchemasRef = v1.defineSchemas({
+  AuditedEntity: baseEntitySchemasRef.BaseEntity.extendWith({
+    createdBy: sharedPropsRef.uuid.optional().nullable(),
+    updatedBy: sharedPropsRef.uuid.optional().nullable(),
   }),
-  UpdateUserBody: userBaseSchemas.ref.UserPublic.pick({
-    name: true,
+}).ref;
+
+export const baseSchemasRef = {
+  ...baseEntitySchemasRef,
+  ...auditedEntitySchemasRef,
+} as const;
+
+export const baseEntityRef = v1.defineBaseEntities({
+  BaseEntity: {
+    kind: 'abstract',
+    schema: baseEntitySchemasRef.BaseEntity,
+    fields: {
+      id: ($) => $.unique().index().role('primaryKey').generated('uuid').query((q) => q.exact()),
+      createdAt: ($) => $.role('createdAt').readonly().managed().query((q) => q.date().range().sort()),
+      updatedAt: ($) => $.role('updatedAt').readonly().managed().query((q) => q.date().range().sort()),
+    },
+  },
+}).ref;
+
+export const auditedEntityRef = v1.defineBaseEntities({
+  AuditedEntity: {
+    kind: 'abstract',
+    schema: auditedEntitySchemasRef.AuditedEntity,
+    extends: baseEntityRef.BaseEntity,
+    fields: {
+      createdBy: ($) => $.role('auditActor').readonly().managed().query((q) => q.exact()),
+      updatedBy: ($) => $.role('auditActor').readonly().managed().query((q) => q.exact()),
+    },
+  },
+}).ref;
+
+export const baseEntitiesRef = {
+  ...baseEntityRef,
+  ...auditedEntityRef,
+} as const;
+
+export const transportSchemasRef = v1.defineSchemas({
+  ApiMessage: {
+    message: sharedPropsRef.message,
+  },
+  BaseQuery: {
+    search: sharedPropsRef.username.optional(),
+  },
+}).ref;
+
+export const users = v1.defineResource({
+  name: 'users',
+  route: '/auth/users',
+  folders: ['auth'],
+  tags: ['admin', 'users'],
+  ui: { enabled: true, infer: true },
+});
+
+export const userPropsRef = users.defineProperties('User', {
+  status: z.enum(['active', 'suspended']).default('active'),
+  roleStatus: z.enum(['active', 'revoked']).default('active'),
+}).ref;
+
+export const userSchemasRef = users.defineSchemas({
+  User: baseSchemasRef.AuditedEntity.extendWith({
+    username: sharedPropsRef.username,
+    status: userPropsRef.status,
+    lastLoginAt: sharedPropsRef.dateTime.optional().nullable(),
+  }),
+
+  UserRole: baseSchemasRef.BaseEntity.extendWith({
+    userId: sharedPropsRef.uuid,
+    role: sharedPropsRef.username,
+    status: userPropsRef.roleStatus,
+  }),
+}).ref;
+
+export const userEntitiesRef = users.defineEntities({
+  User: {
+    schema: userSchemasRef.User,
+    extends: baseEntitiesRef.AuditedEntity,
+    store: 'users',
+    backend: {
+      passwordHash: sharedPropsRef.token,
+    },
+    fields: {
+      username: ($) =>
+        $.unique()
+          .index()
+          .immutable()
+          .query((q) => q.exact().search({ prefix: true, contains: true, fuzzy: true }).sort()),
+      status: ($) => $.index().query((q) => q.exact().oneOf().sort()),
+      lastLoginAt: ($) => $.readonly().managed().query((q) => q.date().range().sort()),
+      passwordHash: ($) => $.index(),
+    },
+    constraints: (c) => ({
+      uniq_user_username: c.unique(['username']),
+      idx_user_status: c.index(['status']),
+    }),
+  },
+
+  UserRole: {
+    schema: userSchemasRef.UserRole,
+    extends: baseEntitiesRef.BaseEntity,
+    store: 'user_roles',
+    fields: {
+      userId: ($) => $.index().immutable().query((q) => q.exact()),
+      role: ($) => $.index().query((q) => q.exact().oneOf()),
+    },
+  },
+}).ref;
+
+users.defineEntityRelations({
+  User: {
+    roles: (r) => r.hasMany(userEntitiesRef.UserRole).local('id').foreign('userId'),
+  },
+  UserRole: {
+    user: (r) => r.belongsTo(userEntitiesRef.User).local('userId').foreign('id').onDelete({ cascade: true }),
+  },
+});
+
+export const userProjectionSchemasRef = users.defineSchemas({
+  UserPublic: userSchemasRef.User.extendWith({
+    roles: userSchemasRef.UserRole.array().optional(),
+  }),
+  UserPartial: userSchemasRef.User.partial(),
+}).ref;
+
+export const userQuerySchemasRef = users.defineSchemas({
+  UserListQuery: transportSchemasRef.BaseQuery.extendWith({
+    username: sharedPropsRef.username.optional(),
+    status: userPropsRef.status.optional(),
+  }),
+}).ref;
+
+export const userBodySchemasRef = users.defineSchemas({
+  UpdateUserBody: userSchemasRef.User.pick({
+    username: true,
     status: true,
   }).partial(),
-});
+}).ref;
 
-const userResponseSchemas = users.defineSchemas({
-  UserRouteParams: {
-    userId: sharedProps.ref.mongoId,
+export const userResponseSchemasRef = users.defineSchemas({
+  UserResponse: {
+    user: userProjectionSchemasRef.UserPublic,
   },
-  UserResponse: sharedSchemas.ref.ApiMessage.extendWith({
-    user: userBaseSchemas.ref.UserPublic,
-  }),
-  UserListResponse: sharedSchemas.ref.ApiMessage.extendWith({
-    users: userProjectionSchemas.ref.UserPreview.array(),
-  }),
-});
+  UsersListResponse: {
+    users: userProjectionSchemasRef.UserPartial.array(),
+  },
+}).ref;
 
-users
-  .defineRoutes()
-  .params(userResponseSchemas.ref.UserRouteParams)
-  .routes((r) => ({
-    listUsers: r.get('/').summary('List users').response(userResponseSchemas.ref.UserListResponse).ui('list'),
-    getUserById: r.get('/:userId').summary('Get user by ID').response(userResponseSchemas.ref.UserResponse).ui('detail'),
-    updateUser: r
-      .patch('/:userId')
-      .summary('Update user')
-      .body(userProjectionSchemas.ref.UpdateUserBody)
-      .response(userResponseSchemas.ref.UserResponse)
-      .ui('update'),
-  }));
+export const userRoutes = users.defineRoutes().routes((r) => ({
+  findUsers: r.get('/').query(userQuerySchemasRef.UserListQuery).response(userResponseSchemasRef.UsersListResponse).ui('list'),
+  getUserById: r.get('/:id').response(userResponseSchemasRef.UserResponse).ui('detail'),
+  updateUser: r
+    .patch('/:id')
+    .body(userBodySchemasRef.UpdateUserBody)
+    .response(userResponseSchemasRef.UserResponse)
+    .ui('update')
+    .cache((c) => c.invalidate.on('findUsers').on('getUserById')),
+}));
 
 export default definePackageConfig({
   contracts: [v1],
@@ -126,19 +226,11 @@ Generate files:
 pnpm exec codepot-openapi generate
 ```
 
-Typical output:
-
-```txt
-openapi/contract-debug.v1.json
-openapi/openapi.v1.json
-openapi/openapi.v1.yaml
-```
-
 ## Current API Shape
 
 ### Version Contracts
 
-Use a version contract for one OpenAPI document.
+Use a version contract for one OpenAPI document. Shared properties, shared schemas, access policies, and abstract base entities can be defined directly on the version.
 
 ```ts
 const v1 = defineVersionContract({
@@ -149,27 +241,9 @@ const v1 = defineVersionContract({
 });
 ```
 
-Global shared refs can be defined directly on the version. You no longer need a fake `Shared` resource.
-
-```ts
-const sharedProps = v1.defineProperties('Shared', {
-  dateTime: z.string().datetime(),
-  email: z.string().email(),
-  success: z.boolean(),
-  message: z.string(),
-});
-
-const sharedSchemas = v1.defineSchemas({
-  ApiMessage: {
-    success: sharedProps.ref.success,
-    message: sharedProps.ref.message,
-  },
-});
-```
-
 ### Resources
 
-Resources own domain-specific properties, schemas, components, and routes.
+Resources own domain-specific properties, schemas, entities, access policies, hooks, and routes.
 
 ```ts
 const users = v1.defineResource({
@@ -180,121 +254,120 @@ const users = v1.defineResource({
 });
 ```
 
-The compiler normalizes final OpenAPI paths. These all work:
-
-```ts
-route: 'v1/users'
-route: '/v1/users'
-route: '///v1//users/'
-```
-
-Route params use Express/Nest style in contracts and compile to OpenAPI style:
-
-```ts
-path: '/:userId'
-// OpenAPI path: /users/{userId}
-```
-
-Version, resource, and operation generator tags merge into operation `x-codegen.tags` in that order. OpenAPI `operation.tags` stays clean and uses the resource grouping tag.
+The compiler normalizes paths. Contracts may use `route: 'v1/users'` or `route: '/v1/users'`. Route params use `/:id` in contracts and compile to OpenAPI `{id}` params.
 
 ### Properties
 
 `defineProperties(name, fields)` accepts a Zod map and returns reusable property refs.
 
 ```ts
-const userProps = users.defineProperties('User', {
+const userPropsRef = users.defineProperties('User', {
   email: z.string().email(),
   status: z.enum(['active', 'suspended']),
-});
+}).ref;
 ```
 
-Usage helpers:
+Refs support usage helpers:
 
 ```ts
-userProps.ref.email.optional()
-userProps.ref.email.nullable()
-userProps.ref.status.array()
+userPropsRef.email.optional()
+userPropsRef.email.nullable()
+userPropsRef.status.array()
 ```
-
-Version-authored properties compile as shared metadata. Resource-authored properties keep resource metadata in `x-codegen`.
 
 ### Schemas
 
-Schemas are reusable DTO components. Multiple `defineSchemas()` calls merge into the same registry.
+Schemas are reusable DTO components. Multiple `defineSchemas()` calls merge into the resource or version schema registry.
 
 ```ts
-const base = users.defineSchemas({
-  UserPublic: {
-    id: sharedProps.ref.mongoId,
-    email: userProps.ref.email,
+const projectionsRef = users.defineSchemas({
+  UserPreview: userSchemasRef.User.pick({
+    id: true,
+    username: true,
+  }),
+  UpdateUserBody: userSchemasRef.User.pick({
+    username: true,
+    status: true,
+  }).partial(),
+}).ref;
+```
+
+Projection helpers are `partial()`, `pick({ field: true })`, and `omit({ field: true })`. Projection chains preserve required fields correctly.
+
+### Entities
+
+Entity metadata is backend/storage-only. Entities derive from schemas, do not expose public query params, and do not create public DTO nesting. Public query, body, and response schemas remain explicit.
+
+Best-practice order:
+
+1. Define shared properties.
+2. Define split base entity schemas.
+3. Define split base entity metadata.
+4. Define persistence-clean resource schemas.
+5. Define resource entities from schemas.
+6. Define entity relations.
+7. Keep public query/body/response schemas explicit.
+
+Field lifecycle helpers are:
+
+```ts
+readonly()
+managed()
+immutable()
+select(false)
+edit(false)
+```
+
+Normal fields are selectable, default-selected, creatable, and editable by default. The entity `fields` block is for metadata outliers.
+
+Entity query capability helpers are:
+
+```ts
+q.exact()
+q.oneOf()
+q.range()
+q.date()
+q.search({ prefix: true, contains: true, fuzzy: true })
+q.sort()
+```
+
+Query capability metadata does not create public route query schemas.
+
+Backend-only fields belong under `backend`. They are backend/storage-only, not public response fields, not selected by default, and not client-editable by default.
+
+Relations use entity refs and neutral topology metadata:
+
+```ts
+users.defineEntityRelations({
+  UserRole: {
+    user: (r) => r.belongsTo(userEntitiesRef.User).local('userId').foreign('id').onDelete({ cascade: true }),
   },
 });
-
-const responses = users.defineSchemas({
-  UserResponse: sharedSchemas.ref.ApiMessage.extendWith({
-    user: base.ref.UserPublic,
-  }),
-});
 ```
 
-Schema refs support composition and projections:
-
-```ts
-const projections = users.defineSchemas({
-  UserPreview: base.ref.UserPublic.pick({
-    id: true,
-    email: true,
-  }),
-  UpdateUserBody: base.ref.UserPublic.omit({
-    id: true,
-  }).partial(),
-});
-```
-
-Projection helpers:
-
-```ts
-schemaRef.partial()
-schemaRef.pick({ field: true })
-schemaRef.omit({ field: true })
-```
-
-Projected refs are normal refs and can be projected again. Required fields are preserved correctly through projection chains.
+Supported relation methods are `belongsTo`, `hasOne`, `hasMany`, `manyToMany`, `local`, `foreign`, and `onDelete` with one of `{ cascade: true }`, `{ restrict: true }`, `{ setNull: true }`, or `{ noAction: true }`.
 
 ### Routes
-
-Object style:
-
-```ts
-users.defineRoutes({
-  params: routeSchemas.ref.UserRouteParams,
-  routes: {
-    getUserById: {
-      method: HttpMethod.get,
-      path: '/:userId',
-      response: userResponseSchemas.ref.UserResponse,
-      tags: ['detail'],
-      ui: 'detail',
-    },
-  },
-});
-```
 
 Builder style:
 
 ```ts
-users
-  .defineRoutes()
-  .params(routeSchemas.ref.UserRouteParams)
-  .routes((r) => ({
-    listUsers: r.get('/').response(userResponseSchemas.ref.UserListResponse).ui('list'),
-    createUser: r.post('/').body(userBodySchemas.ref.CreateUserBody).on(201, userResponseSchemas.ref.UserResponse).tags(['mutation']).ui('create'),
-  }));
+users.defineRoutes().routes((r) => ({
+  findUsers: r.get('/').query(userQuerySchemasRef.UserListQuery).response(userResponseSchemasRef.UsersListResponse).ui('list'),
+  updateUser: r
+    .patch('/:id')
+    .body(userBodySchemasRef.UpdateUserBody)
+    .response(userResponseSchemasRef.UserResponse)
+    .ui('update')
+    .cache((c) => c.invalidate.on('findUsers')),
+}));
 ```
+
+Route cache support is invalidation-only. `cache.invalidate.on(...)` takes an operation ID, and the compiler validates that the operation ID exists.
 
 ### Runtime Hooks
 
-Runtime hooks are resource-owned, framework-neutral lifecycle metadata for generators. They compile under `x-codegen.runtime`; templates decide how to map them.
+Hooks are defined once on a resource and routes reference hook refs. Generated root `x-codegen.hooks` contains full hook definitions. Operation `runtime.hooks` contains owner/key refs only.
 
 ```ts
 const authHooksRef = auth.defineHooks({
@@ -305,54 +378,29 @@ const authHooksRef = auth.defineHooks({
         cookies: true,
       },
     },
-  },
-
-  auditFailedLogin: {
-    phase: 'afterError',
-    transport: {
-      inbound: {
-        ip: true,
-        userAgent: true,
-      },
-    },
+    description: 'Set session cookies.',
   },
 }).ref;
 
 auth.defineRoutes().routes((r) => ({
-  loginWithEmail: r
-    .post('/login/email')
-    .body(authBodySchemas.ref.LoginEmailBody)
-    .response(authResponseSchemas.ref.AuthResponse)
-    .runtime({
-      transport: {
-        inbound: {
-          ip: true,
-          userAgent: true,
-        },
+  loginWithEmail: r.post('/login/email').runtime({
+    transport: {
+      outbound: {
+        cookies: true,
       },
-      hooks: {
-        afterSuccess: authHooksRef.setSessionCookies,
-        afterError: authHooksRef.auditFailedLogin,
-      },
-    }),
+    },
+    hooks: {
+      afterSuccess: authHooksRef.setSessionCookies,
+    },
+  }),
 }));
 ```
 
-Supported hook phases are `beforeValidation`, `beforeHandler`, `afterSuccess`, `afterError`, and `afterSend`. Transport intent uses neutral `inbound` and `outbound` flags such as `cookies`, `headers`, `stream`, and `bypassSerializer`.
+Supported phases are `beforeValidation`, `beforeHandler`, `afterSuccess`, `afterError`, and `afterSend`.
 
 ### UI Metadata
 
-UI intent is resolved by the OpenAPI compiler and emitted under `operation.x-codegen.ui`. Downstream generators should only read `x-codegen.ui`; they should not infer UI roles from method, path, or schema.
-
-Resource-level UI:
-
-```ts
-ui: { enabled: false }
-ui: { enabled: true, infer: true }
-ui: { enabled: true, infer: false }
-```
-
-Operation-level UI:
+UI intent is resolved by the compiler and emitted under operation `x-codegen.ui`. `operation.role` is also preserved for generators.
 
 ```ts
 ui: 'list'
@@ -362,37 +410,24 @@ ui: 'update'
 ui: 'delete'
 ui: 'action'
 ui: 'auth'
-ui: { enabled: false }
-ui: { role: 'auth' }
 ```
 
-Safe compiler inference only happens when the resource has `ui: { enabled: true, infer: true }`.
+### Generated Metadata
+
+Useful `x-codegen` metadata includes:
 
 ```txt
-GET    /resource       -> list
-GET    /resource/{id}  -> detail
-POST   /resource       -> create
-PATCH  /resource/{id}  -> update
-PUT    /resource/{id}  -> update
-DELETE /resource/{id}  -> delete
+x-codegen.baseEntities
+x-codegen.entities
+x-codegen.hooks
+x-codegen.access
+operation.x-codegen.operation.name
+operation.x-codegen.operation.role
+operation.x-codegen.parameters.target
+operation.x-codegen.cache.invalidate.operations
 ```
 
-Example output:
-
-```yaml
-x-codegen:
-  resource:
-    name: auth
-    path:
-      - platform
-  operation:
-    name: adminLogin
-    role: auth
-  ui:
-    enabled: true
-    role: auth
-    inferred: false
-```
+Do not rename `parameters.target` or remove `operation.role`; both are part of the accepted metadata contract.
 
 ### Content Types
 
@@ -410,15 +445,6 @@ ContentType.webp
 ContentType.svg
 ```
 
-Example multipart body:
-
-```ts
-body: {
-  schema: uploadSchemas.ref.UploadFileBody,
-  contentType: ContentType.multipartFormData,
-}
-```
-
 ## CLI
 
 ```bash
@@ -427,40 +453,10 @@ codepot-openapi generate
 codepot-openapi validate
 ```
 
-Useful options:
-
-```bash
-codepot-openapi generate --verbose
-codepot-openapi generate --debug
-codepot-openapi generate --silent
-codepot-openapi generate --log-level debug
-```
-
-Recommended scripts:
-
-```json
-{
-  "scripts": {
-    "openapi:init": "codepot-openapi init",
-    "openapi:generate": "codepot-openapi generate",
-    "openapi:validate": "codepot-openapi validate",
-    "openapi": "npm run openapi:generate && npm run openapi:validate"
-  }
-}
-```
-
 ## Programmatic Usage
 
 ```ts
 import { OpenApiTs, compileOpenApi, generateOpenApi, validateOpenApiDocument } from 'codepot-openapi';
-```
-
-```ts
-const result = compileOpenApi(v1.contract);
-
-if (result.success) {
-  console.log(result.document.paths);
-}
 ```
 
 ## Publishing
@@ -472,13 +468,6 @@ pnpm build
 pnpm pack:dry
 npm publish --access public
 ```
-
-Check before publishing:
-
-- `package.json` version is correct
-- `README.md` describes the current API
-- `dist/` was rebuilt
-- `npm pack --dry-run` includes only intended files
 
 ## Development
 

@@ -30,6 +30,14 @@ import { createAccessBuilder, type AccessBuilder } from '../access/access-builde
 import type { AccessDefinitionInput, AccessRef, AccessRegistry } from '../access/access.types.js';
 import { defineHooks } from '../hooks/define-hooks.js';
 import type { RuntimeHookDefinition, RuntimeHookRegistry } from '../hooks/runtime-hooks.types.js';
+import { defineEntities, defineEntityRelations } from '../entities/define-entities.js';
+import type { EntityDefinitionFactory } from '../entities/define-entities.js';
+import type {
+  ConcreteEntityDefinitionInput,
+  EntityRegistry,
+  EntityRelationRegistry,
+  EntityRelationsInput,
+} from '../entities/entity.types.js';
 
 export interface DefineResourceOptions {
   /**
@@ -93,6 +101,8 @@ export interface ResourceBuilder {
   readonly responseComponents: ResponseComponentRegistry[];
   readonly accessComponents: AccessRegistry[];
   readonly hookComponents: RuntimeHookRegistry[];
+  readonly entityComponents: EntityRegistry[];
+  readonly entityRelationComponents: EntityRelationRegistry[];
   readonly routeRegistries: RouteRegistry[];
   readonly routes: {
     readonly ref: Record<string, import('../refs/ref.types.js').RouteRef>;
@@ -127,6 +137,10 @@ export interface ResourceBuilder {
 
   defineAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput>;
   defineHooks<const TInput extends Record<string, RuntimeHookDefinition>>(input: TInput): RuntimeHookRegistry<TInput>;
+  defineEntities<const TInput extends Record<string, ConcreteEntityDefinitionInput>>(
+    input: TInput | EntityDefinitionFactory<TInput>,
+  ): EntityRegistry<TInput>;
+  defineEntityRelations(input: EntityRelationsInput): EntityRelationRegistry;
 
   defineRoutes(): RoutesDefinitionBuilder;
   defineRoutes(routes: DefineRoutesInputLike, name?: string): RouteRegistry;
@@ -156,6 +170,8 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   const responseComponents: ResponseComponentRegistry[] = [];
   const accessComponents: AccessRegistry[] = [];
   const hookComponents: RuntimeHookRegistry[] = [];
+  const entityComponents: EntityRegistry[] = [];
+  const entityRelationComponents: EntityRelationRegistry[] = [];
   const routeRegistries: RouteRegistry[] = [];
   const routes = { ref: {} as Record<string, import('../refs/ref.types.js').RouteRef> };
   const access = createAccessBuilder();
@@ -269,6 +285,36 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
+  function defineResourceEntities<const TInput extends Record<string, ConcreteEntityDefinitionInput>>(
+    input: TInput | EntityDefinitionFactory<TInput>,
+  ): EntityRegistry<TInput> {
+    const registry = defineEntities(
+      {
+        name: context.name,
+        resource: context,
+      },
+      input,
+    );
+
+    entityComponents.push(registry);
+    return registry;
+  }
+
+  function defineResourceEntityRelations(input: EntityRelationsInput): EntityRelationRegistry {
+    const registry = defineEntityRelations(
+      {
+        resource: {
+          name: context.alias,
+          path: context.folders,
+        },
+      },
+      input,
+    );
+
+    entityRelationComponents.push(registry);
+    return registry;
+  }
+
   function defineResourceRoutes(): RoutesDefinitionBuilder;
   function defineResourceRoutes(input: DefineRoutesInputLike, name?: string): RouteRegistry;
   function defineResourceRoutes(input?: DefineRoutesInputLike, name?: string): RouteRegistry | RoutesDefinitionBuilder {
@@ -310,6 +356,8 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     responseComponents,
     accessComponents,
     hookComponents,
+    entityComponents,
+    entityRelationComponents,
     routeRegistries,
     routes,
     access,
@@ -320,6 +368,8 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     defineResponses: defineResourceResponses,
     defineAccess: defineResourceAccess,
     defineHooks: defineResourceHooks,
+    defineEntities: defineResourceEntities,
+    defineEntityRelations: defineResourceEntityRelations,
     defineRoutes: defineResourceRoutes,
   };
 }

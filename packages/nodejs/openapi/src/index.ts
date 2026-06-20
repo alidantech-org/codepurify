@@ -19,6 +19,8 @@ export { defineVersionContract } from './version/define-version-contract.js';
 export { defineResource } from './resource/define-resource.js';
 export { defineAccess } from './access/define-access.js';
 export { defineHooks } from './hooks/define-hooks.js';
+export { defineBaseEntities, defineEntities, defineEntityRelations } from './entities/define-entities.js';
+export type { EntityDefinitionFactory } from './entities/define-entities.js';
 
 export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
 export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
@@ -48,6 +50,38 @@ export type {
   RuntimeTransportSideInbound,
   RuntimeTransportSideOutbound,
 } from './hooks/runtime-hooks.types.js';
+export type {
+  BaseEntityDefinitionInput,
+  ConcreteEntityDefinitionInput,
+  EntityBackendField,
+  EntityBackendFields,
+  EntityConstraintBuilder,
+  EntityConstraintDefinition,
+  EntityConstraintKind,
+  EntityConstraintRule,
+  EntityConstraintsDefinition,
+  EntityDefinition,
+  EntityDefinitionInput,
+  EntityFieldBuilder,
+  EntityFieldDefinition,
+  EntityFieldMetadata,
+  EntityFieldQueryBuilder,
+  EntityFieldQueryMetadata,
+  EntityFieldRole,
+  EntityGeneratedStrategy,
+  EntityOwner,
+  EntityRef,
+  EntityRegistry,
+  EntityRelation,
+  EntityRelationBuilder,
+  EntityRelationCardinality,
+  EntityRelationDeleteBehavior,
+  EntityRelationDefinition,
+  EntityRelationRef,
+  EntityRelationRegistry,
+  EntityRelationsInput,
+  EntitySearchQueryOptions,
+} from './entities/entity.types.js';
 
 /* =========================================================
  * Public API facade
@@ -74,6 +108,10 @@ export type {
   DefineRoutesInput,
   DefineRoutesInputLike,
   RouteBodyInput,
+  RouteCacheBuilder,
+  RouteCacheConfig,
+  RouteCacheInvalidationConfig,
+  RouteCacheInvalidateBuilder,
   RouteDefinition,
   RouteDefinitionInput,
   RouteFieldSource,

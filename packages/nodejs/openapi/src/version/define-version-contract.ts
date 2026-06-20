@@ -21,6 +21,13 @@ import type { VersionContract, VersionInfo, VersionDefaults } from './version-co
 import { ContentType } from '../openapi/content-type.js';
 import { defineAccess } from '../access/define-access.js';
 import type { AccessDefinitionInput, AccessRegistry } from '../access/access.types.js';
+import { defineBaseEntities, defineEntities } from '../entities/define-entities.js';
+import type { EntityDefinitionFactory } from '../entities/define-entities.js';
+import type {
+  BaseEntityDefinitionInput,
+  ConcreteEntityDefinitionInput,
+  EntityRegistry,
+} from '../entities/entity.types.js';
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;
@@ -33,6 +40,8 @@ export interface DefineVersionContractOptions {
   requestBodyComponents?: RequestBodyComponentRegistry[];
   responseComponents?: ResponseComponentRegistry[];
   accessComponents?: AccessRegistry[];
+  baseEntityComponents?: EntityRegistry[];
+  entityComponents?: EntityRegistry[];
   defaultResponses?: Record<number, RouteResponseInput>;
 }
 
@@ -41,6 +50,8 @@ export interface VersionBuilder {
   readonly schemas: SchemaComponentRegistry;
   readonly properties: PropertyRegistry[];
   readonly accessComponents: AccessRegistry[];
+  readonly baseEntityComponents: EntityRegistry[];
+  readonly entityComponents: EntityRegistry[];
   defineResource(options: DefineResourceOptions): ResourceBuilder;
   addResource(resource: ResourceBuilder): VersionBuilder;
   addProperties(properties: PropertyRegistry): VersionBuilder;
@@ -66,6 +77,12 @@ export interface VersionBuilder {
     name?: string,
   ): ReturnType<typeof defineResponses<TInput>>;
   defineAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput>;
+  defineBaseEntities<const TInput extends Record<string, BaseEntityDefinitionInput>>(
+    input: TInput | EntityDefinitionFactory<TInput>,
+  ): EntityRegistry<TInput>;
+  defineEntities<const TInput extends Record<string, ConcreteEntityDefinitionInput>>(
+    input: TInput | EntityDefinitionFactory<TInput>,
+  ): EntityRegistry<TInput>;
   tags(tags: readonly string[]): VersionBuilder;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
@@ -89,6 +106,8 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     requestBodyComponents: [...(options.requestBodyComponents ?? [])],
     responseComponents: [...(options.responseComponents ?? [])],
     accessComponents: [...(options.accessComponents ?? [])],
+    baseEntityComponents: [...(options.baseEntityComponents ?? [])],
+    entityComponents: [...(options.entityComponents ?? [])],
     defaultResponses: { ...(options.defaultResponses ?? {}) },
   };
 
@@ -112,6 +131,8 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
   const requestBodyComponents = contract.requestBodyComponents;
   const responseComponents = contract.responseComponents;
   const accessComponents = contract.accessComponents;
+  const baseEntityComponents = contract.baseEntityComponents;
+  const entityComponents = contract.entityComponents;
 
   function defineVersionProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
     name: TName,
@@ -208,11 +229,29 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return registry;
   }
 
+  function defineVersionBaseEntities<const TInput extends Record<string, BaseEntityDefinitionInput>>(
+    input: TInput | EntityDefinitionFactory<TInput>,
+  ): EntityRegistry<TInput> {
+    const registry = defineBaseEntities(input);
+    baseEntityComponents.push(registry);
+    return registry;
+  }
+
+  function defineVersionEntities<const TInput extends Record<string, ConcreteEntityDefinitionInput>>(
+    input: TInput | EntityDefinitionFactory<TInput>,
+  ): EntityRegistry<TInput> {
+    const registry = defineEntities({ name: 'shared' }, input);
+    entityComponents.push(registry);
+    return registry;
+  }
+
   const builder: VersionBuilder = {
     contract,
     schemas: rootSchemas,
     properties: contract.properties,
     accessComponents,
+    baseEntityComponents,
+    entityComponents,
     defineResource: defineVersionResource,
     addResource,
     addProperties,
@@ -222,6 +261,8 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     defineRequestBodies: defineVersionRequestBodies,
     defineResponses: defineVersionResponses,
     defineAccess: defineVersionAccess,
+    defineBaseEntities: defineVersionBaseEntities,
+    defineEntities: defineVersionEntities,
     tags: setTags,
     setDefaultResponses,
   };

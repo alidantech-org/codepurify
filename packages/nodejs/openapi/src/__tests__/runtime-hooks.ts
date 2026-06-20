@@ -186,12 +186,6 @@ assert.deepEqual((runtime('/auth/login', 'post').hooks as Record<string, unknown
         path: ['auth'],
       },
     },
-    transport: {
-      outbound: {
-        cookies: true,
-      },
-    },
-    description: 'Set access and refresh session cookies after successful authentication.',
   },
 ]);
 assert.deepEqual((runtime('/auth/login', 'post').hooks as Record<string, unknown>).afterError, [
@@ -203,14 +197,10 @@ assert.deepEqual((runtime('/auth/login', 'post').hooks as Record<string, unknown
         path: ['auth'],
       },
     },
-    transport: {
-      inbound: {
-        ip: true,
-        userAgent: true,
-      },
-    },
   },
 ]);
+assert.equal(JSON.stringify(runtime('/auth/login', 'post').hooks).includes('transport'), false);
+assert.equal(JSON.stringify(runtime('/auth/login', 'post').hooks).includes('description'), false);
 
 assert.deepEqual(runtime('/auth/logout', 'post').transport, {
   outbound: {

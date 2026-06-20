@@ -13,6 +13,10 @@ import type {
   DefineRoutesInput,
   DefineRoutesInputLike,
   RouteBodyInput,
+  RouteCacheBuilder,
+  RouteCacheConfig,
+  RouteCacheInvalidationConfig,
+  RouteCacheInvalidateBuilder,
   RouteDefinition,
   RouteDefinitionInput,
   RouteOperationBuilder,
@@ -197,6 +201,13 @@ class FluentRouteOperationBuilder implements RouteOperationBuilder {
     return this;
   }
 
+  cache(configure: (cache: RouteCacheBuilder) => RouteCacheInvalidateBuilder | RouteCacheBuilder): RouteOperationBuilder {
+    const builder = new FluentRouteCacheBuilder();
+    configure(builder);
+    this.route.cache = builder.build();
+    return this;
+  }
+
   tags(tags: readonly string[]): RouteOperationBuilder {
     this.route.codegenTags = tags;
     return this;
@@ -217,6 +228,36 @@ class FluentRouteOperationBuilder implements RouteOperationBuilder {
     return {
       ...this.route,
       sources: normalizeSourceMap(this.route.sources),
+    };
+  }
+}
+
+class FluentRouteCacheBuilder implements RouteCacheBuilder {
+  readonly invalidate = new FluentRouteCacheInvalidateBuilder();
+
+  build(): RouteCacheConfig {
+    const invalidate = this.invalidate.build();
+    return {
+      ...(invalidate.operations.length > 0 ? { invalidate } : {}),
+    };
+  }
+}
+
+class FluentRouteCacheInvalidateBuilder implements RouteCacheInvalidateBuilder {
+  private readonly operations: string[] = [];
+
+  on(operationId: string): RouteCacheInvalidateBuilder {
+    if (!operationId || typeof operationId !== 'string') {
+      throw new Error('Cache invalidation operation ID must be a non-empty string.');
+    }
+
+    this.operations.push(operationId);
+    return this;
+  }
+
+  build(): RouteCacheInvalidationConfig {
+    return {
+      operations: [...new Set(this.operations)],
     };
   }
 }

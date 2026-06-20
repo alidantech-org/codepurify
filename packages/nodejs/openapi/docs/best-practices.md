@@ -1,23 +1,77 @@
-# Codepot Contract Authoring Guideline: Ref-First, Projection-First, No Barrel Objects
+# Codepot Contract Authoring Guidelines
 
-## 1. Export refs directly
+## 1. Export Refs Directly
 
-Prefer exporting the `.ref` result directly.
-
-Good:
+Prefer exporting `.ref` values.
 
 ```ts
 export const sharedPropsRef = v1.defineProperties('Shared', {
-  uuid: z.uuid(),
-  email: z.email(),
-  phone: z.string().min(7).max(20),
+  uuid: z.string().uuid(),
+  email: z.string().email(),
 }).ref;
 ```
 
-Good:
+Avoid large contract objects that re-wrap registries. They make inferred public types larger and harder to name.
+
+## 2. Use The `Ref` Suffix
+
+Use names like:
+
+```txt
+sharedPropsRef
+baseSchemasRef
+transportSchemasRef
+userPropsRef
+userSchemasRef
+userEntitiesRef
+userRoutes
+```
+
+## 3. Keep Shared Items On The Version
+
+Define global shared properties and schemas directly on the version contract.
 
 ```ts
-export const baseSchemasRef = v1.defineSchemas({
+export const transportSchemasRef = v1.defineSchemas({
+  ApiMessage: {
+    message: sharedPropsRef.message,
+  },
+}).ref;
+```
+
+## 4. Use Short Property Keys
+
+Prefer concise property names:
+
+```ts
+uuid
+dateTime
+username
+status
+message
+```
+
+The generated schema names remain scoped by the property group.
+
+## 5. Keep Entity Schemas Persistence-Clean
+
+Entity schemas should represent storage fields. Public projection schemas can add relation arrays and API-only shapes.
+
+```ts
+export const userSchemasRef = users.defineSchemas({
+  User: baseSchemasRef.AuditedSoftDeletableEntity.extendWith({
+    username: sharedPropsRef.username,
+    status: userPropsRef.status,
+  }),
+}).ref;
+```
+
+## 6. Define Base Schemas And Entities In Split Consts
+
+Define `BaseEntity`, then later composed bases in separate calls. This keeps refs easy to reuse.
+
+```ts
+export const baseEntitySchemasRef = v1.defineSchemas({
   BaseEntity: {
     id: sharedPropsRef.uuid,
     createdAt: sharedPropsRef.dateTime,
@@ -26,522 +80,175 @@ export const baseSchemasRef = v1.defineSchemas({
 }).ref;
 ```
 
-Avoid this pattern:
-
 ```ts
-const sharedProps = v1.defineProperties('Shared', { ... });
-
-export const sharedContract = {
-  sharedProps,
-  baseSchemas,
-  transportSchemas,
-};
-```
-
-Do not create large barrel objects that rename or re-wrap schema registries. They can cause TypeScript errors like:
-
-```txt
-The inferred type of this node exceeds the maximum length the compiler will serialize.
-An explicit type annotation is needed.
-```
-
-The preferred contract usage should be:
-
-```ts
-sharedPropsRef.uuid
-baseSchemasRef.BaseEntity
-transportSchemasRef.ApiError
-```
-
-not:
-
-```ts
-sharedContract.sharedProps.ref.uuid
-sharedContract.baseSchemas.ref.BaseEntity
-```
-
----
-
-## 2. Use the `Ref` suffix for exported refs
-
-Use names like:
-
-```ts
-sharedPropsRef
-baseSchemasRef
-transportSchemasRef
-sharedSchemasRef
-authContextSchemasRef
-baseAccessRef
-userPropsRef
-userAccessRef
-userRoutesRef
-```
-
-This makes it clear that consumers are using the ref layer directly.
-
----
-
-## 3. Do not export schemas that are local to the file
-
-Body schemas and response schemas are usually local to the resource file.
-
-Prefer:
-
-```ts
-const userBodySchemasRef = users.defineSchemas({
-  CreateUserBody: { ... },
-  UpdateUserBody: { ... },
+export const baseEntityRef = v1.defineBaseEntities({
+  BaseEntity: {
+    kind: 'abstract',
+    schema: baseEntitySchemasRef.BaseEntity,
+    fields: {
+      id: ($) => $.unique().index().role('primaryKey').generated('uuid').query((q) => q.exact()),
+    },
+  },
 }).ref;
 ```
 
-Prefer:
+## 7. Use Entity Field Metadata For Outliers
+
+Normal fields are selectable, default-selected, creatable, and editable by default.
+
+Use lifecycle helpers only when behavior differs:
 
 ```ts
-const userResponseSchemasRef = users.defineSchemas({
-  UserResponse: { ... },
-  UsersListResponse: { ... },
-}).ref;
-```
-
-Do not export them unless another contract must consume them.
-
-Use a comment marker:
-
-```ts
-/**
- * ---------------------------------------------------------------------------
- * User Response Schemas @noExport
- * ---------------------------------------------------------------------------
- */
-```
-
-and:
-
-```ts
-/**
- * ---------------------------------------------------------------------------
- * User Body Schemas @noExport
- * ---------------------------------------------------------------------------
- */
-```
-
-This keeps the public contract surface small.
-
----
-
-## 4. Export only what other contract files actually need
-
-Usually export:
-
-```ts
-export const users = ...
-export const userPropsRef = ...
-export const userAccessRef = ...
-export const userRoutes = ...
-```
-
-Only export schemas that are reused by another resource, such as:
-
-```ts
-export const userBaseSchemasRef = ...
-export const userProjectionSchemasRef = ...
-export const userRouteSchemasRef = ...
-export const userQuerySchemasRef = ...
-```
-
-Do not export everything by default.
-
----
-
-## 5. Prefer global smart props
-
-Global props should be reusable, validated, and meaningful.
-
-Good:
-
-```ts
-export const sharedPropsRef = v1.defineProperties('Shared', {
-  uuid: z.uuid(),
-  token: z.string().min(1).max(500),
-  email: z.email(),
-  phone: z.string().min(7).max(20),
-  password: z.string().min(8).max(100),
-  url: z.url().max(500),
-  title: z.string().min(1).max(120),
-  description: z.string().max(500),
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  dateTime: z.iso.datetime(),
-  boolean: z.boolean(),
-  paginationNumber: z.number().max(1000).min(0),
-  sort: z.enum(['asc', 'desc']).default('asc'),
-  message: z.string().min(1).max(500).default(''),
-  statusCode: z.number().min(100).max(599),
-  username: z.string().min(1).max(100),
-  displayName: z.string().min(1).max(255),
-  firstName: z.string().min(1).max(100),
-  lastName: z.string().min(1).max(100),
-  roleName: z.string().min(1).max(120),
-  identityValue: z.string().min(1).max(255),
-  isPrimary: z.boolean().default(false),
-  isVerified: z.boolean().default(false),
-}).ref;
-```
-
-Avoid relying on generic `string` props everywhere.
-
-Bad:
-
-```ts
-title: sharedPropsRef.string
-email: sharedPropsRef.string
-phone: sharedPropsRef.string
-```
-
-Good:
-
-```ts
-title: sharedPropsRef.title
-email: sharedPropsRef.email
-phone: sharedPropsRef.phone
-```
-
-Every prop should explain why that field exists.
-
----
-
-## 6. Keep local props only for local enums/defaulted special fields
-
-Resource props should mostly contain local enums and special resource-owned fields.
-
-Good:
-
-```ts
-export const userPropsRef = users.defineProperties('User', {
-  accessRole: z.enum(USER_ACCESS_ROLES),
-  type: z.enum(USER_TYPES).default('user'),
-  status: z.enum(USER_STATUSES).default('active'),
-  metadata: z.record(z.string(), z.unknown()),
-}).ref;
-```
-
-Avoid redefining reusable fields like username, email, phone, URL, title, and description locally if shared props already define them.
-
----
-
-## 7. Use short prop keys inside named prop groups
-
-The compiler combines the prop group name and prop key.
-
-Bad:
-
-```ts
-users.defineProperties('User', {
-  userStatus: z.enum(...),
-  userType: z.enum(...),
-});
-```
-
-This can emit names like:
-
-```ts
-UserUserStatus
-UserUserType
-```
-
-Good:
-
-```ts
-users.defineProperties('User', {
-  status: z.enum(...),
-  type: z.enum(...),
-});
-```
-
-This emits cleaner names:
-
-```ts
-UserStatus
-UserType
-```
-
----
-
-## 8. Prefer projections over redefining DTO fields
-
-Bodies, queries, public schemas, and partial schemas should mostly be derived from parent schemas.
-
-Good:
-
-```ts
-const userProjectionSchemasRef = users.defineSchemas({
-  UserPartial: userBaseSchemasRef.UserPublic.partial(),
-
-  UserFilterable: userBaseSchemasRef.UserPublic
-    .pick({
-      type: true,
-      status: true,
-      username: true,
-      isActive: true,
-    })
-    .partial(),
-}).ref;
-```
-
-Avoid manually redefining the same fields again and again.
-
-This prevents schema inconsistency when validation changes.
-
----
-
-## 9. Do not name real base schemas as `Partial`, `Public`, `Body`, or `Query`
-
-A schema named `Partial`, `Public`, `Body`, or `Query` should usually be a projection.
-
-Bad:
-
-```ts
-UserPartial: {
-  id: sharedPropsRef.uuid,
-  username: sharedPropsRef.username,
+fields: {
+  username: ($) => $.unique().index().immutable().query((q) => q.exact().sort()),
+  lastLoginAt: ($) => $.readonly().managed().query((q) => q.date().range().sort()),
+  passwordHash: ($) => $.select(false).edit(false).index(),
 }
 ```
 
-Good:
+## 8. Keep Public Query Schemas Explicit
+
+Entity query behavior is capability metadata. It does not create public route query schemas.
 
 ```ts
-User: {
-  id: sharedPropsRef.uuid,
-  username: sharedPropsRef.username,
-  status: userPropsRef.status,
-}
-
-UserPartial: userSchemasRef.User.partial()
+export const userQuerySchemasRef = users.defineSchemas({
+  UserListQuery: transportSchemasRef.BaseQuery.extendWith({
+    username: sharedPropsRef.username.optional(),
+    status: userPropsRef.status.optional(),
+  }),
+}).ref;
 ```
 
-Real field definitions should live in the parent/base schema.
+## 9. Use Projection-First Schemas
 
----
-
-## 10. Use global and resource-level tags
-
-Avoid repeating common tags on every route.
-
-Good:
+Use schema ref projections for public variants and mutable bodies.
 
 ```ts
-export const users = v1.defineResource({
+export const userBodySchemasRef = users.defineSchemas({
+  UpdateUserBody: userSchemasRef.User.pick({
+    username: true,
+    status: true,
+  }).partial(),
+}).ref;
+```
+
+## 10. Backend Fields Stay In `backend`
+
+Backend-only fields are not public fields and are not client-editable by default.
+
+```ts
+backend: {
+  passwordHash: sharedPropsRef.token,
+}
+```
+
+Only add them to `fields` when they need metadata:
+
+```ts
+fields: {
+  passwordHash: ($) => $.index(),
+}
+```
+
+## 11. Use Neutral Relations
+
+Relations use entity refs and neutral delete behavior objects.
+
+```ts
+users.defineEntityRelations({
+  UserRole: {
+    user: (r) => r.belongsTo(userEntitiesRef.User).local('userId').foreign('id').onDelete({ cascade: true }),
+  },
+});
+```
+
+## 12. Use Route Cache Invalidation By Operation ID
+
+Route cache support is invalidation-only.
+
+```ts
+updateUser: r
+  .patch('/:id')
+  .response(userResponseSchemasRef.UserResponse)
+  .cache((c) => c.invalidate.on('findUsers').on('getUserById')),
+```
+
+The compiler validates each operation ID.
+
+## 13. Keep Route Definitions Clean
+
+Use builder routes for fluent metadata:
+
+```ts
+export const userRoutes = users.defineRoutes().routes((r) => ({
+  findUsers: r.get('/').query(userQuerySchemasRef.UserListQuery).response(userResponseSchemasRef.UsersListResponse).ui('list'),
+  getUserById: r.get('/:id').response(userResponseSchemasRef.UserResponse).ui('detail'),
+}));
+```
+
+## 14. Use Resource Tags
+
+Resource tags are inherited by operation `x-codegen.tags`.
+
+```ts
+const users = v1.defineResource({
   name: 'users',
   route: '/auth/users',
   folders: ['auth'],
   tags: ['admin', 'users'],
-  ui: { enabled: true, infer: true },
 });
 ```
 
-Then route tags should only add meaningful route-specific metadata:
+## 15. Use Route Sources For Selectable Lists
 
-```ts
-deleteUser: r
-  .delete('/:id')
-  .tags(['dangerous', 'mutation'])
-```
-
-Do not repeat:
-
-```ts
-.tags(['admin', 'users', 'dangerous', 'mutation'])
-```
-
-if `admin` and `users` already exist on the resource.
-
----
-
-## 11. Keep `x-codegen` as the Codepot semantic layer
-
-`x-codegen` is not a bug or random dumping ground. It is Codepot’s portable semantic layer embedded inside OpenAPI.
-
-Use it for Codepot-only concepts like:
-
-```txt
-resource metadata
-operation metadata
-access ownership
-context metadata
-route sources
-field sources
-UI hints
-generator tags
-effects
-```
-
-OpenAPI is the familiar carrier format. Codepot metadata belongs in `x-codegen`.
-
----
-
-## 12. Keep route definitions clean
-
-Use object-key operation IDs.
-
-Good:
-
-```ts
-export const userRoutes = users
-  .defineRoutes()
-  .params(userRouteSchemasRef.UserRouteParams)
-  .routes((r) => ({
-    findUsers: r
-      .get('/')
-      .response(userResponseSchemasRef.UsersListResponse),
-
-    getUserById: r
-      .get('/:id')
-      .response(userResponseSchemasRef.UserDetailResponse),
-  }));
-```
-
-Do not use old APIs:
-
-```ts
-r.get('/', 'findUsers')
-.done()
-.params(...)
-```
-
----
-
-## 13. Prefer route sources over repeated field-source config
-
-Define selectable/reference values at the route.
-
-Good:
+Route sources describe which response array can drive generated selectors.
 
 ```ts
 findUsers: r
   .get('/')
   .response(userResponseSchemasRef.UsersListResponse)
-  .source('users', (user) => user.key('id').label('username'))
+  .source('users', (user) => user.key('id').label('username')),
 ```
 
-Then consume it simply:
+## 16. Define Hooks Once And Reference Them
+
+Hooks are defined once. Routes attach hook refs.
 
 ```ts
-createdByUserId: sharedPropsRef.uuid.source(userRoutes.ref.findUsers)
+export const authHooksRef = auth.defineHooks({
+  setSessionCookies: {
+    phase: 'afterSuccess',
+    transport: {
+      outbound: {
+        cookies: true,
+      },
+    },
+  },
+}).ref;
 ```
 
-Do not repeat noisy config:
+## 17. Treat `x-codegen` As The Semantic Layer
 
-```ts
-{
-  collection: 'users',
-  value: 'id',
-  label: 'username',
-}
+Templates should read semantic metadata such as:
+
+```txt
+x-codegen.baseEntities
+x-codegen.entities
+x-codegen.access
+x-codegen.hooks
+operation.role
+parameters.target
+cache.invalidate.operations
 ```
 
----
+Keep `operation.role` and `parameters.target` unchanged.
 
-## 14. Avoid local exports unless they are part of the resource contract surface
+## 18. Export Only Reused Contract Parts
 
-Good local-only pattern:
+Export refs and route registries that other modules need. Local-only schemas can remain local.
 
 ```ts
 const userBodySchemasRef = users.defineSchemas({
-  CreateUserBody: { ... },
-  UpdateUserBody: { ... },
-}).ref;
-
-const userResponseSchemasRef = users.defineSchemas({
-  UserResponse: { ... },
-  UsersListResponse: { ... },
+  UpdateUserBody: userSchemasRef.User.partial(),
 }).ref;
 ```
-
-Good exported pattern:
-
-```ts
-export const userRoutes = users.defineRoutes()...
-export const userAccessRef = users.defineAccess(...).ref;
-```
-
-Export what other files need. Keep the rest private.
-
----
-
-## 15. No barrel object that renames schema groups
-
-Avoid:
-
-```ts
-export const userContract = {
-  resource: users,
-  props: userPropsRef,
-  access: userAccessRef,
-  schemas: {
-    base: userBaseSchemasRef,
-    projections: userProjectionSchemasRef,
-    responses: userResponseSchemasRef,
-  },
-};
-```
-
-Prefer direct named exports:
-
-```ts
-export const users = ...
-export const userPropsRef = ...
-export const userAccessRef = ...
-export const userRoutes = ...
-export const userBaseSchemasRef = ...
-export const userProjectionSchemasRef = ...
-```
-
-This avoids huge inferred object types and keeps imports explicit.
-
----
-
-## 16. Use `@noExport` comments for local-only schema sections
-
-Mark local-only sections clearly:
-
-```ts
-/**
- * ---------------------------------------------------------------------------
- * User Body Schemas @noExport
- * ---------------------------------------------------------------------------
- */
-
-const userBodySchemasRef = users.defineSchemas({ ... }).ref;
-```
-
-```ts
-/**
- * ---------------------------------------------------------------------------
- * User Response Schemas @noExport
- * ---------------------------------------------------------------------------
- */
-
-const userResponseSchemasRef = users.defineSchemas({ ... }).ref;
-```
-
-This makes review easier and prevents accidental public surface growth.
-
-
-
-NOW WE NEED TO START A  NEW PLAN, HOW DO WE SUPPORT ?? 
-
-entity generation cleanly from schema, I was thinking of a define entity, that takes in a schema
-
-and then lets user access fields modify them or event do nothing if it is straight forward also eg support relation to other entities eg v1.defineEntity or resource x.define entities ((e) => ({
-
-name/key: e.fields. ... some rules TBD, advice also, I need to approve
-
-as a projection of a schema and with usage rules, which can be minor and with x-kind entity
-
-this can ensure it is not available in frontend and only generated in maybe backend and db layers:
-
-this must remain light weight as it can rely on existing  metadata form the actual schema

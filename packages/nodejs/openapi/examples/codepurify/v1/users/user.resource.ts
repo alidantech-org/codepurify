@@ -40,6 +40,17 @@ const userQueryProps = users.defineProperties('UserQuery', {
 });
 
 const userPublicSchemas = users.defineSchemas({
+  UserEntity: sharedContract.baseEntity.extendWith({
+    email: userProps.ref.email,
+    name: userProps.ref.name,
+    phone: userProps.ref.phone.nullable(),
+    avatar: userProps.ref.avatar.nullable(),
+    roles: userProps.ref.roles,
+    status: userProps.ref.status,
+    emailVerified: userProps.ref.emailVerified,
+    isOnline: userProps.ref.isOnline,
+  }),
+
   UserPublic: sharedContract.publicBaseEntity.extendWith({
     email: userProps.ref.email,
     name: userProps.ref.name,
@@ -50,6 +61,27 @@ const userPublicSchemas = users.defineSchemas({
     emailVerified: userProps.ref.emailVerified,
     isOnline: userProps.ref.isOnline,
   }),
+});
+
+const userEntities = users.defineEntities({
+  User: {
+    schema: userPublicSchemas.ref.UserEntity,
+    extends: sharedContract.baseEntities.BaseEntity,
+    store: 'users',
+    fields: {
+      email: ($) => $.unique().index().query((q) => q.exact().search({ prefix: true, contains: true })),
+      name: ($) => $.query((q) => q.search({ prefix: true, contains: true }).sort()),
+      status: ($) => $.index().query((q) => q.exact().oneOf().sort()),
+      emailVerified: ($) => $.index().query((q) => q.exact()),
+      isOnline: ($) => $.readonly().managed().index().query((q) => q.exact()),
+      deletedAt: ($) => $.immutable(),
+    },
+    constraints: (c) => ({
+      idx_user_status: c.index(['status']),
+      uniq_user_email: c.unique(['email']),
+      chk_user_deleted_after_created: c.check(c.when(c.notNull('deletedAt'), c.gt('deletedAt', c.field('createdAt')))),
+    }),
+  },
 });
 
 const userProjectionSchemas = users.defineSchemas({
@@ -145,9 +177,20 @@ users
 
     getUserById: r.get('/:userId').summary('Get user by ID').query(userSchemas.ref.UserDetailQuery).response(userSchemas.ref.UserOk).ui('detail'),
 
-    updateUser: r.patch('/:userId').summary('Update user').body(userSchemas.ref.UpdateUserBody).response(userSchemas.ref.UserOk).ui('update'),
+    updateUser: r
+      .patch('/:userId')
+      .summary('Update user')
+      .body(userSchemas.ref.UpdateUserBody)
+      .response(userSchemas.ref.UserOk)
+      .cache((c) => c.invalidate.on('listUsers').on('getUserById'))
+      .ui('update'),
 
-    deleteUser: r.delete('/:userId').summary('Delete user').response(userSchemas.ref.UserDeleted).ui('delete'),
+    deleteUser: r
+      .delete('/:userId')
+      .summary('Delete user')
+      .response(userSchemas.ref.UserDeleted)
+      .cache((c) => c.invalidate.on('listUsers').on('getUserById'))
+      .ui('delete'),
   }));
 
 export const userContract = {
@@ -157,5 +200,6 @@ export const userContract = {
   userPublicSchemas,
   userProjectionSchemas,
   userFilterSchemas,
+  userEntities,
   userSchemas,
 };
