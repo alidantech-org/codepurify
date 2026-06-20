@@ -34,7 +34,7 @@ const auth = v1.defineResource({
 });
 
 const adminAuth = v1.defineResource({
-  name: 'auth',
+  name: 'adminAuth',
   route: '/v1/admin/auth',
   folders: ['platform'],
   ui: {
@@ -211,10 +211,10 @@ assert.deepEqual(codegen('/v1/users', 'get').ui, {
   inferenceSource: 'compiler',
   inferenceReason: 'GET collection route',
 });
-assert.deepEqual(codegen('/v1/users', 'get').resource, {
-  name: 'users',
-  path: ['platform'],
+assert.deepEqual(((document.paths['/v1/users'] as Record<string, unknown>)[CODEGEN_EXTENSION_KEY] as Record<string, unknown>).resource, {
+  $ref: '#/x-codegen/resources/users',
 });
+assert.equal('resource' in codegen('/v1/users', 'get'), false);
 assert.deepEqual(codegen('/v1/users', 'get').operation, {
   name: 'listUsers',
   role: 'list',
@@ -246,10 +246,10 @@ assert.deepEqual(codegen('/v1/users/{userId}/run-action', 'post').ui, {
 assert.deepEqual(codegen('/v1/auth/login', 'post').ui, {
   enabled: false,
 });
-assert.deepEqual(codegen('/v1/admin/auth/login', 'post').resource, {
-  name: 'auth',
-  path: ['platform'],
+assert.deepEqual(((document.paths['/v1/admin/auth/login'] as Record<string, unknown>)[CODEGEN_EXTENSION_KEY] as Record<string, unknown>).resource, {
+  $ref: '#/x-codegen/resources/adminAuth',
 });
+assert.equal('resource' in codegen('/v1/admin/auth/login', 'post'), false);
 assert.deepEqual(codegen('/v1/admin/auth/login', 'post').operation, {
   name: 'adminLogin',
   role: 'auth',

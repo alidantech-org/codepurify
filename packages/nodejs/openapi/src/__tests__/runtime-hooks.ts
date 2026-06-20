@@ -179,26 +179,16 @@ assert.deepEqual(runtime('/auth/login', 'post').transport, {
 
 assert.deepEqual((runtime('/auth/login', 'post').hooks as Record<string, unknown>).afterSuccess, [
   {
-    key: 'setSessionCookies',
-    owner: {
-      resource: {
-        name: 'auth',
-        path: ['auth'],
-      },
-    },
+    $ref: '#/x-codegen/resources/auth/hooks/setSessionCookies',
   },
 ]);
 assert.deepEqual((runtime('/auth/login', 'post').hooks as Record<string, unknown>).afterError, [
   {
-    key: 'auditFailedLogin',
-    owner: {
-      resource: {
-        name: 'auth',
-        path: ['auth'],
-      },
-    },
+    $ref: '#/x-codegen/resources/auth/hooks/auditFailedLogin',
   },
 ]);
+assert.equal(JSON.stringify(runtime('/auth/login', 'post').hooks).includes('"key"'), false);
+assert.equal(JSON.stringify(runtime('/auth/login', 'post').hooks).includes('"owner"'), false);
 assert.equal(JSON.stringify(runtime('/auth/login', 'post').hooks).includes('transport'), false);
 assert.equal(JSON.stringify(runtime('/auth/login', 'post').hooks).includes('description'), false);
 
@@ -224,14 +214,8 @@ assert.deepEqual(runtime('/auth/login-object', 'post').transport, {
 });
 
 const documentCodegen = document[CODEGEN_EXTENSION_KEY] as Record<string, unknown>;
-assert.deepEqual(((documentCodegen.hooks as Record<string, unknown>).auth as Record<string, unknown>).setSessionCookies, {
+assert.deepEqual(((documentCodegen.resources as Record<string, Record<string, unknown>>).auth.hooks as Record<string, unknown>).setSessionCookies, {
   phase: 'afterSuccess',
-  owner: {
-    resource: {
-      name: 'auth',
-      path: ['auth'],
-    },
-  },
   transport: {
     outbound: {
       cookies: true,
@@ -245,7 +229,7 @@ const runtimePayload = [
   runtime('/auth/logout', 'post'),
   runtime('/auth/export', 'get'),
   runtime('/auth/login-object', 'post'),
-  documentCodegen.hooks,
+  (documentCodegen.resources as Record<string, unknown>).auth,
 ];
 
 for (const forbidden of ['req', 'res', 'request', 'response', 'express', 'nest', 'fastify', 'middleware', 'interceptor']) {

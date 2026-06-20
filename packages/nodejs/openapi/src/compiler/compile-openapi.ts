@@ -90,36 +90,56 @@ function createOpenApiShell(contract: VersionContract, options: CompileOptions, 
 }
 
 function createDocumentCodegenMetadata(contract: VersionContract, resolver: RefResolver): Record<string, unknown> | undefined {
-  const hooks = Object.fromEntries(
-    contract.resources
-      .filter((resource) => resource.hookComponents.length > 0)
-      .map((resource) => [
-        resource.context.alias,
-        Object.fromEntries(
-          resource.hookComponents.flatMap((registry) =>
-            registry.definitions.map((definition) => [
-              definition.key,
-              cleanObject({
-                phase: definition.phase,
-                owner: definition.owner,
-                transport: definition.transport,
-                description: definition.description,
-              }),
-            ]),
-          ),
-        ),
-      ]),
-  );
-
   const entities = compileEntityMetadata(contract, resolver);
-  const access = compileAccessRegistryMetadata(contract, resolver).access;
+  const accessRegistry = compileAccessRegistryMetadata(contract, resolver);
+  const resources = compileResourceRegistry(contract, accessRegistry.resourceAccess);
   const metadata = cleanObject({
-    access,
+    resources,
+    access: accessRegistry.access,
     ...entities,
-    hooks: Object.keys(hooks).length > 0 ? hooks : undefined,
   });
 
   return Object.keys(metadata).length > 0 ? metadata : undefined;
+}
+
+function compileResourceRegistry(
+  contract: VersionContract,
+  resourceAccess: Record<string, Record<string, unknown>>,
+): Record<string, unknown> | undefined {
+  const resources: Record<string, unknown> = {};
+
+  for (const resource of contract.resources) {
+    const key = resource.context.alias;
+
+    if (resources[key]) {
+      throw new Error(`Duplicate x-codegen resource key "${key}". Resource names must be unique before refs can be emitted.`);
+    }
+
+    const hooks = Object.fromEntries(
+      resource.hookComponents.flatMap((registry) =>
+        registry.definitions.map((definition) => [
+          definition.key,
+          cleanObject({
+            phase: definition.phase,
+            transport: definition.transport,
+            description: definition.description,
+          }),
+        ]),
+      ),
+    );
+
+    resources[key] = cleanObject({
+      name: resource.context.alias,
+      path: resource.context.folders,
+      route: resource.context.route,
+      tags: resource.context.tags,
+      ui: resource.context.ui,
+      hooks: Object.keys(hooks).length > 0 ? hooks : undefined,
+      access: resourceAccess[key] && Object.keys(resourceAccess[key]).length > 0 ? resourceAccess[key] : undefined,
+    });
+  }
+
+  return Object.keys(resources).length > 0 ? resources : undefined;
 }
 
 function cleanObject(input: Record<string, unknown>): Record<string, unknown> {

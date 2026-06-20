@@ -5,8 +5,8 @@ import type { RefResolver } from './refs/ref-resolver.types.js';
 export type ResolvedAccessRegistryMetadata = {
   readonly access?: {
     readonly global?: Record<string, unknown>;
-    readonly resources?: Record<string, Record<string, unknown>>;
   };
+  readonly resourceAccess: Record<string, Record<string, unknown>>;
   readonly policies: Map<string, Record<string, unknown>>;
 };
 
@@ -40,8 +40,8 @@ export function compileAccessRegistryMetadata(contract: VersionContract, resolve
   return {
     access: cleanObject({
       global: Object.keys(global).length > 0 ? global : undefined,
-      resources: Object.keys(resources).length > 0 ? resources : undefined,
     }) as ResolvedAccessRegistryMetadata['access'],
+    resourceAccess: resources,
     policies,
   };
 }
@@ -62,9 +62,13 @@ export function compactOperationAccess(access: AccessRef | undefined, resolver: 
   }
 
   return {
-    key: access.key,
-    owner: access.owner,
+    $ref: accessPolicyRef(access.owner, access.key),
   };
+}
+
+export function accessPolicyRef(owner: AccessRef['owner'], key: string): string {
+  if ('global' in owner) return `#/x-codegen/access/global/${key}`;
+  return `#/x-codegen/resources/${owner.resource.name}/access/${key}`;
 }
 
 function resolveAccessPolicy(definition: NormalizedAccessDefinition, resolver: RefResolver): Record<string, unknown> {

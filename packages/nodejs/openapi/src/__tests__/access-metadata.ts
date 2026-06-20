@@ -172,18 +172,26 @@ assert.deepEqual((schemas.AuthUserContext[CODEGEN_EXTENSION_KEY] as Record<strin
 assert.deepEqual((schemas.UserRole[CODEGEN_EXTENSION_KEY] as Record<string, unknown>).role, 'access-role');
 assert.deepEqual(schemas.SharedDateTime.type, 'string');
 assert.deepEqual(schemas.SharedDateTime.format, 'date-time');
-
-assert.deepEqual(codegen('/platform/apps', 'get').access, {
-  key: 'admin',
-  owner: {
-    resource: {
-      name: 'users',
-      path: ['auth'],
-    },
+assert.deepEqual(((documentCodegen.resources as Record<string, Record<string, unknown>>).apps), {
+  name: 'apps',
+  path: ['platform'],
+  route: '/platform/apps',
+  tags: [],
+  ui: {
+    enabled: true,
+    infer: true,
   },
 });
+assert.deepEqual(((document.paths['/platform/apps'] as Record<string, unknown>)[CODEGEN_EXTENSION_KEY] as Record<string, unknown>).resource, {
+  $ref: '#/x-codegen/resources/apps',
+});
+assert.equal('resource' in codegen('/platform/apps', 'get'), false);
+
+assert.deepEqual(codegen('/platform/apps', 'get').access, {
+  $ref: '#/x-codegen/resources/users/access/admin',
+});
 assert.deepEqual(
-  (((documentCodegen.access as Record<string, unknown>).resources as Record<string, Record<string, unknown>>).users as Record<string, Record<string, unknown>>).admin,
+  (((documentCodegen.resources as Record<string, Record<string, unknown>>).users.access as Record<string, Record<string, unknown>>).admin),
   {
     context: {
       $ref: '#/components/schemas/AuthUserContext',
@@ -204,13 +212,7 @@ assert.deepEqual(
 assert.deepEqual((codegen('/platform/apps', 'get').ui as Record<string, unknown>).enabled, true);
 
 assert.deepEqual(codegen('/platform/apps/{id}', 'delete').access, {
-  key: 'superAdmin',
-  owner: {
-    resource: {
-      name: 'users',
-      path: ['auth'],
-    },
-  },
+  $ref: '#/x-codegen/resources/users/access/superAdmin',
 });
 assert.deepEqual(codegen('/platform/apps/{id}', 'delete').tags, ['platform', 'apps', 'dangerous', 'mutation']);
 assert.deepEqual(codegen('/platform/apps/{id}', 'delete').effects, {
@@ -222,19 +224,13 @@ assert.equal((document.paths['/platform/apps/{id}'] as { parameters?: unknown[] 
 assert.ok(Array.isArray(operation('/platform/apps/{id}', 'delete').parameters));
 
 assert.deepEqual(codegen('/platform/apps/public', 'get').access, {
-  key: 'public',
-  owner: {
-    global: true,
-  },
+  $ref: '#/x-codegen/access/global/public',
 });
 assert.deepEqual(((documentCodegen.access as Record<string, unknown>).global as Record<string, unknown>).public, { context: null });
 assert.deepEqual(operation('/platform/apps/public', 'get').security, []);
 
 assert.deepEqual(codegen('/platform/apps/refresh', 'post').access, {
-  key: 'refreshToken',
-  owner: {
-    global: true,
-  },
+  $ref: '#/x-codegen/access/global/refreshToken',
 });
 assert.deepEqual(((documentCodegen.access as Record<string, unknown>).global as Record<string, unknown>).refreshToken, {
   context: {

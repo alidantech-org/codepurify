@@ -105,10 +105,6 @@ export function compilePaths(
         const resolvedAccess = compactOperationAccess(access, resolver, accessRegistryMetadata.policies);
 
         mergeOperationCodegen(operation, {
-          resource: {
-            name: resource.context.alias,
-            path: resource.context.folders,
-          },
           operation: {
             name: route.operationId,
             role: ui.role,
@@ -144,8 +140,7 @@ export function compilePaths(
       if (firstOperation.resourceContext) {
         const xCodegen: Record<string, unknown> = {
           resource: {
-            name: firstOperation.resourceContext.alias || firstOperation.resourceContext.name || firstOperation.resourceContext.key || 'unknown',
-            path: firstOperation.resourceContext.folders || [],
+            $ref: resourceRef(firstOperation.resourceContext.alias || firstOperation.resourceContext.name || firstOperation.resourceContext.key || 'unknown'),
           },
         };
 
@@ -179,6 +174,10 @@ export function compilePaths(
   }
 
   return { paths, inferredComponents: allInferredComponents };
+}
+
+function resourceRef(resourceKey: string): string {
+  return `#/x-codegen/resources/${resourceKey}`;
 }
 
 function collectOperationIds(contract: VersionContract): ReadonlySet<string> {
@@ -368,10 +367,7 @@ function resolveOperationRuntime(
     hooks: Object.fromEntries(
       Object.entries(hooks).map(([phase, phaseHooks]) => [
         phase,
-        phaseHooks.map((hook) => ({
-          key: hook.key,
-          owner: hook.owner,
-        })),
+        phaseHooks.map((hook) => ({ $ref: hookRefPointer(hook) })),
       ]),
     ),
   });
@@ -428,6 +424,10 @@ function createHookRegistry(contract: VersionContract): Map<string, RuntimeHookR
 
 function hookRefId(hook: RuntimeHookRef): string {
   return `${hook.owner.resource.name}.${hook.key}`;
+}
+
+function hookRefPointer(hook: RuntimeHookRef): string {
+  return `#/x-codegen/resources/${hook.owner.resource.name}/hooks/${hook.key}`;
 }
 
 function mergeRuntimeTransports(...transports: Array<RuntimeTransport | undefined>): RuntimeTransport | undefined {

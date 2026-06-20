@@ -367,7 +367,7 @@ Route cache support is invalidation-only. `cache.invalidate.on(...)` takes an op
 
 ### Runtime Hooks
 
-Hooks are defined once on a resource and routes reference hook refs. Generated root `x-codegen.hooks` contains full hook definitions. Operation `runtime.hooks` contains owner/key refs only.
+Hooks are defined once on a resource and routes reference hook refs. Full hook definitions are emitted under `x-codegen.resources.<resource>.hooks`. Operation runtime hook usages are `$ref` pointers, so generators can resolve them without duplicated metadata.
 
 ```ts
 const authHooksRef = auth.defineHooks({
@@ -417,17 +417,55 @@ ui: 'auth'
 Useful `x-codegen` metadata includes:
 
 ```txt
+x-codegen.resources
 x-codegen.baseEntities
 x-codegen.entities
-x-codegen.hooks
 x-codegen.access
+path.x-codegen.resource.$ref
 operation.x-codegen.operation.name
 operation.x-codegen.operation.role
+operation.x-codegen.access.$ref
+operation.x-codegen.runtime.hooks.<phase>[].$ref
 operation.x-codegen.parameters.target
 operation.x-codegen.cache.invalidate.operations
 ```
 
-Do not rename `parameters.target` or remove `operation.role`; both are part of the accepted metadata contract.
+Resource, access, hook, and entity relation metadata use registry `$ref` pointers:
+
+```yaml
+x-codegen:
+  resources:
+    auth:
+      name: auth
+      path:
+        - platform
+      hooks:
+        setSessionCookies:
+          phase: afterSuccess
+  access:
+    global:
+      public:
+        context: null
+
+paths:
+  /auth/login:
+    x-codegen:
+      resource:
+        $ref: '#/x-codegen/resources/auth'
+    post:
+      x-codegen:
+        operation:
+          name: loginWithEmail
+          role: auth
+        access:
+          $ref: '#/x-codegen/access/global/public'
+        runtime:
+          hooks:
+            afterSuccess:
+              - $ref: '#/x-codegen/resources/auth/hooks/setSessionCookies'
+```
+
+Do not rename `parameters.target`, remove `operation.role`, or inline registry-backed metadata; those shapes are part of the accepted metadata contract.
 
 ### Content Types
 

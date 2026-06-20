@@ -176,7 +176,10 @@ assert.deepEqual(codegen('/users', 'get').sources, {
 assert.deepEqual(codegen('/users', 'get').tags, ['v1', 'auth', 'users', 'admin', 'list']);
 assert.deepEqual(operation('/users', 'get').tags, ['users']);
 assert.deepEqual((codegen('/users', 'get').ui as Record<string, unknown>).role, 'list');
-assert.deepEqual((codegen('/users', 'get').resource as Record<string, unknown>).name, 'users');
+assert.deepEqual(((document.paths['/users'] as Record<string, unknown>)[CODEGEN_EXTENSION_KEY] as Record<string, unknown>).resource, {
+  $ref: '#/x-codegen/resources/users',
+});
+assert.equal('resource' in codegen('/users', 'get'), false);
 assert.deepEqual((codegen('/users', 'get').operation as Record<string, unknown>).name, 'findUsers');
 
 const createTicketBody = document.components.schemas.CreateTicketBody as {

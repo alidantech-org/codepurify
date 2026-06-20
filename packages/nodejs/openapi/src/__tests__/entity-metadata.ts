@@ -157,7 +157,7 @@ assert.deepEqual(baseEntityMetadata.SoftDeletableEntity.extends, {
 
 assert.equal(userEntity.kind, 'entity');
 assert.equal(userEntity.store, 'users');
-assert.deepEqual(userEntity.resource, { name: 'users', path: ['auth'] });
+assert.deepEqual(userEntity.resource, { $ref: '#/x-codegen/resources/users' });
 assert.deepEqual(userEntity.visibility, ['backend', 'storage']);
 assert.deepEqual(userEntity.extends, {
   owner: { global: true },
@@ -191,13 +191,7 @@ assert.equal(Object.prototype.hasOwnProperty.call(fields, 'updatedAt'), true);
 assert.deepEqual((userEntity.relations as Record<string, unknown>).roles, {
   cardinality: 'hasMany',
   target: {
-    owner: {
-      resource: {
-        name: 'users',
-        path: ['auth'],
-      },
-    },
-    key: 'UserRole',
+    $ref: '#/x-codegen/entities/users/UserRole',
   },
   local: 'id',
   foreign: 'userId',

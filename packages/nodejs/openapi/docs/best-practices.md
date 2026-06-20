@@ -232,16 +232,19 @@ export const authHooksRef = auth.defineHooks({
 Templates should read semantic metadata such as:
 
 ```txt
+x-codegen.resources
 x-codegen.baseEntities
 x-codegen.entities
 x-codegen.access
-x-codegen.hooks
+path.x-codegen.resource.$ref
+operation.x-codegen.access.$ref
+operation.x-codegen.runtime.hooks.<phase>[].$ref
 operation.role
 parameters.target
 cache.invalidate.operations
 ```
 
-Keep `operation.role` and `parameters.target` unchanged.
+Resource-owned definitions live in `x-codegen.resources`. Operation-level access and runtime hook usages are `$ref` pointers into the resource/global registries. Keep `operation.role` and `parameters.target` unchanged.
 
 ## 18. Export Only Reused Contract Parts
 

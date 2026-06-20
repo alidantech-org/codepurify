@@ -163,7 +163,7 @@ function compileEntity(
 
   return cleanObject({
     kind: definition.kind,
-    ...(options.includeResource && 'resource' in definition.owner ? { resource: definition.owner.resource } : {}),
+    ...(options.includeResource && 'resource' in definition.owner ? { resource: { $ref: resourceRef(definition.owner.resource.name) } } : {}),
     schema,
     ...(definition.extends ? { extends: compileEntityRef(definition.extends) } : {}),
     store: definition.store,
@@ -282,7 +282,7 @@ function compileRelations(
       relation.name,
       {
         cardinality: relation.cardinality,
-        target: compileEntityRef(relation.target),
+        target: { $ref: entityRefPointer(relation.target) },
         local: relation.local,
         foreign: relation.foreign,
         onDelete: relation.onDelete,
@@ -431,6 +431,16 @@ function compileEntityRef(ref: EntityRef): Record<string, unknown> {
     owner: ref.owner,
     key: ref.entityKey,
   };
+}
+
+function entityRefPointer(ref: EntityRef): string {
+  if ('resource' in ref.owner) return `#/x-codegen/entities/${ref.owner.resource.name}/${ref.entityKey}`;
+  if (ref.abstract) return `#/x-codegen/baseEntities/${ref.entityKey}`;
+  return `#/x-codegen/entities/shared/${ref.entityKey}`;
+}
+
+function resourceRef(resourceKey: string): string {
+  return `#/x-codegen/resources/${resourceKey}`;
 }
 
 function toSchemaRef(refId: string, resolver: RefResolver): { readonly $ref: string } {
