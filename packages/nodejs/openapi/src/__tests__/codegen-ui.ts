@@ -58,6 +58,9 @@ const builderUsers = v1.defineResource({
 });
 
 const userSchemas = users.defineSchemas({
+  UserRouteParams: {
+    userId: sharedProps.ref.id,
+  },
   UserBody: {
     message: sharedProps.ref.message,
   },
@@ -68,6 +71,9 @@ const userSchemas = users.defineSchemas({
 });
 
 const bookingSchemas = bookings.defineSchemas({
+  BookingRouteParams: {
+    bookingId: sharedProps.ref.id,
+  },
   BookingOk: {
     id: sharedProps.ref.id,
     message: sharedProps.ref.message,
@@ -85,9 +91,7 @@ const builderSchemas = builderUsers.defineSchemas({
 });
 
 users.defineRoutes({
-  parameters: {
-    userId: sharedProps.ref.id,
-  },
+  params: userSchemas.ref.UserRouteParams,
   routes: {
     listUsers: {
       method: HttpMethod.get,
@@ -155,9 +159,7 @@ adminAuth.defineRoutes({
 });
 
 bookings.defineRoutes({
-  parameters: {
-    bookingId: sharedProps.ref.id,
-  },
+  params: bookingSchemas.ref.BookingRouteParams,
   routes: {
     listBookings: {
       method: HttpMethod.get,
@@ -175,18 +177,10 @@ bookings.defineRoutes({
   },
 });
 
-builderUsers.defineRoutes((b) =>
-  b
-    .get('/', 'builderListUsers')
-    .response(builderSchemas.ref.BuilderUserOk)
-    .ui('list')
-    .done()
-    .post('/', 'builderCreateUser')
-    .body(builderSchemas.ref.BuilderUserBody)
-    .response(builderSchemas.ref.BuilderUserOk)
-    .ui({ role: 'create' })
-    .done(),
-);
+builderUsers.defineRoutes().routes((b) => ({
+  builderListUsers: b.get('/').response(builderSchemas.ref.BuilderUserOk).ui('list'),
+  builderCreateUser: b.post('/').body(builderSchemas.ref.BuilderUserBody).response(builderSchemas.ref.BuilderUserOk).ui({ role: 'create' }),
+}));
 
 const result = compileOpenApi(v1.contract, { validate: false });
 assert.equal(result.success, true);

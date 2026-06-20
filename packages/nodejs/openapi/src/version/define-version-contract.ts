@@ -24,6 +24,7 @@ import type { AccessDefinitionInput, AccessRegistry } from '../access/access.typ
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;
+  tags?: readonly string[];
   defaults?: VersionDefaults;
   resources?: ResourceBuilder[];
   properties?: PropertyRegistry[];
@@ -65,6 +66,7 @@ export interface VersionBuilder {
     name?: string,
   ): ReturnType<typeof defineResponses<TInput>>;
   defineAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput>;
+  tags(tags: readonly string[]): VersionBuilder;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
 
@@ -75,6 +77,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
 
   const contract: VersionContract = {
     info: options.info,
+    tags: [...(options.tags ?? [])],
     defaults: {
       requestContentType: options.defaults?.requestContentType ?? ContentType.json,
       responseContentType: options.defaults?.responseContentType ?? ContentType.json,
@@ -194,6 +197,11 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return builder;
   }
 
+  function setTags(tags: readonly string[]): VersionBuilder {
+    (contract.tags as string[]).splice(0, contract.tags.length, ...tags);
+    return builder;
+  }
+
   function defineVersionAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput> {
     const registry = defineAccess(input);
     accessComponents.push(registry);
@@ -214,6 +222,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     defineRequestBodies: defineVersionRequestBodies,
     defineResponses: defineVersionResponses,
     defineAccess: defineVersionAccess,
+    tags: setTags,
     setDefaultResponses,
   };
 

@@ -22,7 +22,7 @@ export function validateVersionContract(contract: VersionContract): ValidationIs
       }
     }
 
-    for (const routes of resource.routes) {
+    for (const routes of resource.routeRegistries) {
       issues.push(...validateRoutes(routes));
     }
   }

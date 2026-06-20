@@ -11,6 +11,7 @@ const userSettings = v1.defineResource({
   name: 'user-settings',
   route: 'v1/users/:userId/settings',
   folders: ['platform'],
+  tags: ['platform', 'users', 'settings'],
   ui: {
     enabled: true,
     infer: false,
@@ -89,6 +90,10 @@ const settingsUpdateBodySchemas = userSettings.defineSchemas({
 });
 
 const settingsSchemas = userSettings.defineSchemas({
+  UserSettingsRouteParams: {
+    userId: settingsProps.ref.userId,
+  },
+
   UserSettingsOk: sharedContract.sharedSchemas.ref.ApiMessage.extendWith({
     settings: settingsPublicSchemas.ref.UserSettingsPublic,
   }),
@@ -101,9 +106,7 @@ const settingsSchemas = userSettings.defineSchemas({
 });
 
 userSettings.defineRoutes({
-  parameters: {
-    userId: settingsProps.ref.userId,
-  },
+  params: settingsSchemas.ref.UserSettingsRouteParams,
 
   routes: {
     getUserSettings: {

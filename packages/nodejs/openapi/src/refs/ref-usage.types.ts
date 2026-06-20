@@ -3,6 +3,7 @@ import type { ComponentRef, EngineRef, ModelRef, PropertyRef } from './ref.types
 import type { SchemaCompositionFieldMap } from '../schema/schema.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 import type { AccessAllowSelection, AccessRoleSource } from '../access/access.types.js';
+import type { RouteFieldSource, RouteSourceRef } from '../routes/route.types.js';
 
 export type FieldSourceOrigin = 'base' | 'extension' | 'inline' | 'inherited' | 'path';
 
@@ -78,6 +79,8 @@ export interface RefUsageOptions {
     readonly base?: FieldSourceMetadata;
     readonly extensions?: readonly FieldSourceMetadata[];
   };
+
+  readonly source?: RouteFieldSource;
 }
 
 export type SchemaRefWithUsageMethods<TRef extends ComponentRef, TFields extends Record<string, unknown>> = Omit<
@@ -106,6 +109,7 @@ export interface RefUsage<TRef extends EngineRef = EngineRef> {
   array(): RefUsage<TRef>;
   extendWith(fields: ExtendWithInput): RefUsage<TRef>;
   zod(): z.ZodTypeAny;
+  source(source: RouteFieldSource['route'] | RouteSourceRef): RefUsage<TRef>;
 }
 
 export type RefWithUsageMethods<TRef extends EngineRef> = TRef & {
@@ -116,6 +120,7 @@ export type RefWithUsageMethods<TRef extends EngineRef> = TRef & {
   array(): RefUsage<TRef>;
   extendWith(fields: ExtendWithInput): RefUsage<TRef>;
   zod(): z.ZodTypeAny;
+  source(source: RouteFieldSource['route'] | RouteSourceRef): RefUsage<TRef>;
 };
 
 export type RefWithAccessAllowMethods<TRef extends PropertyRef, TValue extends string> = RefWithUsageMethods<TRef> & {

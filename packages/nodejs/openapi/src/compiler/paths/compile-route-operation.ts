@@ -37,7 +37,6 @@ export function compileRouteOperation(
   };
 
   const parameters = [
-    ...compileRouteParameters(route.params, 'path', resolver, contract),
     ...compileRouteParameters(route.query, 'query', resolver, contract),
   ];
 

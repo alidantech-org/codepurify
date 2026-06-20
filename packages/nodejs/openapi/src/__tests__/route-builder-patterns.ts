@@ -1,214 +1,204 @@
 import { strict as assert } from 'node:assert';
 import { z } from 'zod';
-import { HttpMethod, compileOpenApi, defineVersionContract, schema } from '../index.js';
+import { CODEGEN_EXTENSION_KEY, HttpMethod, compileOpenApi, defineVersionContract } from '../index.js';
 
 const v1 = defineVersionContract({
   info: {
     title: 'Route Builder Pattern API',
     version: 'v1',
   },
+  tags: ['v1', 'auth'],
 });
 
 const sharedProps = v1.defineProperties('Shared', {
-  id: z.string(),
+  uuid: z.string().uuid(),
   message: z.string(),
 });
 
-const objectResource = v1.defineResource({
-  name: 'ObjectUser',
-  route: '/object-users',
+const users = v1.defineResource({
+  name: 'users',
+  route: '/users',
+  folders: ['auth'],
+  tags: ['auth', 'users', 'admin'],
+  ui: {
+    enabled: true,
+    infer: true,
+  },
 });
 
-const builderResource = v1.defineResource({
-  name: 'BuilderUser',
-  route: '/builder-users',
+const userProps = users.defineProperties('User', {
+  username: z.string().min(1),
 });
 
-const companyMembersResource = v1.defineResource({
-  name: 'CompanyMembers',
-  route: '/companies/:companyId/members',
-});
+const userSchemas = users.defineSchemas({
+  UserRouteParams: {
+    id: sharedProps.ref.uuid,
+    roleId: sharedProps.ref.uuid,
+  },
 
-const localParamsResource = v1.defineResource({
-  name: 'LocalParams',
-  route: '/local-params',
-});
+  UserPartial: {
+    id: sharedProps.ref.uuid,
+    username: userProps.ref.username,
+  },
 
-const normalizedRouteResource = v1.defineResource({
-  name: 'NormalizedRoutes',
-  route: '///v1//vehicles/',
-});
-
-const windowsRouteResource = v1.defineResource({
-  name: 'WindowsRoutes',
-  route: 'v1\\garages',
-});
-
-const objectSchemas = objectResource.defineSchemas({
-  ListQuery: {
+  UserListQuery: {
     search: sharedProps.ref.message.optional(),
   },
-  UserBody: {
-    name: sharedProps.ref.message,
+
+});
+
+const responseSchemas = users.defineSchemas({
+  UsersListOk: {
+    users: userSchemas.ref.UserPartial.array(),
   },
+
   UserOk: {
-    id: sharedProps.ref.id,
-    message: sharedProps.ref.message,
+    user: userSchemas.ref.UserPartial,
   },
 });
 
-const builderSchemas = builderResource.defineSchemas({
-  ListQuery: {
-    search: sharedProps.ref.message.optional(),
+const userRoutes = users
+  .defineRoutes()
+  .params(userSchemas.ref.UserRouteParams)
+  .routes((r) => ({
+    findUsers: r
+      .get('/')
+      .query(userSchemas.ref.UserListQuery)
+      .response(responseSchemas.ref.UsersListOk)
+      .source('users', (user) => user.key('id').label('username'))
+      .tags(['list', 'admin'])
+      .ui('list'),
+
+    getUserById: r
+      .get('/:id')
+      .response(responseSchemas.ref.UserOk)
+      .tags(['detail'])
+      .ui('detail'),
+
+    updateUserRole: r
+      .patch('/:id/roles/:roleId')
+      .response(responseSchemas.ref.UserOk)
+      .tags(['mutation'])
+      .ui('update'),
+  }));
+
+const tickets = v1.defineResource({
+  name: 'tickets',
+  route: '/tickets',
+  folders: ['support'],
+  tags: ['support', 'tickets'],
+});
+
+const ticketSchemas = tickets.defineSchemas({
+  TicketRouteParams: {
+    id: sharedProps.ref.uuid,
   },
-  UserBody: {
-    name: sharedProps.ref.message,
+
+  CreateTicketBody: {
+    createdByUserId: sharedProps.ref.uuid.source(userRoutes.ref.findUsers),
+    assignedToUserId: sharedProps.ref.uuid.source(userRoutes.ref.findUsers.sources.users),
   },
-  UserOk: {
-    id: sharedProps.ref.id,
-    message: sharedProps.ref.message,
+
+  TicketResponse: {
+    id: sharedProps.ref.uuid,
   },
 });
 
-const objectRoutes = objectResource.defineRoutes({
-  parameters: {
-    userId: sharedProps.ref.id,
-  },
+tickets.defineRoutes({
+  params: ticketSchemas.ref.TicketRouteParams,
   routes: {
-    listUsers: {
-      method: HttpMethod.get,
-      path: '/',
-      summary: 'List object users',
-      query: objectSchemas.ref.ListQuery,
-      response: objectSchemas.ref.UserOk,
-    },
-    createUser: {
+    createTicket: {
       method: HttpMethod.post,
       path: '/',
-      summary: 'Create object user',
-      body: objectSchemas.ref.UserBody,
-      responses: {
-        201: objectSchemas.ref.UserOk,
-        400: objectSchemas.ref.UserOk,
-      },
+      body: ticketSchemas.ref.CreateTicketBody,
+      response: ticketSchemas.ref.TicketResponse,
+      tags: ['mutation'],
+      ui: 'create',
     },
-    deleteUser: {
-      method: HttpMethod.delete,
-      path: '/:userId',
-      summary: 'Delete object user',
-      responses: {
-        204: schema.noContent(),
-      },
-    },
-  },
-});
 
-const builderRoutes = builderResource.defineRoutes((b) =>
-  b
-    .params({ userId: sharedProps.ref.id })
-    .get('/', 'listUsers')
-    .summary('List builder users')
-    .query(builderSchemas.ref.ListQuery)
-    .response(builderSchemas.ref.UserOk)
-    .done()
-    .post('/', 'createUser')
-    .summary('Create builder user')
-    .body(builderSchemas.ref.UserBody)
-    .on(201, builderSchemas.ref.UserOk)
-    .on(400, builderSchemas.ref.UserOk)
-    .done()
-    .delete('/:userId', 'deleteUser')
-    .summary('Delete builder user')
-    .on(204, schema.noContent())
-    .done(),
-);
-
-const companyMemberRoutes = companyMembersResource.defineRoutes((b) =>
-  b
-    .params({ companyId: sharedProps.ref.id })
-    .get('/', 'listCompanyMembers')
-    .summary('List company members')
-    .response(builderSchemas.ref.UserOk)
-    .done(),
-);
-
-const localParamRoutes = localParamsResource.defineRoutes((b) =>
-  b
-    .get('/:memberId', 'getLocalMember')
-    .params({ memberId: sharedProps.ref.id })
-    .summary('Get local member')
-    .response(builderSchemas.ref.UserOk)
-    .done(),
-);
-
-normalizedRouteResource.defineRoutes({
-  parameters: {
-    vehicleId: sharedProps.ref.id,
-  },
-  routes: {
-    getVehicle: {
+    getTicket: {
       method: HttpMethod.get,
-      path: '//:vehicleId/',
-      summary: 'Get normalized vehicle',
-      response: builderSchemas.ref.UserOk,
+      path: '/:id',
+      response: ticketSchemas.ref.TicketResponse,
+      tags: ['detail'],
+      ui: 'detail',
     },
   },
 });
 
-windowsRouteResource.defineRoutes({
-  routes: {
-    listGarages: {
-      method: HttpMethod.get,
-      path: '\\',
-      summary: 'List normalized garages',
-      response: builderSchemas.ref.UserOk,
-    },
-  },
-});
-
-assert.deepEqual(Object.keys(objectRoutes.routes), ['listUsers', 'createUser', 'deleteUser']);
-assert.deepEqual(Object.keys(builderRoutes.routes), ['listUsers', 'createUser', 'deleteUser']);
-assert.equal(objectRoutes.routes.createUser.method, HttpMethod.post);
-assert.equal(builderRoutes.routes.createUser.method, HttpMethod.post);
-assert.deepEqual(Object.keys(objectRoutes.routes.createUser.responses ?? {}), ['201', '400']);
-assert.deepEqual(Object.keys(builderRoutes.routes.createUser.responses ?? {}), ['201', '400']);
-assert.ok(objectRoutes.parameters?.userId);
-assert.ok(builderRoutes.parameters?.userId);
+assert.equal(userRoutes.ref.findUsers.routeKey, 'findUsers');
+assert.equal(userRoutes.ref.findUsers.method, HttpMethod.get);
+assert.ok(userRoutes.ref.findUsers.sources.users);
+assert.equal(userRoutes.routes.findUsers.operationId, 'findUsers');
 
 const result = compileOpenApi(v1.contract, { validate: false });
 assert.equal(result.success, true);
+if (!result.success) {
+  throw new Error('Expected compileOpenApi to succeed.');
+}
 
-const pathItems = Object.values(result.document.paths);
-const objectListOperation = pathItems.find((pathItem) => pathItem.get?.summary === 'List object users')?.get;
-const builderListOperation = pathItems.find((pathItem) => pathItem.get?.summary === 'List builder users')?.get;
-const objectCreateOperation = pathItems.find((pathItem) => pathItem.post?.summary === 'Create object user')?.post;
-const builderCreateOperation = pathItems.find((pathItem) => pathItem.post?.summary === 'Create builder user')?.post;
-const objectDeleteOperation = pathItems.find((pathItem) => pathItem.delete?.summary === 'Delete object user')?.delete;
-const builderDeleteOperation = pathItems.find((pathItem) => pathItem.delete?.summary === 'Delete builder user')?.delete;
+const document = result.document;
 
-assert.equal(objectListOperation?.summary, 'List object users');
-assert.equal(builderListOperation?.summary, 'List builder users');
-assert.ok(objectCreateOperation?.responses['201']);
-assert.ok(builderCreateOperation?.responses['201']);
-assert.ok(objectCreateOperation?.responses['400']);
-assert.ok(builderCreateOperation?.responses['400']);
-assert.ok(objectDeleteOperation?.responses['204']);
-assert.ok(builderDeleteOperation?.responses['204']);
+function operation(path: string, method: string): Record<string, unknown> {
+  const pathItem = document.paths[path] as Record<string, unknown> | undefined;
+  assert.ok(pathItem, `Expected path ${path}`);
 
-const companyMembersPath = result.document.paths['/companies/{companyId}/members'];
-const localMemberPath = result.document.paths['/local-params/{memberId}'];
-const normalizedVehiclePath = result.document.paths['/v1/vehicles/{vehicleId}'];
-const normalizedGaragePath = result.document.paths['/v1/garages'];
+  const op = pathItem[method] as Record<string, unknown> | undefined;
+  assert.ok(op, `Expected ${method.toUpperCase()} ${path}`);
+  return op;
+}
 
-assert.ok(companyMemberRoutes.parameters?.companyId);
-assert.equal(companyMembersPath?.parameters, undefined);
-assert.ok(JSON.stringify(companyMembersPath?.get?.parameters).includes('CompanyMembersCompanyIdPathParam'));
-assert.ok(localParamRoutes.routes.getLocalMember.params?.memberId);
-assert.equal(localMemberPath?.parameters, undefined);
-assert.ok(JSON.stringify(localMemberPath?.get?.parameters).includes('LocalParamsMemberIdPathParam'));
-assert.equal(normalizedVehiclePath?.parameters, undefined);
-assert.ok(JSON.stringify(normalizedVehiclePath?.get?.parameters).includes('NormalizedRoutesVehicleIdPathParam'));
-assert.equal(normalizedVehiclePath.get?.summary, 'Get normalized vehicle');
-assert.equal(normalizedGaragePath.get?.summary, 'List normalized garages');
-assert.ok(!Object.keys(result.document.paths).some((path) => !path.startsWith('/')));
-assert.ok(!Object.keys(result.document.paths).some((path) => path.length > 1 && path.endsWith('/')));
+function codegen(path: string, method: string): Record<string, unknown> {
+  const meta = operation(path, method)[CODEGEN_EXTENSION_KEY] as Record<string, unknown> | undefined;
+  assert.ok(meta, `Expected x-codegen for ${method.toUpperCase()} ${path}`);
+  return meta;
+}
+
+assert.equal(operation('/users', 'get').operationId, 'findUsers');
+assert.equal(operation('/users/{id}', 'get').operationId, 'getUserById');
+assert.equal(operation('/users/{id}/roles/{roleId}', 'patch').operationId, 'updateUserRole');
+
+assert.equal((document.paths['/users/{id}'] as { parameters?: unknown[] }).parameters, undefined);
+assert.ok(JSON.stringify(operation('/users/{id}', 'get').parameters).includes('UsersIdPathParam'));
+assert.ok(JSON.stringify(operation('/users/{id}/roles/{roleId}', 'patch').parameters).includes('UsersIdPathParam'));
+assert.ok(JSON.stringify(operation('/users/{id}/roles/{roleId}', 'patch').parameters).includes('UsersRoleIdPathParam'));
+
+assert.deepEqual(codegen('/users', 'get').sources, {
+  users: {
+    responseField: 'users',
+    item: {
+      $ref: '#/components/schemas/UserPartial',
+    },
+    key: 'id',
+    label: 'username',
+  },
+});
+assert.deepEqual(codegen('/users', 'get').tags, ['v1', 'auth', 'users', 'admin', 'list']);
+assert.deepEqual(operation('/users', 'get').tags, ['users']);
+assert.deepEqual((codegen('/users', 'get').ui as Record<string, unknown>).role, 'list');
+assert.deepEqual((codegen('/users', 'get').resource as Record<string, unknown>).name, 'users');
+assert.deepEqual((codegen('/users', 'get').operation as Record<string, unknown>).name, 'findUsers');
+
+const createTicketBody = document.components.schemas.CreateTicketBody as {
+  properties: Record<string, Record<string, unknown>>;
+};
+assert.deepEqual(createTicketBody.properties.createdByUserId[CODEGEN_EXTENSION_KEY], {
+  source: {
+    kind: 'route',
+    resource: {
+      name: 'users',
+      path: ['auth'],
+    },
+    operationId: 'findUsers',
+    source: 'users',
+    responseField: 'users',
+    key: 'id',
+    label: 'username',
+  },
+});
+assert.deepEqual(createTicketBody.properties.assignedToUserId[CODEGEN_EXTENSION_KEY], createTicketBody.properties.createdByUserId[CODEGEN_EXTENSION_KEY]);
+
+assert.equal((document.paths['/tickets/{id}'] as { parameters?: unknown[] }).parameters, undefined);
+assert.ok(JSON.stringify(operation('/tickets/{id}', 'get').parameters).includes('TicketsIdPathParam'));
+assert.deepEqual(codegen('/tickets/{id}', 'get').tags, ['v1', 'auth', 'support', 'tickets', 'detail']);
+assert.deepEqual(operation('/tickets/{id}', 'get').tags, ['tickets']);

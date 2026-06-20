@@ -117,6 +117,10 @@ const userFilterSchemas = users.defineSchemas({
 });
 
 const userSchemas = users.defineSchemas({
+  UserRouteParams: {
+    userId: userProps.ref.id,
+  },
+
   UserListQuery: sharedSchemas.ref.BaseQuery.extendWith({
     filters: userFilterSchemas.ref.UserFilters.optional(),
     fields: userQueryProps.ref.select.array().optional(),
@@ -158,9 +162,7 @@ const userSchemas = users.defineSchemas({
 });
 
 users.defineRoutes({
-  parameters: {
-    userId: userProps.ref.id,
-  },
+  params: userSchemas.ref.UserRouteParams,
 
   routes: {
     listUsers: {

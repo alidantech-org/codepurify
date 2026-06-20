@@ -89,6 +89,7 @@ function compileRef(field: RefSchemaField, mode: ZodSchemaMode): unknown {
   let schema: Record<string, unknown>;
   const ref = isRefUsage(field.ref) ? field.ref.ref : field.ref;
   const refUsage = isRefUsage(field.ref) ? field.ref : undefined;
+  const source = refUsage?.usage.source;
 
   // Step 1: Resolve base ref to OpenAPI $ref
   schema = { $ref: `#pending/${ref.id}` };
@@ -145,6 +146,12 @@ function compileRef(field: RefSchemaField, mode: ZodSchemaMode): unknown {
   // Step 5: Apply description from field options
   if (field.description) {
     schema.description = field.description;
+  }
+
+  if (source) {
+    schema['x-codegen'] = {
+      source: normalizeFieldSourceMetadata(source),
+    };
   }
 
   // Step 6: Apply nullable from field options (outer wrapper)
@@ -275,6 +282,24 @@ function asObject(value: unknown): Record<string, unknown> {
   }
 
   return value as Record<string, unknown>;
+}
+
+function normalizeFieldSourceMetadata(source: NonNullable<import('../../refs/ref-usage.types.js').RefUsageOptions['source']>): Record<string, unknown> {
+  const sourceRef = source.source ?? source.route.defaultSource;
+
+  if (!sourceRef) {
+    throw new Error(`Route "${source.route.name}" has no default source.`);
+  }
+
+  return {
+    kind: 'route',
+    resource: source.route.resource,
+    operationId: source.route.routeKey,
+    source: sourceRef.name,
+    responseField: sourceRef.source.responseField,
+    key: sourceRef.source.key,
+    label: sourceRef.source.label,
+  };
 }
 
 function inferKnownZodStringSchema(schema: unknown): Record<string, unknown> {

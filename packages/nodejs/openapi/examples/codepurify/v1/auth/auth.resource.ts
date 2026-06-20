@@ -9,6 +9,7 @@ const auth = v1.defineResource({
   name: 'auth',
   route: 'v1/auth',
   folders: ['platform'],
+  tags: ['platform', 'auth'],
   ui: {
     enabled: true,
     infer: false,
@@ -25,6 +26,29 @@ const authFields = auth.defineProperties('AuthFields', {
   idToken: z.string().min(1),
   token: z.string().min(1),
 });
+
+const authHooksRef = auth.defineHooks({
+  setSessionCookies: {
+    phase: 'afterSuccess',
+    transport: {
+      outbound: {
+        cookies: true,
+      },
+    },
+    description: 'Set access and refresh session cookies after successful authentication.',
+  },
+
+  auditFailedLogin: {
+    phase: 'afterError',
+    transport: {
+      inbound: {
+        ip: true,
+        userAgent: true,
+      },
+    },
+    description: 'Audit a failed login attempt.',
+  },
+}).ref;
 
 const authBodies = auth.defineSchemas({
   ResolveEmailBody: {
@@ -100,87 +124,62 @@ const authResponses = auth.defineSchemas({
   Conflict: sharedContract.sharedSchemas.ref.ApiMessage,
 });
 
-auth.defineRoutes((r) =>
-  r
-    .post('/resolve-email', 'resolveEmail')
-    .summary('Resolve email')
-    .body(authBodies.ref.ResolveEmailBody)
-    .response(authResponses.ref.ResolveEmailOk)
-    .ui('auth')
-    .done()
+auth.defineRoutes().routes((r) => ({
+  resolveEmail: r.post('/resolve-email').summary('Resolve email').body(authBodies.ref.ResolveEmailBody).response(authResponses.ref.ResolveEmailOk).ui('auth'),
 
-    .post('/signup', 'signup')
-    .summary('Sign up')
-    .body(authBodies.ref.SignupBody)
-    .on(201, authResponses.ref.SignupOk)
-    .on(409, authResponses.ref.Conflict)
-    .ui('auth')
-    .done()
+  signup: r.post('/signup').summary('Sign up').body(authBodies.ref.SignupBody).on(201, authResponses.ref.SignupOk).on(409, authResponses.ref.Conflict).ui('auth'),
 
-    .post('/login', 'login')
+  login: r
+    .post('/login')
     .summary('Login')
     .body(authBodies.ref.LoginBody)
     .on(200, authResponses.ref.AuthSessionOk)
     .on(401, sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+    .runtime({
+      transport: {
+        inbound: {
+          ip: true,
+          userAgent: true,
+        },
+      },
+      hooks: {
+        afterSuccess: authHooksRef.setSessionCookies,
+        afterError: authHooksRef.auditFailedLogin,
+      },
+    })
+    .ui('auth'),
 
-    .post('/admin/login', 'adminLogin')
+  adminLogin: r
+    .post('/admin/login')
     .summary('Admin login')
     .body(authBodies.ref.AdminLoginBody)
     .on(200, authResponses.ref.AuthSessionOk)
     .on(401, sharedContract.sharedSchemas.ref.ApiMessage)
     .on(403, sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+    .ui('auth'),
 
-    .post('/google', 'googleSignIn')
-    .summary('Google sign-in')
-    .body(authBodies.ref.GoogleSignInBody)
-    .on(200, authResponses.ref.AuthSessionOk)
-    .on(401, sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+  googleSignIn: r.post('/google').summary('Google sign-in').body(authBodies.ref.GoogleSignInBody).on(200, authResponses.ref.AuthSessionOk).on(401, sharedContract.sharedSchemas.ref.ApiMessage).ui('auth'),
 
-    .post('/verify-email', 'verifyEmail')
-    .summary('Verify email')
-    .body(authBodies.ref.VerifyEmailBody)
-    .response(sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+  verifyEmail: r.post('/verify-email').summary('Verify email').body(authBodies.ref.VerifyEmailBody).response(sharedContract.sharedSchemas.ref.ApiMessage).ui('auth'),
 
-    .post('/resend-verification-email', 'resendVerificationEmail')
+  resendVerificationEmail: r
+    .post('/resend-verification-email')
     .summary('Resend verification email')
     .body(authBodies.ref.ResendVerificationEmailBody)
     .response(sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+    .ui('auth'),
 
-    .post('/forgot-password', 'forgotPassword')
-    .summary('Forgot password')
-    .body(authBodies.ref.ForgotPasswordBody)
-    .response(sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+  forgotPassword: r.post('/forgot-password').summary('Forgot password').body(authBodies.ref.ForgotPasswordBody).response(sharedContract.sharedSchemas.ref.ApiMessage).ui('auth'),
 
-    .post('/reset-password', 'resetPassword')
-    .summary('Reset password')
-    .body(authBodies.ref.ResetPasswordBody)
-    .response(sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('auth')
-    .done()
+  resetPassword: r.post('/reset-password').summary('Reset password').body(authBodies.ref.ResetPasswordBody).response(sharedContract.sharedSchemas.ref.ApiMessage).ui('auth'),
 
-    .put('/change-password', 'changePassword')
-    .summary('Change password')
-    .body(authBodies.ref.ChangePasswordBody)
-    .response(sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('update')
-    .done(),
-);
+  changePassword: r.put('/change-password').summary('Change password').body(authBodies.ref.ChangePasswordBody).response(sharedContract.sharedSchemas.ref.ApiMessage).ui('update'),
+}));
 
 export const authContract = {
   auth,
   authFields,
+  authHooksRef,
   authBodies,
   authResponses,
 };

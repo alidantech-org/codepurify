@@ -19,7 +19,7 @@ import type { ResponseComponentRegistry, ResponseComponentDefinition } from '../
 import type { PropertyGroupOptions, PropertyRegistry, ZodPropertyDefinitionFieldMap } from '../properties/property.types.js';
 
 import { defineRoutes } from '../routes/define-routes.js';
-import type { RouteRegistry } from '../routes/route.types.js';
+import type { DefineRoutesInputLike, RouteRegistry, RoutesDefinitionBuilder } from '../routes/route.types.js';
 
 import type { ResourceContext } from './resource-context.types.js';
 import { defineProperties } from '../properties/define-properties.js';
@@ -28,6 +28,8 @@ import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
 import { defineAccess } from '../access/define-access.js';
 import { createAccessBuilder, type AccessBuilder } from '../access/access-builder.js';
 import type { AccessDefinitionInput, AccessRef, AccessRegistry } from '../access/access.types.js';
+import { defineHooks } from '../hooks/define-hooks.js';
+import type { RuntimeHookDefinition, RuntimeHookRegistry } from '../hooks/runtime-hooks.types.js';
 
 export interface DefineResourceOptions {
   /**
@@ -47,6 +49,11 @@ export interface DefineResourceOptions {
    * Defaults to name.
    */
   tag?: string;
+
+  /**
+   * Generator metadata tags inherited by operations.
+   */
+  tags?: readonly string[];
 
   /**
    * Generated output grouping folders.
@@ -85,7 +92,11 @@ export interface ResourceBuilder {
   readonly requestBodyComponents: RequestBodyComponentRegistry[];
   readonly responseComponents: ResponseComponentRegistry[];
   readonly accessComponents: AccessRegistry[];
-  readonly routes: RouteRegistry[];
+  readonly hookComponents: RuntimeHookRegistry[];
+  readonly routeRegistries: RouteRegistry[];
+  readonly routes: {
+    readonly ref: Record<string, import('../refs/ref.types.js').RouteRef>;
+  };
   readonly access: AccessBuilder;
 
   defineProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
@@ -115,8 +126,10 @@ export interface ResourceBuilder {
   ): ReturnType<typeof defineResponses<TInput>>;
 
   defineAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput>;
+  defineHooks<const TInput extends Record<string, RuntimeHookDefinition>>(input: TInput): RuntimeHookRegistry<TInput>;
 
-  defineRoutes(routes: Parameters<typeof defineRoutes>[1], name?: string): ReturnType<typeof defineRoutes>;
+  defineRoutes(): RoutesDefinitionBuilder;
+  defineRoutes(routes: DefineRoutesInputLike, name?: string): RouteRegistry;
 }
 
 function normalizeFolders(folders?: readonly string[]): readonly string[] {
@@ -128,6 +141,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     name: options.name,
     route: options.route,
     tag: options.tag ?? options.name,
+    tags: options.tags ?? [],
     folders: normalizeFolders(options.folders),
     alias: options.alias ?? options.name,
     ui: normalizeCodegenUiInput(options.ui),
@@ -141,7 +155,9 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   const requestBodyComponents: RequestBodyComponentRegistry[] = [];
   const responseComponents: ResponseComponentRegistry[] = [];
   const accessComponents: AccessRegistry[] = [];
-  const routes: RouteRegistry[] = [];
+  const hookComponents: RuntimeHookRegistry[] = [];
+  const routeRegistries: RouteRegistry[] = [];
+  const routes = { ref: {} as Record<string, import('../refs/ref.types.js').RouteRef> };
   const access = createAccessBuilder();
 
   function defineResourceProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
@@ -239,8 +255,24 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
-  function defineResourceRoutes(input: Parameters<typeof defineRoutes>[1], name?: string) {
-    const registry = defineRoutes(
+  function defineResourceHooks<const TInput extends Record<string, RuntimeHookDefinition>>(input: TInput): RuntimeHookRegistry<TInput> {
+    const registry = defineHooks(input, {
+      owner: {
+        resource: {
+          name: context.alias,
+          path: context.folders,
+        },
+      },
+    });
+
+    hookComponents.push(registry);
+    return registry;
+  }
+
+  function defineResourceRoutes(): RoutesDefinitionBuilder;
+  function defineResourceRoutes(input: DefineRoutesInputLike, name?: string): RouteRegistry;
+  function defineResourceRoutes(input?: DefineRoutesInputLike, name?: string): RouteRegistry | RoutesDefinitionBuilder {
+    const result = defineRoutes(
       {
         name: name ?? context.name,
         resource: context,
@@ -248,8 +280,24 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
       input,
     );
 
-    routes.push(registry);
-    return registry;
+    if ('ref' in result) {
+      routeRegistries.push(result);
+      Object.assign(routes.ref, result.ref);
+      return result;
+    }
+
+    return {
+      params(parameters) {
+        result.params(parameters);
+        return this;
+      },
+      routes(routeInput) {
+        const registry = result.routes(routeInput);
+        routeRegistries.push(registry);
+        Object.assign(routes.ref, registry.ref);
+        return registry;
+      },
+    } satisfies typeof result;
   }
 
   return {
@@ -261,6 +309,8 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     requestBodyComponents,
     responseComponents,
     accessComponents,
+    hookComponents,
+    routeRegistries,
     routes,
     access,
     defineProperties: defineResourceProperties,
@@ -269,6 +319,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     defineRequestBodies: defineResourceRequestBodies,
     defineResponses: defineResourceResponses,
     defineAccess: defineResourceAccess,
+    defineHooks: defineResourceHooks,
     defineRoutes: defineResourceRoutes,
   };
 }

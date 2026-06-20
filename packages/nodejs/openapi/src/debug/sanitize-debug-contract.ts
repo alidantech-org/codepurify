@@ -77,7 +77,7 @@ function extractUiMetadataDebug(contract: VersionContract): unknown[] {
   for (const resource of contract.resources) {
     const resourcePath = expressPathToOpenApi(resource.context.route);
 
-    for (const registry of resource.routes) {
+    for (const registry of resource.routeRegistries) {
       for (const route of Object.values(registry.routes)) {
         const fullPath = expressPathToOpenApi(`${resource.context.route}${route.path}`);
         const ui = resolveCodegenUi({

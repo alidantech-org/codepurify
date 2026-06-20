@@ -18,6 +18,7 @@ import { VersionBuilder } from './version/define-version-contract.js';
 export { defineVersionContract } from './version/define-version-contract.js';
 export { defineResource } from './resource/define-resource.js';
 export { defineAccess } from './access/define-access.js';
+export { defineHooks } from './hooks/define-hooks.js';
 
 export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
 export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
@@ -33,6 +34,20 @@ export type {
   AccessRoleSources,
 } from './access/access.types.js';
 export type { AccessBuilder } from './access/access-builder.js';
+export type {
+  RuntimeHookDefinition,
+  RuntimeHookOwner,
+  RuntimeHookPhase,
+  RuntimeHookRef,
+  RuntimeHookRefMap,
+  RuntimeHookRegistry,
+  RuntimeHookUsage,
+  RuntimeHookUsageMap,
+  RuntimeRouteConfig,
+  RuntimeTransport,
+  RuntimeTransportSideInbound,
+  RuntimeTransportSideOutbound,
+} from './hooks/runtime-hooks.types.js';
 
 /* =========================================================
  * Public API facade
@@ -53,6 +68,29 @@ export { schema } from './schema/schema.js';
  * ========================================================= */
 
 export { HttpMethod } from './routes/http-method.js';
+
+export type {
+  DefineRoutesBuilderInput,
+  DefineRoutesInput,
+  DefineRoutesInputLike,
+  RouteBodyInput,
+  RouteDefinition,
+  RouteDefinitionInput,
+  RouteFieldSource,
+  RouteOperationBuilder,
+  RouteOperationFactory,
+  RouteParameterMap,
+  RouteParameterRegistry,
+  RouteQueryInput,
+  RouteRegistry,
+  RouteResponseInput,
+  RouteSourceDefinition,
+  RouteSourceInput,
+  RouteSourceMapInput,
+  RouteSourceRef,
+  RouteSourceSelector,
+  RoutesDefinitionBuilder,
+} from './routes/route.types.js';
 
 /* =========================================================
  * Components

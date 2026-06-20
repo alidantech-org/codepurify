@@ -21,7 +21,16 @@ function resolvePendingRefsInternal(value: unknown, resolver: RefResolver, path:
   if (!isPlainObject(value)) return value;
 
   if (typeof value.$ref === 'string' && value.$ref.startsWith(PendingPrefix)) {
-    return resolvePendingRef(value.$ref, resolver, path, context);
+    const resolved = resolvePendingRef(value.$ref, resolver, path, context);
+    const { $ref, ...siblings } = value;
+    const resolvedSiblings = Object.fromEntries(
+      Object.entries(siblings).map(([key, child]) => [key, resolvePendingRefsInternal(child, resolver, `${path}.${key}`, context)]),
+    );
+
+    return {
+      ...resolved,
+      ...resolvedSiblings,
+    };
   }
 
   return Object.fromEntries(

@@ -99,41 +99,38 @@ const apps = v1.defineResource({
 });
 
 const appSchemas = apps.defineSchemas({
+  AppRouteParams: {
+    id: sharedProps.ref.uuid,
+  },
+
   AppResponse: {
     id: sharedProps.ref.uuid,
     message: sharedProps.ref.message,
   },
 });
 
-apps.defineRoutes((r) =>
-  r
-    .get('/', 'findApps')
-    .response(appSchemas.ref.AppResponse)
-    .done()
+apps
+  .defineRoutes()
+  .params(appSchemas.ref.AppRouteParams)
+  .routes((r) => ({
+    findApps: r.get('/').response(appSchemas.ref.AppResponse),
 
-    .delete('/:id', 'deleteApp')
-    .params({ id: sharedProps.ref.uuid })
-    .access(userAccess.ref.superAdmin)
-    .effects({
-      cookies: {
-        clear: ['access', 'refresh'],
-      },
-    })
-    .tags(['platform', 'apps', 'dangerous', 'mutation'])
-    .response(appSchemas.ref.AppResponse)
-    .ui('delete')
-    .done()
+    deleteApp: r
+      .delete('/:id')
+      .access(userAccess.ref.superAdmin)
+      .effects({
+        cookies: {
+          clear: ['access', 'refresh'],
+        },
+      })
+      .tags(['platform', 'apps', 'dangerous', 'mutation'])
+      .response(appSchemas.ref.AppResponse)
+      .ui('delete'),
 
-    .get('/public', 'findPublicApps')
-    .access(baseAccess.ref.public)
-    .response(appSchemas.ref.AppResponse)
-    .done()
+    findPublicApps: r.get('/public').access(baseAccess.ref.public).response(appSchemas.ref.AppResponse),
 
-    .post('/refresh', 'refreshApps')
-    .access(baseAccess.ref.refreshToken)
-    .response(appSchemas.ref.AppResponse)
-    .done(),
-);
+    refreshApps: r.post('/refresh').access(baseAccess.ref.refreshToken).response(appSchemas.ref.AppResponse),
+  }));
 
 assert.equal(baseAccess.ref.public.key, 'public');
 assert.deepEqual(baseAccess.ref.public.owner, { global: true });

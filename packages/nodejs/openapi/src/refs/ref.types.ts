@@ -1,7 +1,8 @@
 import { RefKind } from './ref-kind.js';
-import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
+import type { CodegenMetadata, XCodegenResourceMeta } from '../codegen/codegen-extension.types.js';
 import type { RefUsage, RefWithUsageMethods } from './ref-usage.types.js';
 import type { SchemaFieldMap } from '../schema/schema.types.js';
+import type { AccessRef } from '../access/access.types.js';
 
 export interface GeneratedEnumPropertySchema {
   readonly kind: 'enum';
@@ -64,6 +65,16 @@ export interface ModelRef extends EngineRefBase {
 export interface RouteRef extends EngineRefBase {
   readonly kind: typeof RefKind.route;
   readonly routeKey: string;
+  readonly method: string;
+  readonly path: string;
+  readonly resource?: XCodegenResourceMeta;
+  readonly query?: unknown;
+  readonly body?: unknown;
+  readonly response?: unknown;
+  readonly access?: AccessRef;
+  readonly runtime?: import('../hooks/runtime-hooks.types.js').RuntimeRouteConfig;
+  readonly sources: Record<string, import('../routes/route.types.js').RouteSourceRef>;
+  readonly defaultSource?: import('../routes/route.types.js').RouteSourceRef;
 }
 
 export interface OperationRef extends EngineRefBase {

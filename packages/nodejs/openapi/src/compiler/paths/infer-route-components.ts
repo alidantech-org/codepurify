@@ -87,21 +87,6 @@ export function inferRouteComponents(
     }
   }
 
-  if (route.params) {
-    for (const [name, param] of Object.entries(route.params)) {
-      addInferredParameter(components, {
-        name: getParameterName(name, 'path', resourceKey, route.operationId),
-        parameterName: name,
-        in: 'path',
-        required: true,
-        schema: param,
-        resourceKey,
-        operationId: route.operationId,
-        source: { origin: 'path' },
-      });
-    }
-  }
-
   if (route.query) {
     if (isRefUsage(route.query) || isEngineRef(route.query)) {
       const expandedFields = collectQueryFieldsFromSchemaComponentValue(route.query, contract);

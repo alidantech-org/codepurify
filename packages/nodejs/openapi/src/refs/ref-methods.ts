@@ -13,6 +13,7 @@ import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 import { getSourceMetadataFromRef, getSourceMetadataFromExtendWithInput } from './ref-source-metadata.js';
 import { RefKind } from './ref-kind.js';
+import type { RouteFieldSource, RouteSourceRef } from '../routes/route.types.js';
 
 export interface RefMethodOptions {
   readonly toZod?: (value: unknown) => z.ZodTypeAny;
@@ -60,6 +61,11 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
       enumerable: false,
       configurable: true,
       value: () => options.toZod?.(ref) ?? throwMissingZodResolver(ref.id),
+    },
+    source: {
+      enumerable: false,
+      configurable: true,
+      value: (source: RouteFieldSource['route'] | RouteSourceRef) => createUsage(ref, { source: normalizeRouteFieldSource(source) }, options),
     },
     allow: {
       enumerable: false,
@@ -242,9 +248,42 @@ function createUsage<TRef extends EngineRef>(ref: TRef, usage: RefUsageOptions, 
       configurable: true,
       value: () => options.toZod?.(ref) ?? throwMissingZodResolver(ref.id),
     },
+    source: {
+      enumerable: false,
+      configurable: true,
+      value: (source: RouteFieldSource['route'] | RouteSourceRef) =>
+        createUsage(ref, { ...usage, source: normalizeRouteFieldSource(source) }, options),
+    },
   });
 
   return current;
+}
+
+function normalizeRouteFieldSource(source: RouteFieldSource['route'] | RouteSourceRef): RouteFieldSource {
+  if ('kind' in source && source.kind === 'route-source') {
+    return {
+      kind: 'route',
+      route: source.route,
+      source,
+    };
+  }
+
+  const route = source;
+  const sourceValues = Object.values(route.sources ?? {});
+
+  if (sourceValues.length === 0) {
+    throw new Error(`Route "${route.name}" has no sources. Add .source(...) to the route before using it as a field source.`);
+  }
+
+  if (sourceValues.length > 1) {
+    throw new Error(`Route "${route.name}" has multiple sources. Use route.sources.<name> explicitly.`);
+  }
+
+  return {
+    kind: 'route',
+    route,
+    source: sourceValues[0],
+  };
 }
 
 function createArrayRef<TRef extends EngineRef>(ref: TRef, options: RefMethodOptions): ArrayRef<TRef> {

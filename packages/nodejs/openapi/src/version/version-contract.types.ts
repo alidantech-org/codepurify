@@ -28,6 +28,7 @@ export interface VersionDefaults {
 
 export interface VersionContract {
   readonly info: VersionInfo;
+  readonly tags: readonly string[];
   readonly defaults: VersionDefaults;
   readonly resources: ResourceBuilder[];
   readonly properties: PropertyRegistry[];

@@ -166,6 +166,7 @@ function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
   let ref = isRefUsage(value) ? value.ref : value;
   let array = isRefUsage(value) ? value.usage.array : false;
   const nullable = isRefUsage(value) ? value.usage.nullable : false;
+  const source = isRefUsage(value) ? value.usage.source : undefined;
   let extendWith = isRefUsage(value) ? value.usage.extendWith : undefined;
 
   // Unwrap ArrayRef and ExtendedRef
@@ -230,7 +231,34 @@ function compileCompositionValue(value: SchemaCompositionFieldValue): unknown {
     }
   }
 
+  if (source) {
+    schema = {
+      ...asObject(schema),
+      'x-codegen': {
+        source: normalizeFieldSourceMetadata(source),
+      },
+    };
+  }
+
   return schema;
+}
+
+function normalizeFieldSourceMetadata(source: NonNullable<import('../../refs/ref-usage.types.js').RefUsageOptions['source']>): Record<string, unknown> {
+  const sourceRef = source.source ?? source.route.defaultSource;
+
+  if (!sourceRef) {
+    throw new Error(`Route "${source.route.name}" has no default source.`);
+  }
+
+  return {
+    kind: 'route',
+    resource: source.route.resource,
+    operationId: source.route.routeKey,
+    source: sourceRef.name,
+    responseField: sourceRef.source.responseField,
+    key: sourceRef.source.key,
+    label: sourceRef.source.label,
+  };
 }
 
 function isSchemaProjectionDefinition(value: unknown): boolean {

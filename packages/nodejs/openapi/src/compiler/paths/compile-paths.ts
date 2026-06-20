@@ -14,6 +14,15 @@ import { isRefUsage } from '../../validation/ref-usage-guards.js';
 import { isComponentRef } from '../../validation/ref-guards.js';
 import { createOperationParameterTargetMeta } from './parameter-target-metadata.js';
 import type { AccessRef } from '../../access/access.types.js';
+import type { RouteSourceDefinition } from '../../routes/route.types.js';
+import type {
+  RuntimeHookPhase,
+  RuntimeHookRef,
+  RuntimeRouteConfig,
+  RuntimeTransport,
+  RuntimeTransportSideInbound,
+  RuntimeTransportSideOutbound,
+} from '../../hooks/runtime-hooks.types.js';
 
 export function compilePaths(
   contract: VersionContract,
@@ -59,12 +68,12 @@ export function compilePaths(
   >();
 
   for (const resource of contract.resources) {
-    for (const registry of resource.routes) {
+    for (const registry of resource.routeRegistries) {
       for (const route of Object.values(registry.routes)) {
         const routePath = `${resource.context.route}${route.path}`;
         const fullPath = expressPathToOpenApi(routePath);
         const resourcePath = expressPathToOpenApi(resource.context.route);
-        const pathParams = resolvePathParameters(registry.parameters, routePath, route.operationId);
+        const pathParams = resolvePathParameters(registry.params, routePath, route.operationId, contract);
 
         // Infer components for this route
         const inferred = inferRouteComponents(
@@ -103,7 +112,9 @@ export function compilePaths(
           ui,
           access: resolvedAccess,
           effects: route.effects,
-          tags: route.codegenTags,
+          runtime: resolveOperationRuntime(route.runtime),
+          tags: mergeTags(contract.tags, resource.context.tags, route.codegenTags),
+          sources: resolveOperationSources(route, resolver, contract),
         });
 
         if (isPublicAccess(access)) {
@@ -199,6 +210,132 @@ function resolveAccessContext(access: AccessRef, resolver: RefResolver): unknown
   return { $ref: `#/components/schemas/${schemaName}` };
 }
 
+function resolveOperationSources(
+  route: RouteDefinition,
+  resolver: RefResolver,
+  contract: VersionContract,
+): Record<string, unknown> | undefined {
+  if (!route.sources || Object.keys(route.sources).length === 0) return undefined;
+
+  return Object.fromEntries(
+    Object.entries(route.sources).map(([name, source]) => [
+      name,
+      cleanObject({
+        responseField: source.responseField,
+        item: resolveSourceItem(route, source, resolver, contract),
+        key: source.key,
+        label: source.label,
+      }),
+    ]),
+  );
+}
+
+function resolveSourceItem(
+  route: RouteDefinition,
+  source: RouteSourceDefinition,
+  resolver: RefResolver,
+  contract: VersionContract,
+): unknown {
+  const responseRef = unwrapComponentRefFromRouteValue(route.response);
+  if (!responseRef) return undefined;
+
+  const definition = findSchemaDefinition(responseRef.id, contract);
+  const field = resolveFieldFromSchemaValue(definition?.value, source.responseField, contract);
+  if (!field) {
+    throw new Error(`Route "${route.operationId || 'unknown'}" source "${source.responseField}" does not exist on the response schema.`);
+  }
+
+  const itemRef = unwrapArrayItemComponentRef(field);
+
+  if (!itemRef) {
+    throw new Error(`Route "${route.operationId || 'unknown'}" source "${source.responseField}" must be an array of schema refs.`);
+  }
+
+  validateSourceItemFields(route, source, itemRef, contract);
+
+  const schemaName = resolver.schemas.get(itemRef.id) ?? itemRef.name;
+  return { $ref: `#/components/schemas/${schemaName}` };
+}
+
+function validateSourceItemFields(
+  route: RouteDefinition,
+  source: RouteSourceDefinition,
+  itemRef: ComponentRef,
+  contract: VersionContract,
+): void {
+  const definition = findSchemaDefinition(itemRef.id, contract);
+  const fields = resolveSchemaObjectFields(definition?.value, contract);
+
+  if (!fields) return;
+
+  if (!(source.key in fields)) {
+    throw new Error(`Route "${route.operationId || 'unknown'}" source "${source.responseField}" key "${source.key}" was not found on "${itemRef.name}".`);
+  }
+
+  if (!(source.label in fields)) {
+    throw new Error(`Route "${route.operationId || 'unknown'}" source "${source.responseField}" label "${source.label}" was not found on "${itemRef.name}".`);
+  }
+}
+
+function resolveSchemaObjectFields(value: unknown, contract: VersionContract): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+
+  if (isRefUsage(value) && isComponentRef(value.ref)) {
+    const definition = findSchemaDefinition(value.ref.id, contract);
+    const baseFields = resolveSchemaObjectFields(definition?.value, contract) ?? {};
+    const extensionFields = value.usage.extendWith;
+
+    if (extensionFields && typeof extensionFields === 'object' && !Array.isArray(extensionFields) && !('kind' in extensionFields)) {
+      return {
+        ...baseFields,
+        ...(extensionFields as Record<string, unknown>),
+      };
+    }
+
+    return baseFields;
+  }
+
+  if ('kind' in value || 'ref' in value) return undefined;
+
+  return value as Record<string, unknown>;
+}
+
+function unwrapComponentRefFromRouteValue(value: unknown): ComponentRef | undefined {
+  const unwrapped = isRefUsage(value) ? value.ref : value;
+  return isComponentRef(unwrapped) ? unwrapped : undefined;
+}
+
+function resolveFieldFromSchemaValue(value: unknown, fieldName: string, contract: VersionContract): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+
+  if (isRefUsage(value) && isComponentRef(value.ref)) {
+    const definition = findSchemaDefinition(value.ref.id, contract);
+    const baseField = resolveFieldFromSchemaValue(definition?.value, fieldName, contract);
+    const extensionFields = value.usage.extendWith;
+
+    if (extensionFields && typeof extensionFields === 'object' && !Array.isArray(extensionFields) && !(isRefUsage(extensionFields))) {
+      return (extensionFields as Record<string, unknown>)[fieldName] ?? baseField;
+    }
+
+    return baseField;
+  }
+
+  if ('kind' in value || 'ref' in value) return undefined;
+
+  return (value as Record<string, unknown>)[fieldName];
+}
+
+function unwrapArrayItemComponentRef(value: unknown): ComponentRef | undefined {
+  if (!value) return undefined;
+
+  if (isRefUsage(value)) {
+    if (value.usage.array && isComponentRef(value.ref)) return value.ref;
+    return undefined;
+  }
+
+  return undefined;
+}
+
 function resolveAccessRoles(access: AccessRef, resolver: RefResolver): Record<string, unknown> | undefined {
   const roles = access.definition.roles;
   if (!roles) return undefined;
@@ -219,6 +356,75 @@ function resolveAccessRoleSource(source: { readonly id: string; readonly name: s
   return { $ref: `#/components/schemas/${schemaName}` };
 }
 
+function resolveOperationRuntime(runtime: RuntimeRouteConfig | undefined): Record<string, unknown> | undefined {
+  if (!runtime) return undefined;
+
+  const hooks = normalizeRuntimeHooks(runtime.hooks);
+  const hookRefs = Object.values(hooks).flat();
+  const transport = mergeRuntimeTransports(runtime.transport, ...hookRefs.map((hook) => hook.definition.transport));
+
+  return cleanObject({
+    transport,
+    hooks: Object.fromEntries(
+      Object.entries(hooks).map(([phase, phaseHooks]) => [
+        phase,
+        phaseHooks.map((hook) => cleanObject({
+          key: hook.key,
+          owner: hook.owner,
+          transport: hook.definition.transport,
+          description: hook.definition.description,
+        })),
+      ]),
+    ),
+  });
+}
+
+function normalizeRuntimeHooks(
+  hooks: RuntimeRouteConfig['hooks'],
+): Partial<Record<RuntimeHookPhase, RuntimeHookRef[]>> {
+  const normalized: Partial<Record<RuntimeHookPhase, RuntimeHookRef[]>> = {};
+
+  for (const [phase, value] of Object.entries(hooks ?? {}) as Array<[RuntimeHookPhase, RuntimeHookRef | readonly RuntimeHookRef[]]>) {
+    const phaseHooks = Array.isArray(value) ? value : [value];
+
+    for (const hook of phaseHooks) {
+      if (hook.phase !== phase) {
+        throw new Error(`Runtime hook "${hook.key}" declares phase "${hook.phase}" but was used in phase "${phase}".`);
+      }
+    }
+
+    normalized[phase] = phaseHooks as RuntimeHookRef[];
+  }
+
+  return normalized;
+}
+
+function mergeRuntimeTransports(...transports: Array<RuntimeTransport | undefined>): RuntimeTransport | undefined {
+  let inbound: true | RuntimeTransportSideInbound | undefined;
+  let outbound: true | RuntimeTransportSideOutbound | undefined;
+
+  for (const transport of transports) {
+    inbound = mergeRuntimeTransportSide(inbound, transport?.inbound);
+    outbound = mergeRuntimeTransportSide(outbound, transport?.outbound);
+  }
+
+  return cleanObject({ inbound, outbound }) as RuntimeTransport | undefined;
+}
+
+function mergeRuntimeTransportSide<TSide extends object>(
+  current: true | TSide | undefined,
+  next: true | TSide | undefined,
+): true | TSide | undefined {
+  if (current === true || next === true) return true;
+  if (!current) return next;
+  if (!next) return current;
+
+  return {
+    ...current,
+    ...Object.fromEntries(Object.entries(next).filter(([, enabled]) => enabled === true)),
+  } as TSide;
+}
+
 function isPublicAccess(access: AccessRef | undefined): boolean {
   if (!access) return false;
   if (access.definition.context === null) return true;
@@ -233,6 +439,21 @@ function cleanObject(input: Record<string, unknown>): Record<string, unknown> {
       .map(([key, value]) => [key, cleanValue(value)] as const)
       .filter(([, value]) => value !== undefined),
   );
+}
+
+function mergeTags(...groups: Array<readonly string[] | undefined>): string[] | undefined {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const group of groups) {
+    for (const tag of group ?? []) {
+      if (!tag || seen.has(tag)) continue;
+      seen.add(tag);
+      result.push(tag);
+    }
+  }
+
+  return result.length > 0 ? result : undefined;
 }
 
 function cleanValue(value: unknown): unknown {
@@ -259,6 +480,7 @@ function resolvePathParameters(
   parameters: RouteParameterRegistry | undefined,
   routePath: string,
   operationId?: string,
+  contract?: VersionContract,
 ): RouteParameterMap | undefined {
   if (!parameters) return undefined;
 
@@ -266,18 +488,55 @@ function resolvePathParameters(
   if (paramNames.length === 0) return undefined;
 
   const result: RouteParameterMap = {};
+  const availableParams = resolveParameterSchemaFields(parameters, contract);
 
   for (const paramName of paramNames) {
-    const paramRef = parameters[paramName];
+    const paramRef = availableParams[paramName];
     if (!paramRef) {
       throw new Error(
-        `Route "${operationId || 'unknown'}" path "${routePath}" declares path parameter "${paramName}" but no parameter ref was registered in defineRoutes({ parameters }).`,
+        `Route "${operationId || 'unknown'}" path "${routePath}" declares path parameter "${paramName}" but it was not declared in defineRoutes().params(...).`,
       );
     }
     result[paramName] = paramRef;
   }
 
   return result;
+}
+
+function resolveParameterSchemaFields(parameters: RouteParameterRegistry, contract?: VersionContract): RouteParameterMap {
+  const ref = isRefUsage(parameters) ? parameters.ref : parameters;
+
+  if (!isComponentRef(ref)) {
+    return {};
+  }
+
+  const definition = findSchemaDefinition(ref.id, contract);
+
+  if (!definition || !isRecord(definition.value) || 'kind' in definition.value || 'ref' in definition.value) {
+    return {};
+  }
+
+  return definition.value as RouteParameterMap;
+}
+
+function findSchemaDefinition(refId: string, contract?: VersionContract): { value: unknown } | undefined {
+  if (!contract) return undefined;
+
+  for (const registry of contract.schemaComponents) {
+    for (const definition of registry.definitions) {
+      if (registry.ref[definition.name]?.id === refId) return definition;
+    }
+  }
+
+  for (const resource of contract.resources) {
+    for (const registry of resource.schemaComponents) {
+      for (const definition of registry.definitions) {
+        if (registry.ref[definition.name]?.id === refId) return definition;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function mergeInferredComponents(target: InferredRouteComponents, source: InferredRouteComponents): void {

@@ -7,6 +7,7 @@ export interface OpenApiDocument {
   security?: Array<Record<string, string[]>>;
   paths: OpenApiPaths;
   components: OpenApiComponents;
+  [extension: `x-${string}`]: unknown;
 }
 
 export interface OpenApiInfo {

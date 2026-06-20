@@ -22,6 +22,11 @@ export interface ResourceContext {
   readonly tag: string;
 
   /**
+   * Generator metadata tags inherited by operations.
+   */
+  readonly tags: readonly string[];
+
+  /**
    * Generated output grouping folders.
    * This is NOT a URL path.
    *

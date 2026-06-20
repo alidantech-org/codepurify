@@ -26,6 +26,7 @@ const v1 = defineVersionContract({
     title: 'Example API',
     version: 'v1',
   },
+  tags: ['v1'],
   defaults: {
     requestContentType: ContentType.json,
     responseContentType: ContentType.json,
@@ -49,6 +50,7 @@ const users = v1.defineResource({
   name: 'users',
   route: 'v1/users',
   folders: ['platform'],
+  tags: ['platform', 'users'],
   ui: {
     enabled: true,
     infer: true,
@@ -83,6 +85,9 @@ const userProjectionSchemas = users.defineSchemas({
 });
 
 const userResponseSchemas = users.defineSchemas({
+  UserRouteParams: {
+    userId: sharedProps.ref.mongoId,
+  },
   UserResponse: sharedSchemas.ref.ApiMessage.extendWith({
     user: userBaseSchemas.ref.UserPublic,
   }),
@@ -91,29 +96,19 @@ const userResponseSchemas = users.defineSchemas({
   }),
 });
 
-users.defineRoutes((r) =>
-  r
-    .get('/', 'listUsers')
-    .summary('List users')
-    .response(userResponseSchemas.ref.UserListResponse)
-    .ui('list')
-    .done()
-
-    .get('/:userId', 'getUserById')
-    .params({ userId: sharedProps.ref.mongoId })
-    .summary('Get user by ID')
-    .response(userResponseSchemas.ref.UserResponse)
-    .ui('detail')
-    .done()
-
-    .patch('/:userId', 'updateUser')
-    .params({ userId: sharedProps.ref.mongoId })
-    .summary('Update user')
-    .body(userProjectionSchemas.ref.UpdateUserBody)
-    .response(userResponseSchemas.ref.UserResponse)
-    .ui('update')
-    .done(),
-);
+users
+  .defineRoutes()
+  .params(userResponseSchemas.ref.UserRouteParams)
+  .routes((r) => ({
+    listUsers: r.get('/').summary('List users').response(userResponseSchemas.ref.UserListResponse).ui('list'),
+    getUserById: r.get('/:userId').summary('Get user by ID').response(userResponseSchemas.ref.UserResponse).ui('detail'),
+    updateUser: r
+      .patch('/:userId')
+      .summary('Update user')
+      .body(userProjectionSchemas.ref.UpdateUserBody)
+      .response(userResponseSchemas.ref.UserResponse)
+      .ui('update'),
+  }));
 
 export default definePackageConfig({
   contracts: [v1],
@@ -181,6 +176,7 @@ const users = v1.defineResource({
   name: 'users',
   route: '/users',
   folders: ['platform'],
+  tags: ['platform', 'users'],
 });
 ```
 
@@ -198,6 +194,8 @@ Route params use Express/Nest style in contracts and compile to OpenAPI style:
 path: '/:userId'
 // OpenAPI path: /users/{userId}
 ```
+
+Version, resource, and operation generator tags merge into operation `x-codegen.tags` in that order. OpenAPI `operation.tags` stays clean and uses the resource grouping tag.
 
 ### Properties
 
@@ -269,14 +267,13 @@ Object style:
 
 ```ts
 users.defineRoutes({
-  parameters: {
-    userId: sharedProps.ref.mongoId,
-  },
+  params: routeSchemas.ref.UserRouteParams,
   routes: {
     getUserById: {
       method: HttpMethod.get,
       path: '/:userId',
       response: userResponseSchemas.ref.UserResponse,
+      tags: ['detail'],
       ui: 'detail',
     },
   },
@@ -286,19 +283,62 @@ users.defineRoutes({
 Builder style:
 
 ```ts
-users.defineRoutes((r) =>
-  r
-    .get('/', 'listUsers')
-    .response(userResponseSchemas.ref.UserListResponse)
-    .ui('list')
-    .done()
-    .post('/', 'createUser')
-    .body(userBodySchemas.ref.CreateUserBody)
-    .on(201, userResponseSchemas.ref.UserResponse)
-    .ui('create')
-    .done(),
-);
+users
+  .defineRoutes()
+  .params(routeSchemas.ref.UserRouteParams)
+  .routes((r) => ({
+    listUsers: r.get('/').response(userResponseSchemas.ref.UserListResponse).ui('list'),
+    createUser: r.post('/').body(userBodySchemas.ref.CreateUserBody).on(201, userResponseSchemas.ref.UserResponse).tags(['mutation']).ui('create'),
+  }));
 ```
+
+### Runtime Hooks
+
+Runtime hooks are resource-owned, framework-neutral lifecycle metadata for generators. They compile under `x-codegen.runtime`; templates decide how to map them.
+
+```ts
+const authHooksRef = auth.defineHooks({
+  setSessionCookies: {
+    phase: 'afterSuccess',
+    transport: {
+      outbound: {
+        cookies: true,
+      },
+    },
+  },
+
+  auditFailedLogin: {
+    phase: 'afterError',
+    transport: {
+      inbound: {
+        ip: true,
+        userAgent: true,
+      },
+    },
+  },
+}).ref;
+
+auth.defineRoutes().routes((r) => ({
+  loginWithEmail: r
+    .post('/login/email')
+    .body(authBodySchemas.ref.LoginEmailBody)
+    .response(authResponseSchemas.ref.AuthResponse)
+    .runtime({
+      transport: {
+        inbound: {
+          ip: true,
+          userAgent: true,
+        },
+      },
+      hooks: {
+        afterSuccess: authHooksRef.setSessionCookies,
+        afterError: authHooksRef.auditFailedLogin,
+      },
+    }),
+}));
+```
+
+Supported hook phases are `beforeValidation`, `beforeHandler`, `afterSuccess`, `afterError`, and `afterSend`. Transport intent uses neutral `inbound` and `outbound` flags such as `cookies`, `headers`, `stream`, and `bypassSerializer`.
 
 ### UI Metadata
 

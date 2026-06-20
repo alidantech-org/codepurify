@@ -12,6 +12,7 @@ const users = v1.defineResource({
   name: 'users',
   route: 'v1/users',
   folders: ['platform'],
+  tags: ['platform', 'users'],
   ui: {
     enabled: true,
     infer: true,
@@ -79,6 +80,10 @@ const userFilterSchemas = users.defineSchemas({
 });
 
 const userSchemas = users.defineSchemas({
+  UserRouteParams: {
+    userId: userProps.ref.id,
+  },
+
   UserListQuery: sharedContract.sharedSchemas.ref.BaseQuery.extendWith({
     filters: userFilterSchemas.ref.UserFilters.optional(),
     fields: userQueryProps.ref.select.array().optional(),
@@ -116,53 +121,34 @@ const userSchemas = users.defineSchemas({
   }),
 });
 
-users.defineRoutes((r) =>
-  r
-    .get('/', 'listUsers')
-    .summary('List users')
-    .query(userSchemas.ref.UserListQuery)
-    .response(userSchemas.ref.UsersListOk)
-    .ui('list')
-    .done()
+users
+  .defineRoutes()
+  .params(userSchemas.ref.UserRouteParams)
+  .routes((r) => ({
+    listUsers: r
+      .get('/')
+      .summary('List users')
+      .query(userSchemas.ref.UserListQuery)
+      .response(userSchemas.ref.UsersListOk)
+      .source('users', (user) => user.key('id').label('name'))
+      .ui('list'),
 
-    .post('/', 'createUser')
-    .summary('Create user')
-    .body(userSchemas.ref.CreateUserBody)
-    .on(201, userSchemas.ref.UserOk)
-    .on(409, sharedContract.sharedSchemas.ref.ApiMessage)
-    .ui('create')
-    .done()
+    createUser: r
+      .post('/')
+      .summary('Create user')
+      .body(userSchemas.ref.CreateUserBody)
+      .on(201, userSchemas.ref.UserOk)
+      .on(409, sharedContract.sharedSchemas.ref.ApiMessage)
+      .ui('create'),
 
-    .get('/me', 'getCurrentUser')
-    .summary('Get current user')
-    .query(userSchemas.ref.UserDetailQuery)
-    .response(userSchemas.ref.UserOk)
-    .ui({ enabled: false })
-    .done()
+    getCurrentUser: r.get('/me').summary('Get current user').query(userSchemas.ref.UserDetailQuery).response(userSchemas.ref.UserOk).ui({ enabled: false }),
 
-    .get('/:userId', 'getUserById')
-    .params({ userId: userProps.ref.id })
-    .summary('Get user by ID')
-    .query(userSchemas.ref.UserDetailQuery)
-    .response(userSchemas.ref.UserOk)
-    .ui('detail')
-    .done()
+    getUserById: r.get('/:userId').summary('Get user by ID').query(userSchemas.ref.UserDetailQuery).response(userSchemas.ref.UserOk).ui('detail'),
 
-    .patch('/:userId', 'updateUser')
-    .params({ userId: userProps.ref.id })
-    .summary('Update user')
-    .body(userSchemas.ref.UpdateUserBody)
-    .response(userSchemas.ref.UserOk)
-    .ui('update')
-    .done()
+    updateUser: r.patch('/:userId').summary('Update user').body(userSchemas.ref.UpdateUserBody).response(userSchemas.ref.UserOk).ui('update'),
 
-    .delete('/:userId', 'deleteUser')
-    .params({ userId: userProps.ref.id })
-    .summary('Delete user')
-    .response(userSchemas.ref.UserDeleted)
-    .ui('delete')
-    .done(),
-);
+    deleteUser: r.delete('/:userId').summary('Delete user').response(userSchemas.ref.UserDeleted).ui('delete'),
+  }));
 
 export const userContract = {
   users,

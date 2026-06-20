@@ -1,4 +1,4 @@
-import type { ComponentRef, ModelRef, ParameterRef, RequestBodyRef, ResponseRef, PropertyRef } from '../refs/ref.types.js';
+import type { ComponentRef, ModelRef, ParameterRef, RequestBodyRef, ResponseRef, PropertyRef, RouteRef } from '../refs/ref.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 import type { RefWithUsageMethods, RefUsage } from '../refs/ref-usage.types.js';
 import type { SchemaField } from '../schema/schema.types.js';
@@ -6,8 +6,8 @@ import type { HttpMethod } from './http-method.js';
 import type { CodegenMetadata, CodegenOperationEffects, CodegenUiInput } from '../codegen/codegen-extension.types.js';
 import type { AccessRef } from '../access/access.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
+import type { RuntimeRouteConfig } from '../hooks/runtime-hooks.types.js';
 
-// Legacy types - kept for backward compatibility
 export type RouteSchemaRef = ComponentRef | ModelRef | ComponentFieldMap;
 
 export type RouteRequestBodyRef = RequestBodyRef | RouteSchemaRef;
@@ -18,7 +18,7 @@ export type RouteParameterRef = ParameterRef | ComponentFieldMap;
 
 export type RouteParameterInput = ParameterRef | readonly ParameterRef[] | ComponentFieldMap;
 
-export type RouteParameterRegistry = Record<string, RouteParameterFieldValue>;
+export type RouteParameterRegistry = RefWithUsageMethods<ComponentRef> | RefUsage<ComponentRef> | ComponentRef;
 
 // Route query field values must be property refs, not component/model refs
 // A route query can be a ComponentRef at the top level, but expanded fields must be PropertyRef
@@ -54,13 +54,36 @@ export interface RouteResponseObjectInput {
 
 export type RouteResponseInput = RouteSchemaInput | RouteResponseObjectInput;
 
+export interface RouteSourceInput {
+  readonly key: string;
+  readonly label: string;
+}
+
+export type RouteSourceMapInput = Record<string, RouteSourceInput>;
+
+export interface RouteSourceDefinition extends RouteSourceInput {
+  readonly responseField: string;
+}
+
+export interface RouteSourceRef {
+  readonly kind: 'route-source';
+  readonly name: string;
+  readonly route: RouteRef;
+  readonly source: RouteSourceDefinition;
+}
+
+export interface RouteFieldSource {
+  readonly kind: 'route';
+  readonly route: RouteRef;
+  readonly source?: RouteSourceRef;
+}
+
 export interface RouteDefinition {
   readonly method: HttpMethod;
   readonly path: string;
   readonly summary?: string;
   readonly description?: string;
 
-  readonly params?: RouteParameterMap;
   readonly query?: RouteQueryInput;
   readonly body?: RouteBodyInput;
 
@@ -74,47 +97,64 @@ export interface RouteDefinition {
   readonly ui?: CodegenUiInput;
   readonly access?: AccessRef;
   readonly effects?: CodegenOperationEffects;
+  readonly runtime?: RuntimeRouteConfig;
+  readonly source?: RouteSourceMapInput;
+  readonly sources?: Record<string, RouteSourceDefinition>;
 }
 
-export type DefineRoutesInput =
-  | Record<string, RouteDefinition>
-  | {
-      readonly parameters?: RouteParameterRegistry;
-      readonly routes: Record<string, RouteDefinition>;
-    };
+export type RouteDefinitionInput = Omit<RouteDefinition, 'operationId' | 'meta' | 'sources'> & {
+  readonly source?: RouteSourceMapInput;
+};
 
-export type DefineRoutesBuilderInput = (builder: RoutesBuilder) => RoutesBuilder | void;
+export type DefineRoutesInput = {
+  readonly params?: RouteParameterRegistry;
+  readonly routes: Record<string, RouteDefinitionInput>;
+};
 
-export type DefineRoutesInputLike = DefineRoutesInput | DefineRoutesBuilderInput;
+export type DefineRoutesBuilderInput = (builder: RouteOperationFactory) => Record<string, RouteOperationBuilder>;
 
-export interface RoutesBuilder {
-  params(parameters: RouteParameterRegistry): RoutesBuilder;
-  get(path: string, name: string): RoutesBuilder;
-  post(path: string, name: string): RoutesBuilder;
-  put(path: string, name: string): RoutesBuilder;
-  patch(path: string, name: string): RoutesBuilder;
-  delete(path: string, name: string): RoutesBuilder;
-  summary(summary: string): RoutesBuilder;
-  description(description: string): RoutesBuilder;
-  query(query: RouteQueryInput): RoutesBuilder;
-  body(body: RouteBodyInput): RoutesBuilder;
-  response(response: RouteResponseInput): RoutesBuilder;
-  on(status: number, response: RouteResponseInput): RoutesBuilder;
-  ui(roleOrMeta: CodegenUiInput): RoutesBuilder;
-  access(access: AccessRef): RoutesBuilder;
-  effects(effects: CodegenOperationEffects): RoutesBuilder;
-  tags(tags: readonly string[]): RoutesBuilder;
-  done(): RoutesBuilder;
-  build(): {
-    parameters?: RouteParameterRegistry;
-    routes: Record<string, RouteDefinition>;
-  };
+export type DefineRoutesInputLike = DefineRoutesInput;
+
+export interface RouteSourceSelector {
+  key(field: string): RouteSourceSelector;
+  label(field: string): RouteSourceSelector;
+  build(): RouteSourceInput;
+}
+
+export interface RouteOperationBuilder {
+  summary(summary: string): RouteOperationBuilder;
+  description(description: string): RouteOperationBuilder;
+  query(query: RouteQueryInput): RouteOperationBuilder;
+  body(body: RouteBodyInput): RouteOperationBuilder;
+  response(response: RouteResponseInput): RouteOperationBuilder;
+  on(status: number, response: RouteResponseInput): RouteOperationBuilder;
+  ui(roleOrMeta: CodegenUiInput): RouteOperationBuilder;
+  access(access: AccessRef): RouteOperationBuilder;
+  effects(effects: CodegenOperationEffects): RouteOperationBuilder;
+  runtime(runtime: RuntimeRouteConfig): RouteOperationBuilder;
+  tags(tags: readonly string[]): RouteOperationBuilder;
+  source(responseField: string, configure: (source: RouteSourceSelector) => RouteSourceSelector): RouteOperationBuilder;
+  build(): RouteDefinition;
+}
+
+export interface RouteOperationFactory {
+  get(path: string): RouteOperationBuilder;
+  post(path: string): RouteOperationBuilder;
+  put(path: string): RouteOperationBuilder;
+  patch(path: string): RouteOperationBuilder;
+  delete(path: string): RouteOperationBuilder;
+}
+
+export interface RoutesDefinitionBuilder {
+  params(parameters: RouteParameterRegistry): RoutesDefinitionBuilder;
+  routes(input: DefineRoutesBuilderInput): RouteRegistry;
 }
 
 export interface RouteRegistry {
   readonly name: string;
   readonly routes: Record<string, RouteDefinition>;
-  readonly parameters?: RouteParameterRegistry;
+  readonly params?: RouteParameterRegistry;
+  readonly ref: Record<string, RouteRef>;
 }
 
 export function extractPathParamNames(path: string): readonly string[] {

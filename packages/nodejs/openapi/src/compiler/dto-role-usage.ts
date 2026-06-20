@@ -12,7 +12,9 @@ export function collectDtoRoleUsageFromContract(contract: VersionContract, conte
   if (!context.dtoRoleUsage) return;
 
   for (const resource of contract.resources) {
-    for (const routeRegistry of resource.routes) {
+    for (const routeRegistry of resource.routeRegistries) {
+      recordDtoRoleUsage(routeRegistry.params, XCodegenDtoRole.params, context.dtoRoleUsage);
+
       for (const route of Object.values(routeRegistry.routes)) {
         collectDtoRoleUsageFromRoute(route, context);
       }
@@ -29,7 +31,6 @@ function collectDtoRoleUsageFromRoute(route: unknown, context: CompilerContext):
 
   recordDtoRoleUsage(routeObj.query, XCodegenDtoRole.query, usage);
   recordDtoRoleUsage(routeObj.body, XCodegenDtoRole.body, usage);
-  recordDtoRoleUsage(routeObj.params, XCodegenDtoRole.params, usage);
   recordDtoRoleUsage(routeObj.response, XCodegenDtoRole.response, usage);
 
   // Handle responses object

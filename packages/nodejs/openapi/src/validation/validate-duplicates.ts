@@ -83,7 +83,7 @@ export function validateDuplicates(contract: VersionContract): ValidationIssue[]
 
     issues.push(
       ...findRegistryDuplicates(
-        resource.routes.map((registry) => registry.name),
+        resource.routeRegistries.map((registry) => registry.name),
         `${basePath}.routes`,
       ),
     );

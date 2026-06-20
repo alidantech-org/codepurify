@@ -80,7 +80,37 @@ function createOpenApiShell(contract: VersionContract, options: CompileOptions, 
         },
       },
     },
+    'x-codegen': createDocumentCodegenMetadata(contract),
   };
 
   return resolvePendingRefs(document, compiledComponents.resolver, context) as OpenApiDocument;
+}
+
+function createDocumentCodegenMetadata(contract: VersionContract): Record<string, unknown> | undefined {
+  const hooks = Object.fromEntries(
+    contract.resources
+      .filter((resource) => resource.hookComponents.length > 0)
+      .map((resource) => [
+        resource.context.alias,
+        Object.fromEntries(
+          resource.hookComponents.flatMap((registry) =>
+            registry.definitions.map((definition) => [
+              definition.key,
+              cleanObject({
+                phase: definition.phase,
+                owner: definition.owner,
+                transport: definition.transport,
+                description: definition.description,
+              }),
+            ]),
+          ),
+        ),
+      ]),
+  );
+
+  return Object.keys(hooks).length > 0 ? { hooks } : undefined;
+}
+
+function cleanObject(input: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined));
 }
