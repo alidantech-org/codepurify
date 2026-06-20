@@ -20,7 +20,7 @@ import type { PropertyGroupOptions, PropertyRegistry, ZodPropertyDefinitionField
 import type { VersionContract, VersionInfo, VersionDefaults } from './version-contract.types.js';
 import { ContentType } from '../openapi/content-type.js';
 import { defineAccess } from '../access/define-access.js';
-import type { AccessDefinition, AccessRegistry } from '../access/access.types.js';
+import type { AccessDefinitionInput, AccessRegistry } from '../access/access.types.js';
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;
@@ -64,7 +64,7 @@ export interface VersionBuilder {
     input: TInput,
     name?: string,
   ): ReturnType<typeof defineResponses<TInput>>;
-  defineAccess<const TInput extends Record<string, AccessDefinition>>(input: TInput): AccessRegistry<TInput>;
+  defineAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput>;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
 
@@ -194,7 +194,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return builder;
   }
 
-  function defineVersionAccess<const TInput extends Record<string, AccessDefinition>>(input: TInput): AccessRegistry<TInput> {
+  function defineVersionAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput> {
     const registry = defineAccess(input);
     accessComponents.push(registry);
     return registry;

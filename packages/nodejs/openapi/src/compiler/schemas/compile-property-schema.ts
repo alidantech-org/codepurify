@@ -57,11 +57,14 @@ export function compilePropertySchema(field: SchemaField, mode: ZodSchemaMode = 
 }
 
 function compilePrimitive(field: PrimitiveSchemaField, mode: ZodSchemaMode): unknown {
+  const schema = {
+    ...inferKnownZodStringSchema(field.zod),
+    ...asObject(zodToOpenApiSchema(field.zod, mode)),
+    description: field.description,
+  };
+
   return applyNullable(
-    {
-      ...asObject(zodToOpenApiSchema(field.zod, mode)),
-      description: field.description,
-    },
+    schema,
     field.nullable,
   );
 }
@@ -272,4 +275,64 @@ function asObject(value: unknown): Record<string, unknown> {
   }
 
   return value as Record<string, unknown>;
+}
+
+function inferKnownZodStringSchema(schema: unknown): Record<string, unknown> {
+  const format = findZodStringFormat(schema);
+
+  if (!format) return {};
+
+  if (format === 'datetime' || format === 'date-time') {
+    return { type: 'string', format: 'date-time' };
+  }
+
+  if (format === 'uuid') {
+    return { type: 'string', format: 'uuid' };
+  }
+
+  if (format === 'email') {
+    return { type: 'string', format: 'email' };
+  }
+
+  if (format === 'url' || format === 'uri') {
+    return { type: 'string', format: 'uri' };
+  }
+
+  return {};
+}
+
+function findZodStringFormat(schema: unknown): string | undefined {
+  const seen = new Set<unknown>();
+  const stack = [schema];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current || typeof current !== 'object' || seen.has(current)) continue;
+    seen.add(current);
+
+    const record = current as Record<string, unknown>;
+    const format = record.format ?? record.kind ?? record.check ?? record.type;
+
+    if (typeof format === 'string' && isKnownStringFormat(format)) {
+      return format;
+    }
+
+    for (const key of ['_def', 'def', '_zod']) {
+      const child = record[key];
+      if (child && typeof child === 'object') {
+        stack.push(child);
+      }
+    }
+
+    const checks = record.checks;
+    if (Array.isArray(checks)) {
+      stack.push(...checks);
+    }
+  }
+
+  return undefined;
+}
+
+function isKnownStringFormat(value: string): boolean {
+  return ['datetime', 'date-time', 'uuid', 'email', 'url', 'uri'].includes(value);
 }

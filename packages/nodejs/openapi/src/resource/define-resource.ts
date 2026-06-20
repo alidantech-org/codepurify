@@ -25,7 +25,9 @@ import type { ResourceContext } from './resource-context.types.js';
 import { defineProperties } from '../properties/define-properties.js';
 import { normalizeCodegenUiInput } from '../codegen/codegen-ui.js';
 import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
-import type { AccessRef } from '../access/access.types.js';
+import { defineAccess } from '../access/define-access.js';
+import { createAccessBuilder, type AccessBuilder } from '../access/access-builder.js';
+import type { AccessDefinitionInput, AccessRef, AccessRegistry } from '../access/access.types.js';
 
 export interface DefineResourceOptions {
   /**
@@ -82,7 +84,9 @@ export interface ResourceBuilder {
   readonly parameterComponents: ParameterComponentRegistry[];
   readonly requestBodyComponents: RequestBodyComponentRegistry[];
   readonly responseComponents: ResponseComponentRegistry[];
+  readonly accessComponents: AccessRegistry[];
   readonly routes: RouteRegistry[];
+  readonly access: AccessBuilder;
 
   defineProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
     name: TName,
@@ -110,6 +114,8 @@ export interface ResourceBuilder {
     name?: string,
   ): ReturnType<typeof defineResponses<TInput>>;
 
+  defineAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput>;
+
   defineRoutes(routes: Parameters<typeof defineRoutes>[1], name?: string): ReturnType<typeof defineRoutes>;
 }
 
@@ -134,7 +140,9 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
   const parameterComponents: ParameterComponentRegistry[] = [];
   const requestBodyComponents: RequestBodyComponentRegistry[] = [];
   const responseComponents: ResponseComponentRegistry[] = [];
+  const accessComponents: AccessRegistry[] = [];
   const routes: RouteRegistry[] = [];
+  const access = createAccessBuilder();
 
   function defineResourceProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
     name: TName,
@@ -217,6 +225,20 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     return registry;
   }
 
+  function defineResourceAccess<const TInput extends Record<string, AccessDefinitionInput>>(input: TInput): AccessRegistry<TInput> {
+    const registry = defineAccess(input, {
+      owner: {
+        resource: {
+          name: context.alias,
+          path: context.folders,
+        },
+      },
+    });
+
+    accessComponents.push(registry);
+    return registry;
+  }
+
   function defineResourceRoutes(input: Parameters<typeof defineRoutes>[1], name?: string) {
     const registry = defineRoutes(
       {
@@ -238,12 +260,15 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     parameterComponents,
     requestBodyComponents,
     responseComponents,
+    accessComponents,
     routes,
+    access,
     defineProperties: defineResourceProperties,
     defineSchemas: defineResourceSchemas,
     defineParameters: defineResourceParameters,
     defineRequestBodies: defineResourceRequestBodies,
     defineResponses: defineResourceResponses,
+    defineAccess: defineResourceAccess,
     defineRoutes: defineResourceRoutes,
   };
 }

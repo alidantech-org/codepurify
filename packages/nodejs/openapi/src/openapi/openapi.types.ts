@@ -38,6 +38,7 @@ export interface OpenApiOperation {
   parameters?: unknown[];
   requestBody?: unknown;
   responses: Record<string, unknown>;
+  security?: Array<Record<string, string[]>>;
   [extension: `x-${string}`]: unknown;
 }
 

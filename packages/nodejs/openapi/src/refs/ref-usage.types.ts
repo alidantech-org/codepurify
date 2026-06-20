@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { ComponentRef, EngineRef, ModelRef, PropertyRef } from './ref.types.js';
 import type { SchemaCompositionFieldMap } from '../schema/schema.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
+import type { AccessAllowSelection, AccessRoleSource } from '../access/access.types.js';
 
 export type FieldSourceOrigin = 'base' | 'extension' | 'inline' | 'inherited' | 'path';
 
@@ -115,4 +116,10 @@ export type RefWithUsageMethods<TRef extends EngineRef> = TRef & {
   array(): RefUsage<TRef>;
   extendWith(fields: ExtendWithInput): RefUsage<TRef>;
   zod(): z.ZodTypeAny;
+};
+
+export type RefWithAccessAllowMethods<TRef extends PropertyRef, TValue extends string> = RefWithUsageMethods<TRef> & {
+  allow<const TAllow extends Record<string, true>>(
+    allow: AccessAllowSelection<TValue, TAllow>,
+  ): AccessRoleSource<TValue> & { readonly allow: TAllow };
 };

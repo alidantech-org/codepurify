@@ -21,7 +21,18 @@ export { defineAccess } from './access/define-access.js';
 
 export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
 export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
-export type { AccessDefinition, AccessRef, AccessRegistry, AccessRoleMap } from './access/access.types.js';
+export type {
+  AccessAllowMap,
+  AccessDefinition,
+  AccessDefinitionInput,
+  AccessDefinitionObject,
+  AccessOwner,
+  AccessRef,
+  AccessRegistry,
+  AccessRoleSource,
+  AccessRoleSources,
+} from './access/access.types.js';
+export type { AccessBuilder } from './access/access-builder.js';
 
 /* =========================================================
  * Public API facade
@@ -109,7 +120,9 @@ export { XCodegenAccess, XCodegenDtoRole, XCodegenEntityVariant, XCodegenKind } 
 
 export type {
   CodegenKind,
+  CodegenCookieEffects,
   CodegenMetadata,
+  CodegenOperationEffects,
   CodegenUiInput,
   CodegenUiMeta,
   CodegenUiRole,

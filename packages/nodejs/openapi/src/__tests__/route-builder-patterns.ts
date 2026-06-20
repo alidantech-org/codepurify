@@ -201,12 +201,13 @@ const normalizedVehiclePath = result.document.paths['/v1/vehicles/{vehicleId}'];
 const normalizedGaragePath = result.document.paths['/v1/garages'];
 
 assert.ok(companyMemberRoutes.parameters?.companyId);
-assert.ok(companyMembersPath?.parameters);
-assert.ok(JSON.stringify(companyMembersPath.parameters).includes('CompanyMembersCompanyIdPathParam'));
+assert.equal(companyMembersPath?.parameters, undefined);
+assert.ok(JSON.stringify(companyMembersPath?.get?.parameters).includes('CompanyMembersCompanyIdPathParam'));
 assert.ok(localParamRoutes.routes.getLocalMember.params?.memberId);
-assert.ok(localMemberPath?.parameters);
-assert.ok(JSON.stringify(localMemberPath.parameters).includes('LocalParamsMemberIdPathParam'));
-assert.ok(normalizedVehiclePath?.parameters);
+assert.equal(localMemberPath?.parameters, undefined);
+assert.ok(JSON.stringify(localMemberPath?.get?.parameters).includes('LocalParamsMemberIdPathParam'));
+assert.equal(normalizedVehiclePath?.parameters, undefined);
+assert.ok(JSON.stringify(normalizedVehiclePath?.get?.parameters).includes('NormalizedRoutesVehicleIdPathParam'));
 assert.equal(normalizedVehiclePath.get?.summary, 'Get normalized vehicle');
 assert.equal(normalizedGaragePath.get?.summary, 'List normalized garages');
 assert.ok(!Object.keys(result.document.paths).some((path) => !path.startsWith('/')));

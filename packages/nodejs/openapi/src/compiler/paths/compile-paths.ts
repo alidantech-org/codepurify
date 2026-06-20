@@ -5,7 +5,7 @@ import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { expressPathToOpenApi, normalizeOpenApiPath } from './express-path-to-openapi.js';
 import { resolveCodegenUi } from '../../codegen/codegen-ui.js';
 import type { RouteDefinition, RouteParameterMap, RouteParameterRegistry } from '../../routes/route.types.js';
-import type { InferredParameterComponent, InferredRouteComponents } from './inferred-route-components.types.js';
+import type { InferredRouteComponents } from './inferred-route-components.types.js';
 import { inferRouteComponents } from './infer-route-components.js';
 import { compileRouteOperation } from './compile-route-operation.js';
 import { extractPathParamNames } from '../../routes/route.types.js';
@@ -88,6 +88,9 @@ export function compilePaths(
           fullPath,
           resourcePath,
         });
+        const access = route.access ?? resource.context.access;
+        const resolvedAccess = resolveOperationAccess(access, resolver);
+
         mergeOperationCodegen(operation, {
           resource: {
             name: resource.context.alias,
@@ -98,9 +101,14 @@ export function compilePaths(
             role: ui.role,
           },
           ui,
-          access: resolveOperationAccess(route.access ?? resource.context.access, resolver),
+          access: resolvedAccess,
+          effects: route.effects,
           tags: route.codegenTags,
         });
+
+        if (isPublicAccess(access)) {
+          operation.security = [];
+        }
 
         if (!pathOperations.has(fullPath)) {
           pathOperations.set(fullPath, []);
@@ -112,8 +120,6 @@ export function compilePaths(
 
   // Second pass: extract common path parameters and build final paths
   for (const [fullPath, operations] of pathOperations.entries()) {
-    const commonPathParams = findCommonPathParameters(operations, allInferredComponents);
-
     const pathItem: Record<string, unknown> = {};
 
     // Add resource metadata to path item
@@ -122,7 +128,7 @@ export function compilePaths(
       if (firstOperation.resourceContext) {
         const xCodegen: Record<string, unknown> = {
           resource: {
-            name: firstOperation.resourceContext.name || firstOperation.resourceContext.key || 'unknown',
+            name: firstOperation.resourceContext.alias || firstOperation.resourceContext.name || firstOperation.resourceContext.key || 'unknown',
             path: firstOperation.resourceContext.folders || [],
           },
         };
@@ -131,12 +137,7 @@ export function compilePaths(
       }
     }
 
-    // Add common path parameters at path level
-    if (commonPathParams.length > 0) {
-      pathItem.parameters = commonPathParams;
-    }
-
-    // Add operations, removing duplicated path params
+    // Add operations. Keep route parameters operation-level so each operation is self-contained.
     for (const { method, operation } of operations) {
       const filteredOperation = { ...operation };
 
@@ -148,13 +149,6 @@ export function compilePaths(
             filteredOperation.responses[status] = { $ref: `#/components/responses/${componentName}` };
           }
         }
-      }
-
-      // Remove common path params from operation-level parameters
-      if (commonPathParams.length > 0 && filteredOperation.parameters) {
-        filteredOperation.parameters = (filteredOperation.parameters as unknown[]).filter(
-          (param) => !isSameParameterRef(param, commonPathParams),
-        );
       }
 
       // Remove empty parameters array
@@ -188,9 +182,9 @@ function resolveOperationAccess(access: AccessRef | undefined, resolver: RefReso
 
   return cleanObject({
     key: access.key,
+    owner: access.owner,
     context: resolveAccessContext(access, resolver),
-    systemRoles: access.definition.systemRoles,
-    tenantRoles: access.definition.tenantRoles,
+    roles: resolveAccessRoles(access, resolver),
     tags: access.definition.tags,
     description: access.definition.description,
   });
@@ -203,6 +197,34 @@ function resolveAccessContext(access: AccessRef, resolver: RefResolver): unknown
 
   const schemaName = resolver.schemas.get(context.id) ?? context.name;
   return { $ref: `#/components/schemas/${schemaName}` };
+}
+
+function resolveAccessRoles(access: AccessRef, resolver: RefResolver): Record<string, unknown> | undefined {
+  const roles = access.definition.roles;
+  if (!roles) return undefined;
+
+  return Object.fromEntries(
+    Object.entries(roles).map(([realm, role]) => [
+      realm,
+      cleanObject({
+        source: resolveAccessRoleSource(role.source, resolver),
+        allow: role.allow,
+      }),
+    ]),
+  );
+}
+
+function resolveAccessRoleSource(source: { readonly id: string; readonly name: string }, resolver: RefResolver): unknown {
+  const schemaName = resolver.schemas.get(source.id) ?? source.name;
+  return { $ref: `#/components/schemas/${schemaName}` };
+}
+
+function isPublicAccess(access: AccessRef | undefined): boolean {
+  if (!access) return false;
+  if (access.definition.context === null) return true;
+
+  const normalizedKey = access.key.toLowerCase();
+  return normalizedKey.startsWith('public') || normalizedKey === 'refreshtoken' || normalizedKey === 'refreshsession';
 }
 
 function cleanObject(input: Record<string, unknown>): Record<string, unknown> {
@@ -268,14 +290,6 @@ function mergeInferredComponents(target: InferredRouteComponents, source: Inferr
   for (const [key, value] of source.responses.entries()) {
     target.responses.set(key, value);
   }
-}
-
-function getParameterRefs(parameters: Map<string, InferredParameterComponent>): unknown[] {
-  const refs: unknown[] = [];
-  for (const param of parameters.values()) {
-    refs.push({ $ref: `#/components/parameters/${param.name}` });
-  }
-  return refs;
 }
 
 function compileRouteOperationWithRefs(
@@ -367,73 +381,3 @@ function getParameterRefsForRoute(route: RouteDefinition, inferred: InferredRout
   return refs;
 }
 
-function compileResponsesWithRefs(route: RouteDefinition, inferred: InferredRouteComponents): Record<string, unknown> {
-  const responses: Record<string, unknown> = {};
-
-  for (const response of inferred.responses.values()) {
-    responses[response.status.toString()] = { $ref: `#/components/responses/${response.name}` };
-  }
-
-  if (Object.keys(responses).length === 0) {
-    responses[204] = { description: 'No content' };
-  }
-
-  return responses;
-}
-
-function findCommonPathParameters(
-  operations: Array<{ method: string; operation: OpenApiOperation; inferred: InferredRouteComponents }>,
-  allInferredComponents: InferredRouteComponents,
-): unknown[] {
-  if (operations.length === 0) return [];
-
-  // Collect all path parameters from all operations
-  const allPathParams = new Map<string, unknown>();
-
-  for (const { operation, inferred } of operations) {
-    for (const [key, param] of inferred.parameters.entries()) {
-      if (param.operationId === operation.operationId && param.in === 'path') {
-        const paramRef = { $ref: `#/components/parameters/${param.name}` };
-        const keyForParam = `${param.name}-${param.in}`;
-
-        if (!allPathParams.has(keyForParam)) {
-          allPathParams.set(keyForParam, paramRef);
-        }
-      }
-    }
-  }
-
-  // A parameter is common if it appears in all operations
-  const commonParams: unknown[] = [];
-  const paramCounts = new Map<string, number>();
-
-  for (const { operation, inferred } of operations) {
-    for (const [key, param] of inferred.parameters.entries()) {
-      if (param.operationId === operation.operationId && param.in === 'path') {
-        const keyForParam = `${param.name}-${param.in}`;
-        paramCounts.set(keyForParam, (paramCounts.get(keyForParam) || 0) + 1);
-      }
-    }
-  }
-
-  for (const [key, count] of paramCounts.entries()) {
-    if (count === operations.length) {
-      const paramRef = allPathParams.get(key);
-      if (paramRef) {
-        commonParams.push(paramRef);
-      }
-    }
-  }
-
-  return commonParams;
-}
-
-function isSameParameterRef(param: unknown, commonParams: unknown[]): boolean {
-  if (!param || typeof param !== 'object') return false;
-  const paramObj = param as { $ref?: string };
-  if (!paramObj.$ref) return false;
-
-  return commonParams.some(
-    (common) => typeof common === 'object' && common !== null && (common as { $ref?: string }).$ref === paramObj.$ref,
-  );
-}

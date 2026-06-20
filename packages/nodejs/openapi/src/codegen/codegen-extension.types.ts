@@ -51,6 +51,15 @@ export interface ResolvedCodegenUiMeta {
 
 export type CodegenUiInput = CodegenUiRole | CodegenUiMeta;
 
+export interface CodegenCookieEffects {
+  readonly set?: readonly string[];
+  readonly clear?: readonly string[];
+}
+
+export interface CodegenOperationEffects {
+  readonly cookies?: CodegenCookieEffects;
+}
+
 export interface XCodegenRefPointer {
   readonly $ref: string;
 }
@@ -178,6 +187,8 @@ export interface XCodegenBaseMeta {
   };
 
   readonly ui?: ResolvedCodegenUiMeta;
+
+  readonly effects?: CodegenOperationEffects;
 }
 
 export interface XCodegenPrimitiveMeta extends XCodegenBaseMeta {

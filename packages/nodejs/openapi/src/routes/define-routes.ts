@@ -1,7 +1,7 @@
 import { EngineIdPart, createEngineId } from '../ids/engine-id.js';
 import type { OptionalResourceContext } from '../resource/resource-context.types.js';
 import { XCodegenDtoRole, XCodegenKind } from '../codegen/codegen-extension.types.js';
-import type { CodegenUiInput } from '../codegen/codegen-extension.types.js';
+import type { CodegenOperationEffects, CodegenUiInput } from '../codegen/codegen-extension.types.js';
 import { normalizeCodegenUiInput } from '../codegen/codegen-ui.js';
 import type { AccessRef } from '../access/access.types.js';
 import { HttpMethod } from './http-method.js';
@@ -145,6 +145,11 @@ class FluentRoutesBuilder implements RoutesBuilder {
 
   access(access: AccessRef): RoutesBuilder {
     this.activeRoute().access = access;
+    return this;
+  }
+
+  effects(effects: CodegenOperationEffects): RoutesBuilder {
+    this.activeRoute().effects = effects;
     return this;
   }
 

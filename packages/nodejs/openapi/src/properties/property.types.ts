@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { CodegenMetadata } from '../codegen/codegen-extension.types.js';
 import type { PropertyRef } from '../refs/ref.types.js';
-import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types.js';
+import type { RefUsage, RefWithAccessAllowMethods, RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { PropertyDefinitionFieldMap } from '../schema/schema.types.js';
 import type { PropertyKind } from './property-kind.js';
 
@@ -33,8 +33,16 @@ export type PropertyDefinition = SharedPropertyDefinition | ForRefPropertyDefini
 export type PropertyRefGroup = Record<string, RefWithUsageMethods<PropertyRef> | RefUsage<PropertyRef>>;
 
 export type PropertyFieldRefMap<TFields> = {
-  readonly [Key in keyof TFields & string]: RefWithUsageMethods<PropertyRef>;
+  readonly [Key in keyof TFields & string]: PropertyRefForField<TFields[Key]>;
 };
+
+type PropertyRefForField<TField> = TField extends z.ZodTypeAny
+  ? string extends z.infer<TField>
+    ? RefWithUsageMethods<PropertyRef>
+    : z.infer<TField> extends string
+      ? RefWithAccessAllowMethods<PropertyRef, z.infer<TField>>
+      : RefWithUsageMethods<PropertyRef>
+  : RefWithUsageMethods<PropertyRef>;
 
 export type PropertyGroupRegistry<TRefs extends PropertyRefGroup = PropertyRefGroup> = Omit<PropertyRegistry, 'ref'> & {
   readonly ref: TRefs;

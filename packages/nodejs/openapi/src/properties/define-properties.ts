@@ -39,7 +39,7 @@ export function defineProperties<TName extends string, TFields extends ZodProper
   ];
 
   const toZod = options.zodRegistry ? (ref: unknown): z.ZodTypeAny => compileZodRef(ref as never, options.zodRegistry!) : undefined;
-  const groupRefs = createPropertyRefs(options, name, definitionFields, PropertyKind.shared, toZod) as PropertyFieldRefMap<TFields>;
+  const groupRefs = createPropertyRefs(options, name, definitionFields, PropertyKind.shared, toZod) as unknown as PropertyFieldRefMap<TFields>;
 
   return {
     name,

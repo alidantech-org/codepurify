@@ -12,6 +12,7 @@ import type {
 import type { ArrayRef, ExtendedRef } from './ref-wrapper.types.js';
 import type { ComponentFieldMap } from '../components/component.types.js';
 import { getSourceMetadataFromRef, getSourceMetadataFromExtendWithInput } from './ref-source-metadata.js';
+import { RefKind } from './ref-kind.js';
 
 export interface RefMethodOptions {
   readonly toZod?: (value: unknown) => z.ZodTypeAny;
@@ -60,6 +61,22 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
       configurable: true,
       value: () => options.toZod?.(ref) ?? throwMissingZodResolver(ref.id),
     },
+    allow: {
+      enumerable: false,
+      configurable: true,
+      value: (allow: Record<string, true>) => {
+        if (ref.kind !== RefKind.property) {
+          throw new Error(`Access allow maps can only be created from property refs: ${ref.id}`);
+        }
+
+        validateAllowMap(allow);
+
+        return {
+          source: ref,
+          allow,
+        };
+      },
+    },
     partial: {
       enumerable: false,
       configurable: true,
@@ -78,6 +95,14 @@ export function withRefMethods<TRef extends EngineRef>(ref: TRef, options: RefMe
   });
 
   return target;
+}
+
+function validateAllowMap(allow: Record<string, true>): void {
+  for (const [key, enabled] of Object.entries(allow)) {
+    if (enabled !== true) {
+      throw new Error(`Access allow value for "${key}" must be true. Use only { roleName: true }.`);
+    }
+  }
 }
 
 function createProjectionDefinition<TRef extends EngineRef>(
