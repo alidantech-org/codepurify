@@ -209,3 +209,84 @@ def test_dart_schema_imports_inherited_constructor_field_dependencies(tmp_path: 
         pagination_meta.ref,
         user_partial.ref,
     }
+
+
+def test_dart_type_field_keeps_type_name_without_json_key(tmp_path: Path) -> None:
+    schema = ApiSchema(
+        id="CompanyPublic",
+        name=make_contract_name("CompanyPublic"),
+        ref="#/components/schemas/CompanyPublic",
+        kind=ApiSchemaKind.MODEL,
+        fields=(
+            ApiField(
+                id="type",
+                name=make_contract_name("type"),
+                type=ApiFieldType(kind=ApiFieldKind.PRIMITIVE, type="string"),
+            ),
+            ApiField(
+                id="name",
+                name=make_contract_name("name"),
+                type=ApiFieldType(kind=ApiFieldKind.PRIMITIVE, type="string"),
+            ),
+        ),
+    )
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="Dart Reserved API", api_version="v1"),
+        schemas=ApiSchemaGroups(
+            all=(schema,),
+            models=(schema,),
+            emit_models=(schema,),
+        ),
+    )
+
+    contract = DartLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    fields = contract.schemas.emit_models[0].fields
+
+    assert fields[0].lang.display_name == "type"
+    assert fields[0].lang.json_key is None
+    assert fields[1].lang.display_name == "name"
+    assert fields[1].lang.json_key is None
+
+
+def test_dart_actual_reserved_field_names_keep_wire_json_key(tmp_path: Path) -> None:
+    schema = ApiSchema(
+        id="ReservedPayload",
+        name=make_contract_name("ReservedPayload"),
+        ref="#/components/schemas/ReservedPayload",
+        kind=ApiSchemaKind.MODEL,
+        fields=(
+            ApiField(
+                id="default",
+                name=make_contract_name("default"),
+                type=ApiFieldType(kind=ApiFieldKind.PRIMITIVE, type="boolean"),
+            ),
+        ),
+    )
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="Dart Reserved API", api_version="v1"),
+        schemas=ApiSchemaGroups(
+            all=(schema,),
+            models=(schema,),
+            emit_models=(schema,),
+        ),
+    )
+
+    contract = DartLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    field = contract.schemas.emit_models[0].fields[0]
+
+    assert field.lang.display_name == "defaultValue"
+    assert field.lang.json_key == "default"

@@ -295,6 +295,7 @@ class TemplateFieldLang:
     kind: str = "-"
     type: str = "-"
     display_name: str = "-"
+    json_key: str | None = None
     required: bool = False
     nullable: bool = False
     query_enabled: bool = False

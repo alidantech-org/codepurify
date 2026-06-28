@@ -66,7 +66,6 @@ DART_RESERVED_WORDS = {
     "throw",
     "true",
     "try",
-    "type",
     "typedef",
     "var",
     "void",

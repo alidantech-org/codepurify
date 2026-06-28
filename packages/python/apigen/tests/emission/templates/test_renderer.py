@@ -63,6 +63,45 @@ def test_dart_version_barrel_exports_match_path_config(project_root: Path) -> No
     assert "schemas/platform/auth/users/dtos" not in output
 
 
+def test_dart_model_template_emits_json_key_for_renamed_fields(
+    project_root: Path,
+) -> None:
+    output = render_template(
+        template_root=project_root / "templates" / "dart",
+        relative_path=Path("{model}") / "model.dart.j2",
+        context={
+            "file": {"imports": []},
+            "model": {
+                "name": {"pascal": {"o": "CompanyPublic"}},
+                "meta": {"has_extends": False, "super_fields": ()},
+                "fields": [
+                    {
+                        "lang": {
+                            "display_name": "defaultValue",
+                            "type": "bool",
+                            "required": True,
+                            "json_key": "default",
+                        },
+                    },
+                    {
+                        "lang": {
+                            "display_name": "name",
+                            "type": "String",
+                            "required": True,
+                            "json_key": None,
+                        },
+                    },
+                ],
+            },
+        },
+    )
+
+    assert "@JsonKey(name: 'default')" in output
+    assert "final bool defaultValue;" in output
+    assert "@JsonKey(name: 'name')" not in output
+    assert "final String name;" in output
+
+
 def test_next_version_barrel_keeps_server_only_modules_private(
     project_root: Path,
 ) -> None:

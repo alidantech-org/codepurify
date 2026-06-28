@@ -34,6 +34,9 @@ def template_field(
 ) -> TemplateField:
     """Build a TemplateField for Dart templates."""
     dependencies = field_dependencies(field, schema_by_ref)
+    display_name = safe_dart_identifier(field.name.camel.original, fallback="field")
+    wire_name = field.name.camel.o
+    json_key = wire_name if display_name != wire_name else None
 
     return TemplateField(
         api=field,
@@ -41,7 +44,8 @@ def template_field(
         lang=TemplateFieldLang(
             kind="dart_field",
             type=dart_field_type(field, schema_by_ref),
-            display_name=safe_dart_identifier(field.name.camel.original, fallback="field"),
+            display_name=display_name,
+            json_key=json_key,
             required=field.required,
             nullable=_dart_nullable(field, schema_by_ref),
             query_enabled=field.query.enabled,

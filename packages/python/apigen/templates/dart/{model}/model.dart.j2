@@ -21,6 +21,9 @@ class {{ model.name.pascal.o }}{%- if model.meta.has_extends %} extends {{ model
 {%- endif %}
 
 {%- for field in model.fields %}
+{%- if field.lang.json_key %}
+  @JsonKey(name: '{{ field.lang.json_key }}')
+{%- endif %}
   final {{ field.lang.type }} {{ field.lang.display_name }};
 {%- endfor %}
 
