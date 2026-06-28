@@ -1,0 +1,87 @@
+{% set ui = namespace(list=None) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_item_type %}
+{% set ui.list = operation %}
+{% endif %}
+{% endfor %}
+{% if ui.list %}
+'use client';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Data Table
+ * ---------------------------------------------------------------------------
+ *
+ * Thin wrapper around the shared DataTable that lets callers hide generated
+ * columns with a field visibility object.
+ */
+
+import { DataTable } from '@/components/_core/data-table';
+import type { Column } from '@/components/_core/tables/types';
+import type { {{ ui.list.meta.ui_list_item_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+import {
+  {{ resource.name.camel.o }}Columns,
+  type {{ resource.name.pascal.o }}ColumnField,
+  type {{ resource.name.pascal.o }}ColumnVisibility,
+} from './{{ resource.name.path.o }}-columns';
+
+type {{ resource.name.pascal.o }}TableProps = {
+  data: {{ ui.list.meta.ui_list_item_type }}[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+  filters?: Record<string, string>;
+  fields?: {{ resource.name.pascal.o }}ColumnVisibility;
+  className?: string;
+  emptyMessage?: string;
+};
+
+/**
+ * Applies optional field visibility while keeping utility columns available.
+ */
+function visibleColumns(
+  fields?: {{ resource.name.pascal.o }}ColumnVisibility,
+): Column<{{ ui.list.meta.ui_list_item_type }}>[] {
+  if (!fields) {
+    return {{ resource.name.camel.o }}Columns;
+  }
+
+  return {{ resource.name.camel.o }}Columns.filter((column) => {
+    if (column.key === '#') {
+      return true;
+    }
+
+    return fields[column.key as {{ resource.name.pascal.o }}ColumnField] !== false;
+  });
+}
+
+/**
+ * Resource-specific table component backed by generated columns.
+ */
+export function {{ resource.name.pascal.o }}Table({
+  data,
+  pagination,
+  filters,
+  fields,
+  className,
+  emptyMessage = 'No {{ resource.name.path.o }} found.',
+}: {{ resource.name.pascal.o }}TableProps) {
+  return (
+    <DataTable
+      data={data}
+      columns={visibleColumns(fields)}
+      pagination={pagination}
+      filters={filters}
+      className={className}
+      emptyMessage={emptyMessage}
+    />
+  );
+}
+{% else %}
+export function {{ resource.name.pascal.o }}Table() {
+  return null;
+}
+{% endif %}

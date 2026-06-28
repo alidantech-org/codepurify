@@ -1,3 +1,5 @@
+# ruff: noqa: E402, I001
+
 from __future__ import annotations
 
 from typing import Protocol
@@ -8,7 +10,7 @@ ensure_src_on_path()
 
 import typer
 
-from src.app import GeneratorApp
+from app import GeneratorApp
 
 from cli.commands.emit import emit_command
 from cli.commands.infer import infer_command

@@ -1,0 +1,16 @@
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Exports
+ * ---------------------------------------------------------------------------
+ *
+ * @description Barrel file exporting all models for the {{ resource.name.pascal.o }} resource.
+ *
+ * @remarks
+ * Exports:
+ *{%- for model in resource.models %}
+ *   - {{ model.name.path.o }}
+ *{%- endfor %}
+ */
+{% for model in resource.models %}
+export * from './{{ model.name.path.o }}';
+{% endfor %}

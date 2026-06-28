@@ -1,8 +1,27 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "generator"
+name = "codepot-gen"
 version = "0.1.0"
 description = "General OpenAPI inference and multi-language code generation engine"
+readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+  { name = "Alidantech" },
+]
+keywords = ["openapi", "codegen", "generator", "typescript", "dart"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Code Generators",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
   "typer>=0.12.5",
   "rich>=13.9.0",
@@ -15,7 +34,12 @@ dependencies = [
 ]
 
 [project.scripts]
-openapi-generator = "cli.main:app"
+codepot-gen = "cli.main:app"
+codepot = "cli.main:app"
+apigen = "cli.main:app"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.package-dir]
 "" = "src"
@@ -24,8 +48,11 @@ cli = "cli"
 [tool.setuptools.packages.find]
 where = ["src", "."]
 include = [
+  "app*",
   "cli*",
   "constants*",
+  "codepot_gen*",
+  "contracts*",
   "core*",
   "emission*",
   "inference*",
@@ -33,6 +60,17 @@ include = [
   "openapi*",
   "runtime*",
   "utils*",
+]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+codepot_gen = [
+  "templates/**/*.j2",
+  "templates/**/*.yaml",
+  "templates/**/*.json",
+  "templates/**/*.md",
+  "templates/**/.gitignore",
+  "templates/**/.prettierrc",
 ]
 
 [tool.ruff]

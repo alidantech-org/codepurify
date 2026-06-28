@@ -1,0 +1,127 @@
+{% macro params_props(operation) -%}
+{% if operation.meta.has_path_params %}
+  params: Promise<{
+{% for param in operation.meta.path_params %}
+    {{ param }}: string;
+{% endfor %}
+  }>;
+{% endif %}
+{%- endmacro %}
+{% macro params_object(operation) -%}
+{% if operation.meta.has_path_params %}
+    params: {
+{% for param in operation.meta.path_params %}
+      {{ param }}: resolvedParams.{{ param }},
+{% endfor %}
+    },
+{% endif %}
+{%- endmacro %}
+{% set ui = namespace(list=None, create=None) %}
+{% for operation in resource.operations %}
+{% if operation.meta.ui_enabled and operation.meta.ui_role == "list" and operation.meta.ui_list_field and operation.meta.ui_list_item_type %}
+{% set ui.list = operation %}
+{% elif operation.meta.ui_enabled and operation.meta.ui_role == "create" and operation.meta.body_type %}
+{% set ui.create = operation %}
+{% endif %}
+{% endfor %}
+{% if ui.list %}
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Page
+ * ---------------------------------------------------------------------------
+ *
+ * Generated list page connected to server actions, table filters, pagination,
+ * and optional create dialog entry points.
+ */
+
+import { Metadata } from 'next';
+
+import ReusableAppBar from '@/components/_core/reusable-appbar';
+import { DataTable } from '@/components/_core/data-table';
+import { TableFilters } from '@/components/_core/table-filters';
+import { {{ ui.list.lang.function_name }} } from '@/gen/server/actions/{{ resource.name.path.o }}.actions';
+import { {{ resource.name.camel.o }}Columns } from '@/gen/components/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}/{{ resource.name.path.o }}-columns';
+{% if ui.create %}
+import { {{ ui.create.name.pascal.o }}DialogButton } from '@/gen/components/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}/{{ resource.name.path.o }}-dialogs';
+{% endif %}
+{% if ui.list.meta.query_type %}
+import type { {{ ui.list.meta.query_type }} } from '@/gen/server/types/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.path.o }}';
+{% endif %}
+
+export const metadata: Metadata = {
+  title: '{{ resource.name.pascal.o }}',
+  description: 'Manage {{ resource.name.path.o }} records.',
+};
+
+interface PageProps {
+  searchParams: Promise<Record<string, string>>;
+{{ params_props(ui.list) }}
+}
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Fetches the list operation with URL search params and renders the shared
+ * table/filter layout used by generated resource pages.
+ */
+export default async function {{ resource.name.pascal.o }}Page({ searchParams{% if ui.list.meta.has_path_params %}, params{% endif %} }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+{% if ui.list.meta.has_path_params %}
+  const resolvedParams = await params;
+{% endif %}
+  const data = await {{ ui.list.lang.function_name }}({
+{{ params_object(ui.list) }}
+{% if ui.list.meta.query_type %}
+    query: resolvedSearchParams as {{ ui.list.meta.query_type }},
+{% endif %}
+  });
+
+  const pagination = {
+    page: data?.body?.pagination?.page || 1,
+    limit: data?.body?.pagination?.limit || 20,
+    total: data?.body?.pagination?.total || 0,
+    pages: data?.body?.pagination?.pages || 0,
+  };
+
+  return (
+    <>
+      <ReusableAppBar
+        className="w-full max-w-6xl"
+        children={
+          <div className="w-full">
+            <TableFilters
+              columns={ {{- resource.name.camel.o -}}Columns}
+              filters={resolvedSearchParams}
+              searchPlaceholder="Search {{ resource.name.path.o }}..."
+            />
+          </div>
+        }
+        endElement={
+{% if ui.create %}
+          <{{ ui.create.name.pascal.o }}DialogButton
+{% for param in ui.create.meta.path_params %}
+            {{ param }}={resolvedParams.{{ param }}}
+{% endfor %}
+          />
+{% else %}
+          null
+{% endif %}
+        }
+      />
+
+      <DataTable
+        data={data?.body?.{{ ui.list.meta.ui_list_field }} || []}
+        columns={ {{- resource.name.camel.o -}}Columns}
+        pagination={pagination}
+        filters={resolvedSearchParams}
+        className="py-5 mx-auto w-full max-w-6xl px-2 md:px-4"
+        emptyMessage="No {{ resource.name.path.o }} found."
+      />
+    </>
+  );
+}
+{% else %}
+export default function {{ resource.name.pascal.o }}Page() {
+  return null;
+}
+{% endif %}

@@ -1,0 +1,26 @@
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ model.name.pascal.o }}
+ * ---------------------------------------------------------------------------
+ *
+ * @description Represents the {{ model.name.pascal.o }} model{%- if model.meta.has_extends %}, extending {{ model.meta.extends_type }}{%- endif %}.
+ *
+ * @remarks
+ * Fields:
+ *{%- for field in model.fields %}
+ *   - {{ field.lang.display_name }}{{ " (optional)" if not field.api.required else "" }}: {{ field.lang.type }}
+ *{%- endfor %}
+ *{%- if model.meta.has_extends %}
+ *
+ * @extends {{ model.meta.extends_type }}
+ *{%- endif %}
+ */
+export interface {{ model.name.pascal.o }}{%- if model.meta.has_extends %} extends {{ model.meta.extends_type }}{%- endif %} {
+{% for field in model.fields %}
+  {{ field.lang.display_name }}{{ "?" if not field.api.required else "" }}: {{ field.lang.type }};
+{% endfor %}
+}

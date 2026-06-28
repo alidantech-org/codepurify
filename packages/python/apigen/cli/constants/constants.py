@@ -4,7 +4,7 @@ This module is owned by the CLI adapter. Runtime and engine modules must not
 import from it.
 """
 
-APP_NAME = "openapi-generator"
+APP_NAME = "codepot-gen"
 APP_DESCRIPTION = "Template-driven OpenAPI generator."
 APP_VERSION = "0.1.0"
 

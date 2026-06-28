@@ -15,6 +15,7 @@ from contracts.api import (
 )
 from contracts.emission import EmissionResult
 from contracts.events import ProgressSink, RuntimeEvent
+from contracts.language import LanguagePostResult
 from contracts.names import make_contract_name
 from contracts.template import (
     TemplateContract,
@@ -60,7 +61,6 @@ from contracts.template import (
 )
 from languages.debug.context.path_values import safe_file_name, safe_path_parts
 from languages.decorators import language_adapter
-from src.contracts.language import LanguagePostResult
 
 
 @language_adapter(name="debug", aliases=("txt", "md"), template_name="debug")

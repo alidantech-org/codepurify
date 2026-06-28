@@ -1,0 +1,57 @@
+# {{ resource.name.pascal.o }}
+
+{{ resource.docs.description }}
+
+## Resource Metadata
+
+| Field | Value |
+|---|---|
+| Name | `{{ resource.name.path.o }}` |
+| Kind | `{{ resource.lang.kind }}` |
+| Display Name | `{{ resource.lang.display_name }}` |
+| Path | `{{ resource.path | join("/") }}` |
+| Operations | {{ resource.meta.operations_count }} |
+
+## Emission
+
+| Field | Value |
+|---|---|
+| Group | `{{ resource.emit.group }}` |
+| Item Key | `{{ resource.emit.item_key }}` |
+| File Name | `{{ resource.emit.file_name }}` |
+| Resource Path | `{{ resource.emit.resource_path | join("/") }}` |
+| Relative Doc Path | `{{ resource.emit.relative_doc_path | join("/") }}` |
+
+## Related Operations
+
+{% for operation in resource.operations %}
+- [{{ operation.name.pascal.o }}](operations.md) - `{{ operation.api.method }} {{ operation.api.path }}`
+{% endfor %}
+
+## Related Schemas
+
+### Models
+
+{% for model in resource.models %}
+- [{{ model.name.pascal.o }}](schemas/models/{{ model.name.path.o }}.md)
+{% endfor %}
+
+### DTOs
+
+{% for dto in resource.dtos %}
+- [{{ dto.name.pascal.o }}](schemas/dtos/{{ dto.name.path.o }}.md)
+{% endfor %}
+
+### Enums
+
+{% for enum in resource.enums %}
+- [{{ enum.name.pascal.o }}](schemas/enums/{{ enum.name.path.o }}.md)
+{% endfor %}
+
+## Example
+
+```ts
+// Example TypeScript resource grouping
+const resource = "{{ resource.name.camel.o }}";
+const path = "{{ resource.emit.resource_path | join("/") }}";
+```

@@ -1,0 +1,28 @@
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Exports
+ * ---------------------------------------------------------------------------
+ *
+ * @description Root barrel file exporting all available modules for the {{ resource.name.pascal.o }} resource.
+ *
+ * @remarks
+ * Modules:
+ *{%- if resource.dtos %}
+ *   - dto
+ *{%- endif %}
+ *{%- if resource.models %}
+ *   - models
+ *{%- endif %}
+ *{%- if resource.enums %}
+ *   - enums
+ *{%- endif %}
+ */
+{% if resource.dtos %}
+export * from './dto';
+{% endif %}
+{% if resource.models %}
+export * from './models';
+{% endif %}
+{% if resource.enums %}
+export * from './enums';
+{% endif %}

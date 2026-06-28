@@ -6,8 +6,8 @@ stable contract type used by API and template contracts.
 
 from __future__ import annotations
 
-from src.utils.naming.provider import NameSet
 from utils.naming import build_name
+from utils.naming.provider import NameSet
 
 
 def make_contract_name(value: str) -> NameSet:

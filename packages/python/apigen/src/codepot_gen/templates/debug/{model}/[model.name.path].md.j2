@@ -1,0 +1,110 @@
+# {{ model.name.pascal.o }}
+
+{{ model.docs.description }}
+
+## Model Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ model.name.path.o }}` |
+| Kind | `{{ model.api.kind }}` |
+| Language Kind | `{{ model.lang.kind }}` |
+| Type | `{{ model.lang.type }}` |
+| Display Name | `{{ model.lang.display_name }}` |
+| Symbol Name | `{{ model.lang.symbol_name }}` |
+| Field Count | {{ model.lang.field_count }} |
+| Dependency Count | {{ model.lang.dependency_count }} |
+| Deprecated | {{ model.docs.deprecated }} |
+
+## Emission
+
+| Field | Value |
+|---|---|
+| Group | `{{ model.emit.group }}` |
+| Item Key | `{{ model.emit.item_key }}` |
+| Key | `{{ model.emit.key }}` |
+| Ref | `{{ model.emit.ref }}` |
+| Resource Path | `{{ model.emit.resource_path | join("/") }}` |
+| Folder Path | `{{ model.emit.folder_path | join("/") }}` |
+| File Name | `{{ model.emit.file_name }}` |
+| Relative Doc Path | `{{ model.emit.relative_doc_path | join("/") }}` |
+
+## Fields
+
+| Field | Type | Required | Nullable | Sortable | Selectable | Filterable |
+|---|---|---:|---:|---:|---:|---:|
+{% for field in model.fields %}
+| `{{ field.name.camel.o }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.sortable }} | {{ field.lang.selectable }} | {{ field.lang.filterable }} |
+{% endfor %}
+
+## Imports / Links
+
+{% if file.imports %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+{% else %}
+No importable dependencies.
+{% endif %}
+
+## Dependency Graph
+
+{% if file.dependencies %}
+| Ref | Purpose | Target Kind | Exists | Importable | Self | Primitive | Reason | Link |
+|---|---|---|---:|---:|---:|---:|---|---|
+{% for dependency in file.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind if dependency.target else "-" }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | {{ dependency.is_self }} | {{ dependency.target.is_primitive if dependency.target else false }} | `{{ dependency.meta.get("reason", "-") }}` | `{% if dependency.is_importable %}{% for import in file.imports %}{% if import.ref == dependency.ref %}{{ import.path }}{% endif %}{% endfor %}{% else %}-{% endif %}` |
+{% endfor %}
+{% else %}
+No dependencies.
+{% endif %}
+
+## Inheritance
+
+{% if file.dependencies %}
+| Ref | Exists | Importable | Link |
+|---|---:|---:|---|
+{% for dependency in file.dependencies %}
+{% if dependency.is_inheritance %}
+| `{{ dependency.ref }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | `{% if dependency.is_importable %}{% for import in file.imports %}{% if import.ref == dependency.ref %}{{ import.path }}{% endif %}{% endfor %}{% else %}-{% endif %}` |
+{% endif %}
+{% endfor %}
+{% else %}
+No inheritance dependencies.
+{% endif %}
+
+## Example: TypeScript
+
+```ts
+interface {{ model.name.pascal.o }} {
+{% for field in model.fields %}
+  {{ field.name.camel.o }}{% if not field.lang.required %}?{% endif %}: {{ field.lang.type }};
+{% endfor %}
+}
+```
+
+## Example: Dart
+
+```dart
+class {{ model.name.pascal.o }} {
+{% for field in model.fields %}
+  final {{ field.lang.type }} {{ field.name.camel.o }};
+{% endfor %}
+
+  const {{ model.name.pascal.o }}({
+{% for field in model.fields %}
+    {% if field.lang.required %}required {% endif %}this.{{ field.name.camel.o }},
+{% endfor %}
+  });
+}
+```
+
+## Example: JSON
+
+```json
+{
+{% for field in model.fields %}
+  "{{ field.name.camel.o }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+}
+```

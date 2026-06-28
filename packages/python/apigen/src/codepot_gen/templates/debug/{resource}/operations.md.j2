@@ -1,0 +1,100 @@
+# {{ resource.name.pascal.o }} Operations
+
+{% if resource.operations %}
+{% for operation in resource.operations %}
+## {{ operation.name.pascal.o }}
+
+{{ operation.docs.description }}
+
+### Endpoint
+
+```http
+{{ operation.api.method }} {{ operation.api.path }}
+```
+
+### Operation Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ operation.name.path.o }}` |
+| Method | `{{ operation.api.method }}` |
+| Path | `{{ operation.api.path }}` |
+| Function Name | `{{ operation.lang.function_name }}` |
+| Display Name | `{{ operation.lang.display_name }}` |
+| Parameters | {{ operation.meta.parameter_count }} |
+| Responses | {{ operation.meta.response_count }} |
+| Has Request Body | {{ operation.meta.has_request_body }} |
+| Target Ref | `{{ operation.meta.target_ref }}` |
+
+### Parameters
+
+{% if operation.parameters %}
+| Name | Location | Required | Kind | Ref |
+|---|---|---:|---|---|
+{% for parameter in operation.parameters %}
+| `{{ parameter.name.camel.o }}` | `{{ parameter.lang.location }}` | {{ parameter.lang.required }} | `{{ parameter.lang.kind }}` | `{{ parameter.meta.ref }}` |
+{% endfor %}
+{% else %}
+No parameters.
+{% endif %}
+
+### Request Body
+
+{% if operation.request_body %}
+| Field | Value |
+|---|---|
+| Required | {{ operation.request_body.lang.required }} |
+| Kind | `{{ operation.request_body.lang.kind }}` |
+| Content Types | `{{ operation.request_body.lang.content_types | join(", ") }}` |
+| Ref | `{{ operation.request_body.meta.ref }}` |
+| Media Type Count | {{ operation.request_body.meta.media_type_count }} |
+{% else %}
+No request body.
+{% endif %}
+
+### Responses
+
+{% if operation.responses %}
+| Status | Success | Error | Kind | Ref | Content Types |
+|---|---:|---:|---|---|---|
+{% for response in operation.responses %}
+| `{{ response.lang.status_code }}` | {{ response.lang.is_success }} | {{ response.lang.is_error }} | `{{ response.lang.kind }}` | `{{ response.meta.ref }}` | `{{ response.lang.content_types | join(", ") }}` |
+{% endfor %}
+{% else %}
+No responses.
+{% endif %}
+
+### Example: cURL
+
+```bash
+curl -X {{ operation.api.method }} \
+  "{{ operation.api.path }}" \
+  -H "Content-Type: application/json"
+```
+
+### Example: TypeScript Fetch
+
+```ts
+const response = await fetch("{{ operation.api.path }}", {
+  method: "{{ operation.api.method }}",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+const data = await response.json();
+```
+
+### Example: Dart HTTP
+
+```dart
+final response = await client.request(
+  method: '{{ operation.api.method }}',
+  path: '{{ operation.api.path }}',
+);
+```
+
+{% endfor %}
+{% else %}
+No operations for this resource.
+{% endif %}

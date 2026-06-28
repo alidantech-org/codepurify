@@ -1,0 +1,12 @@
+library {{ project.name.path.o }};
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '{{ project.meta.api_version }}/client.dart';
+
+class {{ project.name.pascal.o }} {
+  {{ project.name.pascal.o }}.fromRef(WidgetRef ref)
+      : {{ project.meta.api_version_name.camel.o }} = {{ project.meta.api_version_name.pascal.o }}Client.fromRef(ref);
+
+  final {{ project.meta.api_version_name.pascal.o }}Client {{ project.meta.api_version_name.camel.o }};
+}

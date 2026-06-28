@@ -7,6 +7,7 @@ from pathlib import Path
 from contracts.language import LanguageAdapter
 
 DEFAULT_TEMPLATES_ROOT = Path("templates")
+BUNDLED_TEMPLATES_ROOT = Path(__file__).resolve().parents[2] / "codepot_gen" / "templates"
 
 
 def resolve_template_root(
@@ -18,4 +19,8 @@ def resolve_template_root(
     if templates_path is not None:
         return templates_path
 
-    return DEFAULT_TEMPLATES_ROOT / adapter.template_name
+    source_template_root = DEFAULT_TEMPLATES_ROOT / adapter.template_name
+    if source_template_root.exists():
+        return source_template_root
+
+    return BUNDLED_TEMPLATES_ROOT / adapter.template_name

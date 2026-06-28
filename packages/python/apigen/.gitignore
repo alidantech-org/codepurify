@@ -12,3 +12,4 @@ build/
 .vscode/
 .dart-output
 .tmp-next-out
+*.tmp*

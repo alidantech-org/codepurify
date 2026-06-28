@@ -1,0 +1,38 @@
+# {{ project.name.pascal.o }} API Documentation
+
+{{ project.docs.description }}
+
+## Project
+
+| Field | Value |
+|---|---|
+| Name | `{{ project.name.path.o }}` |
+| Version | `{{ project.version }}` |
+| Language | `{{ lang.name }}` |
+| Package | `{{ lang.package.name }}` |
+| Dry Run | `{{ emit.dry_run }}` |
+| Contract Version | `{{ emit.contract_version }}` |
+
+## Summary
+
+| Kind | Count |
+|---|---:|
+| Resources | {{ meta.resource_count }} |
+| Schemas | {{ meta.schema_count }} |
+| Models | {{ meta.model_count }} |
+| DTOs | {{ meta.dto_count }} |
+| Enums | {{ meta.enum_count }} |
+| Primitives | {{ meta.primitive_count }} |
+| Operations | {{ meta.operation_count }} |
+
+## Resources
+
+{% for resource in resources %}
+- [{{ resource.name.pascal.o }}]({{ resource.emit.relative_doc_path | join("/") }})
+{% endfor %}
+
+## Example Usage
+
+```bash
+python -m cli.main emit -i openapi.yaml -l debug -o .output -v
+```

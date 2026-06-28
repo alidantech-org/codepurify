@@ -1,0 +1,11 @@
+{% for resource in features %}
+import 'constants/{{ resource.name.path.o | string }}_endpoints.dart';{{ "\n" }}
+{% endfor %}
+
+class {{ project.meta.api_version_name.pascal.o }}Routes {
+  const {{ project.meta.api_version_name.pascal.o }}Routes();
+
+{% for resource in features %}
+  final {{ resource.name.camel.o | string }} = const {{ resource.name.pascal.o | string }}Endpoints();{{ "\n" }}
+{% endfor %}
+}

@@ -1,0 +1,88 @@
+# {{ dto.name.pascal.o }}
+
+{{ dto.docs.description }}
+
+## DTO Summary
+
+| Field | Value |
+|---|---|
+| Name | `{{ dto.name.path.o }}` |
+| Kind | `{{ dto.api.kind }}` |
+| Language Kind | `{{ dto.lang.kind }}` |
+| Type | `{{ dto.lang.type }}` |
+| Display Name | `{{ dto.lang.display_name }}` |
+| Symbol Name | `{{ dto.lang.symbol_name }}` |
+| Field Count | {{ dto.lang.field_count }} |
+| Query Enabled | {{ dto.lang.query_enabled }} |
+| Deprecated | {{ dto.docs.deprecated }} |
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| Is Alias | {{ dto.meta.is_alias }} |
+| Alias Of | `{{ dto.meta.alias_of }}` |
+| Query Enabled | {{ dto.meta.query_enabled }} |
+| Composition Refs | `{{ dto.meta.composition_refs | join(", ") }}` |
+| Inherited Refs | `{{ dto.meta.inherited_refs | join(", ") }}` |
+
+## Fields
+
+| Field | Type | Required | Nullable | Query | Operators |
+|---|---|---:|---:|---:|---|
+{% for field in dto.fields %}
+| `{{ field.name.camel.o }}` | `{{ field.lang.type }}` | {{ field.lang.required }} | {{ field.lang.nullable }} | {{ field.lang.query_enabled }} | `{{ field.lang.operators | join(", ") }}` |
+{% endfor %}
+
+## Imports / Links
+
+{% if file.imports %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+{% else %}
+No importable dependencies.
+{% endif %}
+
+## Dependency Graph
+
+{% if file.dependencies %}
+| Ref | Purpose | Target Kind | Exists | Importable | Self | Reason |
+|---|---|---|---:|---:|---:|---|
+{% for dependency in file.dependencies %}
+| `{{ dependency.ref }}` | `{{ dependency.purpose }}` | `{{ dependency.target.kind if dependency.target else "-" }}` | {{ dependency.exists }} | {{ dependency.is_importable }} | {{ dependency.is_self }} | `{{ dependency.meta.get("reason", "-") }}` |
+{% endfor %}
+{% else %}
+No dependencies.
+{% endif %}
+
+## Example: Query DTO
+
+```ts
+const query: {{ dto.name.pascal.o }} = {
+{% for field in dto.fields %}
+  {{ field.name.camel.o }}: undefined,
+{% endfor %}
+};
+```
+
+## Example: Request Body
+
+```json
+{
+{% for field in dto.fields %}
+  "{{ field.name.camel.o }}": "{{ field.lang.type }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+}
+```
+
+## Example: Python TypedDict
+
+```python
+from typing import TypedDict
+
+class {{ dto.name.pascal.o }}(TypedDict, total=False):
+{% for field in dto.fields %}
+    {{ field.name.snake }}: str
+{% endfor %}
+```

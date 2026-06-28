@@ -1,0 +1,25 @@
+# {{ resource.name.pascal.o }} Schemas
+
+## Models
+
+{% for model in resource.models %}
+- {{ model.name.pascal.o }}
+{% else %}
+No models.
+{% endfor %}
+
+## DTOs
+
+{% for dto in resource.dtos %}
+- {{ dto.name.pascal.o }}
+{% else %}
+No DTOs.
+{% endfor %}
+
+## Enums
+
+{% for enum in resource.enums %}
+- {{ enum.name.pascal.o }}
+{% else %}
+No enums.
+{% endfor %}
